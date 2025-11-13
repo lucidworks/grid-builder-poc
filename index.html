@@ -163,6 +163,20 @@
       max-width: 480px;
     }
 
+    /* Responsive grid width for smaller desktop screens */
+    @media (max-width: 1000px) {
+      .canvases-container:not(.mobile-view) {
+        max-width: 90%;
+        margin: 0 auto;
+      }
+    }
+
+    @media (max-width: 800px) {
+      .canvases-container:not(.mobile-view) {
+        max-width: 95%;
+      }
+    }
+
     .canvas-item {
       display: flex;
       flex-direction: column;
