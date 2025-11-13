@@ -643,12 +643,32 @@
     function sendToBack(id) {
       const item = items.find(i => i.id === id);
       if (item) {
-        // Find the lowest z-index
+        // Find the lowest z-index, but never go below 1
         const minZIndex = Math.min(...items.map(i => i.zIndex));
-        item.zIndex = minZIndex - 1;
-        const element = document.getElementById(id);
-        if (element) {
-          element.style.zIndex = item.zIndex;
+        item.zIndex = Math.max(1, minZIndex - 1);
+
+        // If the item is already at the back, reorder all z-indexes
+        if (minZIndex <= 1) {
+          // Sort items by current z-index
+          const sortedItems = [...items].sort((a, b) => a.zIndex - b.zIndex);
+
+          // Reassign z-indexes starting from 1, with this item first
+          sortedItems.forEach((itm, index) => {
+            if (itm.id === id) {
+              itm.zIndex = 1;
+              const elem = document.getElementById(itm.id);
+              if (elem) elem.style.zIndex = 1;
+            } else {
+              itm.zIndex = index + 2;
+              const elem = document.getElementById(itm.id);
+              if (elem) elem.style.zIndex = itm.zIndex;
+            }
+          });
+        } else {
+          const element = document.getElementById(id);
+          if (element) {
+            element.style.zIndex = item.zIndex;
+          }
         }
       }
     }
