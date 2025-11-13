@@ -163,20 +163,6 @@
       max-width: 480px;
     }
 
-    /* Responsive grid width for smaller desktop screens */
-    @media (max-width: 1000px) {
-      .canvases-container:not(.mobile-view) {
-        max-width: 90%;
-        margin: 0 auto;
-      }
-    }
-
-    @media (max-width: 800px) {
-      .canvases-container:not(.mobile-view) {
-        max-width: 95%;
-      }
-    }
-
     .canvas-item {
       display: flex;
       flex-direction: column;
@@ -266,7 +252,7 @@
       background-image:
         linear-gradient(rgba(0,0,0,0.05) 1px, transparent 1px),
         linear-gradient(90deg, rgba(0,0,0,0.05) 1px, transparent 1px);
-      background-size: 20px 20px;
+      background-size: 2% 20px;
       transition: background-color 0.2s;
     }
 
@@ -521,8 +507,13 @@
     let showGrid = true;
     let currentViewport = 'desktop'; // 'desktop' or 'mobile'
 
-    const gridSize = 20; // Snap grid size in pixels
     const gridContainers = document.querySelectorAll('.grid-container');
+
+    // Calculate grid size as 2% of canvas width (dynamic)
+    function getGridSize(canvasId) {
+      const container = document.getElementById(canvasId);
+      return Math.round(container.clientWidth * 0.02);
+    }
 
     // Component templates
     const componentTemplates = {
@@ -765,6 +756,7 @@
               // Calculate new position relative to target canvas
               const targetContainer = document.getElementById(targetCanvasId);
               const targetRect = targetContainer.getBoundingClientRect();
+              const gridSize = getGridSize(targetCanvasId);
 
               let newX = rect.left - targetRect.left;
               let newY = rect.top - targetRect.top;
@@ -886,6 +878,7 @@
               const container = document.getElementById(item.canvasId);
               const containerWidth = container.clientWidth;
               const containerHeight = container.clientHeight;
+              const gridSize = getGridSize(item.canvasId);
 
               // Calculate new size and position
               let newWidth = event.rect.width;
@@ -1048,6 +1041,7 @@
       const item = canvas.items.find(i => i.id === id);
       if (item) {
         const layout = item.layouts[currentViewport];
+        const gridSize = getGridSize(canvasId);
 
         // If mobile and not customized, need to customize it first
         if (currentViewport === 'mobile' && !layout.customized) {
@@ -1059,8 +1053,8 @@
           layout.customized = true;
         }
 
-        layout.x += dx;
-        layout.y += dy;
+        layout.x += dx * gridSize;
+        layout.y += dy * gridSize;
 
         // Get container bounds to ensure item stays fully within
         const container = document.getElementById(canvasId);
@@ -1090,6 +1084,7 @@
     function getGridPosition(clientX, clientY, canvasId) {
       const gridContainer = document.getElementById(canvasId);
       const rect = gridContainer.getBoundingClientRect();
+      const gridSize = getGridSize(canvasId);
 
       // Get cursor position relative to container
       let x = clientX - rect.left;
@@ -1275,16 +1270,16 @@
         let dx = 0, dy = 0;
 
         if (e.key === 'ArrowLeft') {
-          dx = -gridSize;
+          dx = -1;
           e.preventDefault();
         } else if (e.key === 'ArrowRight') {
-          dx = gridSize;
+          dx = 1;
           e.preventDefault();
         } else if (e.key === 'ArrowUp') {
-          dy = -gridSize;
+          dy = -1;
           e.preventDefault();
         } else if (e.key === 'ArrowDown') {
-          dy = gridSize;
+          dy = 1;
           e.preventDefault();
         }
 

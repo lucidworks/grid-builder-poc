@@ -11,7 +11,7 @@ A minimal proof-of-concept demonstrating a drag-and-drop grid builder system wit
 ✅ **Cross-Section Movement** - Move components between sections by dragging
 ✅ **Reposition Items** - Drag existing items to move them around within or between sections
 ✅ **Resize Items** - Use 8-point handles to resize components
-✅ **Snap to Grid** - All movements snap to a 20px grid
+✅ **Snap to Grid** - All movements snap to a responsive grid (2% of canvas width)
 ✅ **Section Background Colors** - Customize background color for each section
 ✅ **Selection** - Click to select items, shows resize handles
 ✅ **Delete** - Click × button or press Delete key
@@ -78,7 +78,7 @@ A minimal proof-of-concept demonstrating a drag-and-drop grid builder system wit
 - Z-index is managed independently per section
 
 **Keyboard Navigation:**
-- Use arrow keys (↑ ↓ ← →) to nudge selected component by 20px (one grid unit)
+- Use arrow keys (↑ ↓ ← →) to nudge selected component by one grid unit (responsive to canvas width)
 - Press `Delete` to delete selected component
 - Press `Escape` to deselect all components
 
@@ -122,7 +122,8 @@ A minimal proof-of-concept demonstrating a drag-and-drop grid builder system wit
    - Components automatically reposition and snap to the target section's grid
 
 4. **Snap-to-Grid**
-   - All drag and resize operations snap to a 20px grid
+   - All drag and resize operations snap to a responsive grid (2% of canvas width)
+   - Grid scales proportionally with canvas width for consistent layouts across different screen sizes
    - Provides clean alignment within each section
 
 5. **Per-Section State Management**
@@ -232,7 +233,7 @@ No build process needed! Just open `index.html` in a browser.
 
 To customize:
 - Edit component templates in the `componentTemplates` object
-- Adjust `gridSize` variable to change snap grid
+- Adjust grid percentage in `background-size` CSS and `getGridSize()` function to change snap grid density
 - Modify styles in the `<style>` section
 - Add more sections by duplicating the `.canvas-item` structure in HTML
 
