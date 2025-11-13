@@ -147,6 +147,46 @@
       border-color: #4A90E2;
     }
 
+    /* Version Switcher */
+    .version-switcher {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 12px;
+      background: #f8f9fa;
+      border: 1px solid #dee2e6;
+      border-radius: 4px;
+      font-size: 12px;
+      margin-left: 12px;
+    }
+
+    .version-switcher-label {
+      color: #666;
+      font-weight: 500;
+    }
+
+    .version-switcher-link {
+      color: #4A90E2;
+      text-decoration: none;
+      font-weight: 500;
+      padding: 4px 8px;
+      border-radius: 3px;
+      transition: all 0.2s;
+    }
+
+    .version-switcher-link:hover {
+      background: #4A90E2;
+      color: white;
+    }
+
+    .version-current {
+      color: #28a745;
+      font-weight: 600;
+      padding: 4px 8px;
+      background: #d4edda;
+      border-radius: 3px;
+    }
+
     /* Canvases Container */
     .canvases-container {
       display: flex;
@@ -438,8 +478,8 @@
     <!-- Main Canvas -->
     <div class="canvas">
       <div class="canvas-header">
-        <h1>Grid Builder POC - Transform-Based Positioning</h1>
-        <p><strong>Experimental:</strong> Testing CSS transform-based positioning instead of left/top. <a href="index.html" style="color: #4A90E2;">← Back to standard version</a></p>
+        <h1>Grid Builder POC</h1>
+        <p>Drag components from the palette into the page sections below. Build your page layout section by section.</p>
         <div class="controls">
           <div class="viewport-toggle">
             <button id="desktopView" class="viewport-btn active">🖥️ Desktop</button>
@@ -447,6 +487,12 @@
           </div>
           <button id="toggleGrid" class="active">Show Grid</button>
           <button id="exportState">Export State</button>
+          <div class="version-switcher">
+            <span class="version-switcher-label">Version:</span>
+            <a href="index.html" class="version-switcher-link" title="Uses left/top CSS properties for positioning">Standard</a>
+            <span style="color: #ccc;">|</span>
+            <span class="version-current">Transform 🧪</span>
+          </div>
         </div>
       </div>
 
