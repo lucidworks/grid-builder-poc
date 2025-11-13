@@ -1,0 +1,1060 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Grid Builder POC - Muuri-Based Auto-Layout (Experimental)</title>
+  <script src="https://cdn.jsdelivr.net/npm/muuri@0.9.5/dist/muuri.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/web-animations-js@2.3.2/web-animations.min.js"></script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      background: #f5f5f5;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    .app {
+      display: flex;
+      height: 100vh;
+    }
+
+    /* Component Palette */
+    .palette {
+      width: 250px;
+      background: white;
+      border-right: 1px solid #ddd;
+      padding: 20px;
+      overflow-y: auto;
+    }
+
+    .palette h2 {
+      font-size: 18px;
+      margin-bottom: 20px;
+      color: #333;
+    }
+
+    .palette-item {
+      background: #4A90E2;
+      color: white;
+      padding: 15px;
+      margin-bottom: 10px;
+      border-radius: 4px;
+      cursor: move;
+      text-align: center;
+      font-weight: 500;
+      user-select: none;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .palette-item:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+
+    /* Main Canvas */
+    .canvas {
+      flex: 1;
+      padding: 20px;
+      overflow: auto;
+      position: relative;
+    }
+
+    .canvas-header {
+      background: white;
+      padding: 15px 20px;
+      margin-bottom: 20px;
+      border-radius: 4px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+
+    .canvas-header h1 {
+      font-size: 24px;
+      color: #333;
+      margin-bottom: 5px;
+    }
+
+    .canvas-header p {
+      color: #666;
+      font-size: 14px;
+    }
+
+    .canvas-header .controls {
+      margin-top: 10px;
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .canvas-header button {
+      padding: 8px 16px;
+      border: 1px solid #ddd;
+      background: white;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 13px;
+      transition: all 0.2s;
+    }
+
+    .canvas-header button:hover {
+      background: #f5f5f5;
+      border-color: #4A90E2;
+    }
+
+    .canvas-header button.active {
+      background: #4A90E2;
+      color: white;
+      border-color: #4A90E2;
+    }
+
+    /* Info Badge */
+    .info-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      background: #fff3cd;
+      border: 1px solid #ffc107;
+      border-radius: 4px;
+      font-size: 12px;
+      color: #856404;
+      cursor: help;
+      position: relative;
+    }
+
+    .info-badge:hover .tooltip {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .tooltip {
+      position: absolute;
+      bottom: calc(100% + 10px);
+      left: 50%;
+      transform: translateX(-50%);
+      background: #333;
+      color: white;
+      padding: 12px 16px;
+      border-radius: 6px;
+      font-size: 12px;
+      line-height: 1.6;
+      white-space: nowrap;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.2s, visibility 0.2s;
+      z-index: 10000;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      max-width: 400px;
+      white-space: normal;
+    }
+
+    .tooltip::after {
+      content: '';
+      position: absolute;
+      top: 100%;
+      left: 50%;
+      transform: translateX(-50%);
+      border: 6px solid transparent;
+      border-top-color: #333;
+    }
+
+    .tooltip-section {
+      margin-bottom: 8px;
+    }
+
+    .tooltip-section:last-child {
+      margin-bottom: 0;
+    }
+
+    .tooltip-title {
+      font-weight: 600;
+      color: #4A90E2;
+      margin-bottom: 4px;
+    }
+
+    .tooltip-list {
+      margin: 0;
+      padding-left: 16px;
+    }
+
+    .tooltip-list li {
+      margin-bottom: 2px;
+    }
+
+    /* Version Switcher */
+    .version-switcher {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 12px;
+      background: #f8f9fa;
+      border: 1px solid #dee2e6;
+      border-radius: 4px;
+      font-size: 12px;
+    }
+
+    .version-switcher-label {
+      color: #666;
+      font-weight: 500;
+    }
+
+    .version-switcher-link {
+      color: #4A90E2;
+      text-decoration: none;
+      font-weight: 500;
+      padding: 4px 8px;
+      border-radius: 3px;
+      transition: all 0.2s;
+    }
+
+    .version-switcher-link:hover {
+      background: #4A90E2;
+      color: white;
+    }
+
+    .version-current {
+      color: #28a745;
+      font-weight: 600;
+      padding: 4px 8px;
+      background: #d4edda;
+      border-radius: 3px;
+    }
+
+    /* Canvases Container */
+    .canvases-container {
+      display: flex;
+      flex-direction: column;
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      overflow: hidden;
+    }
+
+    .canvas-item {
+      display: flex;
+      flex-direction: column;
+      width: 100%;
+      position: relative;
+      border-bottom: 2px solid #e0e0e0;
+    }
+
+    .canvas-item:last-child {
+      border-bottom: none;
+    }
+
+    .canvas-item-header {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: rgba(255, 255, 255, 0.95);
+      padding: 8px 12px;
+      border-radius: 4px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      z-index: 1000;
+      font-size: 12px;
+      color: #666;
+      opacity: 0.7;
+      transition: opacity 0.2s;
+      pointer-events: auto;
+    }
+
+    .canvas-item:hover .canvas-item-header {
+      opacity: 1;
+    }
+
+    .canvas-item-header h3 {
+      font-size: 11px;
+      color: #999;
+      margin: 0;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .canvas-controls {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .canvas-controls label {
+      font-size: 11px;
+      color: #666;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .canvas-bg-color {
+      cursor: pointer;
+      width: 32px;
+      height: 24px;
+      border: 1px solid #ddd;
+      border-radius: 3px;
+    }
+
+    .clear-canvas-btn, .delete-section-btn {
+      padding: 4px 8px;
+      border: 1px solid #ddd;
+      background: white;
+      border-radius: 3px;
+      cursor: pointer;
+      font-size: 11px;
+      transition: all 0.2s;
+    }
+
+    .clear-canvas-btn:hover {
+      background: #f5f5f5;
+      border-color: #ff4444;
+      color: #ff4444;
+    }
+
+    .delete-section-btn {
+      background: transparent;
+      border: none;
+      font-size: 16px;
+      padding: 4px;
+    }
+
+    .delete-section-btn:hover {
+      transform: scale(1.2);
+    }
+
+    /* Muuri Grid */
+    .grid-builder {
+      position: relative;
+      padding: 20px;
+      min-height: 400px;
+    }
+
+    .muuri-grid {
+      position: relative;
+      width: 100%;
+    }
+
+    /* Grid Items */
+    .grid-item {
+      position: absolute;
+      display: block;
+      margin: 5px;
+      z-index: 1;
+      background: white;
+      border: 2px solid transparent;
+      border-radius: 4px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      cursor: move;
+      transition: border-color 0.2s;
+    }
+
+    .grid-item:hover {
+      border-color: #4A90E2;
+    }
+
+    .grid-item.muuri-item-dragging {
+      z-index: 3;
+      opacity: 0.8;
+    }
+
+    .grid-item.muuri-item-releasing {
+      z-index: 2;
+    }
+
+    .grid-item.muuri-item-hidden {
+      z-index: 0;
+    }
+
+    .item-content {
+      position: relative;
+      width: 200px;
+      height: 150px;
+      padding: 20px;
+      cursor: move;
+    }
+
+    .grid-item-header {
+      font-weight: 600;
+      color: #333;
+      margin-bottom: 5px;
+      font-size: 14px;
+    }
+
+    .grid-item-content {
+      color: #666;
+      font-size: 13px;
+    }
+
+    .grid-item-delete {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      width: 24px;
+      height: 24px;
+      background: #ff4444;
+      color: white;
+      border: none;
+      border-radius: 50%;
+      cursor: pointer;
+      font-size: 14px;
+      line-height: 1;
+      padding: 0;
+      opacity: 0;
+      transition: opacity 0.2s, background 0.2s;
+    }
+
+    .grid-item:hover .grid-item-delete {
+      opacity: 1;
+    }
+
+    .grid-item-delete:hover {
+      background: #cc0000;
+    }
+
+    /* Size variants for different component types */
+    .item-content.size-small {
+      width: 150px;
+      height: 100px;
+    }
+
+    .item-content.size-medium {
+      width: 200px;
+      height: 150px;
+    }
+
+    .item-content.size-large {
+      width: 300px;
+      height: 200px;
+    }
+
+    .item-content.size-wide {
+      width: 400px;
+      height: 150px;
+    }
+
+    .item-content.size-tall {
+      width: 200px;
+      height: 250px;
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <!-- Component Palette -->
+    <div class="palette">
+      <h2>Components</h2>
+      <div class="palette-item" data-component-type="header" data-size="wide">
+        📄 Header
+      </div>
+      <div class="palette-item" data-component-type="text" data-size="medium">
+        📝 Text Block
+      </div>
+      <div class="palette-item" data-component-type="image" data-size="medium">
+        🖼️ Image
+      </div>
+      <div class="palette-item" data-component-type="button" data-size="small">
+        🔘 Button
+      </div>
+      <div class="palette-item" data-component-type="video" data-size="large">
+        🎥 Video
+      </div>
+      <h2 style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #ddd;">Complex</h2>
+      <div class="palette-item" data-component-type="gallery" data-size="large">
+        🖼️ Image Gallery
+      </div>
+      <div class="palette-item" data-component-type="dashboard" data-size="large">
+        📊 Dashboard
+      </div>
+      <div class="palette-item" data-component-type="livedata" data-size="tall">
+        📡 Live Data
+      </div>
+    </div>
+
+    <!-- Main Canvas -->
+    <div class="canvas">
+      <div class="canvas-header">
+        <h1>Grid Builder POC - Muuri Auto-Layout</h1>
+        <p>Drag components from the palette into sections. Muuri automatically arranges them with smooth animations.</p>
+        <div class="controls">
+          <button id="exportState">Export State</button>
+          <button id="addSection">➕ Add Section</button>
+          <div class="info-badge">
+            ℹ️ Muuri Version Features
+            <div class="tooltip">
+              <div class="tooltip-section">
+                <div class="tooltip-title">✅ Available:</div>
+                <ul class="tooltip-list">
+                  <li>Auto-layout with smooth animations</li>
+                  <li>Drag and drop between sections</li>
+                  <li>Multiple component types</li>
+                  <li>Section management</li>
+                </ul>
+              </div>
+              <div class="tooltip-section">
+                <div class="tooltip-title">❌ Not Available (vs Original):</div>
+                <ul class="tooltip-list">
+                  <li>Free-form positioning</li>
+                  <li>Resize handles (8-point)</li>
+                  <li>Custom snap-to-grid</li>
+                  <li>Separate desktop/mobile layouts</li>
+                  <li>Manual mobile customization</li>
+                  <li>Edge snapping</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+          <span id="itemCount" style="font-size: 12px; color: #666;">0 items</span>
+          <div class="version-switcher">
+            <span class="version-switcher-label">Version:</span>
+            <a href="index.html" class="version-switcher-link" title="Uses CSS left/top properties for positioning">Left/Top</a>
+            <span style="color: #ccc;">|</span>
+            <a href="index-transform.html" class="version-switcher-link" title="Uses CSS transform: translate() for positioning">Transform</a>
+            <span style="color: #ccc;">|</span>
+            <span class="version-current">Muuri 🧪</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="canvases-container">
+        <div class="canvas-item" data-canvas-id="canvas1">
+          <div class="canvas-item-header">
+            <h3>Section 1</h3>
+            <div class="canvas-controls">
+              <label>
+                <input type="color" class="canvas-bg-color" data-canvas="canvas1" value="#ffffff">
+              </label>
+              <button class="clear-canvas-btn" data-canvas="canvas1">Clear</button>
+              <button class="delete-section-btn" data-canvas="canvas1" title="Delete Section">🗑️</button>
+            </div>
+          </div>
+          <div class="grid-builder">
+            <div class="muuri-grid" id="canvas1" data-canvas-id="canvas1"></div>
+          </div>
+        </div>
+
+        <div class="canvas-item" data-canvas-id="canvas2">
+          <div class="canvas-item-header">
+            <h3>Section 2</h3>
+            <div class="canvas-controls">
+              <label>
+                <input type="color" class="canvas-bg-color" data-canvas="canvas2" value="#f5f5f5">
+              </label>
+              <button class="clear-canvas-btn" data-canvas="canvas2">Clear</button>
+              <button class="delete-section-btn" data-canvas="canvas2" title="Delete Section">🗑️</button>
+            </div>
+          </div>
+          <div class="grid-builder">
+            <div class="muuri-grid" id="canvas2" data-canvas-id="canvas2"></div>
+          </div>
+        </div>
+
+        <div class="canvas-item" data-canvas-id="canvas3">
+          <div class="canvas-item-header">
+            <h3>Section 3</h3>
+            <div class="canvas-controls">
+              <label>
+                <input type="color" class="canvas-bg-color" data-canvas="canvas3" value="#ffffff">
+              </label>
+              <button class="clear-canvas-btn" data-canvas="canvas3">Clear</button>
+              <button class="delete-section-btn" data-canvas="canvas3" title="Delete Section">🗑️</button>
+            </div>
+          </div>
+          <div class="grid-builder">
+            <div class="muuri-grid" id="canvas3" data-canvas-id="canvas3"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // State
+    const grids = {};
+    let itemIdCounter = 0;
+    let sectionCounter = 3;
+
+    // Component templates
+    const componentTemplates = {
+      header: { icon: '📄', title: 'Header', content: 'This is a header component', size: 'wide' },
+      text: { icon: '📝', title: 'Text Block', content: 'This is a text block component', size: 'medium' },
+      image: { icon: '🖼️', title: 'Image', content: '<img src="https://picsum.photos/seed/image/400/300" style="width: 100%; height: 100%; object-fit: cover; border-radius: 4px;" alt="Sample image">', size: 'medium' },
+      button: { icon: '🔘', title: 'Button', content: 'Click me!', size: 'small' },
+      video: { icon: '🎥', title: 'Video', content: '<div style="width: 100%; height: 100%; background: linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.3)), url(\'https://picsum.photos/seed/video/400/300\') center/cover; border-radius: 4px; display: flex; align-items: center; justify-content: center;"><div style="width: 60px; height: 60px; background: rgba(255,255,255,0.9); border-radius: 50%; display: flex; align-items: center; justify-content: center;"><svg width="24" height="24" viewBox="0 0 24 24" fill="#4A90E2"><path d="M8 5v14l11-7z"/></svg></div></div>', size: 'large' },
+      gallery: { icon: '🖼️', title: 'Image Gallery', content: 'Loading images...', complex: true, size: 'large' },
+      dashboard: { icon: '📊', title: 'Dashboard Widget', content: 'Dashboard data', complex: true, size: 'large' },
+      livedata: { icon: '📡', title: 'Live Data', content: 'Connecting...', complex: true, size: 'tall' }
+    };
+
+    // Initialize Muuri grids
+    function initializeGrid(canvasId) {
+      const container = document.getElementById(canvasId);
+
+      grids[canvasId] = new Muuri(container, {
+        items: '.grid-item',
+        dragEnabled: true,
+        dragSort: function() {
+          return Object.values(grids);
+        },
+        dragSortPredicate: {
+          action: 'move',
+          threshold: 50
+        },
+        dragStartPredicate: {
+          distance: 10,
+          delay: 0
+        },
+        dragRelease: {
+          duration: 300,
+          easing: 'ease-out'
+        },
+        layout: {
+          fillGaps: true,
+          horizontal: false,
+          alignRight: false,
+          alignBottom: false,
+          rounding: false
+        },
+        layoutDuration: 300,
+        layoutEasing: 'ease-out'
+      });
+
+      // Handle drag end to track which grid the item ended up in
+      grids[canvasId].on('dragEnd', function(item) {
+        updateItemCount();
+      });
+    }
+
+    // Initialize all grids
+    initializeGrid('canvas1');
+    initializeGrid('canvas2');
+    initializeGrid('canvas3');
+
+    // Create grid item element
+    function createGridItem(componentType, size) {
+      const template = componentTemplates[componentType];
+      const id = 'item-' + (++itemIdCounter);
+
+      const div = document.createElement('div');
+      div.className = 'grid-item';
+      div.id = id;
+
+      const itemContent = document.createElement('div');
+      itemContent.className = `item-content size-${size || template.size}`;
+
+      if (template.complex) {
+        itemContent.innerHTML = `
+          <div class="grid-item-header">${template.icon} ${template.title}</div>
+          <div class="grid-item-content" id="${id}-content"></div>
+          <button class="grid-item-delete" onclick="deleteItem('${id}')">×</button>
+        `;
+      } else {
+        itemContent.innerHTML = `
+          <div class="grid-item-header">${template.icon} ${template.title}</div>
+          <div class="grid-item-content">${template.content}</div>
+          <button class="grid-item-delete" onclick="deleteItem('${id}')">×</button>
+        `;
+      }
+
+      div.appendChild(itemContent);
+      return div;
+    }
+
+    // Initialize complex component behavior
+    function initializeComplexComponent(itemId, type) {
+      const contentEl = document.getElementById(`${itemId}-content`);
+      if (!contentEl) return;
+
+      switch(type) {
+        case 'gallery':
+          contentEl.innerHTML = `
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; height: 100%;">
+              <img src="https://picsum.photos/seed/gallery1/150" style="width: 100%; height: auto; border-radius: 4px;" loading="lazy" alt="Gallery image 1">
+              <img src="https://picsum.photos/seed/gallery2/150" style="width: 100%; height: auto; border-radius: 4px;" loading="lazy" alt="Gallery image 2">
+              <img src="https://picsum.photos/seed/gallery3/150" style="width: 100%; height: auto; border-radius: 4px;" loading="lazy" alt="Gallery image 3">
+              <img src="https://picsum.photos/seed/gallery4/150" style="width: 100%; height: auto; border-radius: 4px;" loading="lazy" alt="Gallery image 4">
+              <img src="https://picsum.photos/seed/gallery5/150" style="width: 100%; height: auto; border-radius: 4px;" loading="lazy" alt="Gallery image 5">
+              <img src="https://picsum.photos/seed/gallery6/150" style="width: 100%; height: auto; border-radius: 4px;" loading="lazy" alt="Gallery image 6">
+            </div>
+          `;
+          break;
+
+        case 'dashboard':
+          contentEl.innerHTML = `
+            <div style="font-size: 11px; line-height: 1.4;">
+              <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                <div style="flex: 1; padding: 6px; background: #f0f0f0; border-radius: 3px; margin-right: 4px;">
+                  <div style="font-weight: 600; color: #666;">Users</div>
+                  <div style="font-size: 16px; font-weight: 700; color: #4A90E2;">2,547</div>
+                </div>
+                <div style="flex: 1; padding: 6px; background: #f0f0f0; border-radius: 3px;">
+                  <div style="font-weight: 600; color: #666;">Revenue</div>
+                  <div style="font-size: 16px; font-weight: 700; color: #28a745;">$12.4K</div>
+                </div>
+              </div>
+              <div style="background: #f8f8f8; padding: 8px; border-radius: 3px; margin-bottom: 6px;">
+                <div style="font-weight: 600; margin-bottom: 4px;">Activity Chart</div>
+                <div style="display: flex; align-items: flex-end; height: 40px; gap: 2px;">
+                  <div style="flex: 1; background: #4A90E2; height: 60%;"></div>
+                  <div style="flex: 1; background: #4A90E2; height: 80%;"></div>
+                  <div style="flex: 1; background: #4A90E2; height: 40%;"></div>
+                  <div style="flex: 1; background: #4A90E2; height: 90%;"></div>
+                  <div style="flex: 1; background: #4A90E2; height: 70%;"></div>
+                  <div style="flex: 1; background: #4A90E2; height: 85%;"></div>
+                  <div style="flex: 1; background: #4A90E2; height: 95%;"></div>
+                </div>
+              </div>
+              <div style="font-size: 10px; color: #999;">
+                <div>• 24 active sessions</div>
+                <div>• 156 page views</div>
+                <div>• 89% bounce rate</div>
+              </div>
+            </div>
+          `;
+          break;
+
+        case 'livedata':
+          let counter = 0;
+          const updateLiveData = () => {
+            counter++;
+            const temperature = (20 + Math.random() * 10).toFixed(1);
+            const cpu = (Math.random() * 100).toFixed(0);
+            const memory = (40 + Math.random() * 50).toFixed(0);
+
+            if (contentEl) {
+              contentEl.innerHTML = `
+                <div style="font-size: 11px;">
+                  <div style="margin-bottom: 8px; padding: 6px; background: #e3f2fd; border-radius: 3px;">
+                    <div style="font-weight: 600; color: #1976d2;">🌡️ Temperature</div>
+                    <div style="font-size: 20px; font-weight: 700; color: #1976d2;">${temperature}°C</div>
+                  </div>
+                  <div style="margin-bottom: 6px;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 2px;">
+                      <span style="font-weight: 600;">CPU</span>
+                      <span>${cpu}%</span>
+                    </div>
+                    <div style="background: #e0e0e0; height: 6px; border-radius: 3px; overflow: hidden;">
+                      <div style="background: #4A90E2; height: 100%; width: ${cpu}%; transition: width 0.5s;"></div>
+                    </div>
+                  </div>
+                  <div style="margin-bottom: 6px;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 2px;">
+                      <span style="font-weight: 600;">Memory</span>
+                      <span>${memory}%</span>
+                    </div>
+                    <div style="background: #e0e0e0; height: 6px; border-radius: 3px; overflow: hidden;">
+                      <div style="background: #28a745; height: 100%; width: ${memory}%; transition: width 0.5s;"></div>
+                    </div>
+                  </div>
+                  <div style="font-size: 10px; color: #999; margin-top: 8px;">
+                    Updated ${counter} times • Last: ${new Date().toLocaleTimeString()}
+                  </div>
+                </div>
+              `;
+            }
+          };
+
+          updateLiveData();
+          const intervalId = setInterval(updateLiveData, 2000);
+
+          const element = document.getElementById(itemId);
+          if (element) {
+            element.setAttribute('data-interval-id', intervalId);
+          }
+          break;
+      }
+    }
+
+    // Add item to grid
+    function addItemToGrid(canvasId, componentType, size) {
+      const template = componentTemplates[componentType];
+      const element = createGridItem(componentType, size);
+
+      const grid = grids[canvasId];
+      grid.add(element);
+
+      if (template.complex) {
+        setTimeout(() => {
+          initializeComplexComponent(element.id, componentType);
+        }, 50);
+      }
+
+      updateItemCount();
+    }
+
+    // Delete item
+    function deleteItem(id) {
+      const element = document.getElementById(id);
+      if (!element) return;
+
+      // Find which grid contains this item
+      for (const canvasId in grids) {
+        const grid = grids[canvasId];
+        const items = grid.getItems();
+        const item = items.find(i => i.getElement() === element);
+
+        if (item) {
+          // Clear any polling intervals
+          const intervalId = element.getAttribute('data-interval-id');
+          if (intervalId) {
+            clearInterval(parseInt(intervalId));
+          }
+
+          grid.remove([item], { removeElements: true });
+          updateItemCount();
+          break;
+        }
+      }
+    }
+
+    // Update item count
+    function updateItemCount() {
+      let totalItems = 0;
+      for (const canvasId in grids) {
+        totalItems += grids[canvasId].getItems().length;
+      }
+      document.getElementById('itemCount').textContent = totalItems + ' items';
+    }
+
+    // Palette drag and drop
+    document.querySelectorAll('.palette-item').forEach(paletteItem => {
+      let dragClone = null;
+
+      paletteItem.addEventListener('mousedown', function(e) {
+        const startX = e.clientX;
+        const startY = e.clientY;
+        let isDragging = false;
+
+        const handleMove = (e) => {
+          if (!isDragging) {
+            const dx = e.clientX - startX;
+            const dy = e.clientY - startY;
+            if (Math.abs(dx) > 5 || Math.abs(dy) > 5) {
+              isDragging = true;
+              dragClone = document.createElement('div');
+              dragClone.className = 'palette-item';
+              dragClone.textContent = paletteItem.textContent;
+              dragClone.style.position = 'fixed';
+              dragClone.style.pointerEvents = 'none';
+              dragClone.style.zIndex = '10000';
+              dragClone.style.opacity = '0.8';
+              document.body.appendChild(dragClone);
+            }
+          }
+
+          if (dragClone) {
+            dragClone.style.left = e.clientX + 'px';
+            dragClone.style.top = e.clientY + 'px';
+          }
+        };
+
+        const handleUp = (e) => {
+          document.removeEventListener('mousemove', handleMove);
+          document.removeEventListener('mouseup', handleUp);
+
+          if (dragClone) {
+            // Find which canvas the drop happened over
+            const canvasElements = document.querySelectorAll('.muuri-grid');
+            let targetCanvas = null;
+
+            canvasElements.forEach(canvas => {
+              const rect = canvas.getBoundingClientRect();
+              if (e.clientX >= rect.left && e.clientX <= rect.right &&
+                  e.clientY >= rect.top && e.clientY <= rect.bottom) {
+                targetCanvas = canvas.id;
+              }
+            });
+
+            if (targetCanvas) {
+              const componentType = paletteItem.getAttribute('data-component-type');
+              const size = paletteItem.getAttribute('data-size');
+              addItemToGrid(targetCanvas, componentType, size);
+            }
+
+            dragClone.remove();
+            dragClone = null;
+          }
+        };
+
+        document.addEventListener('mousemove', handleMove);
+        document.addEventListener('mouseup', handleUp);
+      });
+    });
+
+    // Background color pickers
+    document.querySelectorAll('.canvas-bg-color').forEach(colorPicker => {
+      colorPicker.addEventListener('input', function(e) {
+        const canvasId = e.target.getAttribute('data-canvas');
+        const gridBuilder = document.getElementById(canvasId).closest('.grid-builder');
+        if (gridBuilder) {
+          gridBuilder.style.backgroundColor = e.target.value;
+        }
+      });
+    });
+
+    // Clear canvas buttons
+    document.querySelectorAll('.clear-canvas-btn').forEach(btn => {
+      btn.addEventListener('click', function() {
+        const canvasId = this.getAttribute('data-canvas');
+        if (confirm(`Are you sure you want to clear all items from this canvas?`)) {
+          const grid = grids[canvasId];
+          const items = grid.getItems();
+
+          items.forEach(item => {
+            const element = item.getElement();
+            const intervalId = element.getAttribute('data-interval-id');
+            if (intervalId) {
+              clearInterval(parseInt(intervalId));
+            }
+          });
+
+          grid.remove(items, { removeElements: true });
+          updateItemCount();
+        }
+      });
+    });
+
+    // Export state
+    document.getElementById('exportState').addEventListener('click', function() {
+      const state = {
+        canvases: {},
+        timestamp: new Date().toISOString()
+      };
+
+      for (const canvasId in grids) {
+        const grid = grids[canvasId];
+        const items = grid.getItems();
+        state.canvases[canvasId] = {
+          items: items.map(item => {
+            const element = item.getElement();
+            const type = element.querySelector('.grid-item-header').textContent.split(' ')[1].toLowerCase();
+            return {
+              id: element.id,
+              type: type,
+              size: element.querySelector('.item-content').className.split(' ').find(c => c.startsWith('size-'))
+            };
+          })
+        };
+      }
+
+      console.log('Grid State:', state);
+      const totalItems = Object.values(grids).reduce((sum, grid) => sum + grid.getItems().length, 0);
+      alert('Grid state exported to console!\n\nTotal Items: ' + totalItems);
+    });
+
+    // Add section
+    document.getElementById('addSection').addEventListener('click', function() {
+      sectionCounter++;
+      const newCanvasId = 'canvas' + sectionCounter;
+      const sectionNumber = sectionCounter;
+
+      const newSection = document.createElement('div');
+      newSection.className = 'canvas-item';
+      newSection.setAttribute('data-canvas-id', newCanvasId);
+      newSection.innerHTML = `
+        <div class="canvas-item-header">
+          <h3>Section ${sectionNumber}</h3>
+          <div class="canvas-controls">
+            <label>
+              <input type="color" class="canvas-bg-color" data-canvas="${newCanvasId}" value="#ffffff">
+            </label>
+            <button class="clear-canvas-btn" data-canvas="${newCanvasId}">Clear</button>
+            <button class="delete-section-btn" data-canvas="${newCanvasId}" title="Delete Section">🗑️</button>
+          </div>
+        </div>
+        <div class="grid-builder">
+          <div class="muuri-grid" id="${newCanvasId}" data-canvas-id="${newCanvasId}"></div>
+        </div>
+      `;
+
+      document.querySelector('.canvases-container').appendChild(newSection);
+
+      initializeGrid(newCanvasId);
+
+      const colorPicker = newSection.querySelector('.canvas-bg-color');
+      colorPicker.addEventListener('input', function(e) {
+        const canvasId = e.target.getAttribute('data-canvas');
+        const gridBuilder = document.getElementById(canvasId).closest('.grid-builder');
+        if (gridBuilder) {
+          gridBuilder.style.backgroundColor = e.target.value;
+        }
+      });
+
+      const clearBtn = newSection.querySelector('.clear-canvas-btn');
+      clearBtn.addEventListener('click', function() {
+        const canvasId = this.getAttribute('data-canvas');
+        if (confirm(`Are you sure you want to clear all items from this canvas?`)) {
+          const grid = grids[canvasId];
+          const items = grid.getItems();
+
+          items.forEach(item => {
+            const element = item.getElement();
+            const intervalId = element.getAttribute('data-interval-id');
+            if (intervalId) {
+              clearInterval(parseInt(intervalId));
+            }
+          });
+
+          grid.remove(items, { removeElements: true });
+          updateItemCount();
+        }
+      });
+
+      alert(`Section ${sectionNumber} added!`);
+    });
+
+    // Delete section
+    document.querySelector('.canvases-container').addEventListener('click', function(e) {
+      if (e.target.classList.contains('delete-section-btn')) {
+        const canvasId = e.target.getAttribute('data-canvas');
+        const canvasItem = e.target.closest('.canvas-item');
+        const sectionName = canvasItem.querySelector('h3').textContent;
+
+        const totalSections = document.querySelectorAll('.canvas-item').length;
+        if (totalSections === 1) {
+          alert('Cannot delete the last section!');
+          return;
+        }
+
+        if (confirm(`Are you sure you want to delete ${sectionName}?\n\nThis will remove all items in this section.`)) {
+          const grid = grids[canvasId];
+          const items = grid.getItems();
+
+          items.forEach(item => {
+            const element = item.getElement();
+            const intervalId = element.getAttribute('data-interval-id');
+            if (intervalId) {
+              clearInterval(parseInt(intervalId));
+            }
+          });
+
+          grid.destroy(true);
+          delete grids[canvasId];
+
+          canvasItem.remove();
+          updateItemCount();
+        }
+      }
+    });
+
+    // Set initial background colors
+    window.addEventListener('load', function() {
+      const canvas1Builder = document.getElementById('canvas1').closest('.grid-builder');
+      const canvas2Builder = document.getElementById('canvas2').closest('.grid-builder');
+      const canvas3Builder = document.getElementById('canvas3').closest('.grid-builder');
+
+      if (canvas1Builder) canvas1Builder.style.backgroundColor = '#ffffff';
+      if (canvas2Builder) canvas2Builder.style.backgroundColor = '#f5f5f5';
+      if (canvas3Builder) canvas3Builder.style.backgroundColor = '#ffffff';
+
+      updateItemCount();
+    });
+  </script>
+</body>
+</html>

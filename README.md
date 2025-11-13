@@ -37,9 +37,15 @@ A minimal proof-of-concept demonstrating a drag-and-drop grid builder system wit
 - Alternative architecture with potentially better GPU acceleration
 - All features work identically to left/top version
 
-**Option 3: Local**
+**Option 3: Live Demo - Muuri Auto-Layout (Experimental)**
+- Visit [http://javadoc.lucidworks.com/grid-builder-poc/index-muuri.html](http://javadoc.lucidworks.com/grid-builder-poc/index-muuri.html)
+- Uses Muuri.js library for automatic grid layout
+- Smooth animations and auto-positioning
+- Trade-offs: No free-form positioning, no resize handles, no custom snap-to-grid, no separate desktop/mobile layouts (see tooltip on page for full list)
+
+**Option 4: Local**
 1. Clone the repository
-2. Open `index.html` (left/top) or `index-transform.html` (transform) in your web browser
+2. Open `index.html` (left/top), `index-transform.html` (transform), or `index-muuri.html` (Muuri) in your web browser
 3. That's it! No build process required.
 
 ### Usage
@@ -121,12 +127,28 @@ A minimal proof-of-concept demonstrating a drag-and-drop grid builder system wit
 - Experimental - testing alternative approach
 - All features work identically to left/top version
 
+**Muuri Auto-Layout Version (`index-muuri.html`)** 🧪
+- Uses Muuri.js library for automatic grid layout with smooth animations
+- Auto-positioning with drag-and-drop reordering
+- Simplified architecture - no manual position calculations needed
+- Excellent animation and visual feedback
+- Trade-offs compared to original versions:
+  - ❌ No free-form positioning (auto-layout only)
+  - ❌ No resize handles (fixed component sizes)
+  - ❌ No custom snap-to-grid system
+  - ❌ No separate desktop/mobile layouts
+  - ❌ No manual mobile customization
+  - ❌ No edge snapping feature
+  - ✅ Gains: Built-in animations, sorting, filtering capabilities
+- Best for: Layouts that prioritize automatic organization over precise manual control
+
 ### Technologies Used
 
 - **Vanilla JavaScript** - No frameworks, just pure JS
-- **Interact.js** - Drag, drop, and resize functionality (loaded from CDN)
+- **Interact.js** - Drag, drop, and resize functionality (loaded from CDN) - used in index.html and index-transform.html
+- **Muuri.js** - Auto-layout grid system with animations (loaded from CDN) - used in index-muuri.html
 - **CSS Grid Background** - Visual grid overlay
-- **Absolute Positioning** (standard) / **Transform Positioning** (experimental) - Container-relative positioning for grid items
+- **Absolute Positioning** (standard) / **Transform Positioning** (experimental) / **Muuri Auto-Layout** (experimental) - Different approaches to component positioning
 
 ### Key Concepts Demonstrated
 
