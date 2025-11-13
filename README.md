@@ -18,7 +18,10 @@ A minimal proof-of-concept demonstrating a drag-and-drop grid builder system wit
 ✅ **Z-Index Controls** - Bring to front or send to back buttons (per section)
 ✅ **Keyboard Nudging** - Use arrow keys to move selected items
 ✅ **Grid Toggle** - Show/hide the visual grid across all sections
-✅ **Export State** - Export current layout to console
+✅ **Desktop/Mobile Viewports** - Switch between desktop and mobile preview modes
+✅ **Auto-Stacking Mobile Layout** - Components automatically stack vertically in mobile view
+✅ **Independent Mobile Customization** - Manually adjust mobile layouts separately from desktop
+✅ **Export State** - Export current layout (both desktop and mobile) to console
 
 ## How to Use
 
@@ -79,10 +82,19 @@ A minimal proof-of-concept demonstrating a drag-and-drop grid builder system wit
 - Press `Delete` to delete selected component
 - Press `Escape` to deselect all components
 
+**Viewport Switching:**
+- Click **🖥️ Desktop** or **📱 Mobile** to switch between viewport modes
+- Desktop view shows the full-width layout as designed
+- Mobile view automatically stacks components vertically with maintained aspect ratios
+- In mobile view, drag or resize any component to customize its mobile layout independently
+- Once customized in mobile, that component retains its manual mobile layout (not auto-stacked)
+- Switch back to desktop at any time - each viewport maintains its own layout
+
 **Controls:**
+- **🖥️ Desktop / 📱 Mobile** - Switch between desktop and mobile viewport preview
 - **Show Grid** - Toggle visibility of the background grid across all sections
 - **Clear** (per section) - Remove all components from a specific section
-- **Export State** - View the current layout state for all sections in the console
+- **Export State** - View the current layout state (both desktop and mobile) for all sections in the console
 
 ## Technical Implementation
 
@@ -116,15 +128,23 @@ A minimal proof-of-concept demonstrating a drag-and-drop grid builder system wit
 5. **Per-Section State Management**
    - Each section has its own items array and z-index counter
    - State structure: `canvases: { canvas1: { items: [], zIndexCounter: 1 }, ... }`
-   - Each item stores: id, canvasId, type, x, y, width, height, zIndex
+   - Each item stores: id, canvasId, type, layouts (desktop & mobile), zIndex
 
-6. **Event Handling**
+6. **Responsive Layout System**
+   - Desktop and mobile layouts stored independently per component
+   - Desktop layout: manual positioning with full control
+   - Mobile layout: auto-stacks by default, customizable on demand
+   - Auto-stacking maintains aspect ratio and provides 20px vertical spacing
+   - Once a component is manually edited in mobile view, it's marked as "customized"
+   - Customized mobile layouts persist independently from desktop layouts
+
+7. **Event Handling**
    - Interact.js handles drag/drop/resize events
    - Custom logic converts pixel positions to grid coordinates
    - Manual grid snapping during drag/resize for real-time alignment
    - Section boundary enforcement ensures components stay fully contained
 
-7. **Z-Index Layering**
+8. **Z-Index Layering**
    - Components can overlap with proper layering control
    - Z-index managed independently per section
    - Z-index management prevents components from going behind the canvas (minimum z-index: 1)
@@ -151,10 +171,21 @@ canvases: {
   id: 'item-1',
   canvasId: 'canvas1',  // which section this item belongs to
   type: 'header',
-  x: 40,                // pixels from left of section
-  y: 40,                // pixels from top of section
-  width: 300,           // pixels wide
-  height: 100,          // pixels tall
+  layouts: {
+    desktop: {
+      x: 40,            // pixels from left of section
+      y: 40,            // pixels from top of section
+      width: 300,       // pixels wide
+      height: 100       // pixels tall
+    },
+    mobile: {
+      x: 20,            // auto-calculated or manually set
+      y: 20,            // auto-calculated or manually set
+      width: 280,       // auto-calculated or manually set
+      height: 93,       // auto-calculated or manually set
+      customized: false // true if user manually edited mobile layout
+    }
+  },
   zIndex: 1             // layering order within this section
 }
 ```
@@ -163,7 +194,6 @@ canvases: {
 
 This is a proof-of-concept, so these features are intentionally not included:
 
-- ❌ Responsive/breakpoint switching
 - ❌ Undo/redo
 - ❌ Data persistence (localStorage/backend)
 - ❌ Component configuration/properties
@@ -171,6 +201,7 @@ This is a proof-of-concept, so these features are intentionally not included:
 - ❌ Multi-select
 - ❌ Alignment guides/tools
 - ❌ Grouping/containers
+- ❌ Additional breakpoints (tablet, etc.)
 
 These would be added in a production implementation based on the full proposal.
 
@@ -183,16 +214,16 @@ These would be added in a production implementation based on the full proposal.
 
 ## Next Steps
 
-This POC demonstrates the core concepts. For a production implementation, see the full technical proposal in Confluence:
+This POC demonstrates the core concepts including responsive desktop/mobile layouts. For a production implementation, see the full technical proposal in Confluence:
 
 **Grid Builder System - Technical Proposal & Research**
 
 The proposal includes:
-- Container-relative responsive system (desktop/mobile breakpoints)
+- Extended responsive system with additional breakpoints (tablet, etc.)
 - Command pattern for undo/redo
-- Z-index layering management
 - StencilJS component architecture
-- State persistence
+- State persistence and data management
+- Component configuration and properties
 - And much more...
 
 ## Development

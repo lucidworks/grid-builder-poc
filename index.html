@@ -92,6 +92,38 @@
       margin-top: 10px;
       display: flex;
       gap: 10px;
+      align-items: center;
+    }
+
+    .viewport-toggle {
+      display: flex;
+      gap: 4px;
+      background: #f5f5f5;
+      padding: 4px;
+      border-radius: 6px;
+    }
+
+    .viewport-btn {
+      padding: 8px 16px;
+      border: none;
+      background: transparent;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 13px;
+      transition: all 0.2s;
+      color: #666;
+      font-weight: 500;
+    }
+
+    .viewport-btn:hover {
+      background: rgba(74, 144, 226, 0.1);
+      color: #4A90E2;
+    }
+
+    .viewport-btn.active {
+      background: white;
+      color: #4A90E2;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     }
 
     .canvas-header button {
@@ -123,6 +155,12 @@
       border-radius: 8px;
       box-shadow: 0 2px 8px rgba(0,0,0,0.1);
       overflow: hidden;
+      transition: max-width 0.3s ease;
+      margin: 0 auto;
+    }
+
+    .canvases-container.mobile-view {
+      max-width: 480px;
     }
 
     .canvas-item {
@@ -403,6 +441,10 @@
         <h1>Grid Builder POC</h1>
         <p>Drag components from the palette into the page sections below. Build your page layout section by section.</p>
         <div class="controls">
+          <div class="viewport-toggle">
+            <button id="desktopView" class="viewport-btn active">🖥️ Desktop</button>
+            <button id="mobileView" class="viewport-btn">📱 Mobile</button>
+          </div>
           <button id="toggleGrid" class="active">Show Grid</button>
           <button id="exportState">Export State</button>
         </div>
@@ -463,6 +505,7 @@
     let itemIdCounter = 0;
     let dragClone = null;
     let showGrid = true;
+    let currentViewport = 'desktop'; // 'desktop' or 'mobile'
 
     const gridSize = 20; // Snap grid size in pixels
     const gridContainers = document.querySelectorAll('.grid-container');
@@ -538,15 +581,73 @@
         id,
         canvasId,
         type: componentType,
-        x,
-        y,
-        width,
-        height,
+        layouts: {
+          desktop: {
+            x,
+            y,
+            width,
+            height
+          },
+          mobile: {
+            x: null, // null means auto-generate
+            y: null,
+            width: null,
+            height: null,
+            customized: false // track if user has manually edited mobile layout
+          }
+        },
         zIndex: zIndex !== null ? zIndex : canvas.zIndexCounter++
       };
 
       canvas.items.push(item);
       renderItem(item, template);
+    }
+
+    // Get current layout for item based on viewport
+    function getCurrentLayout(item) {
+      const layout = item.layouts[currentViewport];
+
+      // If mobile and not customized, calculate auto-layout
+      if (currentViewport === 'mobile' && !layout.customized) {
+        return calculateMobileAutoLayout(item);
+      }
+
+      return layout;
+    }
+
+    // Calculate auto-stacked mobile layout
+    function calculateMobileAutoLayout(item) {
+      const canvas = canvases[item.canvasId];
+      const containerWidth = document.getElementById(item.canvasId).clientWidth;
+
+      // Find vertical position by stacking items
+      let yPosition = 20;
+      canvas.items.forEach(otherItem => {
+        if (otherItem.id !== item.id) {
+          const otherIndex = canvas.items.indexOf(otherItem);
+          const currentIndex = canvas.items.indexOf(item);
+
+          if (otherIndex < currentIndex) {
+            const otherLayout = otherItem.layouts.mobile.customized
+              ? otherItem.layouts.mobile
+              : calculateMobileAutoLayout(otherItem);
+            yPosition = Math.max(yPosition, otherLayout.y + otherLayout.height + 20);
+          }
+        }
+      });
+
+      // Mobile: full width minus padding, maintain aspect ratio
+      const desktopLayout = item.layouts.desktop;
+      const mobileWidth = Math.min(containerWidth - 40, desktopLayout.width);
+      const aspectRatio = desktopLayout.height / desktopLayout.width;
+      const mobileHeight = Math.round(mobileWidth * aspectRatio);
+
+      return {
+        x: 20,
+        y: yPosition,
+        width: mobileWidth,
+        height: mobileHeight
+      };
     }
 
     // Render item
@@ -556,10 +657,12 @@
       div.className = 'grid-item';
       div.id = item.id;
       div.setAttribute('data-canvas-id', item.canvasId);
-      div.style.left = item.x + 'px';
-      div.style.top = item.y + 'px';
-      div.style.width = item.width + 'px';
-      div.style.height = item.height + 'px';
+
+      const layout = getCurrentLayout(item);
+      div.style.left = layout.x + 'px';
+      div.style.top = layout.y + 'px';
+      div.style.width = layout.width + 'px';
+      div.style.height = layout.height + 'px';
       div.style.zIndex = item.zIndex;
 
       div.innerHTML = `
@@ -686,13 +789,24 @@
                 }
               }
 
-              // Update item position
-              item.x = newX;
-              item.y = newY;
+              // Update item position in current viewport's layout
+              const layout = item.layouts[currentViewport];
+              layout.x = newX;
+              layout.y = newY;
+
+              // If in mobile view, mark as customized
+              if (currentViewport === 'mobile') {
+                item.layouts.mobile.customized = true;
+                // Set width/height if not already set
+                if (item.layouts.mobile.width === null) {
+                  item.layouts.mobile.width = item.layouts.desktop.width;
+                  item.layouts.mobile.height = item.layouts.desktop.height;
+                }
+              }
 
               // Reset transform
-              event.target.style.left = item.x + 'px';
-              event.target.style.top = item.y + 'px';
+              event.target.style.left = newX + 'px';
+              event.target.style.top = newY + 'px';
               event.target.style.transform = '';
               event.target.removeAttribute('data-x');
               event.target.removeAttribute('data-y');
@@ -772,17 +886,28 @@
               const x = parseFloat(event.target.getAttribute('data-x')) || 0;
               const y = parseFloat(event.target.getAttribute('data-y')) || 0;
 
-              // Update item size and position
-              item.width = parseFloat(event.target.style.width);
-              item.height = parseFloat(event.target.style.height);
-              item.x = parseFloat(event.target.style.left) + x;
-              item.y = parseFloat(event.target.style.top) + y;
+              const newWidth = parseFloat(event.target.style.width);
+              const newHeight = parseFloat(event.target.style.height);
+              const newX = parseFloat(event.target.style.left) + x;
+              const newY = parseFloat(event.target.style.top) + y;
+
+              // Update item size and position in current viewport's layout
+              const layout = item.layouts[currentViewport];
+              layout.width = newWidth;
+              layout.height = newHeight;
+              layout.x = newX;
+              layout.y = newY;
+
+              // If in mobile view, mark as customized
+              if (currentViewport === 'mobile') {
+                item.layouts.mobile.customized = true;
+              }
 
               // Reset transform
-              event.target.style.left = item.x + 'px';
-              event.target.style.top = item.y + 'px';
-              event.target.style.width = item.width + 'px';
-              event.target.style.height = item.height + 'px';
+              event.target.style.left = newX + 'px';
+              event.target.style.top = newY + 'px';
+              event.target.style.width = newWidth + 'px';
+              event.target.style.height = newHeight + 'px';
               event.target.style.transform = '';
               event.target.removeAttribute('data-x');
               event.target.removeAttribute('data-y');
@@ -874,8 +999,20 @@
       const canvas = canvases[canvasId];
       const item = canvas.items.find(i => i.id === id);
       if (item) {
-        item.x += dx;
-        item.y += dy;
+        const layout = item.layouts[currentViewport];
+
+        // If mobile and not customized, need to customize it first
+        if (currentViewport === 'mobile' && !layout.customized) {
+          const autoLayout = calculateMobileAutoLayout(item);
+          layout.x = autoLayout.x;
+          layout.y = autoLayout.y;
+          layout.width = autoLayout.width;
+          layout.height = autoLayout.height;
+          layout.customized = true;
+        }
+
+        layout.x += dx;
+        layout.y += dy;
 
         // Get container bounds to ensure item stays fully within
         const container = document.getElementById(canvasId);
@@ -883,13 +1020,13 @@
         const containerHeight = container.clientHeight;
 
         // Keep within bounds - ensure item stays fully visible
-        item.x = Math.max(0, Math.min(item.x, containerWidth - item.width));
-        item.y = Math.max(0, Math.min(item.y, containerHeight - item.height));
+        layout.x = Math.max(0, Math.min(layout.x, containerWidth - layout.width));
+        layout.y = Math.max(0, Math.min(layout.y, containerHeight - layout.height));
 
         const element = document.getElementById(id);
         if (element) {
-          element.style.left = item.x + 'px';
-          element.style.top = item.y + 'px';
+          element.style.left = layout.x + 'px';
+          element.style.top = layout.y + 'px';
         }
       }
     }
@@ -913,6 +1050,53 @@
 
       return { x, y };
     }
+
+    // Switch viewport
+    function switchViewport(viewport) {
+      currentViewport = viewport;
+
+      // Update button states
+      document.getElementById('desktopView').classList.toggle('active', viewport === 'desktop');
+      document.getElementById('mobileView').classList.toggle('active', viewport === 'mobile');
+
+      // Update container class
+      const container = document.querySelector('.canvases-container');
+      container.classList.toggle('mobile-view', viewport === 'mobile');
+
+      // Re-render all items with current viewport layout
+      Object.keys(canvases).forEach(canvasId => {
+        const canvas = canvases[canvasId];
+        const gridContainer = document.getElementById(canvasId);
+
+        // Clear and re-render all items
+        canvas.items.forEach(item => {
+          const element = document.getElementById(item.id);
+          if (element) {
+            const layout = getCurrentLayout(item);
+            element.style.left = layout.x + 'px';
+            element.style.top = layout.y + 'px';
+            element.style.width = layout.width + 'px';
+            element.style.height = layout.height + 'px';
+          }
+        });
+      });
+
+      // Deselect items when switching
+      selectedItemId = null;
+      selectedCanvasId = null;
+      document.querySelectorAll('.grid-item').forEach(el => {
+        el.classList.remove('selected');
+      });
+    }
+
+    // Viewport toggle handlers
+    document.getElementById('desktopView').addEventListener('click', function() {
+      switchViewport('desktop');
+    });
+
+    document.getElementById('mobileView').addEventListener('click', function() {
+      switchViewport('mobile');
+    });
 
     // Toggle grid visibility
     document.getElementById('toggleGrid').addEventListener('click', function() {
@@ -966,17 +1150,18 @@
       const state = {
         canvases: Object.keys(canvases).reduce((acc, canvasId) => {
           acc[canvasId] = {
-            items: canvases[canvasId].items.map(({ id, type, x, y, width, height, zIndex }) =>
-              ({ id, type, x, y, width, height, zIndex }))
+            items: canvases[canvasId].items.map(({ id, canvasId, type, layouts, zIndex }) =>
+              ({ id, canvasId, type, layouts, zIndex }))
           };
           return acc;
         }, {}),
+        currentViewport: currentViewport,
         timestamp: new Date().toISOString()
       };
 
       console.log('Grid State:', state);
       const totalItems = Object.values(canvases).reduce((sum, canvas) => sum + canvas.items.length, 0);
-      alert('Grid state exported to console!\n\nTotal Items: ' + totalItems);
+      alert('Grid state exported to console!\n\nTotal Items: ' + totalItems + '\nViewport: ' + currentViewport);
     });
 
     // Deselect on background click
