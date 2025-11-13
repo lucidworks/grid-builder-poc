@@ -776,6 +776,11 @@
       const template = componentTemplates[componentType];
       const element = createGridItem(componentType, size);
 
+      // Append element to the grid container first
+      const container = document.getElementById(canvasId);
+      container.appendChild(element);
+
+      // Then add it to the Muuri grid
       const grid = grids[canvasId];
       grid.add(element);
 
