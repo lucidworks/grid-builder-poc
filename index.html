@@ -601,6 +601,13 @@
 
       canvas.items.push(item);
       renderItem(item, template);
+
+      // Update canvas height if in mobile view
+      if (currentViewport === 'mobile') {
+        const gridContainer = document.getElementById(canvasId);
+        const requiredHeight = calculateCanvasHeight(canvasId);
+        gridContainer.style.minHeight = requiredHeight + 'px';
+      }
     }
 
     // Get current layout for item based on viewport
@@ -731,6 +738,7 @@
               const centerY = rect.top + rect.height / 2;
 
               // Find which canvas the center of the item is over
+              const oldCanvasId = item.canvasId;
               let targetCanvasId = item.canvasId;
               gridContainers.forEach(container => {
                 const containerRect = container.getBoundingClientRect();
@@ -814,6 +822,20 @@
               // Update selected canvas if this item is selected
               if (selectedItemId === item.id) {
                 selectedCanvasId = targetCanvasId;
+              }
+
+              // Update canvas heights if in mobile view
+              if (currentViewport === 'mobile') {
+                // Update target canvas height (may be same as old or different)
+                const requiredHeight = calculateCanvasHeight(targetCanvasId);
+                targetContainer.style.minHeight = requiredHeight + 'px';
+
+                // If canvas changed, also update old canvas height
+                if (targetCanvasId !== oldCanvasId) {
+                  const oldGridContainer = document.getElementById(oldCanvasId);
+                  const oldRequiredHeight = calculateCanvasHeight(oldCanvasId);
+                  oldGridContainer.style.minHeight = oldRequiredHeight + 'px';
+                }
               }
             }
           }
@@ -901,6 +923,11 @@
               // If in mobile view, mark as customized
               if (currentViewport === 'mobile') {
                 item.layouts.mobile.customized = true;
+
+                // Update canvas height to fit resized item
+                const gridContainer = document.getElementById(item.canvasId);
+                const requiredHeight = calculateCanvasHeight(item.canvasId);
+                gridContainer.style.minHeight = requiredHeight + 'px';
               }
 
               // Reset transform
@@ -942,6 +969,13 @@
         if (selectedItemId === id) {
           selectedItemId = null;
           selectedCanvasId = null;
+        }
+
+        // Update canvas height if in mobile view
+        if (currentViewport === 'mobile') {
+          const gridContainer = document.getElementById(canvasId);
+          const requiredHeight = calculateCanvasHeight(canvasId);
+          gridContainer.style.minHeight = requiredHeight + 'px';
         }
       }
     }
@@ -1028,6 +1062,13 @@
           element.style.left = layout.x + 'px';
           element.style.top = layout.y + 'px';
         }
+
+        // Update canvas height if in mobile view
+        if (currentViewport === 'mobile') {
+          const gridContainer = document.getElementById(canvasId);
+          const requiredHeight = calculateCanvasHeight(canvasId);
+          gridContainer.style.minHeight = requiredHeight + 'px';
+        }
       }
     }
 
@@ -1049,6 +1090,21 @@
       y = Math.max(0, y);
 
       return { x, y };
+    }
+
+    // Calculate required height for a canvas in current viewport
+    function calculateCanvasHeight(canvasId) {
+      const canvas = canvases[canvasId];
+      let maxBottom = 400; // minimum height
+
+      canvas.items.forEach(item => {
+        const layout = getCurrentLayout(item);
+        const bottom = layout.y + layout.height;
+        maxBottom = Math.max(maxBottom, bottom);
+      });
+
+      // Add some padding at the bottom
+      return maxBottom + 40;
     }
 
     // Switch viewport
@@ -1079,6 +1135,10 @@
             element.style.height = layout.height + 'px';
           }
         });
+
+        // Update canvas height to fit all items
+        const requiredHeight = calculateCanvasHeight(canvasId);
+        gridContainer.style.minHeight = requiredHeight + 'px';
       });
 
       // Deselect items when switching
@@ -1141,6 +1201,9 @@
             selectedItemId = null;
             selectedCanvasId = null;
           }
+
+          // Reset canvas height to minimum
+          gridContainer.style.minHeight = '400px';
         }
       });
     });
