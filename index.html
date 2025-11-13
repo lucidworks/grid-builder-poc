@@ -509,23 +509,45 @@
 
     const gridContainers = document.querySelectorAll('.grid-container');
 
-    // Calculate grid size as 2% of canvas width (dynamic)
-    // Don't round - keep precision to match CSS background grid exactly
-    function getGridSize(canvasId) {
+    // Grid configuration matches CSS background-size: 2% 20px
+    const GRID_SIZE_VERTICAL = 20; // Fixed 20px vertical grid
+    const GRID_SIZE_HORIZONTAL_PERCENT = 0.02; // 2% horizontal grid
+
+    // Calculate horizontal grid size (responsive, based on container width)
+    function getGridSizeHorizontal(canvasId) {
       const container = document.getElementById(canvasId);
-      return container.clientWidth * 0.02;
+      return container.clientWidth * GRID_SIZE_HORIZONTAL_PERCENT;
     }
 
-    // Convert grid units to pixels
-    function gridToPixels(gridUnits, canvasId) {
-      const gridSize = getGridSize(canvasId);
-      return Math.round(gridUnits * gridSize);
+    // Calculate vertical grid size (fixed 20px)
+    function getGridSizeVertical() {
+      return GRID_SIZE_VERTICAL;
     }
 
-    // Convert pixels to grid units
-    function pixelsToGrid(pixels, canvasId) {
-      const gridSize = getGridSize(canvasId);
-      return Math.round(pixels / gridSize);
+    // Convert grid units to pixels for horizontal values (x, width)
+    // Uses percentage calculation to match CSS background grid
+    function gridToPixelsX(gridUnits, canvasId) {
+      const container = document.getElementById(canvasId);
+      const percentage = gridUnits * GRID_SIZE_HORIZONTAL_PERCENT;
+      return Math.round(container.clientWidth * percentage);
+    }
+
+    // Convert grid units to pixels for vertical values (y, height)
+    // Uses fixed 20px grid size
+    function gridToPixelsY(gridUnits) {
+      return gridUnits * GRID_SIZE_VERTICAL;
+    }
+
+    // Convert pixels to grid units for horizontal values (x, width)
+    function pixelsToGridX(pixels, canvasId) {
+      const container = document.getElementById(canvasId);
+      const percentage = pixels / container.clientWidth;
+      return Math.round(percentage / GRID_SIZE_HORIZONTAL_PERCENT);
+    }
+
+    // Convert pixels to grid units for vertical values (y, height)
+    function pixelsToGridY(pixels) {
+      return Math.round(pixels / GRID_SIZE_VERTICAL);
     }
 
     // Component templates
@@ -602,10 +624,10 @@
         type: componentType,
         layouts: {
           desktop: {
-            x: pixelsToGrid(x, canvasId),        // stored in grid units
-            y: pixelsToGrid(y, canvasId),        // stored in grid units
-            width: pixelsToGrid(width, canvasId),   // stored in grid units
-            height: pixelsToGrid(height, canvasId)  // stored in grid units
+            x: pixelsToGridX(x, canvasId),        // stored in grid units
+            y: pixelsToGridY(y),                   // stored in grid units
+            width: pixelsToGridX(width, canvasId), // stored in grid units
+            height: pixelsToGridY(height)          // stored in grid units
           },
           mobile: {
             x: null, // null means auto-generate
@@ -640,8 +662,9 @@
     function calculateAllMobileAutoLayouts(canvasId) {
       const canvas = canvases[canvasId];
       const containerWidth = document.getElementById(canvasId).clientWidth;
-      const gridSize = getGridSize(canvasId);
-      let yPosition = gridSize; // Start with 1 grid unit padding
+      const gridSizeX = getGridSizeHorizontal(canvasId);
+      const gridSizeY = getGridSizeVertical();
+      let yPosition = gridSizeY; // Start with 1 grid unit padding
 
       canvas.items.forEach(item => {
         const cacheKey = `${canvasId}-${item.id}`;
@@ -649,28 +672,28 @@
         if (item.layouts.mobile.customized) {
           // Use stored customized layout
           const layout = {
-            x: gridToPixels(item.layouts.mobile.x, item.canvasId),
-            y: gridToPixels(item.layouts.mobile.y, item.canvasId),
-            width: gridToPixels(item.layouts.mobile.width, item.canvasId),
-            height: gridToPixels(item.layouts.mobile.height, item.canvasId)
+            x: gridToPixelsX(item.layouts.mobile.x, item.canvasId),
+            y: gridToPixelsY(item.layouts.mobile.y),
+            width: gridToPixelsX(item.layouts.mobile.width, item.canvasId),
+            height: gridToPixelsY(item.layouts.mobile.height)
           };
           mobileAutoLayoutCache[cacheKey] = layout;
 
           // Update yPosition for next item (customized items can affect stacking)
           const bottom = layout.y + layout.height;
-          yPosition = Math.max(yPosition, bottom + gridSize);
+          yPosition = Math.max(yPosition, bottom + gridSizeY);
         } else {
           // Calculate auto-layout for this item
           const desktopLayout = item.layouts.desktop;
-          const desktopWidthPx = gridToPixels(desktopLayout.width, item.canvasId);
-          const desktopHeightPx = gridToPixels(desktopLayout.height, item.canvasId);
+          const desktopWidthPx = gridToPixelsX(desktopLayout.width, item.canvasId);
+          const desktopHeightPx = gridToPixelsY(desktopLayout.height);
 
-          const mobileWidth = Math.min(containerWidth - (2 * gridSize), desktopWidthPx);
+          const mobileWidth = Math.min(containerWidth - (2 * gridSizeX), desktopWidthPx);
           const aspectRatio = desktopHeightPx / desktopWidthPx;
           const mobileHeight = Math.round(mobileWidth * aspectRatio);
 
           const layout = {
-            x: gridSize,
+            x: gridSizeX,
             y: yPosition,
             width: mobileWidth,
             height: mobileHeight
@@ -679,7 +702,7 @@
           mobileAutoLayoutCache[cacheKey] = layout;
 
           // Move yPosition down for next item
-          yPosition = layout.y + layout.height + gridSize;
+          yPosition = layout.y + layout.height + gridSizeY;
         }
       });
     }
@@ -712,10 +735,10 @@
 
       // Convert grid units to pixels
       return {
-        x: gridToPixels(layout.x, item.canvasId),
-        y: gridToPixels(layout.y, item.canvasId),
-        width: gridToPixels(layout.width, item.canvasId),
-        height: gridToPixels(layout.height, item.canvasId)
+        x: gridToPixelsX(layout.x, item.canvasId),
+        y: gridToPixelsY(layout.y),
+        width: gridToPixelsX(layout.width, item.canvasId),
+        height: gridToPixelsY(layout.height)
       };
     }
 
@@ -831,14 +854,15 @@
               // Calculate new position relative to target canvas
               const targetContainer = document.getElementById(targetCanvasId);
               const targetRect = targetContainer.getBoundingClientRect();
-              const gridSize = getGridSize(targetCanvasId);
+              const gridSizeX = getGridSizeHorizontal(targetCanvasId);
+              const gridSizeY = getGridSizeVertical();
 
               let newX = rect.left - targetRect.left;
               let newY = rect.top - targetRect.top;
 
-              // Snap to grid
-              newX = Math.round(newX / gridSize) * gridSize;
-              newY = Math.round(newY / gridSize) * gridSize;
+              // Snap to grid (separate X and Y)
+              newX = Math.round(newX / gridSizeX) * gridSizeX;
+              newY = Math.round(newY / gridSizeY) * gridSizeY;
 
               // Ensure item stays fully within target canvas
               const itemWidth = parseFloat(event.target.style.width) || 0;
@@ -880,8 +904,8 @@
 
               // Update item position in current viewport's layout (convert to grid units)
               const layout = item.layouts[currentViewport];
-              layout.x = pixelsToGrid(newX, targetCanvasId);
-              layout.y = pixelsToGrid(newY, targetCanvasId);
+              layout.x = pixelsToGridX(newX, targetCanvasId);
+              layout.y = pixelsToGridY(newY);
 
               // If in mobile view, mark as customized
               if (currentViewport === 'mobile') {
@@ -967,7 +991,8 @@
                 const container = document.getElementById(item.canvasId);
                 const containerWidth = container.clientWidth;
                 const containerHeight = container.clientHeight;
-                const gridSize = getGridSize(item.canvasId);
+                const gridSizeX = getGridSizeHorizontal(item.canvasId);
+                const gridSizeY = getGridSizeVertical();
 
                 // Calculate new size and position
                 let newWidth = event.rect.width;
@@ -975,13 +1000,13 @@
                 let newX = currentX + deltaX + event.deltaRect.left;
                 let newY = currentY + deltaY + event.deltaRect.top;
 
-                // Snap size to grid
-                newWidth = Math.round(newWidth / gridSize) * gridSize;
-                newHeight = Math.round(newHeight / gridSize) * gridSize;
+                // Snap size to grid (separate X and Y)
+                newWidth = Math.round(newWidth / gridSizeX) * gridSizeX;
+                newHeight = Math.round(newHeight / gridSizeY) * gridSizeY;
 
-                // Snap position to grid
-                newX = Math.round(newX / gridSize) * gridSize;
-                newY = Math.round(newY / gridSize) * gridSize;
+                // Snap position to grid (separate X and Y)
+                newX = Math.round(newX / gridSizeX) * gridSizeX;
+                newY = Math.round(newY / gridSizeY) * gridSizeY;
 
                 // Ensure item stays fully within container
                 newX = Math.max(0, Math.min(newX, containerWidth - newWidth));
@@ -1020,10 +1045,10 @@
 
               // Update item size and position in current viewport's layout (convert to grid units)
               const layout = item.layouts[currentViewport];
-              layout.width = pixelsToGrid(newWidth, item.canvasId);
-              layout.height = pixelsToGrid(newHeight, item.canvasId);
-              layout.x = pixelsToGrid(newX, item.canvasId);
-              layout.y = pixelsToGrid(newY, item.canvasId);
+              layout.width = pixelsToGridX(newWidth, item.canvasId);
+              layout.height = pixelsToGridY(newHeight);
+              layout.x = pixelsToGridX(newX, item.canvasId);
+              layout.y = pixelsToGridY(newY);
 
               // If in mobile view, mark as customized
               if (currentViewport === 'mobile') {
@@ -1157,10 +1182,10 @@
           const autoLayout = mobileAutoLayoutCache[cacheKey];
 
           // Convert pixels to grid units and store
-          layout.x = pixelsToGrid(autoLayout.x, canvasId);
-          layout.y = pixelsToGrid(autoLayout.y, canvasId);
-          layout.width = pixelsToGrid(autoLayout.width, canvasId);
-          layout.height = pixelsToGrid(autoLayout.height, canvasId);
+          layout.x = pixelsToGridX(autoLayout.x, canvasId);
+          layout.y = pixelsToGridY(autoLayout.y);
+          layout.width = pixelsToGridX(autoLayout.width, canvasId);
+          layout.height = pixelsToGridY(autoLayout.height);
           layout.customized = true;
 
           // Clear cache since we just customized
@@ -1173,9 +1198,8 @@
 
         // Get container bounds to ensure item stays fully within (in grid units)
         const container = document.getElementById(canvasId);
-        const gridSize = getGridSize(canvasId);
-        const containerWidthInGrids = pixelsToGrid(container.clientWidth, canvasId);
-        const containerHeightInGrids = pixelsToGrid(container.clientHeight, canvasId);
+        const containerWidthInGrids = pixelsToGridX(container.clientWidth, canvasId);
+        const containerHeightInGrids = pixelsToGridY(container.clientHeight);
 
         // Keep within bounds - ensure item stays fully visible
         layout.x = Math.max(0, Math.min(layout.x, containerWidthInGrids - layout.width));
@@ -1184,8 +1208,8 @@
         // Update DOM (convert to pixels)
         const element = document.getElementById(id);
         if (element) {
-          element.style.left = gridToPixels(layout.x, canvasId) + 'px';
-          element.style.top = gridToPixels(layout.y, canvasId) + 'px';
+          element.style.left = gridToPixelsX(layout.x, canvasId) + 'px';
+          element.style.top = gridToPixelsY(layout.y) + 'px';
         }
 
         // Update canvas height if in mobile view
@@ -1201,15 +1225,16 @@
     function getGridPosition(clientX, clientY, canvasId) {
       const gridContainer = document.getElementById(canvasId);
       const rect = gridContainer.getBoundingClientRect();
-      const gridSize = getGridSize(canvasId);
+      const gridSizeX = getGridSizeHorizontal(canvasId);
+      const gridSizeY = getGridSizeVertical();
 
       // Get cursor position relative to container
       let x = clientX - rect.left;
       let y = clientY - rect.top;
 
-      // Snap to grid
-      x = Math.round(x / gridSize) * gridSize;
-      y = Math.round(y / gridSize) * gridSize;
+      // Snap to grid (separate X and Y)
+      x = Math.round(x / gridSizeX) * gridSizeX;
+      y = Math.round(y / gridSizeY) * gridSizeY;
 
       // Keep within bounds
       x = Math.max(0, x);
