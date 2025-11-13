@@ -27,12 +27,19 @@ A minimal proof-of-concept demonstrating a drag-and-drop grid builder system wit
 
 ### Running the POC
 
-**Option 1: Live Demo**
+**Option 1: Live Demo - Standard Version**
 - Visit [http://javadoc.lucidworks.com/grid-builder-poc/](http://javadoc.lucidworks.com/grid-builder-poc/)
+- Uses `left/top` CSS properties for positioning
 
-**Option 2: Local**
+**Option 2: Live Demo - Transform-Based (Experimental)**
+- Visit [http://javadoc.lucidworks.com/grid-builder-poc/index-transform.html](http://javadoc.lucidworks.com/grid-builder-poc/index-transform.html)
+- Uses CSS `transform: translate()` for all positioning
+- Alternative architecture with potentially better GPU acceleration
+- All features work identically to standard version
+
+**Option 3: Local**
 1. Clone the repository
-2. Open `index.html` in your web browser
+2. Open `index.html` (standard) or `index-transform.html` (experimental) in your web browser
 3. That's it! No build process required.
 
 ### Usage
@@ -98,12 +105,28 @@ A minimal proof-of-concept demonstrating a drag-and-drop grid builder system wit
 
 ## Technical Implementation
 
+### Versions
+
+**Standard Version (`index.html`)**
+- Uses `left` and `top` CSS properties for positioning
+- Two-phase positioning: transform during drag/resize → commit to left/top on end
+- Well-tested, production-ready approach
+- Default version
+
+**Transform-Based Version (`index-transform.html`)** 🧪
+- Uses CSS `transform: translate(x, y)` for all positioning
+- Single-phase positioning: always uses transform
+- Potentially better GPU acceleration
+- Simpler code architecture (no two-phase commit)
+- Experimental - testing alternative approach
+- All features work identically to standard version
+
 ### Technologies Used
 
 - **Vanilla JavaScript** - No frameworks, just pure JS
 - **Interact.js** - Drag, drop, and resize functionality (loaded from CDN)
 - **CSS Grid Background** - Visual grid overlay
-- **Absolute Positioning** - Container-relative positioning for grid items
+- **Absolute Positioning** (standard) / **Transform Positioning** (experimental) - Container-relative positioning for grid items
 
 ### Key Concepts Demonstrated
 
