@@ -509,10 +509,63 @@
 
     const gridContainers = document.querySelectorAll('.grid-container');
 
+    // Store initial canvas widths for scaling calculations
+    const canvasBaseWidths = {};
+
     // Calculate grid size as 2% of canvas width (dynamic)
     function getGridSize(canvasId) {
       const container = document.getElementById(canvasId);
       return Math.round(container.clientWidth * 0.02);
+    }
+
+    // Initialize base widths
+    function initializeBaseWidths() {
+      gridContainers.forEach(container => {
+        const canvasId = container.getAttribute('data-canvas-id');
+        canvasBaseWidths[canvasId] = container.clientWidth;
+      });
+    }
+
+    // Scale components when canvas width changes
+    function scaleComponentsToCanvasWidth() {
+      Object.keys(canvases).forEach(canvasId => {
+        const container = document.getElementById(canvasId);
+        const currentWidth = container.clientWidth;
+        const baseWidth = canvasBaseWidths[canvasId];
+
+        if (!baseWidth || baseWidth === currentWidth) return;
+
+        const scaleFactor = currentWidth / baseWidth;
+        const canvas = canvases[canvasId];
+
+        canvas.items.forEach(item => {
+          const layout = item.layouts[currentViewport];
+
+          // Scale position and size
+          layout.x = Math.round(layout.x * scaleFactor);
+          layout.y = Math.round(layout.y * scaleFactor);
+          layout.width = Math.round(layout.width * scaleFactor);
+          layout.height = Math.round(layout.height * scaleFactor);
+
+          // Update DOM element
+          const element = document.getElementById(item.id);
+          if (element) {
+            element.style.left = layout.x + 'px';
+            element.style.top = layout.y + 'px';
+            element.style.width = layout.width + 'px';
+            element.style.height = layout.height + 'px';
+          }
+        });
+
+        // Update base width
+        canvasBaseWidths[canvasId] = currentWidth;
+
+        // Update canvas height if in mobile view
+        if (currentViewport === 'mobile') {
+          const requiredHeight = calculateCanvasHeight(canvasId);
+          container.style.minHeight = requiredHeight + 'px';
+        }
+      });
     }
 
     // Component templates
@@ -1156,6 +1209,11 @@
       document.querySelectorAll('.grid-item').forEach(el => {
         el.classList.remove('selected');
       });
+
+      // Update base widths after viewport change (canvas width may have changed)
+      setTimeout(() => {
+        initializeBaseWidths();
+      }, 400); // Wait for CSS transition to complete
     }
 
     // Viewport toggle handlers
@@ -1289,6 +1347,15 @@
       }
     });
 
+    // Window resize handler with debounce
+    let resizeTimeout;
+    window.addEventListener('resize', function() {
+      clearTimeout(resizeTimeout);
+      resizeTimeout = setTimeout(() => {
+        scaleComponentsToCanvasWidth();
+      }, 100);
+    });
+
     // Add some demo items on load
     window.addEventListener('load', function() {
       // Set initial background colors
@@ -1305,6 +1372,9 @@
       addItemToGrid('canvas2', 'header', 40, 40, 350, 80);
       addItemToGrid('canvas2', 'text', 40, 140, 350, 150);
       addItemToGrid('canvas2', 'video', 420, 40, 340, 250);
+
+      // Initialize base widths after items are loaded
+      initializeBaseWidths();
     });
   </script>
 </body>
