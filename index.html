@@ -510,15 +510,16 @@
     const gridContainers = document.querySelectorAll('.grid-container');
 
     // Calculate grid size as 2% of canvas width (dynamic)
+    // Don't round - keep precision to match CSS background grid exactly
     function getGridSize(canvasId) {
       const container = document.getElementById(canvasId);
-      return Math.round(container.clientWidth * 0.02);
+      return container.clientWidth * 0.02;
     }
 
     // Convert grid units to pixels
     function gridToPixels(gridUnits, canvasId) {
       const gridSize = getGridSize(canvasId);
-      return gridUnits * gridSize;
+      return Math.round(gridUnits * gridSize);
     }
 
     // Convert pixels to grid units
