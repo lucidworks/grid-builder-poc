@@ -27,19 +27,19 @@ A minimal proof-of-concept demonstrating a drag-and-drop grid builder system wit
 
 ### Running the POC
 
-**Option 1: Live Demo - Standard Version**
+**Option 1: Live Demo - Left/Top Version**
 - Visit [http://javadoc.lucidworks.com/grid-builder-poc/](http://javadoc.lucidworks.com/grid-builder-poc/)
-- Uses `left/top` CSS properties for positioning
+- Uses CSS `left/top` properties for positioning
 
 **Option 2: Live Demo - Transform-Based (Experimental)**
 - Visit [http://javadoc.lucidworks.com/grid-builder-poc/index-transform.html](http://javadoc.lucidworks.com/grid-builder-poc/index-transform.html)
 - Uses CSS `transform: translate()` for all positioning
 - Alternative architecture with potentially better GPU acceleration
-- All features work identically to standard version
+- All features work identically to left/top version
 
 **Option 3: Local**
 1. Clone the repository
-2. Open `index.html` (standard) or `index-transform.html` (experimental) in your web browser
+2. Open `index.html` (left/top) or `index-transform.html` (transform) in your web browser
 3. That's it! No build process required.
 
 ### Usage
@@ -107,7 +107,7 @@ A minimal proof-of-concept demonstrating a drag-and-drop grid builder system wit
 
 ### Versions
 
-**Standard Version (`index.html`)**
+**Left/Top Version (`index.html`)**
 - Uses `left` and `top` CSS properties for positioning
 - Two-phase positioning: transform during drag/resize → commit to left/top on end
 - Well-tested, production-ready approach
@@ -119,7 +119,7 @@ A minimal proof-of-concept demonstrating a drag-and-drop grid builder system wit
 - Potentially better GPU acceleration
 - Simpler code architecture (no two-phase commit)
 - Experimental - testing alternative approach
-- All features work identically to standard version
+- All features work identically to left/top version
 
 ### Technologies Used
 
