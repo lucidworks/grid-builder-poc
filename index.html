@@ -611,9 +611,71 @@
         });
     });
 
+    // Batch render items using DocumentFragment for better performance
+    // Use this after adding multiple items with skipRender = true
+    function batchRenderItems(canvasId) {
+      const canvas = canvases[canvasId];
+      const gridContainer = document.getElementById(canvasId);
+      const fragment = document.createDocumentFragment();
+
+      // Create all DOM elements in the fragment (not yet in DOM)
+      canvas.items.forEach(item => {
+        const template = componentTemplates[item.type];
+        const div = document.createElement('div');
+        div.className = 'grid-item';
+        div.id = item.id;
+        div.setAttribute('data-canvas-id', item.canvasId);
+
+        const layout = getCurrentLayout(item);
+        div.style.left = layout.x + 'px';
+        div.style.top = layout.y + 'px';
+        div.style.width = layout.width + 'px';
+        div.style.height = layout.height + 'px';
+        div.style.zIndex = item.zIndex;
+
+        div.innerHTML = `
+          <div class="grid-item-header">${template.icon} ${template.title}</div>
+          <div class="grid-item-content">${template.content}</div>
+          <div class="grid-item-controls">
+            <button class="grid-item-control-btn" onclick="bringToFront('${item.id}', '${item.canvasId}')" title="Bring to Front">⬆️</button>
+            <button class="grid-item-control-btn" onclick="sendToBack('${item.id}', '${item.canvasId}')" title="Send to Back">⬇️</button>
+            <button class="grid-item-delete" onclick="deleteItem('${item.id}', '${item.canvasId}')">×</button>
+          </div>
+          <div class="resize-handle nw"></div>
+          <div class="resize-handle ne"></div>
+          <div class="resize-handle sw"></div>
+          <div class="resize-handle se"></div>
+          <div class="resize-handle n"></div>
+          <div class="resize-handle s"></div>
+          <div class="resize-handle e"></div>
+          <div class="resize-handle w"></div>
+        `;
+
+        // Click to select
+        div.addEventListener('click', (e) => {
+          if (!e.target.classList.contains('grid-item-delete') &&
+              !e.target.classList.contains('grid-item-control-btn')) {
+            selectItem(item.id, item.canvasId);
+          }
+        });
+
+        fragment.appendChild(div);
+      });
+
+      // Single DOM append operation
+      gridContainer.appendChild(fragment);
+
+      // Initialize interact.js on all elements (must be done after elements are in DOM)
+      canvas.items.forEach(item => {
+        const element = document.getElementById(item.id);
+        makeItemDraggable(element, item);
+        makeItemResizable(element, item);
+      });
+    }
+
     // Add item to grid
     // NOTE: x, y, width, height are in PIXELS for the initial call, but stored as GRID UNITS
-    function addItemToGrid(canvasId, componentType, x, y, width = 200, height = 150, zIndex = null) {
+    function addItemToGrid(canvasId, componentType, x, y, width = 200, height = 150, zIndex = null, skipRender = false) {
       const template = componentTemplates[componentType];
       const id = 'item-' + (++itemIdCounter);
       const canvas = canvases[canvasId];
@@ -641,7 +703,10 @@
       };
 
       canvas.items.push(item);
-      renderItem(item, template);
+
+      if (!skipRender) {
+        renderItem(item, template);
+      }
 
       // Clear mobile layout cache since items changed
       clearMobileLayoutCache(canvasId);
@@ -652,6 +717,8 @@
         const requiredHeight = calculateCanvasHeight(canvasId);
         gridContainer.style.minHeight = requiredHeight + 'px';
       }
+
+      return item;
     }
 
     // Cache for mobile auto-layouts (cleared when items change)
@@ -1468,7 +1535,7 @@
             gridContainer.style.minHeight = requiredHeight + 'px';
           }
         });
-      }, 100);
+      }, 150);
     });
 
     // Add some demo items on load
@@ -1477,16 +1544,22 @@
       document.getElementById('canvas1').style.backgroundColor = '#ffffff';
       document.getElementById('canvas2').style.backgroundColor = '#f5f5f5';
 
-      // Section 1 - Hero section demo items
-      addItemToGrid('canvas1', 'header', 40, 40, 400, 120);
-      addItemToGrid('canvas1', 'text', 40, 180, 400, 100);
-      addItemToGrid('canvas1', 'button', 40, 300, 180, 80);
-      addItemToGrid('canvas1', 'image', 460, 40, 300, 240);
+      // Section 1 - Hero section demo items (batch add without rendering)
+      addItemToGrid('canvas1', 'header', 40, 40, 400, 120, null, true);
+      addItemToGrid('canvas1', 'text', 40, 180, 400, 100, null, true);
+      addItemToGrid('canvas1', 'button', 40, 300, 180, 80, null, true);
+      addItemToGrid('canvas1', 'image', 460, 40, 300, 240, null, true);
 
-      // Section 2 - Content section demo items
-      addItemToGrid('canvas2', 'header', 40, 40, 350, 80);
-      addItemToGrid('canvas2', 'text', 40, 140, 350, 150);
-      addItemToGrid('canvas2', 'video', 420, 40, 340, 250);
+      // Batch render all canvas1 items with DocumentFragment
+      batchRenderItems('canvas1');
+
+      // Section 2 - Content section demo items (batch add without rendering)
+      addItemToGrid('canvas2', 'header', 40, 40, 350, 80, null, true);
+      addItemToGrid('canvas2', 'text', 40, 140, 350, 150, null, true);
+      addItemToGrid('canvas2', 'video', 420, 40, 340, 250, null, true);
+
+      // Batch render all canvas2 items with DocumentFragment
+      batchRenderItems('canvas2');
     });
   </script>
 </body>
