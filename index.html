@@ -509,63 +509,22 @@
 
     const gridContainers = document.querySelectorAll('.grid-container');
 
-    // Store initial canvas widths for scaling calculations
-    const canvasBaseWidths = {};
-
     // Calculate grid size as 2% of canvas width (dynamic)
     function getGridSize(canvasId) {
       const container = document.getElementById(canvasId);
       return Math.round(container.clientWidth * 0.02);
     }
 
-    // Initialize base widths
-    function initializeBaseWidths() {
-      gridContainers.forEach(container => {
-        const canvasId = container.getAttribute('data-canvas-id');
-        canvasBaseWidths[canvasId] = container.clientWidth;
-      });
+    // Convert grid units to pixels
+    function gridToPixels(gridUnits, canvasId) {
+      const gridSize = getGridSize(canvasId);
+      return gridUnits * gridSize;
     }
 
-    // Scale components when canvas width changes
-    function scaleComponentsToCanvasWidth() {
-      Object.keys(canvases).forEach(canvasId => {
-        const container = document.getElementById(canvasId);
-        const currentWidth = container.clientWidth;
-        const baseWidth = canvasBaseWidths[canvasId];
-
-        if (!baseWidth || baseWidth === currentWidth) return;
-
-        const scaleFactor = currentWidth / baseWidth;
-        const canvas = canvases[canvasId];
-
-        canvas.items.forEach(item => {
-          const layout = item.layouts[currentViewport];
-
-          // Scale position and size
-          layout.x = Math.round(layout.x * scaleFactor);
-          layout.y = Math.round(layout.y * scaleFactor);
-          layout.width = Math.round(layout.width * scaleFactor);
-          layout.height = Math.round(layout.height * scaleFactor);
-
-          // Update DOM element
-          const element = document.getElementById(item.id);
-          if (element) {
-            element.style.left = layout.x + 'px';
-            element.style.top = layout.y + 'px';
-            element.style.width = layout.width + 'px';
-            element.style.height = layout.height + 'px';
-          }
-        });
-
-        // Update base width
-        canvasBaseWidths[canvasId] = currentWidth;
-
-        // Update canvas height if in mobile view
-        if (currentViewport === 'mobile') {
-          const requiredHeight = calculateCanvasHeight(canvasId);
-          container.style.minHeight = requiredHeight + 'px';
-        }
-      });
+    // Convert pixels to grid units
+    function pixelsToGrid(pixels, canvasId) {
+      const gridSize = getGridSize(canvasId);
+      return Math.round(pixels / gridSize);
     }
 
     // Component templates
@@ -630,6 +589,7 @@
     });
 
     // Add item to grid
+    // NOTE: x, y, width, height are in PIXELS for the initial call, but stored as GRID UNITS
     function addItemToGrid(canvasId, componentType, x, y, width = 200, height = 150, zIndex = null) {
       const template = componentTemplates[componentType];
       const id = 'item-' + (++itemIdCounter);
@@ -641,10 +601,10 @@
         type: componentType,
         layouts: {
           desktop: {
-            x,
-            y,
-            width,
-            height
+            x: pixelsToGrid(x, canvasId),        // stored in grid units
+            y: pixelsToGrid(y, canvasId),        // stored in grid units
+            width: pixelsToGrid(width, canvasId),   // stored in grid units
+            height: pixelsToGrid(height, canvasId)  // stored in grid units
           },
           mobile: {
             x: null, // null means auto-generate
@@ -669,6 +629,7 @@
     }
 
     // Get current layout for item based on viewport
+    // Returns layout in PIXELS (converted from grid units)
     function getCurrentLayout(item) {
       const layout = item.layouts[currentViewport];
 
@@ -677,16 +638,24 @@
         return calculateMobileAutoLayout(item);
       }
 
-      return layout;
+      // Convert grid units to pixels
+      return {
+        x: gridToPixels(layout.x, item.canvasId),
+        y: gridToPixels(layout.y, item.canvasId),
+        width: gridToPixels(layout.width, item.canvasId),
+        height: gridToPixels(layout.height, item.canvasId)
+      };
     }
 
     // Calculate auto-stacked mobile layout
+    // Returns layout in PIXELS for consistency with getCurrentLayout
     function calculateMobileAutoLayout(item) {
       const canvas = canvases[item.canvasId];
       const containerWidth = document.getElementById(item.canvasId).clientWidth;
+      const gridSize = getGridSize(item.canvasId);
 
       // Find vertical position by stacking items
-      let yPosition = 20;
+      let yPosition = gridSize; // 1 grid unit padding
       canvas.items.forEach(otherItem => {
         if (otherItem.id !== item.id) {
           const otherIndex = canvas.items.indexOf(otherItem);
@@ -694,21 +663,29 @@
 
           if (otherIndex < currentIndex) {
             const otherLayout = otherItem.layouts.mobile.customized
-              ? otherItem.layouts.mobile
+              ? {
+                  x: gridToPixels(otherItem.layouts.mobile.x, item.canvasId),
+                  y: gridToPixels(otherItem.layouts.mobile.y, item.canvasId),
+                  width: gridToPixels(otherItem.layouts.mobile.width, item.canvasId),
+                  height: gridToPixels(otherItem.layouts.mobile.height, item.canvasId)
+                }
               : calculateMobileAutoLayout(otherItem);
-            yPosition = Math.max(yPosition, otherLayout.y + otherLayout.height + 20);
+            yPosition = Math.max(yPosition, otherLayout.y + otherLayout.height + gridSize);
           }
         }
       });
 
       // Mobile: full width minus padding, maintain aspect ratio
       const desktopLayout = item.layouts.desktop;
-      const mobileWidth = Math.min(containerWidth - 40, desktopLayout.width);
-      const aspectRatio = desktopLayout.height / desktopLayout.width;
+      const desktopWidthPx = gridToPixels(desktopLayout.width, item.canvasId);
+      const desktopHeightPx = gridToPixels(desktopLayout.height, item.canvasId);
+
+      const mobileWidth = Math.min(containerWidth - (2 * gridSize), desktopWidthPx);
+      const aspectRatio = desktopHeightPx / desktopWidthPx;
       const mobileHeight = Math.round(mobileWidth * aspectRatio);
 
       return {
-        x: 20,
+        x: gridSize,
         y: yPosition,
         width: mobileWidth,
         height: mobileHeight
@@ -856,15 +833,15 @@
                 }
               }
 
-              // Update item position in current viewport's layout
+              // Update item position in current viewport's layout (convert to grid units)
               const layout = item.layouts[currentViewport];
-              layout.x = newX;
-              layout.y = newY;
+              layout.x = pixelsToGrid(newX, targetCanvasId);
+              layout.y = pixelsToGrid(newY, targetCanvasId);
 
               // If in mobile view, mark as customized
               if (currentViewport === 'mobile') {
                 item.layouts.mobile.customized = true;
-                // Set width/height if not already set
+                // Set width/height if not already set (copy from desktop)
                 if (item.layouts.mobile.width === null) {
                   item.layouts.mobile.width = item.layouts.desktop.width;
                   item.layouts.mobile.height = item.layouts.desktop.height;
@@ -973,12 +950,12 @@
               const newX = parseFloat(event.target.style.left) + x;
               const newY = parseFloat(event.target.style.top) + y;
 
-              // Update item size and position in current viewport's layout
+              // Update item size and position in current viewport's layout (convert to grid units)
               const layout = item.layouts[currentViewport];
-              layout.width = newWidth;
-              layout.height = newHeight;
-              layout.x = newX;
-              layout.y = newY;
+              layout.width = pixelsToGrid(newWidth, item.canvasId);
+              layout.height = pixelsToGrid(newHeight, item.canvasId);
+              layout.x = pixelsToGrid(newX, item.canvasId);
+              layout.y = pixelsToGrid(newY, item.canvasId);
 
               // If in mobile view, mark as customized
               if (currentViewport === 'mobile') {
@@ -1089,39 +1066,43 @@
     }
 
     // Nudge item with keyboard
+    // dx and dy are in grid units (1 = one grid cell)
     function nudgeItem(id, canvasId, dx, dy) {
       const canvas = canvases[canvasId];
       const item = canvas.items.find(i => i.id === id);
       if (item) {
         const layout = item.layouts[currentViewport];
-        const gridSize = getGridSize(canvasId);
 
         // If mobile and not customized, need to customize it first
         if (currentViewport === 'mobile' && !layout.customized) {
           const autoLayout = calculateMobileAutoLayout(item);
-          layout.x = autoLayout.x;
-          layout.y = autoLayout.y;
-          layout.width = autoLayout.width;
-          layout.height = autoLayout.height;
+          // Convert pixels to grid units and store
+          layout.x = pixelsToGrid(autoLayout.x, canvasId);
+          layout.y = pixelsToGrid(autoLayout.y, canvasId);
+          layout.width = pixelsToGrid(autoLayout.width, canvasId);
+          layout.height = pixelsToGrid(autoLayout.height, canvasId);
           layout.customized = true;
         }
 
-        layout.x += dx * gridSize;
-        layout.y += dy * gridSize;
+        // Move by grid units
+        layout.x += dx;
+        layout.y += dy;
 
-        // Get container bounds to ensure item stays fully within
+        // Get container bounds to ensure item stays fully within (in grid units)
         const container = document.getElementById(canvasId);
-        const containerWidth = container.clientWidth;
-        const containerHeight = container.clientHeight;
+        const gridSize = getGridSize(canvasId);
+        const containerWidthInGrids = pixelsToGrid(container.clientWidth, canvasId);
+        const containerHeightInGrids = pixelsToGrid(container.clientHeight, canvasId);
 
         // Keep within bounds - ensure item stays fully visible
-        layout.x = Math.max(0, Math.min(layout.x, containerWidth - layout.width));
-        layout.y = Math.max(0, Math.min(layout.y, containerHeight - layout.height));
+        layout.x = Math.max(0, Math.min(layout.x, containerWidthInGrids - layout.width));
+        layout.y = Math.max(0, Math.min(layout.y, containerHeightInGrids - layout.height));
 
+        // Update DOM (convert to pixels)
         const element = document.getElementById(id);
         if (element) {
-          element.style.left = layout.x + 'px';
-          element.style.top = layout.y + 'px';
+          element.style.left = gridToPixels(layout.x, canvasId) + 'px';
+          element.style.top = gridToPixels(layout.y, canvasId) + 'px';
         }
 
         // Update canvas height if in mobile view
@@ -1209,11 +1190,6 @@
       document.querySelectorAll('.grid-item').forEach(el => {
         el.classList.remove('selected');
       });
-
-      // Update base widths after viewport change (canvas width may have changed)
-      setTimeout(() => {
-        initializeBaseWidths();
-      }, 400); // Wait for CSS transition to complete
     }
 
     // Viewport toggle handlers
@@ -1347,15 +1323,6 @@
       }
     });
 
-    // Window resize handler with debounce
-    let resizeTimeout;
-    window.addEventListener('resize', function() {
-      clearTimeout(resizeTimeout);
-      resizeTimeout = setTimeout(() => {
-        scaleComponentsToCanvasWidth();
-      }, 100);
-    });
-
     // Add some demo items on load
     window.addEventListener('load', function() {
       // Set initial background colors
@@ -1372,9 +1339,6 @@
       addItemToGrid('canvas2', 'header', 40, 40, 350, 80);
       addItemToGrid('canvas2', 'text', 40, 140, 350, 150);
       addItemToGrid('canvas2', 'video', 420, 40, 340, 250);
-
-      // Initialize base widths after items are loaded
-      initializeBaseWidths();
     });
   </script>
 </body>

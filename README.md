@@ -124,6 +124,8 @@ A minimal proof-of-concept demonstrating a drag-and-drop grid builder system wit
 4. **Snap-to-Grid**
    - All drag and resize operations snap to a responsive grid (2% of canvas width)
    - Grid scales proportionally with canvas width for consistent layouts across different screen sizes
+   - Component positions and sizes are stored in grid units, not pixels
+   - Components automatically scale with the grid when canvas width changes
    - Provides clean alignment within each section
 
 5. **Per-Section State Management**
@@ -174,22 +176,24 @@ canvases: {
   type: 'header',
   layouts: {
     desktop: {
-      x: 40,            // pixels from left of section
-      y: 40,            // pixels from top of section
-      width: 300,       // pixels wide
-      height: 100       // pixels tall
+      x: 2,             // grid units from left of section
+      y: 2,             // grid units from top of section
+      width: 20,        // grid units wide
+      height: 6         // grid units tall
     },
     mobile: {
-      x: 20,            // auto-calculated or manually set
-      y: 20,            // auto-calculated or manually set
-      width: 280,       // auto-calculated or manually set
-      height: 93,       // auto-calculated or manually set
+      x: 1,             // auto-calculated or manually set (grid units)
+      y: 1,             // auto-calculated or manually set (grid units)
+      width: 14,        // auto-calculated or manually set (grid units)
+      height: 5,        // auto-calculated or manually set (grid units)
       customized: false // true if user manually edited mobile layout
     }
   },
   zIndex: 1             // layering order within this section
 }
 ```
+
+**Note:** All position and size values are stored in grid units (not pixels). This allows components to scale proportionally with the grid when the canvas width changes. Grid size = 2% of canvas width.
 
 ## What's NOT Included (Keeping it Minimal)
 
