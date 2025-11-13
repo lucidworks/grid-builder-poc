@@ -928,6 +928,7 @@
     // Make item draggable
     function makeItemDraggable(element, item) {
       let dragRafId = null;
+      let basePosition = { x: 0, y: 0 };
 
       interact(element)
         .draggable({
@@ -935,6 +936,9 @@
             start(event) {
               event.target.classList.add('dragging');
               selectItem(item.id, item.canvasId);
+
+              // Store the base position from transform
+              basePosition = getTransformPosition(event.target);
             },
 
             move(event) {
@@ -948,7 +952,8 @@
                 const x = (parseFloat(event.target.getAttribute('data-x')) || 0) + event.dx;
                 const y = (parseFloat(event.target.getAttribute('data-y')) || 0) + event.dy;
 
-                event.target.style.transform = `translate(${x}px, ${y}px)`;
+                // Apply drag delta to base position
+                event.target.style.transform = `translate(${basePosition.x + x}px, ${basePosition.y + y}px)`;
                 event.target.setAttribute('data-x', x);
                 event.target.setAttribute('data-y', y);
 
@@ -965,8 +970,8 @@
 
               event.target.classList.remove('dragging');
 
-              const x = parseFloat(event.target.getAttribute('data-x')) || 0;
-              const y = parseFloat(event.target.getAttribute('data-y')) || 0;
+              const deltaX = parseFloat(event.target.getAttribute('data-x')) || 0;
+              const deltaY = parseFloat(event.target.getAttribute('data-y')) || 0;
 
               // Get the element's current position in viewport
               const rect = event.target.getBoundingClientRect();
@@ -990,8 +995,16 @@
               const gridSizeX = getGridSizeHorizontal(targetCanvasId);
               const gridSizeY = getGridSizeVertical();
 
-              let newX = rect.left - targetRect.left;
-              let newY = rect.top - targetRect.top;
+              // Final position is base position + drag delta
+              let newX = basePosition.x + deltaX;
+              let newY = basePosition.y + deltaY;
+
+              // If canvas changed, need to adjust for the relative position to new canvas
+              if (targetCanvasId !== oldCanvasId) {
+                // Get position in viewport coordinates and convert to new canvas coordinates
+                newX = rect.left - targetRect.left;
+                newY = rect.top - targetRect.top;
+              }
 
               // Snap to grid (separate X and Y)
               newX = Math.round(newX / gridSizeX) * gridSizeX;
@@ -1086,6 +1099,7 @@
     // Make item resizable
     function makeItemResizable(element, item) {
       let resizeRafId = null;
+      let basePosition = { x: 0, y: 0 };
 
       interact(element)
         .resizable({
@@ -1103,6 +1117,9 @@
           listeners: {
             start(event) {
               event.target.classList.add('resizing');
+
+              // Store the base position from transform
+              basePosition = getTransformPosition(event.target);
             },
 
             move(event) {
@@ -1113,10 +1130,6 @@
 
               // Batch DOM updates with requestAnimationFrame
               resizeRafId = requestAnimationFrame(() => {
-                // Get current position from transform
-                const currentPos = getTransformPosition(event.target);
-                const currentX = currentPos.x;
-                const currentY = currentPos.y;
                 let deltaX = parseFloat(event.target.getAttribute('data-x')) || 0;
                 let deltaY = parseFloat(event.target.getAttribute('data-y')) || 0;
 
@@ -1130,8 +1143,8 @@
                 // Calculate new size and position
                 let newWidth = event.rect.width;
                 let newHeight = event.rect.height;
-                let newX = currentX + deltaX + event.deltaRect.left;
-                let newY = currentY + deltaY + event.deltaRect.top;
+                let newX = basePosition.x + deltaX + event.deltaRect.left;
+                let newY = basePosition.y + deltaY + event.deltaRect.top;
 
                 // Snap size to grid (separate X and Y)
                 newWidth = Math.round(newWidth / gridSizeX) * gridSizeX;
@@ -1145,13 +1158,13 @@
                 newX = Math.max(0, Math.min(newX, containerWidth - newWidth));
                 newY = Math.max(0, Math.min(newY, containerHeight - newHeight));
 
-                // Calculate snapped deltas
-                const snappedDeltaX = newX - currentX;
-                const snappedDeltaY = newY - currentY;
+                // Calculate deltas from base position
+                const snappedDeltaX = newX - basePosition.x;
+                const snappedDeltaY = newY - basePosition.y;
 
                 event.target.style.width = newWidth + 'px';
                 event.target.style.height = newHeight + 'px';
-                event.target.style.transform = `translate(${snappedDeltaX}px, ${snappedDeltaY}px)`;
+                event.target.style.transform = `translate(${newX}px, ${newY}px)`;
                 event.target.setAttribute('data-x', snappedDeltaX);
                 event.target.setAttribute('data-y', snappedDeltaY);
 
@@ -1168,16 +1181,14 @@
 
               event.target.classList.remove('resizing');
 
-              const x = parseFloat(event.target.getAttribute('data-x')) || 0;
-              const y = parseFloat(event.target.getAttribute('data-y')) || 0;
+              const deltaX = parseFloat(event.target.getAttribute('data-x')) || 0;
+              const deltaY = parseFloat(event.target.getAttribute('data-y')) || 0;
 
-              // Get current position from transform
-              const currentPos = getTransformPosition(event.target);
-
+              // Get final position (base + delta)
               const newWidth = parseFloat(event.target.style.width);
               const newHeight = parseFloat(event.target.style.height);
-              const newX = currentPos.x + x;
-              const newY = currentPos.y + y;
+              const newX = basePosition.x + deltaX;
+              const newY = basePosition.y + deltaY;
 
               // Update item size and position in current viewport's layout (convert to grid units)
               const layout = item.layouts[currentViewport];
