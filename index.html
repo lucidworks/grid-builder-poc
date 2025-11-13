@@ -1324,6 +1324,36 @@
       }
     });
 
+    // Re-render all components when window resizes
+    // Components are stored in grid units, so we need to recalculate pixel positions
+    let resizeTimeout;
+    window.addEventListener('resize', function() {
+      clearTimeout(resizeTimeout);
+      resizeTimeout = setTimeout(() => {
+        Object.keys(canvases).forEach(canvasId => {
+          const canvas = canvases[canvasId];
+
+          canvas.items.forEach(item => {
+            const element = document.getElementById(item.id);
+            if (element) {
+              const layout = getCurrentLayout(item);
+              element.style.left = layout.x + 'px';
+              element.style.top = layout.y + 'px';
+              element.style.width = layout.width + 'px';
+              element.style.height = layout.height + 'px';
+            }
+          });
+
+          // Update canvas height if in mobile view
+          if (currentViewport === 'mobile') {
+            const gridContainer = document.getElementById(canvasId);
+            const requiredHeight = calculateCanvasHeight(canvasId);
+            gridContainer.style.minHeight = requiredHeight + 'px';
+          }
+        });
+      }, 100);
+    });
+
     // Add some demo items on load
     window.addEventListener('load', function() {
       // Set initial background colors
