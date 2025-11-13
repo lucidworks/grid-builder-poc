@@ -1,0 +1,779 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Grid Builder POC - Drag & Drop Grid System</title>
+  <script src="https://cdn.jsdelivr.net/npm/interactjs@1.10.19/dist/interact.min.js"></script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      background: #f5f5f5;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    .app {
+      display: flex;
+      height: 100vh;
+    }
+
+    /* Component Palette */
+    .palette {
+      width: 250px;
+      background: white;
+      border-right: 1px solid #ddd;
+      padding: 20px;
+      overflow-y: auto;
+    }
+
+    .palette h2 {
+      font-size: 18px;
+      margin-bottom: 20px;
+      color: #333;
+    }
+
+    .palette-item {
+      background: #4A90E2;
+      color: white;
+      padding: 15px;
+      margin-bottom: 10px;
+      border-radius: 4px;
+      cursor: move;
+      text-align: center;
+      font-weight: 500;
+      user-select: none;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .palette-item:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+
+    .palette-item.dragging-from-palette {
+      opacity: 0.5;
+    }
+
+    /* Main Canvas */
+    .canvas {
+      flex: 1;
+      padding: 20px;
+      overflow: auto;
+      position: relative;
+    }
+
+    .canvas-header {
+      background: white;
+      padding: 15px 20px;
+      margin-bottom: 20px;
+      border-radius: 4px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+
+    .canvas-header h1 {
+      font-size: 24px;
+      color: #333;
+      margin-bottom: 5px;
+    }
+
+    .canvas-header p {
+      color: #666;
+      font-size: 14px;
+    }
+
+    .canvas-header .controls {
+      margin-top: 10px;
+      display: flex;
+      gap: 10px;
+    }
+
+    .canvas-header button {
+      padding: 8px 16px;
+      border: 1px solid #ddd;
+      background: white;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 13px;
+      transition: all 0.2s;
+    }
+
+    .canvas-header button:hover {
+      background: #f5f5f5;
+      border-color: #4A90E2;
+    }
+
+    .canvas-header button.active {
+      background: #4A90E2;
+      color: white;
+      border-color: #4A90E2;
+    }
+
+    /* Grid Builder */
+    .grid-builder {
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      min-height: 600px;
+      position: relative;
+    }
+
+    .grid-container {
+      position: relative;
+      width: 100%;
+      min-height: 600px;
+      background-image:
+        linear-gradient(rgba(0,0,0,0.05) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,0,0,0.05) 1px, transparent 1px);
+      background-size: 20px 20px;
+    }
+
+    .grid-container.hide-grid {
+      background-image: none;
+    }
+
+    /* Grid Items */
+    .grid-item {
+      position: absolute;
+      background: white;
+      border: 2px solid transparent;
+      border-radius: 4px;
+      padding: 20px;
+      cursor: move;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      min-width: 100px;
+      min-height: 80px;
+      user-select: none;
+    }
+
+    .grid-item:hover {
+      border-color: #4A90E2;
+    }
+
+    .grid-item.selected {
+      border-color: #4A90E2;
+      box-shadow: 0 4px 12px rgba(74, 144, 226, 0.3);
+      z-index: 1000;
+    }
+
+    .grid-item.dragging {
+      opacity: 0.7;
+      cursor: move;
+    }
+
+    .grid-item.resizing {
+      user-select: none;
+    }
+
+    .grid-item-header {
+      font-weight: 600;
+      color: #333;
+      margin-bottom: 5px;
+      font-size: 14px;
+    }
+
+    .grid-item-content {
+      color: #666;
+      font-size: 13px;
+    }
+
+    .grid-item-controls {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      display: flex;
+      gap: 4px;
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+
+    .grid-item.selected .grid-item-controls,
+    .grid-item:hover .grid-item-controls {
+      opacity: 1;
+    }
+
+    .grid-item-control-btn {
+      width: 24px;
+      height: 24px;
+      background: #4A90E2;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 12px;
+      line-height: 1;
+      padding: 0;
+      transition: background 0.2s;
+    }
+
+    .grid-item-control-btn:hover {
+      background: #357ABD;
+    }
+
+    .grid-item-delete {
+      width: 24px;
+      height: 24px;
+      background: #ff4444;
+      color: white;
+      border: none;
+      border-radius: 50%;
+      cursor: pointer;
+      font-size: 14px;
+      line-height: 1;
+      padding: 0;
+      transition: background 0.2s;
+    }
+
+    .grid-item-delete:hover {
+      background: #cc0000;
+    }
+
+    /* Resize Handles */
+    .resize-handle {
+      position: absolute;
+      width: 10px;
+      height: 10px;
+      background: #4A90E2;
+      border: 2px solid white;
+      border-radius: 50%;
+      box-shadow: 0 0 3px rgba(0,0,0,0.3);
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+
+    .grid-item.selected .resize-handle,
+    .grid-item:hover .resize-handle {
+      opacity: 1;
+    }
+
+    .resize-handle.nw { top: -5px; left: -5px; cursor: nw-resize; }
+    .resize-handle.ne { top: -5px; right: -5px; cursor: ne-resize; }
+    .resize-handle.sw { bottom: -5px; left: -5px; cursor: sw-resize; }
+    .resize-handle.se { bottom: -5px; right: -5px; cursor: se-resize; }
+    .resize-handle.n { top: -5px; left: 50%; transform: translateX(-50%); cursor: n-resize; }
+    .resize-handle.s { bottom: -5px; left: 50%; transform: translateX(-50%); cursor: s-resize; }
+    .resize-handle.e { top: 50%; right: -5px; transform: translateY(-50%); cursor: e-resize; }
+    .resize-handle.w { top: 50%; left: -5px; transform: translateY(-50%); cursor: w-resize; }
+
+    /* Drag Clone */
+    .dragging-clone {
+      position: fixed;
+      pointer-events: none;
+      z-index: 10000;
+      opacity: 0.8;
+      background: #4A90E2;
+      color: white;
+      padding: 15px;
+      border-radius: 4px;
+      font-weight: 500;
+    }
+
+    /* Drop Zone Indicator */
+    .drop-zone-indicator {
+      position: absolute;
+      border: 2px dashed #4A90E2;
+      background: rgba(74, 144, 226, 0.1);
+      border-radius: 4px;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+
+    .drop-zone-indicator.active {
+      opacity: 1;
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <!-- Component Palette -->
+    <div class="palette">
+      <h2>Components</h2>
+      <div class="palette-item" data-component-type="header">
+        📄 Header
+      </div>
+      <div class="palette-item" data-component-type="text">
+        📝 Text Block
+      </div>
+      <div class="palette-item" data-component-type="image">
+        🖼️ Image
+      </div>
+      <div class="palette-item" data-component-type="button">
+        🔘 Button
+      </div>
+      <div class="palette-item" data-component-type="video">
+        🎥 Video
+      </div>
+    </div>
+
+    <!-- Main Canvas -->
+    <div class="canvas">
+      <div class="canvas-header">
+        <h1>Grid Builder POC</h1>
+        <p>Drag components from the left palette into the grid. Drag to reposition, use handles to resize.</p>
+        <div class="controls">
+          <button id="toggleGrid" class="active">Show Grid</button>
+          <button id="clearAll">Clear All</button>
+          <button id="exportState">Export State</button>
+        </div>
+      </div>
+
+      <div class="grid-builder">
+        <div class="grid-container" id="gridContainer">
+          <!-- Grid items will be added here -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // State
+    let items = [];
+    let selectedItemId = null;
+    let itemIdCounter = 0;
+    let dragClone = null;
+    let showGrid = true;
+    let zIndexCounter = 1;
+
+    const gridContainer = document.getElementById('gridContainer');
+    const gridSize = 20; // Snap grid size in pixels
+
+    // Component templates
+    const componentTemplates = {
+      header: { icon: '📄', title: 'Header', content: 'This is a header component' },
+      text: { icon: '📝', title: 'Text Block', content: 'This is a text block component' },
+      image: { icon: '🖼️', title: 'Image', content: 'Image placeholder' },
+      button: { icon: '🔘', title: 'Button', content: 'Click me!' },
+      video: { icon: '🎥', title: 'Video', content: 'Video player' }
+    };
+
+    // Initialize palette dragging
+    interact('.palette-item')
+      .draggable({
+        inertia: false,
+        autoScroll: false,
+
+        listeners: {
+          start(event) {
+            event.target.classList.add('dragging-from-palette');
+
+            // Create drag clone
+            dragClone = document.createElement('div');
+            dragClone.className = 'dragging-clone';
+            dragClone.textContent = event.target.textContent;
+            dragClone.style.left = event.clientX + 'px';
+            dragClone.style.top = event.clientY + 'px';
+            document.body.appendChild(dragClone);
+          },
+
+          move(event) {
+            if (dragClone) {
+              dragClone.style.left = event.clientX + 'px';
+              dragClone.style.top = event.clientY + 'px';
+            }
+          },
+
+          end(event) {
+            event.target.classList.remove('dragging-from-palette');
+            if (dragClone) {
+              dragClone.remove();
+              dragClone = null;
+            }
+          }
+        }
+      });
+
+    // Initialize drop zone
+    interact('#gridContainer')
+      .dropzone({
+        accept: '.palette-item',
+
+        ondrop(event) {
+          const componentType = event.relatedTarget.getAttribute('data-component-type');
+          const dropPosition = getGridPosition(event.dragEvent.clientX, event.dragEvent.clientY);
+
+          addItemToGrid(componentType, dropPosition.x, dropPosition.y);
+        }
+      });
+
+    // Add item to grid
+    function addItemToGrid(componentType, x, y, width = 200, height = 150, zIndex = null) {
+      const template = componentTemplates[componentType];
+      const id = 'item-' + (++itemIdCounter);
+
+      const item = {
+        id,
+        type: componentType,
+        x,
+        y,
+        width,
+        height,
+        zIndex: zIndex !== null ? zIndex : zIndexCounter++
+      };
+
+      items.push(item);
+      renderItem(item, template);
+    }
+
+    // Render item
+    function renderItem(item, template) {
+      const div = document.createElement('div');
+      div.className = 'grid-item';
+      div.id = item.id;
+      div.style.left = item.x + 'px';
+      div.style.top = item.y + 'px';
+      div.style.width = item.width + 'px';
+      div.style.height = item.height + 'px';
+      div.style.zIndex = item.zIndex;
+
+      div.innerHTML = `
+        <div class="grid-item-header">${template.icon} ${template.title}</div>
+        <div class="grid-item-content">${template.content}</div>
+        <div class="grid-item-controls">
+          <button class="grid-item-control-btn" onclick="bringToFront('${item.id}')" title="Bring to Front">⬆️</button>
+          <button class="grid-item-control-btn" onclick="sendToBack('${item.id}')" title="Send to Back">⬇️</button>
+          <button class="grid-item-delete" onclick="deleteItem('${item.id}')">×</button>
+        </div>
+        <div class="resize-handle nw"></div>
+        <div class="resize-handle ne"></div>
+        <div class="resize-handle sw"></div>
+        <div class="resize-handle se"></div>
+        <div class="resize-handle n"></div>
+        <div class="resize-handle s"></div>
+        <div class="resize-handle e"></div>
+        <div class="resize-handle w"></div>
+      `;
+
+      // Click to select
+      div.addEventListener('click', (e) => {
+        if (!e.target.classList.contains('grid-item-delete') &&
+            !e.target.classList.contains('grid-item-control-btn')) {
+          selectItem(item.id);
+        }
+      });
+
+      gridContainer.appendChild(div);
+
+      // Make draggable
+      makeItemDraggable(div, item);
+
+      // Make resizable
+      makeItemResizable(div, item);
+    }
+
+    // Make item draggable
+    function makeItemDraggable(element, item) {
+      interact(element)
+        .draggable({
+          modifiers: [
+            interact.modifiers.restrict({
+              restriction: 'parent',
+              endOnly: true
+            })
+          ],
+
+          listeners: {
+            start(event) {
+              event.target.classList.add('dragging');
+              selectItem(item.id);
+            },
+
+            move(event) {
+              // Calculate new position
+              const currentX = parseFloat(event.target.style.left) || 0;
+              const currentY = parseFloat(event.target.style.top) || 0;
+              const deltaX = (parseFloat(event.target.getAttribute('data-x')) || 0) + event.dx;
+              const deltaY = (parseFloat(event.target.getAttribute('data-y')) || 0) + event.dy;
+
+              // Calculate absolute position and snap to grid
+              let newX = currentX + deltaX;
+              let newY = currentY + deltaY;
+
+              newX = Math.round(newX / gridSize) * gridSize;
+              newY = Math.round(newY / gridSize) * gridSize;
+
+              // Calculate snapped delta
+              const snappedDeltaX = newX - currentX;
+              const snappedDeltaY = newY - currentY;
+
+              event.target.style.transform = `translate(${snappedDeltaX}px, ${snappedDeltaY}px)`;
+              event.target.setAttribute('data-x', snappedDeltaX);
+              event.target.setAttribute('data-y', snappedDeltaY);
+            },
+
+            end(event) {
+              event.target.classList.remove('dragging');
+
+              const x = parseFloat(event.target.getAttribute('data-x')) || 0;
+              const y = parseFloat(event.target.getAttribute('data-y')) || 0;
+
+              // Update item position
+              item.x = parseFloat(event.target.style.left) + x;
+              item.y = parseFloat(event.target.style.top) + y;
+
+              // Reset transform
+              event.target.style.left = item.x + 'px';
+              event.target.style.top = item.y + 'px';
+              event.target.style.transform = '';
+              event.target.removeAttribute('data-x');
+              event.target.removeAttribute('data-y');
+            }
+          }
+        });
+    }
+
+    // Make item resizable
+    function makeItemResizable(element, item) {
+      interact(element)
+        .resizable({
+          edges: { left: true, right: true, bottom: true, top: true },
+
+          modifiers: [
+            interact.modifiers.restrictSize({
+              min: { width: 100, height: 80 }
+            })
+          ],
+
+          listeners: {
+            start(event) {
+              event.target.classList.add('resizing');
+            },
+
+            move(event) {
+              const currentX = parseFloat(event.target.style.left) || 0;
+              const currentY = parseFloat(event.target.style.top) || 0;
+              let deltaX = parseFloat(event.target.getAttribute('data-x')) || 0;
+              let deltaY = parseFloat(event.target.getAttribute('data-y')) || 0;
+
+              // Calculate new size and position
+              let newWidth = event.rect.width;
+              let newHeight = event.rect.height;
+              let newX = currentX + deltaX + event.deltaRect.left;
+              let newY = currentY + deltaY + event.deltaRect.top;
+
+              // Snap size to grid
+              newWidth = Math.round(newWidth / gridSize) * gridSize;
+              newHeight = Math.round(newHeight / gridSize) * gridSize;
+
+              // Snap position to grid
+              newX = Math.round(newX / gridSize) * gridSize;
+              newY = Math.round(newY / gridSize) * gridSize;
+
+              // Calculate snapped deltas
+              const snappedDeltaX = newX - currentX;
+              const snappedDeltaY = newY - currentY;
+
+              event.target.style.width = newWidth + 'px';
+              event.target.style.height = newHeight + 'px';
+              event.target.style.transform = `translate(${snappedDeltaX}px, ${snappedDeltaY}px)`;
+              event.target.setAttribute('data-x', snappedDeltaX);
+              event.target.setAttribute('data-y', snappedDeltaY);
+            },
+
+            end(event) {
+              event.target.classList.remove('resizing');
+
+              const x = parseFloat(event.target.getAttribute('data-x')) || 0;
+              const y = parseFloat(event.target.getAttribute('data-y')) || 0;
+
+              // Update item size and position
+              item.width = parseFloat(event.target.style.width);
+              item.height = parseFloat(event.target.style.height);
+              item.x = parseFloat(event.target.style.left) + x;
+              item.y = parseFloat(event.target.style.top) + y;
+
+              // Reset transform
+              event.target.style.left = item.x + 'px';
+              event.target.style.top = item.y + 'px';
+              event.target.style.width = item.width + 'px';
+              event.target.style.height = item.height + 'px';
+              event.target.style.transform = '';
+              event.target.removeAttribute('data-x');
+              event.target.removeAttribute('data-y');
+            }
+          }
+        });
+    }
+
+    // Select item
+    function selectItem(id) {
+      // Deselect all
+      document.querySelectorAll('.grid-item').forEach(el => {
+        el.classList.remove('selected');
+      });
+
+      // Select the clicked item
+      const element = document.getElementById(id);
+      if (element) {
+        element.classList.add('selected');
+        selectedItemId = id;
+      }
+    }
+
+    // Delete item
+    function deleteItem(id) {
+      const element = document.getElementById(id);
+      if (element) {
+        element.remove();
+        items = items.filter(item => item.id !== id);
+        selectedItemId = null;
+      }
+    }
+
+    // Bring item to front
+    function bringToFront(id) {
+      const item = items.find(i => i.id === id);
+      if (item) {
+        item.zIndex = ++zIndexCounter;
+        const element = document.getElementById(id);
+        if (element) {
+          element.style.zIndex = item.zIndex;
+        }
+      }
+    }
+
+    // Send item to back
+    function sendToBack(id) {
+      const item = items.find(i => i.id === id);
+      if (item) {
+        // Find the lowest z-index
+        const minZIndex = Math.min(...items.map(i => i.zIndex));
+        item.zIndex = minZIndex - 1;
+        const element = document.getElementById(id);
+        if (element) {
+          element.style.zIndex = item.zIndex;
+        }
+      }
+    }
+
+    // Nudge item with keyboard
+    function nudgeItem(id, dx, dy) {
+      const item = items.find(i => i.id === id);
+      if (item) {
+        item.x += dx;
+        item.y += dy;
+
+        // Keep within bounds
+        item.x = Math.max(0, item.x);
+        item.y = Math.max(0, item.y);
+
+        const element = document.getElementById(id);
+        if (element) {
+          element.style.left = item.x + 'px';
+          element.style.top = item.y + 'px';
+        }
+      }
+    }
+
+    // Get grid position from mouse coordinates
+    function getGridPosition(clientX, clientY) {
+      const rect = gridContainer.getBoundingClientRect();
+
+      // Get cursor position relative to container
+      let x = clientX - rect.left;
+      let y = clientY - rect.top;
+
+      // Snap to grid
+      x = Math.round(x / gridSize) * gridSize;
+      y = Math.round(y / gridSize) * gridSize;
+
+      // Keep within bounds
+      x = Math.max(0, x);
+      y = Math.max(0, y);
+
+      return { x, y };
+    }
+
+    // Toggle grid visibility
+    document.getElementById('toggleGrid').addEventListener('click', function() {
+      showGrid = !showGrid;
+      gridContainer.classList.toggle('hide-grid', !showGrid);
+      this.classList.toggle('active', showGrid);
+      this.textContent = showGrid ? 'Show Grid' : 'Hide Grid';
+    });
+
+    // Clear all items
+    document.getElementById('clearAll').addEventListener('click', function() {
+      if (confirm('Are you sure you want to clear all items?')) {
+        items = [];
+        selectedItemId = null;
+        gridContainer.innerHTML = '';
+      }
+    });
+
+    // Export state
+    document.getElementById('exportState').addEventListener('click', function() {
+      const state = {
+        items: items.map(({ id, type, x, y, width, height }) => ({ id, type, x, y, width, height })),
+        timestamp: new Date().toISOString()
+      };
+
+      console.log('Grid State:', state);
+      alert('Grid state exported to console!\n\nItems: ' + items.length);
+    });
+
+    // Deselect on background click
+    gridContainer.addEventListener('click', function(e) {
+      if (e.target === gridContainer) {
+        document.querySelectorAll('.grid-item').forEach(el => {
+          el.classList.remove('selected');
+        });
+        selectedItemId = null;
+      }
+    });
+
+    // Keyboard shortcuts
+    document.addEventListener('keydown', function(e) {
+      // Delete key
+      if (e.key === 'Delete' && selectedItemId) {
+        deleteItem(selectedItemId);
+      }
+
+      // Escape key
+      if (e.key === 'Escape') {
+        document.querySelectorAll('.grid-item').forEach(el => {
+          el.classList.remove('selected');
+        });
+        selectedItemId = null;
+      }
+
+      // Arrow keys - nudge selected item
+      if (selectedItemId) {
+        let dx = 0, dy = 0;
+
+        if (e.key === 'ArrowLeft') {
+          dx = -gridSize;
+          e.preventDefault();
+        } else if (e.key === 'ArrowRight') {
+          dx = gridSize;
+          e.preventDefault();
+        } else if (e.key === 'ArrowUp') {
+          dy = -gridSize;
+          e.preventDefault();
+        } else if (e.key === 'ArrowDown') {
+          dy = gridSize;
+          e.preventDefault();
+        }
+
+        if (dx !== 0 || dy !== 0) {
+          nudgeItem(selectedItemId, dx, dy);
+        }
+      }
+    });
+
+    // Add some demo items on load
+    window.addEventListener('load', function() {
+      addItemToGrid('header', 40, 40, 300, 100);
+      addItemToGrid('text', 40, 160, 300, 150);
+      addItemToGrid('image', 360, 40, 250, 200);
+    });
+  </script>
+</body>
+</html>
