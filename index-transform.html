@@ -1,0 +1,1586 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Grid Builder POC - Transform-Based Positioning (Experimental)</title>
+  <script src="https://cdn.jsdelivr.net/npm/interactjs@1.10.19/dist/interact.min.js"></script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      background: #f5f5f5;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    .app {
+      display: flex;
+      height: 100vh;
+    }
+
+    /* Component Palette */
+    .palette {
+      width: 250px;
+      background: white;
+      border-right: 1px solid #ddd;
+      padding: 20px;
+      overflow-y: auto;
+    }
+
+    .palette h2 {
+      font-size: 18px;
+      margin-bottom: 20px;
+      color: #333;
+    }
+
+    .palette-item {
+      background: #4A90E2;
+      color: white;
+      padding: 15px;
+      margin-bottom: 10px;
+      border-radius: 4px;
+      cursor: move;
+      text-align: center;
+      font-weight: 500;
+      user-select: none;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .palette-item:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+
+    .palette-item.dragging-from-palette {
+      opacity: 0.5;
+    }
+
+    /* Main Canvas */
+    .canvas {
+      flex: 1;
+      padding: 20px;
+      overflow: auto;
+      position: relative;
+    }
+
+    .canvas-header {
+      background: white;
+      padding: 15px 20px;
+      margin-bottom: 20px;
+      border-radius: 4px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+
+    .canvas-header h1 {
+      font-size: 24px;
+      color: #333;
+      margin-bottom: 5px;
+    }
+
+    .canvas-header p {
+      color: #666;
+      font-size: 14px;
+    }
+
+    .canvas-header .controls {
+      margin-top: 10px;
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .viewport-toggle {
+      display: flex;
+      gap: 4px;
+      background: #f5f5f5;
+      padding: 4px;
+      border-radius: 6px;
+    }
+
+    .viewport-btn {
+      padding: 8px 16px;
+      border: none;
+      background: transparent;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 13px;
+      transition: all 0.2s;
+      color: #666;
+      font-weight: 500;
+    }
+
+    .viewport-btn:hover {
+      background: rgba(74, 144, 226, 0.1);
+      color: #4A90E2;
+    }
+
+    .viewport-btn.active {
+      background: white;
+      color: #4A90E2;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .canvas-header button {
+      padding: 8px 16px;
+      border: 1px solid #ddd;
+      background: white;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 13px;
+      transition: all 0.2s;
+    }
+
+    .canvas-header button:hover {
+      background: #f5f5f5;
+      border-color: #4A90E2;
+    }
+
+    .canvas-header button.active {
+      background: #4A90E2;
+      color: white;
+      border-color: #4A90E2;
+    }
+
+    /* Canvases Container */
+    .canvases-container {
+      display: flex;
+      flex-direction: column;
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      overflow: hidden;
+      transition: max-width 0.3s ease;
+      margin: 0 auto;
+    }
+
+    .canvases-container.mobile-view {
+      max-width: 480px;
+    }
+
+    .canvas-item {
+      display: flex;
+      flex-direction: column;
+      width: 100%;
+      position: relative;
+    }
+
+    .canvas-item-header {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: rgba(255, 255, 255, 0.95);
+      padding: 8px 12px;
+      border-radius: 4px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      z-index: 1000;
+      font-size: 12px;
+      color: #666;
+      opacity: 0.7;
+      transition: opacity 0.2s;
+      pointer-events: auto;
+    }
+
+    .canvas-item:hover .canvas-item-header {
+      opacity: 1;
+    }
+
+    .canvas-item-header h3 {
+      font-size: 11px;
+      color: #999;
+      margin: 0;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .canvas-controls {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .canvas-controls label {
+      font-size: 11px;
+      color: #666;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .canvas-bg-color {
+      cursor: pointer;
+      width: 32px;
+      height: 24px;
+      border: 1px solid #ddd;
+      border-radius: 3px;
+    }
+
+    .clear-canvas-btn {
+      padding: 4px 8px;
+      border: 1px solid #ddd;
+      background: white;
+      border-radius: 3px;
+      cursor: pointer;
+      font-size: 11px;
+      transition: all 0.2s;
+    }
+
+    .clear-canvas-btn:hover {
+      background: #f5f5f5;
+      border-color: #ff4444;
+      color: #ff4444;
+    }
+
+    /* Grid Builder */
+    .grid-builder {
+      position: relative;
+      flex: 1;
+    }
+
+    .grid-container {
+      position: relative;
+      width: 100%;
+      min-height: 400px;
+      background-image:
+        linear-gradient(rgba(0,0,0,0.05) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,0,0,0.05) 1px, transparent 1px);
+      background-size: 2% 20px;
+      transition: background-color 0.2s;
+    }
+
+    .grid-container.hide-grid {
+      background-image: none;
+    }
+
+    /* Grid Items */
+    .grid-item {
+      position: absolute;
+      background: white;
+      border: 2px solid transparent;
+      border-radius: 4px;
+      padding: 20px;
+      cursor: move;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      min-width: 100px;
+      min-height: 80px;
+      user-select: none;
+    }
+
+    .grid-item:hover {
+      border-color: #4A90E2;
+    }
+
+    .grid-item.selected {
+      border-color: #4A90E2;
+      box-shadow: 0 4px 12px rgba(74, 144, 226, 0.3);
+      z-index: 1000;
+    }
+
+    .grid-item.dragging {
+      opacity: 0.7;
+      cursor: move;
+    }
+
+    .grid-item.resizing {
+      user-select: none;
+    }
+
+    .grid-item-header {
+      font-weight: 600;
+      color: #333;
+      margin-bottom: 5px;
+      font-size: 14px;
+    }
+
+    .grid-item-content {
+      color: #666;
+      font-size: 13px;
+    }
+
+    .grid-item-controls {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      display: flex;
+      gap: 4px;
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+
+    .grid-item.selected .grid-item-controls,
+    .grid-item:hover .grid-item-controls {
+      opacity: 1;
+    }
+
+    .grid-item-control-btn {
+      width: 24px;
+      height: 24px;
+      background: #4A90E2;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 12px;
+      line-height: 1;
+      padding: 0;
+      transition: background 0.2s;
+    }
+
+    .grid-item-control-btn:hover {
+      background: #357ABD;
+    }
+
+    .grid-item-delete {
+      width: 24px;
+      height: 24px;
+      background: #ff4444;
+      color: white;
+      border: none;
+      border-radius: 50%;
+      cursor: pointer;
+      font-size: 14px;
+      line-height: 1;
+      padding: 0;
+      transition: background 0.2s;
+    }
+
+    .grid-item-delete:hover {
+      background: #cc0000;
+    }
+
+    /* Resize Handles */
+    .resize-handle {
+      position: absolute;
+      width: 10px;
+      height: 10px;
+      background: #4A90E2;
+      border: 2px solid white;
+      border-radius: 50%;
+      box-shadow: 0 0 3px rgba(0,0,0,0.3);
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+
+    .grid-item.selected .resize-handle,
+    .grid-item:hover .resize-handle {
+      opacity: 1;
+    }
+
+    .resize-handle.nw { top: -5px; left: -5px; cursor: nw-resize; }
+    .resize-handle.ne { top: -5px; right: -5px; cursor: ne-resize; }
+    .resize-handle.sw { bottom: -5px; left: -5px; cursor: sw-resize; }
+    .resize-handle.se { bottom: -5px; right: -5px; cursor: se-resize; }
+    .resize-handle.n { top: -5px; left: 50%; transform: translateX(-50%); cursor: n-resize; }
+    .resize-handle.s { bottom: -5px; left: 50%; transform: translateX(-50%); cursor: s-resize; }
+    .resize-handle.e { top: 50%; right: -5px; transform: translateY(-50%); cursor: e-resize; }
+    .resize-handle.w { top: 50%; left: -5px; transform: translateY(-50%); cursor: w-resize; }
+
+    /* Drag Clone */
+    .dragging-clone {
+      position: fixed;
+      pointer-events: none;
+      z-index: 10000;
+      opacity: 0.8;
+      background: #4A90E2;
+      color: white;
+      padding: 15px;
+      border-radius: 4px;
+      font-weight: 500;
+    }
+
+    /* Drop Zone Indicator */
+    .drop-zone-indicator {
+      position: absolute;
+      border: 2px dashed #4A90E2;
+      background: rgba(74, 144, 226, 0.1);
+      border-radius: 4px;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+
+    .drop-zone-indicator.active {
+      opacity: 1;
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <!-- Component Palette -->
+    <div class="palette">
+      <h2>Components</h2>
+      <div class="palette-item" data-component-type="header">
+        📄 Header
+      </div>
+      <div class="palette-item" data-component-type="text">
+        📝 Text Block
+      </div>
+      <div class="palette-item" data-component-type="image">
+        🖼️ Image
+      </div>
+      <div class="palette-item" data-component-type="button">
+        🔘 Button
+      </div>
+      <div class="palette-item" data-component-type="video">
+        🎥 Video
+      </div>
+    </div>
+
+    <!-- Main Canvas -->
+    <div class="canvas">
+      <div class="canvas-header">
+        <h1>Grid Builder POC - Transform-Based Positioning</h1>
+        <p><strong>Experimental:</strong> Testing CSS transform-based positioning instead of left/top. <a href="index.html" style="color: #4A90E2;">← Back to standard version</a></p>
+        <div class="controls">
+          <div class="viewport-toggle">
+            <button id="desktopView" class="viewport-btn active">🖥️ Desktop</button>
+            <button id="mobileView" class="viewport-btn">📱 Mobile</button>
+          </div>
+          <button id="toggleGrid" class="active">Show Grid</button>
+          <button id="exportState">Export State</button>
+        </div>
+      </div>
+
+      <div class="canvases-container">
+        <div class="canvas-item">
+          <div class="canvas-item-header">
+            <h3>Section 1</h3>
+            <div class="canvas-controls">
+              <label>
+                <input type="color" class="canvas-bg-color" data-canvas="canvas1" value="#ffffff">
+              </label>
+              <button class="clear-canvas-btn" data-canvas="canvas1">Clear</button>
+            </div>
+          </div>
+          <div class="grid-builder">
+            <div class="grid-container" id="canvas1" data-canvas-id="canvas1">
+              <!-- Grid items will be added here -->
+            </div>
+          </div>
+        </div>
+
+        <div class="canvas-item">
+          <div class="canvas-item-header">
+            <h3>Section 2</h3>
+            <div class="canvas-controls">
+              <label>
+                <input type="color" class="canvas-bg-color" data-canvas="canvas2" value="#f5f5f5">
+              </label>
+              <button class="clear-canvas-btn" data-canvas="canvas2">Clear</button>
+            </div>
+          </div>
+          <div class="grid-builder">
+            <div class="grid-container" id="canvas2" data-canvas-id="canvas2">
+              <!-- Grid items will be added here -->
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // State - per canvas
+    const canvases = {
+      canvas1: {
+        items: [],
+        zIndexCounter: 1
+      },
+      canvas2: {
+        items: [],
+        zIndexCounter: 1
+      }
+    };
+    let selectedItemId = null;
+    let selectedCanvasId = null;
+    let itemIdCounter = 0;
+    let dragClone = null;
+    let showGrid = true;
+    let currentViewport = 'desktop'; // 'desktop' or 'mobile'
+
+    const gridContainers = document.querySelectorAll('.grid-container');
+
+    // Grid configuration matches CSS background-size: 2% 20px
+    const GRID_SIZE_VERTICAL = 20; // Fixed 20px vertical grid
+    const GRID_SIZE_HORIZONTAL_PERCENT = 0.02; // 2% horizontal grid
+
+    // Calculate horizontal grid size (responsive, based on container width)
+    function getGridSizeHorizontal(canvasId) {
+      const container = document.getElementById(canvasId);
+      return container.clientWidth * GRID_SIZE_HORIZONTAL_PERCENT;
+    }
+
+    // Calculate vertical grid size (fixed 20px)
+    function getGridSizeVertical() {
+      return GRID_SIZE_VERTICAL;
+    }
+
+    // Convert grid units to pixels for horizontal values (x, width)
+    // Uses percentage calculation to match CSS background grid
+    function gridToPixelsX(gridUnits, canvasId) {
+      const container = document.getElementById(canvasId);
+      const percentage = gridUnits * GRID_SIZE_HORIZONTAL_PERCENT;
+      return Math.round(container.clientWidth * percentage);
+    }
+
+    // Convert grid units to pixels for vertical values (y, height)
+    // Uses fixed 20px grid size
+    function gridToPixelsY(gridUnits) {
+      return gridUnits * GRID_SIZE_VERTICAL;
+    }
+
+    // Convert pixels to grid units for horizontal values (x, width)
+    function pixelsToGridX(pixels, canvasId) {
+      const container = document.getElementById(canvasId);
+      const percentage = pixels / container.clientWidth;
+      return Math.round(percentage / GRID_SIZE_HORIZONTAL_PERCENT);
+    }
+
+    // Convert pixels to grid units for vertical values (y, height)
+    function pixelsToGridY(pixels) {
+      return Math.round(pixels / GRID_SIZE_VERTICAL);
+    }
+
+    // Component templates
+    const componentTemplates = {
+      header: { icon: '📄', title: 'Header', content: 'This is a header component' },
+      text: { icon: '📝', title: 'Text Block', content: 'This is a text block component' },
+      image: { icon: '🖼️', title: 'Image', content: 'Image placeholder' },
+      button: { icon: '🔘', title: 'Button', content: 'Click me!' },
+      video: { icon: '🎥', title: 'Video', content: 'Video player' }
+    };
+
+    // Initialize palette dragging
+    interact('.palette-item')
+      .draggable({
+        inertia: false,
+        autoScroll: false,
+
+        listeners: {
+          start(event) {
+            event.target.classList.add('dragging-from-palette');
+
+            // Create drag clone
+            dragClone = document.createElement('div');
+            dragClone.className = 'dragging-clone';
+            dragClone.textContent = event.target.textContent;
+            dragClone.style.left = event.clientX + 'px';
+            dragClone.style.top = event.clientY + 'px';
+            document.body.appendChild(dragClone);
+          },
+
+          move(event) {
+            if (dragClone) {
+              dragClone.style.left = event.clientX + 'px';
+              dragClone.style.top = event.clientY + 'px';
+            }
+          },
+
+          end(event) {
+            event.target.classList.remove('dragging-from-palette');
+            if (dragClone) {
+              dragClone.remove();
+              dragClone = null;
+            }
+          }
+        }
+      });
+
+    // Initialize drop zones for all canvases
+    gridContainers.forEach(container => {
+      interact(container)
+        .dropzone({
+          accept: '.palette-item',
+
+          ondrop(event) {
+            const componentType = event.relatedTarget.getAttribute('data-component-type');
+            const canvasId = event.target.getAttribute('data-canvas-id');
+            const dropPosition = getGridPosition(event.dragEvent.clientX, event.dragEvent.clientY, canvasId);
+
+            addItemToGrid(canvasId, componentType, dropPosition.x, dropPosition.y);
+          }
+        });
+    });
+
+    // Batch render items using DocumentFragment for better performance
+    // Use this after adding multiple items with skipRender = true
+    function batchRenderItems(canvasId) {
+      const canvas = canvases[canvasId];
+      const gridContainer = document.getElementById(canvasId);
+      const fragment = document.createDocumentFragment();
+
+      // Create all DOM elements in the fragment (not yet in DOM)
+      canvas.items.forEach(item => {
+        const template = componentTemplates[item.type];
+        const div = document.createElement('div');
+        div.className = 'grid-item';
+        div.id = item.id;
+        div.setAttribute('data-canvas-id', item.canvasId);
+
+        const layout = getCurrentLayout(item);
+        // Use transform for positioning instead of left/top
+        div.style.transform = `translate(${layout.x}px, ${layout.y}px)`;
+        div.style.width = layout.width + 'px';
+        div.style.height = layout.height + 'px';
+        div.style.zIndex = item.zIndex;
+
+        div.innerHTML = `
+          <div class="grid-item-header">${template.icon} ${template.title}</div>
+          <div class="grid-item-content">${template.content}</div>
+          <div class="grid-item-controls">
+            <button class="grid-item-control-btn" onclick="bringToFront('${item.id}', '${item.canvasId}')" title="Bring to Front">⬆️</button>
+            <button class="grid-item-control-btn" onclick="sendToBack('${item.id}', '${item.canvasId}')" title="Send to Back">⬇️</button>
+            <button class="grid-item-delete" onclick="deleteItem('${item.id}', '${item.canvasId}')">×</button>
+          </div>
+          <div class="resize-handle nw"></div>
+          <div class="resize-handle ne"></div>
+          <div class="resize-handle sw"></div>
+          <div class="resize-handle se"></div>
+          <div class="resize-handle n"></div>
+          <div class="resize-handle s"></div>
+          <div class="resize-handle e"></div>
+          <div class="resize-handle w"></div>
+        `;
+
+        // Click to select
+        div.addEventListener('click', (e) => {
+          if (!e.target.classList.contains('grid-item-delete') &&
+              !e.target.classList.contains('grid-item-control-btn')) {
+            selectItem(item.id, item.canvasId);
+          }
+        });
+
+        fragment.appendChild(div);
+      });
+
+      // Single DOM append operation
+      gridContainer.appendChild(fragment);
+
+      // Initialize interact.js on all elements (must be done after elements are in DOM)
+      canvas.items.forEach(item => {
+        const element = document.getElementById(item.id);
+        makeItemDraggable(element, item);
+        makeItemResizable(element, item);
+      });
+    }
+
+    // Add item to grid
+    // NOTE: x, y, width, height are in PIXELS for the initial call, but stored as GRID UNITS
+    function addItemToGrid(canvasId, componentType, x, y, width = 200, height = 150, zIndex = null, skipRender = false) {
+      const template = componentTemplates[componentType];
+      const id = 'item-' + (++itemIdCounter);
+      const canvas = canvases[canvasId];
+
+      const item = {
+        id,
+        canvasId,
+        type: componentType,
+        layouts: {
+          desktop: {
+            x: pixelsToGridX(x, canvasId),        // stored in grid units
+            y: pixelsToGridY(y),                   // stored in grid units
+            width: pixelsToGridX(width, canvasId), // stored in grid units
+            height: pixelsToGridY(height)          // stored in grid units
+          },
+          mobile: {
+            x: null, // null means auto-generate
+            y: null,
+            width: null,
+            height: null,
+            customized: false // track if user has manually edited mobile layout
+          }
+        },
+        zIndex: zIndex !== null ? zIndex : canvas.zIndexCounter++
+      };
+
+      canvas.items.push(item);
+
+      if (!skipRender) {
+        renderItem(item, template);
+      }
+
+      // Clear mobile layout cache since items changed
+      clearMobileLayoutCache(canvasId);
+
+      // Update canvas height if in mobile view
+      if (currentViewport === 'mobile') {
+        const gridContainer = document.getElementById(canvasId);
+        const requiredHeight = calculateCanvasHeight(canvasId);
+        gridContainer.style.minHeight = requiredHeight + 'px';
+      }
+
+      return item;
+    }
+
+    // Cache for mobile auto-layouts (cleared when items change)
+    const mobileAutoLayoutCache = {};
+
+    // Calculate all mobile auto-layouts for a canvas in O(n) time
+    // This eliminates the recursive O(n²) calculation
+    function calculateAllMobileAutoLayouts(canvasId) {
+      const canvas = canvases[canvasId];
+      const containerWidth = document.getElementById(canvasId).clientWidth;
+      const gridSizeX = getGridSizeHorizontal(canvasId);
+      const gridSizeY = getGridSizeVertical();
+      let yPosition = gridSizeY; // Start with 1 grid unit padding
+
+      canvas.items.forEach(item => {
+        const cacheKey = `${canvasId}-${item.id}`;
+
+        if (item.layouts.mobile.customized) {
+          // Use stored customized layout
+          const layout = {
+            x: gridToPixelsX(item.layouts.mobile.x, item.canvasId),
+            y: gridToPixelsY(item.layouts.mobile.y),
+            width: gridToPixelsX(item.layouts.mobile.width, item.canvasId),
+            height: gridToPixelsY(item.layouts.mobile.height)
+          };
+          mobileAutoLayoutCache[cacheKey] = layout;
+
+          // Update yPosition for next item (customized items can affect stacking)
+          const bottom = layout.y + layout.height;
+          yPosition = Math.max(yPosition, bottom + gridSizeY);
+        } else {
+          // Calculate auto-layout for this item
+          const desktopLayout = item.layouts.desktop;
+          const desktopWidthPx = gridToPixelsX(desktopLayout.width, item.canvasId);
+          const desktopHeightPx = gridToPixelsY(desktopLayout.height);
+
+          const mobileWidth = Math.min(containerWidth - (2 * gridSizeX), desktopWidthPx);
+          const aspectRatio = desktopHeightPx / desktopWidthPx;
+          const mobileHeight = Math.round(mobileWidth * aspectRatio);
+
+          const layout = {
+            x: gridSizeX,
+            y: yPosition,
+            width: mobileWidth,
+            height: mobileHeight
+          };
+
+          mobileAutoLayoutCache[cacheKey] = layout;
+
+          // Move yPosition down for next item
+          yPosition = layout.y + layout.height + gridSizeY;
+        }
+      });
+    }
+
+    // Clear mobile auto-layout cache for a canvas
+    function clearMobileLayoutCache(canvasId) {
+      const canvas = canvases[canvasId];
+      canvas.items.forEach(item => {
+        const cacheKey = `${canvasId}-${item.id}`;
+        delete mobileAutoLayoutCache[cacheKey];
+      });
+    }
+
+    // Get current layout for item based on viewport
+    // Returns layout in PIXELS (converted from grid units)
+    function getCurrentLayout(item) {
+      const layout = item.layouts[currentViewport];
+
+      // If mobile and not customized, use cached auto-layout
+      if (currentViewport === 'mobile' && !layout.customized) {
+        const cacheKey = `${item.canvasId}-${item.id}`;
+
+        // If not in cache, calculate all layouts for this canvas
+        if (!mobileAutoLayoutCache[cacheKey]) {
+          calculateAllMobileAutoLayouts(item.canvasId);
+        }
+
+        return mobileAutoLayoutCache[cacheKey];
+      }
+
+      // Convert grid units to pixels
+      return {
+        x: gridToPixelsX(layout.x, item.canvasId),
+        y: gridToPixelsY(layout.y),
+        width: gridToPixelsX(layout.width, item.canvasId),
+        height: gridToPixelsY(layout.height)
+      };
+    }
+
+    // Render item
+    function renderItem(item, template) {
+      const gridContainer = document.getElementById(item.canvasId);
+      const div = document.createElement('div');
+      div.className = 'grid-item';
+      div.id = item.id;
+      div.setAttribute('data-canvas-id', item.canvasId);
+
+      const layout = getCurrentLayout(item);
+      // Use transform for positioning instead of left/top
+      div.style.transform = `translate(${layout.x}px, ${layout.y}px)`;
+      div.style.width = layout.width + 'px';
+      div.style.height = layout.height + 'px';
+      div.style.zIndex = item.zIndex;
+
+      div.innerHTML = `
+        <div class="grid-item-header">${template.icon} ${template.title}</div>
+        <div class="grid-item-content">${template.content}</div>
+        <div class="grid-item-controls">
+          <button class="grid-item-control-btn" onclick="bringToFront('${item.id}', '${item.canvasId}')" title="Bring to Front">⬆️</button>
+          <button class="grid-item-control-btn" onclick="sendToBack('${item.id}', '${item.canvasId}')" title="Send to Back">⬇️</button>
+          <button class="grid-item-delete" onclick="deleteItem('${item.id}', '${item.canvasId}')">×</button>
+        </div>
+        <div class="resize-handle nw"></div>
+        <div class="resize-handle ne"></div>
+        <div class="resize-handle sw"></div>
+        <div class="resize-handle se"></div>
+        <div class="resize-handle n"></div>
+        <div class="resize-handle s"></div>
+        <div class="resize-handle e"></div>
+        <div class="resize-handle w"></div>
+      `;
+
+      // Click to select
+      div.addEventListener('click', (e) => {
+        if (!e.target.classList.contains('grid-item-delete') &&
+            !e.target.classList.contains('grid-item-control-btn')) {
+          selectItem(item.id, item.canvasId);
+        }
+      });
+
+      gridContainer.appendChild(div);
+
+      // Make draggable
+      makeItemDraggable(div, item);
+
+      // Make resizable
+      makeItemResizable(div, item);
+    }
+
+    // Extract position from transform string
+    // Returns {x: number, y: number} or {x: 0, y: 0} if no transform
+    function getTransformPosition(element) {
+      const transform = element.style.transform;
+      if (!transform || transform === 'none') {
+        return { x: 0, y: 0 };
+      }
+
+      // Match translate(Xpx, Ypx) pattern
+      const match = transform.match(/translate\((-?[\d.]+)px,\s*(-?[\d.]+)px\)/);
+      if (match) {
+        return {
+          x: parseFloat(match[1]),
+          y: parseFloat(match[2])
+        };
+      }
+
+      return { x: 0, y: 0 };
+    }
+
+    // Make item draggable
+    function makeItemDraggable(element, item) {
+      let dragRafId = null;
+
+      interact(element)
+        .draggable({
+          listeners: {
+            start(event) {
+              event.target.classList.add('dragging');
+              selectItem(item.id, item.canvasId);
+            },
+
+            move(event) {
+              // Cancel any pending frame
+              if (dragRafId) {
+                cancelAnimationFrame(dragRafId);
+              }
+
+              // Batch DOM updates with requestAnimationFrame
+              dragRafId = requestAnimationFrame(() => {
+                const x = (parseFloat(event.target.getAttribute('data-x')) || 0) + event.dx;
+                const y = (parseFloat(event.target.getAttribute('data-y')) || 0) + event.dy;
+
+                event.target.style.transform = `translate(${x}px, ${y}px)`;
+                event.target.setAttribute('data-x', x);
+                event.target.setAttribute('data-y', y);
+
+                dragRafId = null;
+              });
+            },
+
+            end(event) {
+              // Cancel any pending frame
+              if (dragRafId) {
+                cancelAnimationFrame(dragRafId);
+                dragRafId = null;
+              }
+
+              event.target.classList.remove('dragging');
+
+              const x = parseFloat(event.target.getAttribute('data-x')) || 0;
+              const y = parseFloat(event.target.getAttribute('data-y')) || 0;
+
+              // Get the element's current position in viewport
+              const rect = event.target.getBoundingClientRect();
+              const centerX = rect.left + rect.width / 2;
+              const centerY = rect.top + rect.height / 2;
+
+              // Find which canvas the center of the item is over
+              const oldCanvasId = item.canvasId;
+              let targetCanvasId = item.canvasId;
+              gridContainers.forEach(container => {
+                const containerRect = container.getBoundingClientRect();
+                if (centerX >= containerRect.left && centerX <= containerRect.right &&
+                    centerY >= containerRect.top && centerY <= containerRect.bottom) {
+                  targetCanvasId = container.getAttribute('data-canvas-id');
+                }
+              });
+
+              // Calculate new position relative to target canvas
+              const targetContainer = document.getElementById(targetCanvasId);
+              const targetRect = targetContainer.getBoundingClientRect();
+              const gridSizeX = getGridSizeHorizontal(targetCanvasId);
+              const gridSizeY = getGridSizeVertical();
+
+              let newX = rect.left - targetRect.left;
+              let newY = rect.top - targetRect.top;
+
+              // Snap to grid (separate X and Y)
+              newX = Math.round(newX / gridSizeX) * gridSizeX;
+              newY = Math.round(newY / gridSizeY) * gridSizeY;
+
+              // Ensure item stays fully within target canvas
+              const itemWidth = parseFloat(event.target.style.width) || 0;
+              const itemHeight = parseFloat(event.target.style.height) || 0;
+              newX = Math.max(0, Math.min(newX, targetContainer.clientWidth - itemWidth));
+              newY = Math.max(0, Math.min(newY, targetContainer.clientHeight - itemHeight));
+
+              // If canvas changed, move item to new canvas
+              if (targetCanvasId !== item.canvasId) {
+                const oldCanvas = canvases[item.canvasId];
+                const newCanvas = canvases[targetCanvasId];
+
+                // Remove from old canvas
+                oldCanvas.items = oldCanvas.items.filter(i => i.id !== item.id);
+
+                // Update item canvas
+                item.canvasId = targetCanvasId;
+
+                // Add to new canvas
+                newCanvas.items.push(item);
+
+                // Move DOM element to new container
+                event.target.remove();
+                targetContainer.appendChild(event.target);
+
+                // Update data attribute
+                event.target.setAttribute('data-canvas-id', targetCanvasId);
+
+                // Update control buttons to use new canvas ID
+                const controlsDiv = event.target.querySelector('.grid-item-controls');
+                if (controlsDiv) {
+                  controlsDiv.innerHTML = `
+                    <button class="grid-item-control-btn" onclick="bringToFront('${item.id}', '${targetCanvasId}')" title="Bring to Front">⬆️</button>
+                    <button class="grid-item-control-btn" onclick="sendToBack('${item.id}', '${targetCanvasId}')" title="Send to Back">⬇️</button>
+                    <button class="grid-item-delete" onclick="deleteItem('${item.id}', '${targetCanvasId}')">×</button>
+                  `;
+                }
+              }
+
+              // Update item position in current viewport's layout (convert to grid units)
+              const layout = item.layouts[currentViewport];
+              layout.x = pixelsToGridX(newX, targetCanvasId);
+              layout.y = pixelsToGridY(newY);
+
+              // If in mobile view, mark as customized
+              if (currentViewport === 'mobile') {
+                item.layouts.mobile.customized = true;
+                // Set width/height if not already set (copy from desktop)
+                if (item.layouts.mobile.width === null) {
+                  item.layouts.mobile.width = item.layouts.desktop.width;
+                  item.layouts.mobile.height = item.layouts.desktop.height;
+                }
+                // Clear cache since customization affects layout
+                clearMobileLayoutCache(targetCanvasId);
+                if (targetCanvasId !== oldCanvasId) {
+                  clearMobileLayoutCache(oldCanvasId);
+                }
+              }
+
+              // Commit to transform-based position (no left/top)
+              event.target.style.transform = `translate(${newX}px, ${newY}px)`;
+              event.target.removeAttribute('data-x');
+              event.target.removeAttribute('data-y');
+
+              // Update selected canvas if this item is selected
+              if (selectedItemId === item.id) {
+                selectedCanvasId = targetCanvasId;
+              }
+
+              // Update canvas heights if in mobile view
+              if (currentViewport === 'mobile') {
+                // Update target canvas height (may be same as old or different)
+                const requiredHeight = calculateCanvasHeight(targetCanvasId);
+                targetContainer.style.minHeight = requiredHeight + 'px';
+
+                // If canvas changed, also update old canvas height
+                if (targetCanvasId !== oldCanvasId) {
+                  const oldGridContainer = document.getElementById(oldCanvasId);
+                  const oldRequiredHeight = calculateCanvasHeight(oldCanvasId);
+                  oldGridContainer.style.minHeight = oldRequiredHeight + 'px';
+                }
+              }
+            }
+          }
+        });
+    }
+
+    // Make item resizable
+    function makeItemResizable(element, item) {
+      let resizeRafId = null;
+
+      interact(element)
+        .resizable({
+          edges: { left: true, right: true, bottom: true, top: true },
+
+          modifiers: [
+            interact.modifiers.restrictSize({
+              min: { width: 100, height: 80 }
+            }),
+            interact.modifiers.restrictEdges({
+              outer: 'parent'
+            })
+          ],
+
+          listeners: {
+            start(event) {
+              event.target.classList.add('resizing');
+            },
+
+            move(event) {
+              // Cancel any pending frame
+              if (resizeRafId) {
+                cancelAnimationFrame(resizeRafId);
+              }
+
+              // Batch DOM updates with requestAnimationFrame
+              resizeRafId = requestAnimationFrame(() => {
+                // Get current position from transform
+                const currentPos = getTransformPosition(event.target);
+                const currentX = currentPos.x;
+                const currentY = currentPos.y;
+                let deltaX = parseFloat(event.target.getAttribute('data-x')) || 0;
+                let deltaY = parseFloat(event.target.getAttribute('data-y')) || 0;
+
+                // Get container bounds
+                const container = document.getElementById(item.canvasId);
+                const containerWidth = container.clientWidth;
+                const containerHeight = container.clientHeight;
+                const gridSizeX = getGridSizeHorizontal(item.canvasId);
+                const gridSizeY = getGridSizeVertical();
+
+                // Calculate new size and position
+                let newWidth = event.rect.width;
+                let newHeight = event.rect.height;
+                let newX = currentX + deltaX + event.deltaRect.left;
+                let newY = currentY + deltaY + event.deltaRect.top;
+
+                // Snap size to grid (separate X and Y)
+                newWidth = Math.round(newWidth / gridSizeX) * gridSizeX;
+                newHeight = Math.round(newHeight / gridSizeY) * gridSizeY;
+
+                // Snap position to grid (separate X and Y)
+                newX = Math.round(newX / gridSizeX) * gridSizeX;
+                newY = Math.round(newY / gridSizeY) * gridSizeY;
+
+                // Ensure item stays fully within container
+                newX = Math.max(0, Math.min(newX, containerWidth - newWidth));
+                newY = Math.max(0, Math.min(newY, containerHeight - newHeight));
+
+                // Calculate snapped deltas
+                const snappedDeltaX = newX - currentX;
+                const snappedDeltaY = newY - currentY;
+
+                event.target.style.width = newWidth + 'px';
+                event.target.style.height = newHeight + 'px';
+                event.target.style.transform = `translate(${snappedDeltaX}px, ${snappedDeltaY}px)`;
+                event.target.setAttribute('data-x', snappedDeltaX);
+                event.target.setAttribute('data-y', snappedDeltaY);
+
+                resizeRafId = null;
+              });
+            },
+
+            end(event) {
+              // Cancel any pending frame
+              if (resizeRafId) {
+                cancelAnimationFrame(resizeRafId);
+                resizeRafId = null;
+              }
+
+              event.target.classList.remove('resizing');
+
+              const x = parseFloat(event.target.getAttribute('data-x')) || 0;
+              const y = parseFloat(event.target.getAttribute('data-y')) || 0;
+
+              // Get current position from transform
+              const currentPos = getTransformPosition(event.target);
+
+              const newWidth = parseFloat(event.target.style.width);
+              const newHeight = parseFloat(event.target.style.height);
+              const newX = currentPos.x + x;
+              const newY = currentPos.y + y;
+
+              // Update item size and position in current viewport's layout (convert to grid units)
+              const layout = item.layouts[currentViewport];
+              layout.width = pixelsToGridX(newWidth, item.canvasId);
+              layout.height = pixelsToGridY(newHeight);
+              layout.x = pixelsToGridX(newX, item.canvasId);
+              layout.y = pixelsToGridY(newY);
+
+              // If in mobile view, mark as customized
+              if (currentViewport === 'mobile') {
+                item.layouts.mobile.customized = true;
+
+                // Clear cache since customization affects layout
+                clearMobileLayoutCache(item.canvasId);
+
+                // Update canvas height to fit resized item
+                const gridContainer = document.getElementById(item.canvasId);
+                const requiredHeight = calculateCanvasHeight(item.canvasId);
+                gridContainer.style.minHeight = requiredHeight + 'px';
+              }
+
+              // Commit to transform-based position (no left/top)
+              event.target.style.transform = `translate(${newX}px, ${newY}px)`;
+              event.target.style.width = newWidth + 'px';
+              event.target.style.height = newHeight + 'px';
+              event.target.removeAttribute('data-x');
+              event.target.removeAttribute('data-y');
+            }
+          }
+        });
+    }
+
+    // Select item
+    function selectItem(id, canvasId) {
+      // Deselect all
+      document.querySelectorAll('.grid-item').forEach(el => {
+        el.classList.remove('selected');
+      });
+
+      // Select the clicked item
+      const element = document.getElementById(id);
+      if (element) {
+        element.classList.add('selected');
+        selectedItemId = id;
+        selectedCanvasId = canvasId;
+      }
+    }
+
+    // Delete item
+    function deleteItem(id, canvasId) {
+      const element = document.getElementById(id);
+      if (element) {
+        element.remove();
+        const canvas = canvases[canvasId];
+        canvas.items = canvas.items.filter(item => item.id !== id);
+        if (selectedItemId === id) {
+          selectedItemId = null;
+          selectedCanvasId = null;
+        }
+
+        // Clear mobile layout cache since items changed
+        clearMobileLayoutCache(canvasId);
+
+        // Update canvas height if in mobile view
+        if (currentViewport === 'mobile') {
+          const gridContainer = document.getElementById(canvasId);
+          const requiredHeight = calculateCanvasHeight(canvasId);
+          gridContainer.style.minHeight = requiredHeight + 'px';
+        }
+      }
+    }
+
+    // Bring item to front
+    function bringToFront(id, canvasId) {
+      const canvas = canvases[canvasId];
+      const item = canvas.items.find(i => i.id === id);
+      if (item) {
+        item.zIndex = ++canvas.zIndexCounter;
+        const element = document.getElementById(id);
+        if (element) {
+          element.style.zIndex = item.zIndex;
+        }
+      }
+    }
+
+    // Send item to back
+    function sendToBack(id, canvasId) {
+      const canvas = canvases[canvasId];
+      const item = canvas.items.find(i => i.id === id);
+      if (item) {
+        // Find the lowest z-index, but never go below 1
+        const minZIndex = Math.min(...canvas.items.map(i => i.zIndex));
+        item.zIndex = Math.max(1, minZIndex - 1);
+
+        // If the item is already at the back, reorder all z-indexes
+        if (minZIndex <= 1) {
+          // Sort items by current z-index
+          const sortedItems = [...canvas.items].sort((a, b) => a.zIndex - b.zIndex);
+
+          // Reassign z-indexes starting from 1, with this item first
+          sortedItems.forEach((itm, index) => {
+            if (itm.id === id) {
+              itm.zIndex = 1;
+              const elem = document.getElementById(itm.id);
+              if (elem) elem.style.zIndex = 1;
+            } else {
+              itm.zIndex = index + 2;
+              const elem = document.getElementById(itm.id);
+              if (elem) elem.style.zIndex = itm.zIndex;
+            }
+          });
+        } else {
+          const element = document.getElementById(id);
+          if (element) {
+            element.style.zIndex = item.zIndex;
+          }
+        }
+      }
+    }
+
+    // Nudge item with keyboard
+    // dx and dy are in grid units (1 = one grid cell)
+    function nudgeItem(id, canvasId, dx, dy) {
+      const canvas = canvases[canvasId];
+      const item = canvas.items.find(i => i.id === id);
+      if (item) {
+        const layout = item.layouts[currentViewport];
+
+        // If mobile and not customized, need to customize it first
+        if (currentViewport === 'mobile' && !layout.customized) {
+          // Get the cached auto-layout
+          const cacheKey = `${canvasId}-${item.id}`;
+          if (!mobileAutoLayoutCache[cacheKey]) {
+            calculateAllMobileAutoLayouts(canvasId);
+          }
+          const autoLayout = mobileAutoLayoutCache[cacheKey];
+
+          // Convert pixels to grid units and store
+          layout.x = pixelsToGridX(autoLayout.x, canvasId);
+          layout.y = pixelsToGridY(autoLayout.y);
+          layout.width = pixelsToGridX(autoLayout.width, canvasId);
+          layout.height = pixelsToGridY(autoLayout.height);
+          layout.customized = true;
+
+          // Clear cache since we just customized
+          clearMobileLayoutCache(canvasId);
+        }
+
+        // Move by grid units
+        layout.x += dx;
+        layout.y += dy;
+
+        // Get container bounds to ensure item stays fully within (in grid units)
+        const container = document.getElementById(canvasId);
+        const containerWidthInGrids = pixelsToGridX(container.clientWidth, canvasId);
+        const containerHeightInGrids = pixelsToGridY(container.clientHeight);
+
+        // Keep within bounds - ensure item stays fully visible
+        layout.x = Math.max(0, Math.min(layout.x, containerWidthInGrids - layout.width));
+        layout.y = Math.max(0, Math.min(layout.y, containerHeightInGrids - layout.height));
+
+        // Update DOM using transform (convert to pixels)
+        const element = document.getElementById(id);
+        if (element) {
+          const x = gridToPixelsX(layout.x, canvasId);
+          const y = gridToPixelsY(layout.y);
+          element.style.transform = `translate(${x}px, ${y}px)`;
+        }
+
+        // Update canvas height if in mobile view
+        if (currentViewport === 'mobile') {
+          const gridContainer = document.getElementById(canvasId);
+          const requiredHeight = calculateCanvasHeight(canvasId);
+          gridContainer.style.minHeight = requiredHeight + 'px';
+        }
+      }
+    }
+
+    // Get grid position from mouse coordinates
+    function getGridPosition(clientX, clientY, canvasId) {
+      const gridContainer = document.getElementById(canvasId);
+      const rect = gridContainer.getBoundingClientRect();
+      const gridSizeX = getGridSizeHorizontal(canvasId);
+      const gridSizeY = getGridSizeVertical();
+
+      // Get cursor position relative to container
+      let x = clientX - rect.left;
+      let y = clientY - rect.top;
+
+      // Snap to grid (separate X and Y)
+      x = Math.round(x / gridSizeX) * gridSizeX;
+      y = Math.round(y / gridSizeY) * gridSizeY;
+
+      // Keep within bounds
+      x = Math.max(0, x);
+      y = Math.max(0, y);
+
+      return { x, y };
+    }
+
+    // Calculate required height for a canvas in current viewport
+    function calculateCanvasHeight(canvasId) {
+      const canvas = canvases[canvasId];
+      let maxBottom = 400; // minimum height
+
+      canvas.items.forEach(item => {
+        const layout = getCurrentLayout(item);
+        const bottom = layout.y + layout.height;
+        maxBottom = Math.max(maxBottom, bottom);
+      });
+
+      // Add some padding at the bottom
+      return maxBottom + 40;
+    }
+
+    // Switch viewport
+    function switchViewport(viewport) {
+      currentViewport = viewport;
+
+      // Update button states
+      document.getElementById('desktopView').classList.toggle('active', viewport === 'desktop');
+      document.getElementById('mobileView').classList.toggle('active', viewport === 'mobile');
+
+      // Update container class
+      const container = document.querySelector('.canvases-container');
+      container.classList.toggle('mobile-view', viewport === 'mobile');
+
+      // Re-render all items with current viewport layout
+      Object.keys(canvases).forEach(canvasId => {
+        const canvas = canvases[canvasId];
+        const gridContainer = document.getElementById(canvasId);
+
+        // Clear and re-render all items using transform
+        canvas.items.forEach(item => {
+          const element = document.getElementById(item.id);
+          if (element) {
+            const layout = getCurrentLayout(item);
+            element.style.transform = `translate(${layout.x}px, ${layout.y}px)`;
+            element.style.width = layout.width + 'px';
+            element.style.height = layout.height + 'px';
+          }
+        });
+
+        // Update canvas height to fit all items
+        const requiredHeight = calculateCanvasHeight(canvasId);
+        gridContainer.style.minHeight = requiredHeight + 'px';
+      });
+
+      // Deselect items when switching
+      selectedItemId = null;
+      selectedCanvasId = null;
+      document.querySelectorAll('.grid-item').forEach(el => {
+        el.classList.remove('selected');
+      });
+    }
+
+    // Viewport toggle handlers
+    document.getElementById('desktopView').addEventListener('click', function() {
+      switchViewport('desktop');
+    });
+
+    document.getElementById('mobileView').addEventListener('click', function() {
+      switchViewport('mobile');
+    });
+
+    // Toggle grid visibility
+    document.getElementById('toggleGrid').addEventListener('click', function() {
+      showGrid = !showGrid;
+      gridContainers.forEach(container => {
+        container.classList.toggle('hide-grid', !showGrid);
+      });
+      this.classList.toggle('active', showGrid);
+      this.textContent = showGrid ? 'Show Grid' : 'Hide Grid';
+    });
+
+    // Background color pickers
+    document.querySelectorAll('.canvas-bg-color').forEach(colorPicker => {
+      colorPicker.addEventListener('input', function(e) {
+        const canvasId = e.target.getAttribute('data-canvas');
+        const gridContainer = document.getElementById(canvasId);
+        if (gridContainer) {
+          gridContainer.style.backgroundColor = e.target.value;
+        }
+      });
+    });
+
+    // Clear canvas buttons
+    document.querySelectorAll('.clear-canvas-btn').forEach(btn => {
+      btn.addEventListener('click', function() {
+        const canvasId = this.getAttribute('data-canvas');
+        if (confirm(`Are you sure you want to clear all items from this canvas?`)) {
+          const canvas = canvases[canvasId];
+          const gridContainer = document.getElementById(canvasId);
+
+          // Remove all items from DOM
+          canvas.items.forEach(item => {
+            const element = document.getElementById(item.id);
+            if (element) element.remove();
+          });
+
+          // Clear items array
+          canvas.items = [];
+
+          // Clear mobile layout cache
+          clearMobileLayoutCache(canvasId);
+
+          // Clear selection if it was on this canvas
+          if (selectedCanvasId === canvasId) {
+            selectedItemId = null;
+            selectedCanvasId = null;
+          }
+
+          // Reset canvas height to minimum
+          gridContainer.style.minHeight = '400px';
+        }
+      });
+    });
+
+    // Export state
+    document.getElementById('exportState').addEventListener('click', function() {
+      const state = {
+        canvases: Object.keys(canvases).reduce((acc, canvasId) => {
+          acc[canvasId] = {
+            items: canvases[canvasId].items.map(({ id, canvasId, type, layouts, zIndex }) =>
+              ({ id, canvasId, type, layouts, zIndex }))
+          };
+          return acc;
+        }, {}),
+        currentViewport: currentViewport,
+        timestamp: new Date().toISOString()
+      };
+
+      console.log('Grid State:', state);
+      const totalItems = Object.values(canvases).reduce((sum, canvas) => sum + canvas.items.length, 0);
+      alert('Grid state exported to console!\n\nTotal Items: ' + totalItems + '\nViewport: ' + currentViewport);
+    });
+
+    // Deselect on background click
+    gridContainers.forEach(container => {
+      container.addEventListener('click', function(e) {
+        if (e.target === container) {
+          document.querySelectorAll('.grid-item').forEach(el => {
+            el.classList.remove('selected');
+          });
+          selectedItemId = null;
+          selectedCanvasId = null;
+        }
+      });
+    });
+
+    // Keyboard shortcuts
+    document.addEventListener('keydown', function(e) {
+      // Delete key
+      if (e.key === 'Delete' && selectedItemId && selectedCanvasId) {
+        deleteItem(selectedItemId, selectedCanvasId);
+      }
+
+      // Escape key
+      if (e.key === 'Escape') {
+        document.querySelectorAll('.grid-item').forEach(el => {
+          el.classList.remove('selected');
+        });
+        selectedItemId = null;
+        selectedCanvasId = null;
+      }
+
+      // Arrow keys - nudge selected item
+      if (selectedItemId && selectedCanvasId) {
+        let dx = 0, dy = 0;
+
+        if (e.key === 'ArrowLeft') {
+          dx = -1;
+          e.preventDefault();
+        } else if (e.key === 'ArrowRight') {
+          dx = 1;
+          e.preventDefault();
+        } else if (e.key === 'ArrowUp') {
+          dy = -1;
+          e.preventDefault();
+        } else if (e.key === 'ArrowDown') {
+          dy = 1;
+          e.preventDefault();
+        }
+
+        if (dx !== 0 || dy !== 0) {
+          nudgeItem(selectedItemId, selectedCanvasId, dx, dy);
+        }
+      }
+    });
+
+    // Re-render all components when window resizes
+    // Components are stored in grid units, so we need to recalculate pixel positions
+    let resizeTimeout;
+    window.addEventListener('resize', function() {
+      clearTimeout(resizeTimeout);
+      resizeTimeout = setTimeout(() => {
+        // Clear all mobile layout caches since grid size changed
+        if (currentViewport === 'mobile') {
+          Object.keys(canvases).forEach(canvasId => {
+            clearMobileLayoutCache(canvasId);
+          });
+        }
+
+        Object.keys(canvases).forEach(canvasId => {
+          const canvas = canvases[canvasId];
+
+          canvas.items.forEach(item => {
+            const element = document.getElementById(item.id);
+            if (element) {
+              const layout = getCurrentLayout(item);
+              element.style.transform = `translate(${layout.x}px, ${layout.y}px)`;
+              element.style.width = layout.width + 'px';
+              element.style.height = layout.height + 'px';
+            }
+          });
+
+          // Update canvas height if in mobile view
+          if (currentViewport === 'mobile') {
+            const gridContainer = document.getElementById(canvasId);
+            const requiredHeight = calculateCanvasHeight(canvasId);
+            gridContainer.style.minHeight = requiredHeight + 'px';
+          }
+        });
+      }, 150);
+    });
+
+    // Add some demo items on load
+    window.addEventListener('load', function() {
+      // Set initial background colors
+      document.getElementById('canvas1').style.backgroundColor = '#ffffff';
+      document.getElementById('canvas2').style.backgroundColor = '#f5f5f5';
+
+      // Section 1 - Hero section demo items (batch add without rendering)
+      addItemToGrid('canvas1', 'header', 40, 40, 400, 120, null, true);
+      addItemToGrid('canvas1', 'text', 40, 180, 400, 100, null, true);
+      addItemToGrid('canvas1', 'button', 40, 300, 180, 80, null, true);
+      addItemToGrid('canvas1', 'image', 460, 40, 300, 240, null, true);
+
+      // Batch render all canvas1 items with DocumentFragment
+      batchRenderItems('canvas1');
+
+      // Section 2 - Content section demo items (batch add without rendering)
+      addItemToGrid('canvas2', 'header', 40, 40, 350, 80, null, true);
+      addItemToGrid('canvas2', 'text', 40, 140, 350, 150, null, true);
+      addItemToGrid('canvas2', 'video', 420, 40, 340, 250, null, true);
+
+      // Batch render all canvas2 items with DocumentFragment
+      batchRenderItems('canvas2');
+    });
+  </script>
+</body>
+</html>
