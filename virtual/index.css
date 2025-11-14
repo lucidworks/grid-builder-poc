@@ -296,7 +296,7 @@
       background: white;
       border: 2px solid transparent;
       border-radius: 4px;
-      padding: 20px;
+      padding: 20px 20px 20px 44px; /* Extra left padding for drag handle */
       cursor: default;
       transition: border-color 0.2s, box-shadow 0.2s;
       box-shadow: 0 2px 4px rgba(0,0,0,0.1);
@@ -329,7 +329,6 @@
       color: #333;
       margin-bottom: 5px;
       font-size: 14px;
-      padding-left: 40px; /* Make room for drag handle */
     }
 
     .grid-item-content {
