@@ -136,7 +136,7 @@
 
     .tooltip {
       position: absolute;
-      bottom: calc(100% + 10px);
+      top: calc(100% + 10px);
       left: 50%;
       transform: translateX(-50%);
       background: #333;
@@ -158,11 +158,11 @@
     .tooltip::after {
       content: '';
       position: absolute;
-      top: 100%;
+      bottom: 100%;
       left: 50%;
       transform: translateX(-50%);
       border: 6px solid transparent;
-      border-top-color: #333;
+      border-bottom-color: #333;
     }
 
     .tooltip-section {
