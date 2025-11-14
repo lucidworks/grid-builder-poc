@@ -899,8 +899,8 @@
           edges: { left: true, right: true, bottom: true, top: true },
 
           modifiers: [
-            // FIXED: Use Interact.js snap modifier instead of manual snapping
-            // This prevents drift between mouse position and element edges
+            // FIXED: Use Interact.js snap modifier with endOnly to prevent initial jump
+            // This snaps only when resize ends, not during the resize
             interact.modifiers.snap({
               targets: [
                 interact.snappers.grid({
@@ -909,7 +909,7 @@
                 })
               ],
               range: Infinity,
-              relativePoints: [ { x: 0, y: 0 } ]
+              endOnly: true
             }),
             interact.modifiers.restrictSize({
               min: { width: 100, height: 80 }
