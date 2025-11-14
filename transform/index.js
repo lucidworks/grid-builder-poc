@@ -1,737 +1,3 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Grid Builder POC - Transform-Based Positioning (Experimental)</title>
-  <script src="https://cdn.jsdelivr.net/npm/interactjs@1.10.19/dist/interact.min.js"></script>
-  <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-      background: #f5f5f5;
-      height: 100vh;
-      overflow: hidden;
-    }
-
-    .app {
-      display: flex;
-      height: 100vh;
-    }
-
-    /* Component Palette */
-    .palette {
-      width: 250px;
-      background: white;
-      border-right: 1px solid #ddd;
-      padding: 20px;
-      overflow-y: auto;
-    }
-
-    .palette h2 {
-      font-size: 18px;
-      margin-bottom: 20px;
-      color: #333;
-    }
-
-    .palette-item {
-      background: #4A90E2;
-      color: white;
-      padding: 15px;
-      margin-bottom: 10px;
-      border-radius: 4px;
-      cursor: move;
-      text-align: center;
-      font-weight: 500;
-      user-select: none;
-      transition: transform 0.2s, box-shadow 0.2s;
-    }
-
-    .palette-item:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-    }
-
-    .palette-item.dragging-from-palette {
-      opacity: 0.5;
-    }
-
-    /* Main Canvas */
-    .canvas {
-      flex: 1;
-      padding: 20px;
-      overflow: auto;
-      position: relative;
-    }
-
-    .canvas-header {
-      background: white;
-      padding: 15px 20px;
-      margin-bottom: 20px;
-      border-radius: 4px;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-    }
-
-    .canvas-header h1 {
-      font-size: 24px;
-      color: #333;
-      margin-bottom: 5px;
-    }
-
-    .canvas-header p {
-      color: #666;
-      font-size: 14px;
-    }
-
-    .canvas-header .controls {
-      margin-top: 10px;
-      display: flex;
-      gap: 10px;
-      align-items: center;
-    }
-
-    .viewport-toggle {
-      display: flex;
-      gap: 4px;
-      background: #f5f5f5;
-      padding: 4px;
-      border-radius: 6px;
-    }
-
-    .viewport-btn {
-      padding: 8px 16px;
-      border: none;
-      background: transparent;
-      border-radius: 4px;
-      cursor: pointer;
-      font-size: 13px;
-      transition: all 0.2s;
-      color: #666;
-      font-weight: 500;
-    }
-
-    .viewport-btn:hover {
-      background: rgba(74, 144, 226, 0.1);
-      color: #4A90E2;
-    }
-
-    .viewport-btn.active {
-      background: white;
-      color: #4A90E2;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    }
-
-    .canvas-header button {
-      padding: 8px 16px;
-      border: 1px solid #ddd;
-      background: white;
-      border-radius: 4px;
-      cursor: pointer;
-      font-size: 13px;
-      transition: all 0.2s;
-    }
-
-    .canvas-header button:hover {
-      background: #f5f5f5;
-      border-color: #4A90E2;
-    }
-
-    .canvas-header button.active {
-      background: #4A90E2;
-      color: white;
-      border-color: #4A90E2;
-    }
-
-    /* Version Switcher */
-    .version-switcher {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      padding: 6px 12px;
-      background: #f8f9fa;
-      border: 1px solid #dee2e6;
-      border-radius: 4px;
-      font-size: 12px;
-    }
-
-    .version-switcher-label {
-      color: #666;
-      font-weight: 500;
-    }
-
-    .version-switcher select {
-      padding: 4px 8px;
-      border: 1px solid #dee2e6;
-      border-radius: 3px;
-      background: white;
-      color: #333;
-      font-size: 12px;
-      cursor: pointer;
-      outline: none;
-      transition: border-color 0.2s;
-    }
-
-    .version-switcher select:hover {
-      border-color: #4A90E2;
-    }
-
-    .version-switcher select:focus {
-      border-color: #4A90E2;
-      box-shadow: 0 0 0 2px rgba(74, 144, 226, 0.1);
-    }
-
-    /* Canvases Container */
-    .canvases-container {
-      display: flex;
-      flex-direction: column;
-      background: white;
-      border-radius: 8px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-      overflow: hidden;
-      transition: max-width 0.3s ease;
-      margin: 0 auto;
-    }
-
-    .canvases-container.mobile-view {
-      max-width: 480px;
-    }
-
-    .canvas-item {
-      display: flex;
-      flex-direction: column;
-      width: 100%;
-      position: relative;
-    }
-
-    .canvas-item-header {
-      position: absolute;
-      top: 10px;
-      right: 10px;
-      background: rgba(255, 255, 255, 0.95);
-      padding: 8px 12px;
-      border-radius: 4px;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-      display: flex;
-      gap: 10px;
-      align-items: center;
-      z-index: 1000;
-      font-size: 12px;
-      color: #666;
-      opacity: 0.7;
-      transition: opacity 0.2s;
-      pointer-events: auto;
-    }
-
-    .canvas-item:hover .canvas-item-header {
-      opacity: 1;
-    }
-
-    .canvas-item-header h3 {
-      font-size: 11px;
-      color: #999;
-      margin: 0;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
-
-    .canvas-controls {
-      display: flex;
-      gap: 8px;
-      align-items: center;
-    }
-
-    .canvas-controls label {
-      font-size: 11px;
-      color: #666;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-
-    .canvas-bg-color {
-      cursor: pointer;
-      width: 32px;
-      height: 24px;
-      border: 1px solid #ddd;
-      border-radius: 3px;
-    }
-
-    .clear-canvas-btn {
-      padding: 4px 8px;
-      border: 1px solid #ddd;
-      background: white;
-      border-radius: 3px;
-      cursor: pointer;
-      font-size: 11px;
-      transition: all 0.2s;
-    }
-
-    .clear-canvas-btn:hover {
-      background: #f5f5f5;
-      border-color: #ff4444;
-      color: #ff4444;
-    }
-
-    /* Grid Builder */
-    .grid-builder {
-      position: relative;
-      flex: 1;
-    }
-
-    .grid-container {
-      position: relative;
-      width: 100%;
-      min-height: 400px;
-      background-image:
-        linear-gradient(rgba(0,0,0,0.05) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(0,0,0,0.05) 1px, transparent 1px);
-      background-size: 2% 20px;
-      transition: background-color 0.2s;
-    }
-
-    .grid-container.hide-grid {
-      background-image: none;
-    }
-
-    /* Grid Items */
-    .grid-item {
-      position: absolute;
-      background: white;
-      border: 2px solid transparent;
-      border-radius: 4px;
-      padding: 20px;
-      cursor: move;
-      transition: border-color 0.2s, box-shadow 0.2s;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-      min-width: 100px;
-      min-height: 80px;
-      user-select: none;
-    }
-
-    .grid-item:hover {
-      border-color: #4A90E2;
-    }
-
-    .grid-item.selected {
-      border-color: #4A90E2;
-      box-shadow: 0 4px 12px rgba(74, 144, 226, 0.3);
-      z-index: 1000;
-    }
-
-    .grid-item.dragging {
-      opacity: 0.7;
-      cursor: move;
-    }
-
-    .grid-item.resizing {
-      user-select: none;
-    }
-
-    .grid-item-header {
-      font-weight: 600;
-      color: #333;
-      margin-bottom: 5px;
-      font-size: 14px;
-    }
-
-    .grid-item-content {
-      color: #666;
-      font-size: 13px;
-    }
-
-    .grid-item-controls {
-      position: absolute;
-      top: 8px;
-      right: 8px;
-      display: flex;
-      gap: 4px;
-      opacity: 0;
-      transition: opacity 0.2s;
-    }
-
-    .grid-item.selected .grid-item-controls,
-    .grid-item:hover .grid-item-controls {
-      opacity: 1;
-    }
-
-    .grid-item-control-btn {
-      width: 24px;
-      height: 24px;
-      background: #4A90E2;
-      color: white;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-      font-size: 12px;
-      line-height: 1;
-      padding: 0;
-      transition: background 0.2s;
-    }
-
-    .grid-item-control-btn:hover {
-      background: #357ABD;
-    }
-
-    .grid-item-delete {
-      width: 24px;
-      height: 24px;
-      background: #ff4444;
-      color: white;
-      border: none;
-      border-radius: 50%;
-      cursor: pointer;
-      font-size: 14px;
-      line-height: 1;
-      padding: 0;
-      transition: background 0.2s;
-    }
-
-    .grid-item-delete:hover {
-      background: #cc0000;
-    }
-
-    /* Resize Handles */
-    .resize-handle {
-      position: absolute;
-      width: 10px;
-      height: 10px;
-      background: #4A90E2;
-      border: 2px solid white;
-      border-radius: 50%;
-      box-shadow: 0 0 3px rgba(0,0,0,0.3);
-      opacity: 0;
-      transition: opacity 0.2s;
-    }
-
-    .grid-item.selected .resize-handle,
-    .grid-item:hover .resize-handle {
-      opacity: 1;
-    }
-
-    .resize-handle.nw { top: -5px; left: -5px; cursor: nw-resize; }
-    .resize-handle.ne { top: -5px; right: -5px; cursor: ne-resize; }
-    .resize-handle.sw { bottom: -5px; left: -5px; cursor: sw-resize; }
-    .resize-handle.se { bottom: -5px; right: -5px; cursor: se-resize; }
-    .resize-handle.n { top: -5px; left: 50%; transform: translateX(-50%); cursor: n-resize; }
-    .resize-handle.s { bottom: -5px; left: 50%; transform: translateX(-50%); cursor: s-resize; }
-    .resize-handle.e { top: 50%; right: -5px; transform: translateY(-50%); cursor: e-resize; }
-    .resize-handle.w { top: 50%; left: -5px; transform: translateY(-50%); cursor: w-resize; }
-
-    /* Drag Clone */
-    .dragging-clone {
-      position: fixed;
-      pointer-events: none;
-      z-index: 10000;
-      opacity: 0.8;
-      background: #4A90E2;
-      color: white;
-      padding: 15px;
-      border-radius: 4px;
-      font-weight: 500;
-    }
-
-    /* Drop Zone Indicator */
-    .drop-zone-indicator {
-      position: absolute;
-      border: 2px dashed #4A90E2;
-      background: rgba(74, 144, 226, 0.1);
-      border-radius: 4px;
-      pointer-events: none;
-      opacity: 0;
-      transition: opacity 0.2s;
-    }
-
-    .drop-zone-indicator.active {
-      opacity: 1;
-    }
-
-    /* Drag Handle */
-    .drag-handle {
-      position: absolute;
-      top: 8px;
-      left: 8px;
-      width: 28px;
-      height: 28px;
-      background: rgba(74, 144, 226, 0.1);
-      border: 1px solid rgba(74, 144, 226, 0.3);
-      border-radius: 4px;
-      cursor: move;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      opacity: 0.3;
-      transition: all 0.2s;
-      z-index: 10;
-    }
-
-    .drag-handle::before {
-      content: '⋮⋮';
-      font-size: 14px;
-      color: #4A90E2;
-      font-weight: bold;
-      letter-spacing: -2px;
-    }
-
-    .grid-item:hover .drag-handle {
-      opacity: 1;
-      background: rgba(74, 144, 226, 0.15);
-    }
-
-    .drag-handle:hover {
-      background: rgba(74, 144, 226, 0.25);
-      transform: scale(1.1);
-    }
-
-    /* Configuration Side Panel */
-    .config-panel {
-      position: fixed;
-      top: 0;
-      right: -400px;
-      width: 400px;
-      height: 100vh;
-      background: white;
-      box-shadow: -2px 0 8px rgba(0,0,0,0.15);
-      transition: right 0.3s ease;
-      z-index: 10000;
-      display: flex;
-      flex-direction: column;
-    }
-
-    .config-panel.open {
-      right: 0;
-    }
-
-    .config-panel-header {
-      padding: 20px;
-      border-bottom: 1px solid #ddd;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-
-    .config-panel-header h2 {
-      margin: 0;
-      font-size: 18px;
-      color: #333;
-    }
-
-    .config-panel-close {
-      width: 32px;
-      height: 32px;
-      border: none;
-      background: transparent;
-      cursor: pointer;
-      font-size: 24px;
-      color: #666;
-      border-radius: 4px;
-      transition: all 0.2s;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 0;
-    }
-
-    .config-panel-close:hover {
-      background: #f5f5f5;
-      color: #333;
-    }
-
-    .config-panel-body {
-      padding: 20px;
-      flex: 1;
-      overflow-y: auto;
-    }
-
-    .config-field {
-      margin-bottom: 20px;
-    }
-
-    .config-field label {
-      display: block;
-      margin-bottom: 8px;
-      font-weight: 600;
-      color: #333;
-      font-size: 14px;
-    }
-
-    .config-field input {
-      width: 100%;
-      padding: 10px 12px;
-      border: 1px solid #ddd;
-      border-radius: 4px;
-      font-size: 14px;
-      font-family: inherit;
-      transition: border-color 0.2s;
-    }
-
-    .config-field input:focus {
-      outline: none;
-      border-color: #4A90E2;
-      box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.1);
-    }
-
-    .config-panel-footer {
-      padding: 20px;
-      border-top: 1px solid #ddd;
-      display: flex;
-      gap: 10px;
-      justify-content: flex-end;
-    }
-
-    .config-panel-footer button {
-      padding: 10px 20px;
-      border: 1px solid #ddd;
-      background: white;
-      border-radius: 4px;
-      cursor: pointer;
-      font-size: 14px;
-      font-weight: 500;
-      transition: all 0.2s;
-    }
-
-    .config-panel-footer button:hover {
-      background: #f5f5f5;
-    }
-
-    .config-panel-footer button.primary {
-      background: #4A90E2;
-      color: white;
-      border-color: #4A90E2;
-    }
-
-    .config-panel-footer button.primary:hover {
-      background: #357ABD;
-      border-color: #357ABD;
-    }
-  </style>
-</head>
-<body>
-  <div class="app">
-    <!-- Component Palette -->
-    <div class="palette">
-      <h2>Components</h2>
-      <div class="palette-item" data-component-type="header">
-        📄 Header
-      </div>
-      <div class="palette-item" data-component-type="text">
-        📝 Text Block
-      </div>
-      <div class="palette-item" data-component-type="image">
-        🖼️ Image
-      </div>
-      <div class="palette-item" data-component-type="button">
-        🔘 Button
-      </div>
-      <div class="palette-item" data-component-type="video">
-        🎥 Video
-      </div>
-      <h2 style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #ddd;">Complex</h2>
-      <div class="palette-item" data-component-type="gallery">
-        🖼️ Image Gallery
-      </div>
-      <div class="palette-item" data-component-type="dashboard">
-        📊 Dashboard
-      </div>
-      <div class="palette-item" data-component-type="livedata">
-        📡 Live Data
-      </div>
-    </div>
-
-    <!-- Main Canvas -->
-    <div class="canvas">
-      <div class="canvas-header">
-        <h1>Grid Builder POC</h1>
-        <p>Drag components from the palette into the page sections below. Build your page layout section by section.</p>
-        <div class="controls">
-          <div class="viewport-toggle">
-            <button id="desktopView" class="viewport-btn active">🖥️ Desktop</button>
-            <button id="mobileView" class="viewport-btn">📱 Mobile</button>
-          </div>
-          <button id="toggleGrid" class="active">Show Grid</button>
-          <button id="exportState">Export State</button>
-          <button id="addSection">➕ Add Section</button>
-          <div style="display: inline-flex; align-items: center; gap: 6px; margin-left: 12px; padding: 6px 12px; background: #fff3cd; border: 1px solid #ffc107; border-radius: 4px;">
-            <span style="font-size: 12px; color: #856404; font-weight: 500;">Stress Test:</span>
-            <input type="number" id="stressTestCount" value="50" min="1" max="500" style="width: 60px; padding: 4px 8px; border: 1px solid #ddd; border-radius: 3px; font-size: 12px;">
-            <button id="addStressTest" style="padding: 4px 12px; background: #ffc107; color: #000; border: 1px solid #ffc107; border-radius: 3px; cursor: pointer; font-size: 12px; font-weight: 500;">Add Items</button>
-            <button id="clearAll" style="padding: 4px 12px; background: #dc3545; color: white; border: 1px solid #dc3545; border-radius: 3px; cursor: pointer; font-size: 12px; font-weight: 500;">Clear All</button>
-            <span id="itemCount" style="font-size: 11px; color: #666; margin-left: 4px;">0 items</span>
-          </div>
-          <div class="version-switcher">
-            <span class="version-switcher-label">Version:</span>
-            <select id="versionSelect" onchange="window.location.href = this.value">
-              <option value="index.html">Left/Top</option>
-              <option value="index-transform.html" selected>Transform 🧪</option>
-              <option value="index-muuri.html">Masonry 🧪</option>
-            </select>
-          </div>
-        </div>
-      </div>
-
-      <div class="canvases-container">
-        <div class="canvas-item" data-canvas-id="canvas1">
-          <div class="canvas-item-header">
-            <h3>Section 1</h3>
-            <div class="canvas-controls">
-              <label>
-                <input type="color" class="canvas-bg-color" data-canvas="canvas1" value="#ffffff">
-              </label>
-              <button class="clear-canvas-btn" data-canvas="canvas1">Clear</button>
-              <button class="delete-section-btn" data-canvas="canvas1" title="Delete Section">🗑️</button>
-            </div>
-          </div>
-          <div class="grid-builder">
-            <div class="grid-container" id="canvas1" data-canvas-id="canvas1">
-              <!-- Grid items will be added here -->
-            </div>
-          </div>
-        </div>
-
-        <div class="canvas-item" data-canvas-id="canvas2">
-          <div class="canvas-item-header">
-            <h3>Section 2</h3>
-            <div class="canvas-controls">
-              <label>
-                <input type="color" class="canvas-bg-color" data-canvas="canvas2" value="#f5f5f5">
-              </label>
-              <button class="clear-canvas-btn" data-canvas="canvas2">Clear</button>
-              <button class="delete-section-btn" data-canvas="canvas2" title="Delete Section">🗑️</button>
-            </div>
-          </div>
-          <div class="grid-builder">
-            <div class="grid-container" id="canvas2" data-canvas-id="canvas2">
-              <!-- Grid items will be added here -->
-            </div>
-          </div>
-        </div>
-
-        <div class="canvas-item" data-canvas-id="canvas3">
-          <div class="canvas-item-header">
-            <h3>Section 3</h3>
-            <div class="canvas-controls">
-              <label>
-                <input type="color" class="canvas-bg-color" data-canvas="canvas3" value="#ffffff">
-              </label>
-              <button class="clear-canvas-btn" data-canvas="canvas3">Clear</button>
-              <button class="delete-section-btn" data-canvas="canvas3" title="Delete Section">🗑️</button>
-            </div>
-          </div>
-          <div class="grid-builder">
-            <div class="grid-container" id="canvas3" data-canvas-id="canvas3">
-              <!-- Grid items will be added here -->
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <script>
     // State - per canvas
     const canvases = {
       canvas1: {
@@ -749,6 +15,7 @@
     };
     let selectedItemId = null;
     let selectedCanvasId = null;
+    let selectedConfigItem = null; // Track currently configured item
     let itemIdCounter = 0;
     let dragClone = null;
     let showGrid = true;
@@ -838,9 +105,9 @@
     const componentTemplates = {
       header: { icon: '📄', title: 'Header', content: 'This is a header component' },
       text: { icon: '📝', title: 'Text Block', content: 'This is a text block component' },
-      image: { icon: '🖼️', title: 'Image', content: '<img src="https://picsum.photos/seed/image/400/300" style="width: 100%; height: 100%; object-fit: cover; border-radius: 4px;" alt="Sample image">' },
+      image: { icon: '🖼️', title: 'Image', content: '<div style="position: relative; width: 100%; height: 0; padding-bottom: 75%; overflow: hidden; border-radius: 4px; background: #f0f0f0;"><img src="https://picsum.photos/seed/image/800/600" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover;" alt="Sample image"></div>' },
       button: { icon: '🔘', title: 'Button', content: 'Click me!' },
-      video: { icon: '🎥', title: 'Video', content: '<div class="video-placeholder" style="width: 100%; height: 100%; background: linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.3)), url(\'https://picsum.photos/seed/video/400/300\') center/cover; border-radius: 4px; display: flex; align-items: center; justify-content: center; cursor: pointer;" onclick="this.outerHTML = \'<video controls autoplay style=\\\'width: 100%; height: 100%; border-radius: 4px;\\\'><source src=\\\'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4\\\' type=\\\'video/mp4\\\'>Your browser does not support the video tag.</video>\';"><div style="width: 80px; height: 80px; background: rgba(255,255,255,0.9); border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(0,0,0,0.3);"><svg width="32" height="32" viewBox="0 0 24 24" fill="#4A90E2"><path d="M8 5v14l11-7z"/></svg></div></div>' },
+      video: { icon: '🎥', title: 'Video', content: '<div class="video-placeholder" style="width: 100%; height: 100%; background: linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.3)), url(\'https://picsum.photos/seed/video/400/300\') center/cover; border-radius: 4px; display: flex; align-items: center; justify-content: center; cursor: pointer;" onclick="this.outerHTML = \'<video controls autoplay style=\\\'width: 100%; height: 100%; object-fit: cover; border-radius: 4px;\\\'><source src=\\\'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4\\\' type=\\\'video/mp4\\\'>Your browser does not support the video tag.</video>\';"><div style="width: 80px; height: 80px; background: rgba(255,255,255,0.9); border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(0,0,0,0.3);"><svg width="32" height="32" viewBox="0 0 24 24" fill="#4A90E2"><path d="M8 5v14l11-7z"/></svg></div></div>' },
       gallery: { icon: '🖼️', title: 'Image Gallery', content: 'Loading images...', complex: true },
       dashboard: { icon: '📊', title: 'Dashboard Widget', content: 'Dashboard data', complex: true },
       livedata: { icon: '📡', title: 'Live Data', content: 'Connecting...', complex: true }
@@ -912,6 +179,7 @@
         div.className = 'grid-item';
         div.id = item.id;
         div.setAttribute('data-canvas-id', item.canvasId);
+        div.setAttribute('data-component-name', item.name || template.title); // Store component name
 
         const layout = getCurrentLayout(item);
         // Use transform for positioning instead of left/top
@@ -923,7 +191,8 @@
         // Render complex or simple content
         if (template.complex) {
           div.innerHTML = `
-            <div class="grid-item-header">${template.icon} ${template.title}</div>
+            <div class="drag-handle"></div>
+            <div class="grid-item-header">${template.icon} ${item.name || template.title}</div>
             <div class="grid-item-content" id="${item.id}-content"></div>
             <div class="grid-item-controls">
               <button class="grid-item-control-btn" onclick="bringToFront('${item.id}', '${item.canvasId}')" title="Bring to Front">⬆️</button>
@@ -941,7 +210,8 @@
           `;
         } else {
           div.innerHTML = `
-            <div class="grid-item-header">${template.icon} ${template.title}</div>
+            <div class="drag-handle"></div>
+            <div class="grid-item-header">${template.icon} ${item.name || template.title}</div>
             <div class="grid-item-content">${template.content}</div>
             <div class="grid-item-controls">
               <button class="grid-item-control-btn" onclick="bringToFront('${item.id}', '${item.canvasId}')" title="Bring to Front">⬆️</button>
@@ -959,12 +229,17 @@
           `;
         }
 
-        // Click to select
+        // Click to open config panel
         div.addEventListener('click', (e) => {
-          if (!e.target.classList.contains('grid-item-delete') &&
-              !e.target.classList.contains('grid-item-control-btn')) {
-            selectItem(item.id, item.canvasId);
+          // Don't open config panel if clicking on drag handle, resize handle, delete button, or control buttons
+          if (e.target.classList.contains('drag-handle') ||
+              e.target.closest('.drag-handle') ||
+              e.target.classList.contains('resize-handle') ||
+              e.target.classList.contains('grid-item-delete') ||
+              e.target.classList.contains('grid-item-control-btn')) {
+            return;
           }
+          openConfigPanel(item.id, item.canvasId);
         });
 
         fragment.appendChild(div);
@@ -1000,6 +275,7 @@
         id,
         canvasId,
         type: componentType,
+        name: template.title, // Default name from template
         layouts: {
           desktop: {
             x: pixelsToGridX(x, canvasId),        // stored in grid units
@@ -1133,15 +409,27 @@
 
       switch(type) {
         case 'gallery':
-          // Image Gallery - loads 6 real photos from Lorem Picsum
+          // Image Gallery - loads 6 real photos from Lorem Picsum with responsive sizing
           contentEl.innerHTML = `
             <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; height: 100%;">
-              <img src="https://picsum.photos/seed/gallery1/150" style="width: 100%; height: auto; border-radius: 4px;" loading="lazy" alt="Gallery image 1">
-              <img src="https://picsum.photos/seed/gallery2/150" style="width: 100%; height: auto; border-radius: 4px;" loading="lazy" alt="Gallery image 2">
-              <img src="https://picsum.photos/seed/gallery3/150" style="width: 100%; height: auto; border-radius: 4px;" loading="lazy" alt="Gallery image 3">
-              <img src="https://picsum.photos/seed/gallery4/150" style="width: 100%; height: auto; border-radius: 4px;" loading="lazy" alt="Gallery image 4">
-              <img src="https://picsum.photos/seed/gallery5/150" style="width: 100%; height: auto; border-radius: 4px;" loading="lazy" alt="Gallery image 5">
-              <img src="https://picsum.photos/seed/gallery6/150" style="width: 100%; height: auto; border-radius: 4px;" loading="lazy" alt="Gallery image 6">
+              <div style="position: relative; width: 100%; padding-bottom: 100%; overflow: hidden; border-radius: 4px; background: #f0f0f0;">
+                <img src="https://picsum.photos/seed/gallery1/400" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover;" loading="lazy" alt="Gallery image 1">
+              </div>
+              <div style="position: relative; width: 100%; padding-bottom: 100%; overflow: hidden; border-radius: 4px; background: #f0f0f0;">
+                <img src="https://picsum.photos/seed/gallery2/400" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover;" loading="lazy" alt="Gallery image 2">
+              </div>
+              <div style="position: relative; width: 100%; padding-bottom: 100%; overflow: hidden; border-radius: 4px; background: #f0f0f0;">
+                <img src="https://picsum.photos/seed/gallery3/400" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover;" loading="lazy" alt="Gallery image 3">
+              </div>
+              <div style="position: relative; width: 100%; padding-bottom: 100%; overflow: hidden; border-radius: 4px; background: #f0f0f0;">
+                <img src="https://picsum.photos/seed/gallery4/400" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover;" loading="lazy" alt="Gallery image 4">
+              </div>
+              <div style="position: relative; width: 100%; padding-bottom: 100%; overflow: hidden; border-radius: 4px; background: #f0f0f0;">
+                <img src="https://picsum.photos/seed/gallery5/400" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover;" loading="lazy" alt="Gallery image 5">
+              </div>
+              <div style="position: relative; width: 100%; padding-bottom: 100%; overflow: hidden; border-radius: 4px; background: #f0f0f0;">
+                <img src="https://picsum.photos/seed/gallery6/400" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover;" loading="lazy" alt="Gallery image 6">
+              </div>
             </div>
           `;
           break;
@@ -1245,6 +533,7 @@
       div.className = 'grid-item';
       div.id = item.id;
       div.setAttribute('data-canvas-id', item.canvasId);
+      div.setAttribute('data-component-name', item.name || template.title); // Store component name
 
       const layout = getCurrentLayout(item);
       // Use transform for positioning instead of left/top
@@ -1256,7 +545,8 @@
       // Render complex or simple content
       if (template.complex) {
         div.innerHTML = `
-          <div class="grid-item-header">${template.icon} ${template.title}</div>
+          <div class="drag-handle"></div>
+          <div class="grid-item-header">${template.icon} ${item.name || template.title}</div>
           <div class="grid-item-content" id="${item.id}-content"></div>
           <div class="grid-item-controls">
             <button class="grid-item-control-btn" onclick="bringToFront('${item.id}', '${item.canvasId}')" title="Bring to Front">⬆️</button>
@@ -1274,7 +564,8 @@
         `;
       } else {
         div.innerHTML = `
-          <div class="grid-item-header">${template.icon} ${template.title}</div>
+          <div class="drag-handle"></div>
+          <div class="grid-item-header">${template.icon} ${item.name || template.title}</div>
           <div class="grid-item-content">${template.content}</div>
           <div class="grid-item-controls">
             <button class="grid-item-control-btn" onclick="bringToFront('${item.id}', '${item.canvasId}')" title="Bring to Front">⬆️</button>
@@ -1292,12 +583,17 @@
         `;
       }
 
-      // Click to select
+      // Click to open config panel
       div.addEventListener('click', (e) => {
-        if (!e.target.classList.contains('grid-item-delete') &&
-            !e.target.classList.contains('grid-item-control-btn')) {
-          selectItem(item.id, item.canvasId);
+        // Don't open config panel if clicking on drag handle, resize handle, delete button, or control buttons
+        if (e.target.classList.contains('drag-handle') ||
+            e.target.closest('.drag-handle') ||
+            e.target.classList.contains('resize-handle') ||
+            e.target.classList.contains('grid-item-delete') ||
+            e.target.classList.contains('grid-item-control-btn')) {
+          return;
         }
+        openConfigPanel(item.id, item.canvasId);
       });
 
       gridContainer.appendChild(div);
@@ -1336,11 +632,12 @@
 
     // Make item draggable
     function makeItemDraggable(element, item) {
-      let dragRafId = null;
       let basePosition = { x: 0, y: 0 };
 
       interact(element)
         .draggable({
+          allowFrom: '.drag-handle', // Only allow drag from drag handle
+          inertia: false,
           listeners: {
             start(event) {
               event.target.classList.add('dragging');
@@ -1348,34 +645,23 @@
 
               // Store the base position from transform
               basePosition = getTransformPosition(event.target);
+
+              // Reset accumulation
+              event.target.setAttribute('data-x', 0);
+              event.target.setAttribute('data-y', 0);
             },
 
             move(event) {
-              // Cancel any pending frame
-              if (dragRafId) {
-                cancelAnimationFrame(dragRafId);
-              }
+              const x = (parseFloat(event.target.getAttribute('data-x')) || 0) + event.dx;
+              const y = (parseFloat(event.target.getAttribute('data-y')) || 0) + event.dy;
 
-              // Batch DOM updates with requestAnimationFrame
-              dragRafId = requestAnimationFrame(() => {
-                const x = (parseFloat(event.target.getAttribute('data-x')) || 0) + event.dx;
-                const y = (parseFloat(event.target.getAttribute('data-y')) || 0) + event.dy;
-
-                // Apply drag delta to base position
-                event.target.style.transform = `translate(${basePosition.x + x}px, ${basePosition.y + y}px)`;
-                event.target.setAttribute('data-x', x);
-                event.target.setAttribute('data-y', y);
-
-                dragRafId = null;
-              });
+              // Apply drag delta to base position - no RAF needed, interact.js already throttles
+              event.target.style.transform = `translate(${basePosition.x + x}px, ${basePosition.y + y}px)`;
+              event.target.setAttribute('data-x', x);
+              event.target.setAttribute('data-y', y);
             },
 
             end(event) {
-              // Cancel any pending frame
-              if (dragRafId) {
-                cancelAnimationFrame(dragRafId);
-                dragRafId = null;
-              }
 
               event.target.classList.remove('dragging');
 
@@ -1606,7 +892,7 @@
     // Make item resizable
     function makeItemResizable(element, item) {
       let resizeRafId = null;
-      let basePosition = { x: 0, y: 0 };
+      let startRect = { x: 0, y: 0, width: 0, height: 0 };
 
       interact(element)
         .resizable({
@@ -1625,8 +911,18 @@
             start(event) {
               event.target.classList.add('resizing');
 
-              // Store the base position from transform
-              basePosition = getTransformPosition(event.target);
+              // Store the starting position and size
+              const position = getTransformPosition(event.target);
+              startRect.x = position.x;
+              startRect.y = position.y;
+              startRect.width = parseFloat(event.target.style.width) || 0;
+              startRect.height = parseFloat(event.target.style.height) || 0;
+
+              // Reset data attributes for accumulating deltas during this resize
+              event.target.setAttribute('data-x', 0);
+              event.target.setAttribute('data-y', 0);
+              event.target.setAttribute('data-width', 0);
+              event.target.setAttribute('data-height', 0);
             },
 
             move(event) {
@@ -1637,43 +933,37 @@
 
               // Batch DOM updates with requestAnimationFrame
               resizeRafId = requestAnimationFrame(() => {
-                let deltaX = parseFloat(event.target.getAttribute('data-x')) || 0;
-                let deltaY = parseFloat(event.target.getAttribute('data-y')) || 0;
-
-                // Get container bounds
-                const container = document.getElementById(item.canvasId);
-                const containerWidth = container.clientWidth;
-                const containerHeight = container.clientHeight;
                 const gridSizeX = getGridSizeHorizontal(item.canvasId);
                 const gridSizeY = getGridSizeVertical();
 
-                // Calculate new size and position
-                let newWidth = event.rect.width;
-                let newHeight = event.rect.height;
-                let newX = basePosition.x + deltaX + event.deltaRect.left;
-                let newY = basePosition.y + deltaY + event.deltaRect.top;
+                // Accumulate deltas for position AND size
+                let x = (parseFloat(event.target.getAttribute('data-x')) || 0) + event.deltaRect.left;
+                let y = (parseFloat(event.target.getAttribute('data-y')) || 0) + event.deltaRect.top;
+                let width = (parseFloat(event.target.getAttribute('data-width')) || 0) + event.deltaRect.width;
+                let height = (parseFloat(event.target.getAttribute('data-height')) || 0) + event.deltaRect.height;
 
-                // Snap size to grid (separate X and Y)
+                // Calculate final values from start + accumulated deltas
+                let newX = startRect.x + x;
+                let newY = startRect.y + y;
+                let newWidth = startRect.width + width;
+                let newHeight = startRect.height + height;
+
+                // Snap to grid
+                newX = Math.round(newX / gridSizeX) * gridSizeX;
+                newY = Math.round(newY / gridSizeY) * gridSizeY;
                 newWidth = Math.round(newWidth / gridSizeX) * gridSizeX;
                 newHeight = Math.round(newHeight / gridSizeY) * gridSizeY;
 
-                // Snap position to grid (separate X and Y)
-                newX = Math.round(newX / gridSizeX) * gridSizeX;
-                newY = Math.round(newY / gridSizeY) * gridSizeY;
-
-                // Ensure item stays fully within container
-                newX = Math.max(0, Math.min(newX, containerWidth - newWidth));
-                newY = Math.max(0, Math.min(newY, containerHeight - newHeight));
-
-                // Calculate deltas from base position
-                const snappedDeltaX = newX - basePosition.x;
-                const snappedDeltaY = newY - basePosition.y;
-
+                // Update DOM
                 event.target.style.width = newWidth + 'px';
                 event.target.style.height = newHeight + 'px';
                 event.target.style.transform = `translate(${newX}px, ${newY}px)`;
-                event.target.setAttribute('data-x', snappedDeltaX);
-                event.target.setAttribute('data-y', snappedDeltaY);
+
+                // Store accumulated deltas
+                event.target.setAttribute('data-x', x);
+                event.target.setAttribute('data-y', y);
+                event.target.setAttribute('data-width', width);
+                event.target.setAttribute('data-height', height);
 
                 resizeRafId = null;
               });
@@ -1688,14 +978,18 @@
 
               event.target.classList.remove('resizing');
 
-              const deltaX = parseFloat(event.target.getAttribute('data-x')) || 0;
-              const deltaY = parseFloat(event.target.getAttribute('data-y')) || 0;
+              // Clean up data attributes
+              event.target.removeAttribute('data-x');
+              event.target.removeAttribute('data-y');
+              event.target.removeAttribute('data-width');
+              event.target.removeAttribute('data-height');
 
-              // Get final position (base + delta)
+              // Read final position and size directly from element
               const newWidth = parseFloat(event.target.style.width);
               const newHeight = parseFloat(event.target.style.height);
-              const newX = basePosition.x + deltaX;
-              const newY = basePosition.y + deltaY;
+              const position = getTransformPosition(event.target);
+              const newX = position.x;
+              const newY = position.y;
 
               // Save old state for undo before changing
               const oldLayout = JSON.parse(JSON.stringify(item.layouts[currentViewport]));
@@ -1984,6 +1278,69 @@
       y = Math.max(0, y);
 
       return { x, y };
+    }
+
+    // Open configuration panel
+    function openConfigPanel(itemId, canvasId) {
+      const canvas = canvases[canvasId];
+      const item = canvas.items.find(i => i.id === itemId);
+      if (!item) return;
+
+      selectedConfigItem = itemId;
+      selectedCanvasId = canvasId;
+
+      // Populate form
+      document.getElementById('componentName').value = item.name || '';
+
+      // Show panel
+      document.getElementById('configPanel').classList.add('open');
+
+      // Add selected visual state
+      document.querySelectorAll('.grid-item').forEach(el => el.classList.remove('selected'));
+      const element = document.getElementById(itemId);
+      if (element) {
+        element.classList.add('selected');
+      }
+    }
+
+    // Close configuration panel
+    function closeConfigPanel() {
+      document.getElementById('configPanel').classList.remove('open');
+      if (selectedConfigItem) {
+        const element = document.getElementById(selectedConfigItem);
+        if (element) {
+          element.classList.remove('selected');
+        }
+      }
+      selectedConfigItem = null;
+    }
+
+    // Save configuration changes
+    function saveConfig() {
+      if (!selectedConfigItem || !selectedCanvasId) return;
+
+      const canvas = canvases[selectedCanvasId];
+      const item = canvas.items.find(i => i.id === selectedConfigItem);
+      if (!item) return;
+
+      const newName = document.getElementById('componentName').value.trim();
+      if (newName) {
+        item.name = newName;
+
+        // Update the DOM
+        const element = document.getElementById(selectedConfigItem);
+        if (element) {
+          element.setAttribute('data-component-name', newName);
+          const header = element.querySelector('.grid-item-header');
+          if (header) {
+            // Extract the icon (emoji) from the current header
+            const template = componentTemplates[item.type];
+            header.textContent = `${template.icon} ${newName}`;
+          }
+        }
+      }
+
+      closeConfigPanel();
     }
 
     // Calculate required height for a canvas in current viewport
@@ -2457,6 +1814,11 @@
       }
     });
 
+    // Configuration panel event listeners
+    document.getElementById('configPanelClose').addEventListener('click', closeConfigPanel);
+    document.getElementById('configPanelCancel').addEventListener('click', closeConfigPanel);
+    document.getElementById('configPanelSave').addEventListener('click', saveConfig);
+
     // Re-render all components when window resizes
     // Components are stored in grid units, so we need to recalculate pixel positions
     let resizeTimeout;
@@ -2528,6 +1890,3 @@
       // Update item count after loading demo items
       updateItemCount();
     });
-  </script>
-</body>
-</html>

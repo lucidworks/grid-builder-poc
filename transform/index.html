@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Grid Builder POC - Transform-Based Positioning (Experimental)</title>
+  <script src="https://cdn.jsdelivr.net/npm/interactjs@1.10.19/dist/interact.min.js"></script>
+  <link rel="stylesheet" href="index.css">
+</head>
+<body>
+  <div class="app">
+    <!-- Component Palette -->
+    <div class="palette">
+      <h2>Components</h2>
+      <div class="palette-item" data-component-type="header">
+        📄 Header
+      </div>
+      <div class="palette-item" data-component-type="text">
+        📝 Text Block
+      </div>
+      <div class="palette-item" data-component-type="image">
+        🖼️ Image
+      </div>
+      <div class="palette-item" data-component-type="button">
+        🔘 Button
+      </div>
+      <div class="palette-item" data-component-type="video">
+        🎥 Video
+      </div>
+      <h2 style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #ddd;">Complex</h2>
+      <div class="palette-item" data-component-type="gallery">
+        🖼️ Image Gallery
+      </div>
+      <div class="palette-item" data-component-type="dashboard">
+        📊 Dashboard
+      </div>
+      <div class="palette-item" data-component-type="livedata">
+        📡 Live Data
+      </div>
+    </div>
+
+    <!-- Main Canvas -->
+    <div class="canvas">
+      <div class="canvas-header">
+        <h1>Grid Builder POC</h1>
+        <p>Drag components from the palette into the page sections below. Build your page layout section by section.</p>
+        <div class="controls">
+          <div class="viewport-toggle">
+            <button id="desktopView" class="viewport-btn active">🖥️ Desktop</button>
+            <button id="mobileView" class="viewport-btn">📱 Mobile</button>
+          </div>
+          <button id="toggleGrid" class="active">Show Grid</button>
+          <button id="exportState">Export State</button>
+          <button id="addSection">➕ Add Section</button>
+          <div style="display: inline-flex; align-items: center; gap: 6px; margin-left: 12px; padding: 6px 12px; background: #fff3cd; border: 1px solid #ffc107; border-radius: 4px;">
+            <span style="font-size: 12px; color: #856404; font-weight: 500;">Stress Test:</span>
+            <input type="number" id="stressTestCount" value="50" min="1" max="500" style="width: 60px; padding: 4px 8px; border: 1px solid #ddd; border-radius: 3px; font-size: 12px;">
+            <button id="addStressTest" style="padding: 4px 12px; background: #ffc107; color: #000; border: 1px solid #ffc107; border-radius: 3px; cursor: pointer; font-size: 12px; font-weight: 500;">Add Items</button>
+            <button id="clearAll" style="padding: 4px 12px; background: #dc3545; color: white; border: 1px solid #dc3545; border-radius: 3px; cursor: pointer; font-size: 12px; font-weight: 500;">Clear All</button>
+            <span id="itemCount" style="font-size: 11px; color: #666; margin-left: 4px;">0 items</span>
+          </div>
+          <div class="version-switcher">
+            <span class="version-switcher-label">Version:</span>
+            <select id="versionSelect" onchange="window.location.href = this.value">
+              <option value="../left-top/">Left/Top</option>
+              <option value="../transform/" selected>Transform 🧪</option>
+              <option value="../masonry/">Masonry 🧪</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="canvases-container">
+        <div class="canvas-item" data-canvas-id="canvas1">
+          <div class="canvas-item-header">
+            <h3>Section 1</h3>
+            <div class="canvas-controls">
+              <label>
+                <input type="color" class="canvas-bg-color" data-canvas="canvas1" value="#ffffff">
+              </label>
+              <button class="clear-canvas-btn" data-canvas="canvas1">Clear</button>
+              <button class="delete-section-btn" data-canvas="canvas1" title="Delete Section">🗑️</button>
+            </div>
+          </div>
+          <div class="grid-builder">
+            <div class="grid-container" id="canvas1" data-canvas-id="canvas1">
+              <!-- Grid items will be added here -->
+            </div>
+          </div>
+        </div>
+
+        <div class="canvas-item" data-canvas-id="canvas2">
+          <div class="canvas-item-header">
+            <h3>Section 2</h3>
+            <div class="canvas-controls">
+              <label>
+                <input type="color" class="canvas-bg-color" data-canvas="canvas2" value="#f5f5f5">
+              </label>
+              <button class="clear-canvas-btn" data-canvas="canvas2">Clear</button>
+              <button class="delete-section-btn" data-canvas="canvas2" title="Delete Section">🗑️</button>
+            </div>
+          </div>
+          <div class="grid-builder">
+            <div class="grid-container" id="canvas2" data-canvas-id="canvas2">
+              <!-- Grid items will be added here -->
+            </div>
+          </div>
+        </div>
+
+        <div class="canvas-item" data-canvas-id="canvas3">
+          <div class="canvas-item-header">
+            <h3>Section 3</h3>
+            <div class="canvas-controls">
+              <label>
+                <input type="color" class="canvas-bg-color" data-canvas="canvas3" value="#ffffff">
+              </label>
+              <button class="clear-canvas-btn" data-canvas="canvas3">Clear</button>
+              <button class="delete-section-btn" data-canvas="canvas3" title="Delete Section">🗑️</button>
+            </div>
+          </div>
+          <div class="grid-builder">
+            <div class="grid-container" id="canvas3" data-canvas-id="canvas3">
+              <!-- Grid items will be added here -->
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Configuration Side Panel -->
+  <div class="config-panel" id="configPanel">
+    <div class="config-panel-header">
+      <h2>Component Settings</h2>
+      <button class="config-panel-close" id="configPanelClose">×</button>
+    </div>
+    <div class="config-panel-body">
+      <div class="config-field">
+        <label for="componentName">Component Name</label>
+        <input type="text" id="componentName" placeholder="Enter component name">
+      </div>
+    </div>
+    <div class="config-panel-footer">
+      <button id="configPanelCancel">Cancel</button>
+      <button id="configPanelSave" class="primary">Save</button>
+    </div>
+  </div>
+
+  <script src="index.js"></script>
+</body>
+</html>

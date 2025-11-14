@@ -27,26 +27,31 @@ A minimal proof-of-concept demonstrating a drag-and-drop grid builder system wit
 
 ### Running the POC
 
-**Option 1: Live Demo - Left/Top Version**
+**Option 1: Live Demo - Overview Page**
 - Visit [http://javadoc.lucidworks.com/grid-builder-poc/](http://javadoc.lucidworks.com/grid-builder-poc/)
+- Overview of all POC variants with links to each implementation
+
+**Option 2: Live Demo - Left/Top Version (Recommended)**
+- Visit [http://javadoc.lucidworks.com/grid-builder-poc/left-top/](http://javadoc.lucidworks.com/grid-builder-poc/left-top/)
 - Uses CSS `left/top` properties for positioning
 
-**Option 2: Live Demo - Transform-Based (Experimental)**
-- Visit [http://javadoc.lucidworks.com/grid-builder-poc/index-transform.html](http://javadoc.lucidworks.com/grid-builder-poc/index-transform.html)
+**Option 3: Live Demo - Transform-Based (Experimental)**
+- Visit [http://javadoc.lucidworks.com/grid-builder-poc/transform/](http://javadoc.lucidworks.com/grid-builder-poc/transform/)
 - Uses CSS `transform: translate()` for all positioning
 - Alternative architecture with potentially better GPU acceleration
 - All features work identically to left/top version
 
-**Option 3: Live Demo - Muuri Auto-Layout (Experimental)**
-- Visit [http://javadoc.lucidworks.com/grid-builder-poc/index-muuri.html](http://javadoc.lucidworks.com/grid-builder-poc/index-muuri.html)
+**Option 4: Live Demo - Muuri Auto-Layout (Experimental)**
+- Visit [http://javadoc.lucidworks.com/grid-builder-poc/masonry/](http://javadoc.lucidworks.com/grid-builder-poc/masonry/)
 - Uses Muuri.js library for automatic grid layout
 - Smooth animations and auto-positioning
 - Trade-offs: No free-form positioning, no resize handles, no custom snap-to-grid, no separate desktop/mobile layouts (see tooltip on page for full list)
 
-**Option 4: Local**
+**Option 5: Local**
 1. Clone the repository
-2. Open `index.html` (left/top), `index-transform.html` (transform), or `index-muuri.html` (Muuri) in your web browser
-3. That's it! No build process required.
+2. Open `index.html` in your web browser for the overview page
+3. Or navigate to any POC folder and open its `index.html`
+4. That's it! No build process required.
 
 ### Usage
 
@@ -113,13 +118,13 @@ A minimal proof-of-concept demonstrating a drag-and-drop grid builder system wit
 
 ### Versions
 
-**Left/Top Version (`index.html`)**
+**Left/Top Version (`left-top/`)** ⭐
 - Uses `left` and `top` CSS properties for positioning
 - Two-phase positioning: transform during drag/resize → commit to left/top on end
 - Well-tested, production-ready approach
-- Default version
+- Recommended version
 
-**Transform-Based Version (`index-transform.html`)** 🧪
+**Transform-Based Version (`transform/`)** 🧪
 - Uses CSS `transform: translate(x, y)` for all positioning
 - Single-phase positioning: always uses transform
 - Potentially better GPU acceleration
@@ -127,7 +132,7 @@ A minimal proof-of-concept demonstrating a drag-and-drop grid builder system wit
 - Experimental - testing alternative approach
 - All features work identically to left/top version
 
-**Muuri Auto-Layout Version (`index-muuri.html`)** 🧪
+**Muuri Auto-Layout Version (`masonry/`)** 🧪
 - Uses Muuri.js library for automatic grid layout with smooth animations
 - Auto-positioning with drag-and-drop reordering
 - Simplified architecture - no manual position calculations needed
@@ -278,12 +283,30 @@ The proposal includes:
 
 ## Development
 
-No build process needed! Just open `index.html` in a browser.
+No build process needed! The project is organized as follows:
 
-To customize:
-- Edit component templates in the `componentTemplates` object
+```
+grid-builder-poc/
+├── index.html           # Overview page with links to all POCs
+├── left-top/           # Recommended version
+│   ├── index.html      # HTML structure
+│   ├── index.css       # Styles
+│   └── index.js        # JavaScript logic
+├── transform/          # Experimental transform-based version
+│   ├── index.html
+│   ├── index.css
+│   └── index.js
+└── masonry/            # Experimental masonry layout version
+    ├── index.html
+    ├── index.css
+    └── index.js
+```
+
+To customize any version:
+- Edit component templates in the `componentTemplates` object in `index.js`
 - Adjust grid percentage in `background-size` CSS and `getGridSize()` function to change snap grid density
-- Modify styles in the `<style>` section
+- Modify styles in `index.css`
+- Update HTML structure in `index.html`
 - Add more sections by duplicating the `.canvas-item` structure in HTML
 
 ## Deployment
