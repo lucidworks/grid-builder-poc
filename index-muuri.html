@@ -886,14 +886,15 @@
           const itemContent = element.querySelector('.item-content');
           itemContent.className = `item-content size-${previewSize}`;
 
-          // Wait for CSS to apply, then refresh Muuri layout
-          requestAnimationFrame(() => {
-            const grid = grids[canvasId];
-            // Force Muuri to recalculate item dimensions
-            grid.refreshItems([element]);
-            // Trigger immediate layout (true = instant, no animation during resize)
-            grid.layout(true);
-          });
+          // Force browser to recalculate layout synchronously
+          void element.offsetHeight;
+
+          // Refresh Muuri layout
+          const grid = grids[canvasId];
+          // Force Muuri to recalculate item dimensions
+          grid.refreshItems([element]);
+          // Trigger immediate layout (true = instant, no animation during resize)
+          grid.layout(true);
         }
       });
 
@@ -919,22 +920,24 @@
           itemContent.className = `item-content size-${newSize}`;
           element.setAttribute('data-size', newSize);
 
-          // Final refresh - wait for CSS to apply
-          requestAnimationFrame(() => {
-            const grid = grids[canvasId];
-            grid.refreshItems([element]);
-            grid.layout();
-          });
+          // Force browser to recalculate layout synchronously
+          void element.offsetHeight;
+
+          // Final refresh
+          const grid = grids[canvasId];
+          grid.refreshItems([element]);
+          grid.layout();
         } else if (currentPreviewSize !== startSize) {
           // Revert to original size if no significant change
           const itemContent = element.querySelector('.item-content');
           itemContent.className = `item-content size-${startSize}`;
 
-          requestAnimationFrame(() => {
-            const grid = grids[canvasId];
-            grid.refreshItems([element]);
-            grid.layout();
-          });
+          // Force browser to recalculate layout synchronously
+          void element.offsetHeight;
+
+          const grid = grids[canvasId];
+          grid.refreshItems([element]);
+          grid.layout();
         }
 
         currentPreviewSize = null;
