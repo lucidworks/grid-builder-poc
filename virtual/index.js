@@ -1113,10 +1113,6 @@
               event.target.removeAttribute('data-width');
               event.target.removeAttribute('data-height');
 
-              // Get the snapped dimensions from event.rect
-              const newWidth = event.rect.width;
-              const newHeight = event.rect.height;
-
               // Get the container to calculate relative position
               const container = document.getElementById(item.canvasId);
               const containerRect = container.getBoundingClientRect();
@@ -1126,10 +1122,16 @@
               // Convert absolute event.rect to container-relative coordinates
               let newX = event.rect.left - containerRect.left;
               let newY = event.rect.top - containerRect.top;
+              let newWidth = event.rect.width;
+              let newHeight = event.rect.height;
 
-              // Snap to grid
+              // Snap position to grid
               newX = Math.round(newX / gridSizeX) * gridSizeX;
               newY = Math.round(newY / gridSizeY) * gridSizeY;
+
+              // Snap dimensions to grid
+              newWidth = Math.round(newWidth / gridSizeX) * gridSizeX;
+              newHeight = Math.round(newHeight / gridSizeY) * gridSizeY;
 
               // Apply snapped final position
               event.target.style.transform = `translate(${newX}px, ${newY}px)`;
