@@ -6,6 +6,7 @@
   <title>Grid Builder POC - Muuri-Based Auto-Layout (Experimental)</title>
   <script src="https://cdn.jsdelivr.net/npm/muuri@0.9.5/dist/muuri.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/web-animations-js@2.3.2/web-animations.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/interactjs@1.10.19/dist/interact.min.js"></script>
   <style>
     * {
       margin: 0;
@@ -443,6 +444,30 @@
       width: 200px;
       height: 250px;
     }
+
+    /* Resize Handles */
+    .resize-handle {
+      position: absolute;
+      width: 10px;
+      height: 10px;
+      background: #4A90E2;
+      border: 2px solid white;
+      border-radius: 50%;
+      box-shadow: 0 0 3px rgba(0,0,0,0.3);
+      opacity: 0;
+      transition: opacity 0.2s;
+      z-index: 10;
+    }
+
+    .grid-item:hover .resize-handle {
+      opacity: 1;
+    }
+
+    .resize-handle.se {
+      bottom: -5px;
+      right: -5px;
+      cursor: se-resize;
+    }
   </style>
 </head>
 <body>
@@ -654,16 +679,19 @@
           <div class="grid-item-header">${template.icon} ${template.title}</div>
           <div class="grid-item-content" id="${id}-content"></div>
           <button class="grid-item-delete" onclick="deleteItem('${id}')">×</button>
+          <div class="resize-handle se"></div>
         `;
       } else {
         itemContent.innerHTML = `
           <div class="grid-item-header">${template.icon} ${template.title}</div>
           <div class="grid-item-content">${template.content}</div>
           <button class="grid-item-delete" onclick="deleteItem('${id}')">×</button>
+          <div class="resize-handle se"></div>
         `;
       }
 
       div.appendChild(itemContent);
+      div.setAttribute('data-size', size || template.size);
       return div;
     }
 
@@ -772,6 +800,70 @@
       }
     }
 
+    // Size cycling order for resizing
+    const sizeOrder = ['small', 'medium', 'large', 'wide', 'tall'];
+
+    // Make item resizable with fixed size snapping
+    function makeItemResizable(element, canvasId) {
+      const resizeHandle = element.querySelector('.resize-handle.se');
+      if (!resizeHandle) return;
+
+      let startSize = element.getAttribute('data-size');
+      let startRect = null;
+
+      interact(resizeHandle)
+        .draggable({
+          onstart: function(event) {
+            startSize = element.getAttribute('data-size');
+            startRect = element.querySelector('.item-content').getBoundingClientRect();
+            event.stopPropagation();
+          },
+          onmove: function(event) {
+            event.stopPropagation();
+          },
+          onend: function(event) {
+            event.stopPropagation();
+
+            // Calculate resize delta
+            const deltaX = event.pageX - startRect.right;
+            const deltaY = event.pageY - startRect.bottom;
+
+            // Determine new size based on delta
+            let newSize = startSize;
+            const currentIndex = sizeOrder.indexOf(startSize);
+
+            // Significant horizontal drag
+            if (Math.abs(deltaX) > 50 || Math.abs(deltaY) > 50) {
+              if (deltaX > 50 && deltaY < 30) {
+                // Drag right -> wider
+                newSize = 'wide';
+              } else if (deltaY > 50 && deltaX < 30) {
+                // Drag down -> taller
+                newSize = 'tall';
+              } else if (deltaX > 30 && deltaY > 30) {
+                // Drag diagonal -> larger
+                newSize = currentIndex < sizeOrder.length - 1 ? sizeOrder[currentIndex + 1] : 'large';
+              } else if (deltaX < -30 || deltaY < -30) {
+                // Drag inward -> smaller
+                newSize = currentIndex > 0 ? sizeOrder[currentIndex - 1] : 'small';
+              }
+            }
+
+            // Update size if changed
+            if (newSize !== startSize) {
+              const itemContent = element.querySelector('.item-content');
+              itemContent.className = `item-content size-${newSize}`;
+              element.setAttribute('data-size', newSize);
+
+              // Refresh Muuri layout
+              const grid = grids[canvasId];
+              grid.refreshItems([element]);
+              grid.layout();
+            }
+          }
+        });
+    }
+
     // Add item to grid
     function addItemToGrid(canvasId, componentType, size) {
       const template = componentTemplates[componentType];
@@ -784,6 +876,9 @@
       // Then add it to the Muuri grid
       const grid = grids[canvasId];
       grid.add(element);
+
+      // Make item resizable
+      makeItemResizable(element, canvasId);
 
       // Explicitly trigger layout refresh
       grid.layout();
