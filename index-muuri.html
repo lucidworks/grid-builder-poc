@@ -888,8 +888,10 @@
 
           // Refresh Muuri layout for live preview
           const grid = grids[canvasId];
+          // Force Muuri to recalculate item dimensions
           grid.refreshItems([element]);
-          grid.layout();
+          // Trigger immediate layout (true = instant, no animation during resize)
+          grid.layout(true);
         }
       });
 
