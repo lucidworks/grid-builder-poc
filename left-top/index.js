@@ -870,6 +870,18 @@ function makeItemResizable(element, item) {
       edges: { left: true, right: true, bottom: true, top: true },
 
       modifiers: [
+        // FIXED: Use Interact.js snap modifier instead of manual snapping
+        // This prevents drift between mouse position and element edges
+        interact.modifiers.snap({
+          targets: [
+            interact.snappers.grid({
+              x: () => getGridSizeHorizontal(item.canvasId),
+              y: () => getGridSizeVertical()
+            })
+          ],
+          range: Infinity,
+          relativePoints: [ { x: 0, y: 0 } ]
+        }),
         interact.modifiers.restrictSize({
           min: { width: 100, height: 80 }
         }),
@@ -887,12 +899,6 @@ function makeItemResizable(element, item) {
           startRect.top = parseFloat(event.target.style.top) || 0;
           startRect.width = parseFloat(event.target.style.width) || 0;
           startRect.height = parseFloat(event.target.style.height) || 0;
-
-          // Reset data attributes for accumulating deltas during this resize
-          event.target.setAttribute('data-x', 0);
-          event.target.setAttribute('data-y', 0);
-          event.target.setAttribute('data-width', 0);
-          event.target.setAttribute('data-height', 0);
         },
 
         move(event) {
@@ -903,38 +909,18 @@ function makeItemResizable(element, item) {
 
           // Batch DOM updates with requestAnimationFrame
           resizeRafId = requestAnimationFrame(() => {
-            const gridSizeX = getGridSizeHorizontal(item.canvasId);
-            const gridSizeY = getGridSizeVertical();
-
-            // Accumulate deltas for position AND size
-            let x = (parseFloat(event.target.getAttribute('data-x')) || 0) + event.deltaRect.left;
-            let y = (parseFloat(event.target.getAttribute('data-y')) || 0) + event.deltaRect.top;
-            let width = (parseFloat(event.target.getAttribute('data-width')) || 0) + event.deltaRect.width;
-            let height = (parseFloat(event.target.getAttribute('data-height')) || 0) + event.deltaRect.height;
-
-            // Calculate final values from start + accumulated deltas
-            let newLeft = startRect.left + x;
-            let newTop = startRect.top + y;
-            let newWidth = startRect.width + width;
-            let newHeight = startRect.height + height;
-
-            // Snap to grid
-            newLeft = Math.round(newLeft / gridSizeX) * gridSizeX;
-            newTop = Math.round(newTop / gridSizeY) * gridSizeY;
-            newWidth = Math.round(newWidth / gridSizeX) * gridSizeX;
-            newHeight = Math.round(newHeight / gridSizeY) * gridSizeY;
+            // FIXED: Use event.rect directly - interact.js already snapped it
+            // No need to accumulate deltas and manually snap
+            const newLeft = event.rect.left;
+            const newTop = event.rect.top;
+            const newWidth = event.rect.width;
+            const newHeight = event.rect.height;
 
             // Update DOM
             event.target.style.left = newLeft + 'px';
             event.target.style.top = newTop + 'px';
             event.target.style.width = newWidth + 'px';
             event.target.style.height = newHeight + 'px';
-
-            // Store accumulated deltas
-            event.target.setAttribute('data-x', x);
-            event.target.setAttribute('data-y', y);
-            event.target.setAttribute('data-width', width);
-            event.target.setAttribute('data-height', height);
 
             resizeRafId = null;
           });
