@@ -891,8 +891,8 @@
 
           // Refresh Muuri layout
           const grid = grids[canvasId];
-          // Force Muuri to recalculate item dimensions
-          grid.refreshItems([element]);
+          // Refresh ALL items in the grid, not just this one
+          grid.refreshItems();
           // Trigger immediate layout (true = instant, no animation during resize)
           grid.layout(true);
         }
@@ -925,7 +925,8 @@
 
           // Final refresh
           const grid = grids[canvasId];
-          grid.refreshItems([element]);
+          // Refresh ALL items in the grid
+          grid.refreshItems();
           grid.layout();
         } else if (currentPreviewSize !== startSize) {
           // Revert to original size if no significant change
@@ -936,7 +937,8 @@
           void element.offsetHeight;
 
           const grid = grids[canvasId];
-          grid.refreshItems([element]);
+          // Refresh ALL items in the grid
+          grid.refreshItems();
           grid.layout();
         }
 
