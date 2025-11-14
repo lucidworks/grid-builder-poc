@@ -1160,6 +1160,60 @@ function sendToBack(id, canvasId) {
   }
 }
 
+// Bring item forward (increment z-index by 1)
+function bringForward(id, canvasId) {
+  const canvas = canvases[canvasId];
+  const item = canvas.items.find(i => i.id === id);
+  if (item) {
+    // Find items with z-index greater than current
+    const itemsAbove = canvas.items.filter(i => i.zIndex > item.zIndex);
+    if (itemsAbove.length > 0) {
+      // Get the lowest z-index above this item
+      const nextZIndex = Math.min(...itemsAbove.map(i => i.zIndex));
+      // Swap z-indexes
+      const itemAbove = canvas.items.find(i => i.zIndex === nextZIndex);
+      if (itemAbove) {
+        const temp = item.zIndex;
+        item.zIndex = itemAbove.zIndex;
+        itemAbove.zIndex = temp;
+
+        // Update DOM
+        const element = document.getElementById(id);
+        const elementAbove = document.getElementById(itemAbove.id);
+        if (element) element.style.zIndex = item.zIndex;
+        if (elementAbove) elementAbove.style.zIndex = itemAbove.zIndex;
+      }
+    }
+  }
+}
+
+// Send item backward (decrement z-index by 1)
+function sendBackward(id, canvasId) {
+  const canvas = canvases[canvasId];
+  const item = canvas.items.find(i => i.id === id);
+  if (item) {
+    // Find items with z-index less than current
+    const itemsBelow = canvas.items.filter(i => i.zIndex < item.zIndex);
+    if (itemsBelow.length > 0) {
+      // Get the highest z-index below this item
+      const prevZIndex = Math.max(...itemsBelow.map(i => i.zIndex));
+      // Swap z-indexes
+      const itemBelow = canvas.items.find(i => i.zIndex === prevZIndex);
+      if (itemBelow) {
+        const temp = item.zIndex;
+        item.zIndex = itemBelow.zIndex;
+        itemBelow.zIndex = temp;
+
+        // Update DOM
+        const element = document.getElementById(id);
+        const elementBelow = document.getElementById(itemBelow.id);
+        if (element) element.style.zIndex = item.zIndex;
+        if (elementBelow) elementBelow.style.zIndex = itemBelow.zIndex;
+      }
+    }
+  }
+}
+
 // Nudge item with keyboard
 // dx and dy are in grid units (1 = one grid cell)
 function nudgeItem(id, canvasId, dx, dy) {
@@ -1778,6 +1832,31 @@ document.addEventListener('keydown', function(e) {
 document.getElementById('configPanelClose').addEventListener('click', closeConfigPanel);
 document.getElementById('configPanelCancel').addEventListener('click', closeConfigPanel);
 document.getElementById('configPanelSave').addEventListener('click', saveConfig);
+
+// Z-index control buttons in config panel
+document.getElementById('sendToFront').addEventListener('click', function() {
+  if (selectedConfigItem && selectedCanvasId) {
+    bringToFront(selectedConfigItem, selectedCanvasId);
+  }
+});
+
+document.getElementById('bringForward').addEventListener('click', function() {
+  if (selectedConfigItem && selectedCanvasId) {
+    bringForward(selectedConfigItem, selectedCanvasId);
+  }
+});
+
+document.getElementById('sendBackward').addEventListener('click', function() {
+  if (selectedConfigItem && selectedCanvasId) {
+    sendBackward(selectedConfigItem, selectedCanvasId);
+  }
+});
+
+document.getElementById('sendToBack').addEventListener('click', function() {
+  if (selectedConfigItem && selectedCanvasId) {
+    sendToBack(selectedConfigItem, selectedCanvasId);
+  }
+});
 
 // Re-render all components when window resizes
 // Components are stored in grid units, so we need to recalculate pixel positions
