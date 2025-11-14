@@ -637,9 +637,13 @@
           action: 'move',
           threshold: 50
         },
-        dragStartPredicate: {
-          distance: 10,
-          delay: 0
+        dragStartPredicate: function(item, event) {
+          // Don't start drag if clicking on resize handle
+          if (event.target.classList.contains('resize-handle')) {
+            return false;
+          }
+          // Use default distance-based drag start
+          return Muuri.ItemDrag.defaultStartPredicate(item, event);
         },
         dragRelease: {
           duration: 300,
