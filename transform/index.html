@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Grid Builder POC - Transform-Based Positioning (Experimental)</title>
   <script src="https://cdn.jsdelivr.net/npm/interactjs@1.10.19/dist/interact.min.js"></script>
+  <script src="../shared/performance-monitor.js"></script>
   <link rel="stylesheet" href="index.css">
 </head>
 <body>
@@ -36,6 +37,11 @@
       </div>
       <div class="palette-item" data-component-type="livedata">
         📡 Live Data
+      </div>
+      <h2 style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #ddd;">History</h2>
+      <div class="history-controls">
+        <button id="undoBtn" class="history-btn" title="Undo (Ctrl+Z)">↶ Undo</button>
+        <button id="redoBtn" class="history-btn" title="Redo (Ctrl+Y)">↷ Redo</button>
       </div>
     </div>
 

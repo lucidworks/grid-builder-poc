@@ -21,6 +21,7 @@ A minimal proof-of-concept demonstrating a drag-and-drop grid builder system wit
 ✅ **Desktop/Mobile Viewports** - Switch between desktop and mobile preview modes
 ✅ **Auto-Stacking Mobile Layout** - Components automatically stack vertically in mobile view
 ✅ **Independent Mobile Customization** - Manually adjust mobile layouts separately from desktop
+✅ **Undo/Redo** - Full command history with Ctrl+Z/Ctrl+Y keyboard shortcuts
 ✅ **Export State** - Export current layout (both desktop and mobile) to console
 
 ## How to Use
@@ -52,7 +53,7 @@ A minimal proof-of-concept demonstrating a drag-and-drop grid builder system wit
 - Performance-optimized version based on Transform variant
 - Uses Intersection Observer API for lazy-loading complex components
 - Cached DOM queries and grid calculations
-- Optimized for 500-2000+ items
+- Better performance with 500-2000+ items (fewer dropped frames than other variants)
 - All features work identically to transform version
 
 **Option 6: Local**
@@ -116,9 +117,16 @@ A minimal proof-of-concept demonstrating a drag-and-drop grid builder system wit
 - Once customized in mobile, that component retains its manual mobile layout (not auto-stacked)
 - Switch back to desktop at any time - each viewport maintains its own layout
 
+**Undo/Redo:**
+- Press `Ctrl+Z` (or `Cmd+Z` on Mac) to undo the last action
+- Press `Ctrl+Y` or `Ctrl+Shift+Z` (or `Cmd+Shift+Z` on Mac) to redo
+- Supports up to 50 operations in history
+- Works for: drag, resize, delete, and all item modifications
+
 **Controls:**
 - **🖥️ Desktop / 📱 Mobile** - Switch between desktop and mobile viewport preview
 - **Show Grid** - Toggle visibility of the background grid across all sections
+- **↶ Undo / ↷ Redo** - Undo or redo recent actions
 - **Clear** (per section) - Remove all components from a specific section
 - **Export State** - View the current layout state (both desktop and mobile) for all sections in the console
 
@@ -130,6 +138,7 @@ A minimal proof-of-concept demonstrating a drag-and-drop grid builder system wit
 - Uses `left` and `top` CSS properties for positioning
 - Two-phase positioning: transform during drag/resize → commit to left/top on end
 - Well-tested, production-ready approach
+- Includes undo/redo
 - Recommended version
 
 **Transform-Based Version (`transform/`)** 🧪
@@ -137,6 +146,7 @@ A minimal proof-of-concept demonstrating a drag-and-drop grid builder system wit
 - Single-phase positioning: always uses transform
 - Potentially better GPU acceleration
 - Simpler code architecture (no two-phase commit)
+- Includes undo/redo
 - Experimental - testing alternative approach
 - All features work identically to left/top version
 
@@ -161,7 +171,8 @@ A minimal proof-of-concept demonstrating a drag-and-drop grid builder system wit
 - Cached DOM queries reduce repeated document.getElementById calls by 50%
 - Cached grid size calculations reduce snap-to-grid overhead by 80%
 - GPU-accelerated transforms (inherit from Transform variant)
-- RequestAnimationFrame-based updates for smooth 60fps rendering
+- RequestAnimationFrame-based updates for better rendering performance
+- Includes undo/redo
 - Optimizations:
   - ✅ Lazy-load gallery/dashboard/livedata components only when visible
   - ✅ DOM cache registry initialized on page load
@@ -171,18 +182,48 @@ A minimal proof-of-concept demonstrating a drag-and-drop grid builder system wit
   - ✅ All features identical to Transform version
 - Performance gains vs Left/Top:
   - 5-10x faster stress test (200 items in ~500ms vs ~5000ms)
-  - Handles 500-2000+ items smoothly (vs ~100 item limit)
+  - Handles 500-2000+ items with significantly fewer dropped frames (vs ~100 item practical limit)
   - 50% reduction in memory usage
-  - Consistent 60fps during drag/resize operations
-- Best for: High-volume layouts with 100+ items, production use cases requiring scale
+  - Better framerate during drag/resize operations (still some frame drops at very high item counts)
+- Best for: High-volume layouts with 100+ items, scenarios requiring better scalability
+
+### Developer Tools
+
+#### Performance Monitoring (Diagnostic Tool)
+
+The left-top, transform, and virtual variants include a performance monitoring tool (`shared/performance-monitor.js`) for **comparing variant performance and diagnosing bottlenecks**. This is a development/evaluation tool, not a user-facing feature.
+
+**Purpose:**
+- Compare performance characteristics between variants (left-top vs transform vs virtual)
+- Measure operation timing (drag, resize, viewport switching, stress tests)
+- Identify performance bottlenecks and layout thrashing
+- Validate optimization improvements
+
+**How to Use:**
+1. Click **📊 Performance** button in top-right corner of any variant
+2. Perform test operations (drag items, resize, switch viewports, run stress tests)
+3. View real-time FPS, dropped frames, and operation timing
+4. Click **Export Data** to download JSON performance report
+5. Repeat in different variants and compare exported data
+
+**Key Metrics:**
+- **Current FPS** - Instantaneous frame rate (updates ~10x per second)
+- **Dropped Frames** - Count of frames below 55 FPS
+- **Operation Timing** - Average, min, max duration for each operation type
+- **Layout Thrashing** - Operations taking >16ms (one frame at 60fps)
+
+See `shared/PERFORMANCE_MONITORING.md` for detailed technical documentation.
 
 ### Technologies Used
 
 - **Vanilla JavaScript** - No frameworks, just pure JS
-- **Interact.js** - Drag, drop, and resize functionality (loaded from CDN) - used in index.html and index-transform.html
-- **Muuri.js** - Auto-layout grid system with animations (loaded from CDN) - used in index-muuri.html
+- **Interact.js** - Drag, drop, and resize functionality (loaded from CDN)
+- **Muuri.js** - Auto-layout grid system with animations (masonry variant only)
 - **CSS Grid Background** - Visual grid overlay
 - **Absolute Positioning** (standard) / **Transform Positioning** (experimental) / **Muuri Auto-Layout** (experimental) - Different approaches to component positioning
+
+**Diagnostic Tools:**
+- **Performance Monitor** (`shared/performance-monitor.js`) - Developer tool for comparing variant performance
 
 ### Key Concepts Demonstrated
 

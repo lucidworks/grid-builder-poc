@@ -1,3 +1,40 @@
+    // ========================================
+    // MASONRY VARIANT - EXPERIMENTAL
+    // ========================================
+    //
+    // KEY DIFFERENCES FROM OTHER VARIANTS:
+    //
+    // 1. LAYOUT LIBRARY: Uses Muuri.js for automatic masonry layout
+    //    - Items automatically flow and pack efficiently
+    //    - No manual positioning required
+    //    - Completely different from all other variants
+    //
+    // 2. FIXED SIZE PRESETS: Items have predefined sizes
+    //    - small (150x100), medium (200x150), large (300x200)
+    //    - wide (400x150), tall (200x250)
+    //    - Users resize by cycling through presets (not free-form)
+    //    - Different from all other variants (free-form sizing)
+    //
+    // 3. NO GRID SNAPPING: Muuri handles all positioning
+    //    - No grid units or pixel-to-grid conversion
+    //    - Different from all other variants
+    //
+    // 4. NO UNDO/REDO: Muuri state is complex to serialize
+    //    - Would require custom implementation
+    //    - Different from all other variants
+    //
+    // 5. DRAG AND DROP: Custom Muuri drag configuration
+    //    - Can drag between different canvases
+    //    - Muuri handles all animation and sorting
+    //
+    // 6. NO VIEWPORT TOGGLE: Single responsive layout
+    //    - No desktop/mobile switching
+    //    - Different from all other variants
+    //
+    // PERFORMANCE TARGET: 100-500 items with automatic layout
+    // USE CASE: Pinterest-style masonry layout experimentation
+    // ========================================
+
     // State
     const grids = {};
     let itemIdCounter = 0;
@@ -8,9 +45,9 @@
     const componentTemplates = {
       header: { icon: '📄', title: 'Header', content: 'This is a header component', size: 'wide' },
       text: { icon: '📝', title: 'Text Block', content: 'This is a text block component', size: 'medium' },
-      image: { icon: '🖼️', title: 'Image', content: '<img src="https://picsum.photos/seed/image/400/300" style="width: 100%; height: 100%; object-fit: cover; border-radius: 4px;" alt="Sample image">', size: 'medium' },
+      image: { icon: '🖼️', title: 'Image', content: '<img src="https://picsum.photos/400/300?random=' + Math.random() + '" style="width: 100%; height: 100%; object-fit: cover; border-radius: 4px;" alt="Sample image">', size: 'medium' },
       button: { icon: '🔘', title: 'Button', content: 'Click me!', size: 'small' },
-      video: { icon: '🎥', title: 'Video', content: '<div style="width: 100%; height: 100%; background: linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.3)), url(\'https://picsum.photos/seed/video/400/300\') center/cover; border-radius: 4px; display: flex; align-items: center; justify-content: center;"><div style="width: 60px; height: 60px; background: rgba(255,255,255,0.9); border-radius: 50%; display: flex; align-items: center; justify-content: center;"><svg width="24" height="24" viewBox="0 0 24 24" fill="#4A90E2"><path d="M8 5v14l11-7z"/></svg></div></div>', size: 'large' },
+      video: { icon: '🎥', title: 'Video', content: '<div style="width: 100%; height: 100%; background: linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.3)), url(\'https://picsum.photos/400/300?random=' + Math.random() + '\') center/cover; border-radius: 4px; display: flex; align-items: center; justify-content: center;"><div style="width: 60px; height: 60px; background: rgba(255,255,255,0.9); border-radius: 50%; display: flex; align-items: center; justify-content: center;"><svg width="24" height="24" viewBox="0 0 24 24" fill="#4A90E2"><path d="M8 5v14l11-7z"/></svg></div></div>', size: 'large' },
       gallery: { icon: '🖼️', title: 'Image Gallery', content: 'Loading images...', complex: true, size: 'large' },
       dashboard: { icon: '📊', title: 'Dashboard Widget', content: 'Dashboard data', complex: true, size: 'large' },
       livedata: { icon: '📡', title: 'Live Data', content: 'Connecting...', complex: true, size: 'tall' }
@@ -117,12 +154,12 @@
         case 'gallery':
           contentEl.innerHTML = `
             <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; height: 100%;">
-              <img src="https://picsum.photos/seed/gallery1/150" style="width: 100%; height: auto; border-radius: 4px;" loading="lazy" alt="Gallery image 1">
-              <img src="https://picsum.photos/seed/gallery2/150" style="width: 100%; height: auto; border-radius: 4px;" loading="lazy" alt="Gallery image 2">
-              <img src="https://picsum.photos/seed/gallery3/150" style="width: 100%; height: auto; border-radius: 4px;" loading="lazy" alt="Gallery image 3">
-              <img src="https://picsum.photos/seed/gallery4/150" style="width: 100%; height: auto; border-radius: 4px;" loading="lazy" alt="Gallery image 4">
-              <img src="https://picsum.photos/seed/gallery5/150" style="width: 100%; height: auto; border-radius: 4px;" loading="lazy" alt="Gallery image 5">
-              <img src="https://picsum.photos/seed/gallery6/150" style="width: 100%; height: auto; border-radius: 4px;" loading="lazy" alt="Gallery image 6">
+              <img src="https://picsum.photos/150?random=${Math.random()}" style="width: 100%; height: auto; border-radius: 4px;" loading="lazy" alt="Gallery image 1">
+              <img src="https://picsum.photos/150?random=${Math.random()}" style="width: 100%; height: auto; border-radius: 4px;" loading="lazy" alt="Gallery image 2">
+              <img src="https://picsum.photos/150?random=${Math.random()}" style="width: 100%; height: auto; border-radius: 4px;" loading="lazy" alt="Gallery image 3">
+              <img src="https://picsum.photos/150?random=${Math.random()}" style="width: 100%; height: auto; border-radius: 4px;" loading="lazy" alt="Gallery image 4">
+              <img src="https://picsum.photos/150?random=${Math.random()}" style="width: 100%; height: auto; border-radius: 4px;" loading="lazy" alt="Gallery image 5">
+              <img src="https://picsum.photos/150?random=${Math.random()}" style="width: 100%; height: auto; border-radius: 4px;" loading="lazy" alt="Gallery image 6">
             </div>
           `;
           break;
@@ -223,7 +260,8 @@
 
       let isResizing = false;
       let startSize = null;
-      let startRect = null;
+      let startMouseX = null;
+      let startMouseY = null;
       let currentPreviewSize = null;
 
       // Helper function to determine size based on delta
@@ -253,7 +291,8 @@
 
         isResizing = true;
         startSize = element.getAttribute('data-size');
-        startRect = element.querySelector('.item-content').getBoundingClientRect();
+        startMouseX = e.pageX;
+        startMouseY = e.pageY;
         currentPreviewSize = startSize;
       });
 
@@ -264,9 +303,9 @@
         e.preventDefault();
         e.stopPropagation();
 
-        // Calculate current delta
-        const deltaX = e.pageX - startRect.right;
-        const deltaY = e.pageY - startRect.bottom;
+        // Calculate current delta from starting mouse position
+        const deltaX = e.pageX - startMouseX;
+        const deltaY = e.pageY - startMouseY;
 
         // Determine preview size
         const previewSize = calculateNewSize(deltaX, deltaY, startSize);
@@ -298,9 +337,9 @@
 
         isResizing = false;
 
-        // Calculate final delta
-        const deltaX = e.pageX - startRect.right;
-        const deltaY = e.pageY - startRect.bottom;
+        // Calculate final delta from starting mouse position
+        const deltaX = e.pageX - startMouseX;
+        const deltaY = e.pageY - startMouseY;
 
         // Determine final size
         const newSize = calculateNewSize(deltaX, deltaY, startSize);
@@ -335,7 +374,8 @@
 
         currentPreviewSize = null;
         startSize = null;
-        startRect = null;
+        startMouseX = null;
+        startMouseY = null;
       });
     }
 
@@ -476,20 +516,47 @@
             const dy = e.clientY - startY;
             if (Math.abs(dx) > 5 || Math.abs(dy) > 5) {
               isDragging = true;
+
+              // Get component type and template
+              const componentType = paletteItem.getAttribute('data-component-type');
+              const template = componentTemplates[componentType];
+
+              // Create full-size drag preview
               dragClone = document.createElement('div');
-              dragClone.className = 'palette-item';
-              dragClone.textContent = paletteItem.textContent;
+              dragClone.className = 'dragging-clone';
+
+              // Set size and styling
               dragClone.style.position = 'fixed';
+              dragClone.style.width = '200px';
+              dragClone.style.height = '150px';
+              dragClone.style.background = 'white';
+              dragClone.style.border = '2px solid #4A90E2';
+              dragClone.style.borderRadius = '4px';
+              dragClone.style.boxShadow = '0 8px 24px rgba(74, 144, 226, 0.4)';
+              dragClone.style.opacity = '0.9';
               dragClone.style.pointerEvents = 'none';
               dragClone.style.zIndex = '10000';
-              dragClone.style.opacity = '0.8';
+              dragClone.style.padding = '16px';
+              dragClone.style.display = 'flex';
+              dragClone.style.flexDirection = 'column';
+              dragClone.style.alignItems = 'center';
+              dragClone.style.justifyContent = 'center';
+              dragClone.style.gap = '12px';
+
+              // Add component icon and title
+              dragClone.innerHTML = `
+                <div style="font-size: 48px;">${template.icon}</div>
+                <div style="font-size: 14px; font-weight: 600; color: #333; text-align: center;">${template.title}</div>
+              `;
+
               document.body.appendChild(dragClone);
             }
           }
 
           if (dragClone) {
-            dragClone.style.left = e.clientX + 'px';
-            dragClone.style.top = e.clientY + 'px';
+            // Center preview on cursor
+            dragClone.style.left = (e.clientX - 100) + 'px';
+            dragClone.style.top = (e.clientY - 75) + 'px';
           }
         };
 
@@ -499,6 +566,8 @@
 
           if (dragClone) {
             // Find which canvas the drop happened over
+            // Use the center of the drag preview (where it visually appears)
+            // since the preview is centered on the cursor
             const canvasElements = document.querySelectorAll('.muuri-grid');
             let targetCanvas = null;
 

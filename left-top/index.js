@@ -1,3 +1,37 @@
+// ========================================
+// LEFT-TOP VARIANT - BASELINE/ORIGINAL
+// ========================================
+//
+// KEY DIFFERENCES FROM OTHER VARIANTS:
+//
+// 1. POSITIONING: Uses CSS left/top properties
+//    - Traditional CSS positioning approach
+//    - Different from Virtual/Transform (use transform)
+//    - Sets element.style.left and element.style.top
+//    - May trigger layout reflow (slower than transform)
+//
+// 2. NO VIRTUAL RENDERING: All components load immediately
+//    - Same as Transform variant
+//    - Different from Virtual variant
+//
+// 3. NO CACHING: No DOM or grid size caching optimizations
+//    - Same as Transform variant
+//    - Different from Virtual variant
+//
+// 4. STANDARD RENDERING: One item at a time
+//    - Same as Transform variant
+//    - Different from Virtual variant
+//
+// 5. RESIZEOBSERVER: Watches canvas containers instead of window
+//    - Only fires when canvas actually resizes, not entire window
+//    - More efficient and targeted than window resize events
+//    - Same as Virtual and Transform variants
+//
+// PERFORMANCE TARGET: 50-200 items
+// USE CASE: Baseline implementation, traditional CSS approach
+// NOTE: This is the original implementation that others are based on
+// ========================================
+
 // State - per canvas
 const canvases = {
   canvas1: {
@@ -27,6 +61,19 @@ const commandHistory = [];
 let historyPosition = -1;
 const MAX_HISTORY = 50;
 
+// Update undo/redo button states
+function updateUndoRedoButtons() {
+  const undoBtn = document.getElementById('undoBtn');
+  const redoBtn = document.getElementById('redoBtn');
+
+  if (undoBtn) {
+    undoBtn.disabled = historyPosition < 0;
+  }
+  if (redoBtn) {
+    redoBtn.disabled = historyPosition >= commandHistory.length - 1;
+  }
+}
+
 function pushCommand(command) {
   // Remove any commands after current position (if we undid and then did something new)
   commandHistory.splice(historyPosition + 1);
@@ -40,6 +87,9 @@ function pushCommand(command) {
   } else {
     historyPosition++;
   }
+
+  // Update button states
+  updateUndoRedoButtons();
 }
 
 function undo() {
@@ -57,6 +107,14 @@ function redo() {
   const command = commandHistory[historyPosition];
   command.redo();
 }
+
+// ========================================
+// PERFORMANCE MONITORING
+// ========================================
+
+// Initialize Performance Monitor
+const perfMonitor = new PerformanceMonitor('left-top');
+window.perfMonitor = perfMonitor; // Make globally accessible
 
 const gridContainers = document.querySelectorAll('.grid-container');
 
@@ -105,9 +163,9 @@ function pixelsToGridY(pixels) {
 const componentTemplates = {
   header: { icon: '📄', title: 'Header', content: 'This is a header component' },
   text: { icon: '📝', title: 'Text Block', content: 'This is a text block component' },
-  image: { icon: '🖼️', title: 'Image', content: '<div style="position: relative; width: 100%; height: 0; padding-bottom: 75%; overflow: hidden; border-radius: 4px; background: #f0f0f0;"><img src="https://picsum.photos/seed/image/800/600" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover;" alt="Sample image"></div>' },
+  image: { icon: '🖼️', title: 'Image', content: '<div style="position: relative; width: 100%; height: 0; padding-bottom: 75%; overflow: hidden; border-radius: 4px; background: #f0f0f0;"><img src="https://picsum.photos/800/600?random=' + Math.random() + '" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover;" alt="Sample image"></div>' },
   button: { icon: '🔘', title: 'Button', content: 'Click me!' },
-  video: { icon: '🎥', title: 'Video', content: '<div class="video-placeholder" style="width: 100%; height: 100%; background: linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.3)), url(\'https://picsum.photos/seed/video/400/300\') center/cover; border-radius: 4px; display: flex; align-items: center; justify-content: center; cursor: pointer;" onclick="this.outerHTML = \'<video controls autoplay style=\\\'width: 100%; height: 100%; object-fit: cover; border-radius: 4px;\\\'><source src=\\\'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4\\\' type=\\\'video/mp4\\\'>Your browser does not support the video tag.</video>\';" ><div style="width: 80px; height: 80px; background: rgba(255,255,255,0.9); border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(0,0,0,0.3);"><svg width="32" height="32" viewBox="0 0 24 24" fill="#4A90E2"><path d="M8 5v14l11-7z"/></svg></div></div>' },
+  video: { icon: '🎥', title: 'Video', content: '<div class="video-placeholder" style="width: 100%; height: 100%; background: linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.3)), url(\'https://picsum.photos/400/300?random=' + Math.random() + '\') center/cover; border-radius: 4px; display: flex; align-items: center; justify-content: center; cursor: pointer;" onclick="this.outerHTML = \'<video controls autoplay style=\\\'width: 100%; height: 100%; object-fit: cover; border-radius: 4px;\\\'><source src=\\\'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4\\\' type=\\\'video/mp4\\\'>Your browser does not support the video tag.</video>\';" ><div style="width: 80px; height: 80px; background: rgba(255,255,255,0.9); border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(0,0,0,0.3);"><svg width="32" height="32" viewBox="0 0 24 24" fill="#4A90E2"><path d="M8 5v14l11-7z"/></svg></div></div>' },
   gallery: { icon: '🖼️', title: 'Image Gallery', content: 'Loading images...', complex: true },
   dashboard: { icon: '📊', title: 'Dashboard Widget', content: 'Dashboard data', complex: true },
   livedata: { icon: '📡', title: 'Live Data', content: 'Connecting...', complex: true }
@@ -123,19 +181,29 @@ interact('.palette-item')
       start(event) {
         event.target.classList.add('dragging-from-palette');
 
-        // Create drag clone
+        // Get component type and template
+        const componentType = event.target.getAttribute('data-component-type');
+        const template = componentTemplates[componentType];
+
+        // Create drag clone with full size
         dragClone = document.createElement('div');
         dragClone.className = 'dragging-clone';
-        dragClone.textContent = event.target.textContent;
-        dragClone.style.left = event.clientX + 'px';
-        dragClone.style.top = event.clientY + 'px';
+        dragClone.style.width = '200px';
+        dragClone.style.height = '150px';
+        dragClone.style.left = (event.clientX - 100) + 'px';
+        dragClone.style.top = (event.clientY - 75) + 'px';
+        dragClone.style.padding = '20px 20px 20px 44px';
+        dragClone.innerHTML = `
+          <div style="font-weight: 600; color: #333; margin-bottom: 5px; font-size: 14px;">${template.icon} ${template.title}</div>
+        `;
         document.body.appendChild(dragClone);
       },
 
       move(event) {
         if (dragClone) {
-          dragClone.style.left = event.clientX + 'px';
-          dragClone.style.top = event.clientY + 'px';
+          // Keep centered on cursor
+          dragClone.style.left = (event.clientX - 100) + 'px';
+          dragClone.style.top = (event.clientY - 75) + 'px';
         }
       },
 
@@ -158,7 +226,8 @@ gridContainers.forEach(container => {
       ondrop(event) {
         const componentType = event.relatedTarget.getAttribute('data-component-type');
         const canvasId = event.target.getAttribute('data-canvas-id');
-        const dropPosition = getGridPosition(event.dragEvent.clientX, event.dragEvent.clientY, canvasId);
+        // Offset cursor position to account for clone being centered (200px wide, 150px tall)
+        const dropPosition = getGridPosition(event.dragEvent.clientX - 100, event.dragEvent.clientY - 75, canvasId);
 
         addItemToGrid(canvasId, componentType, dropPosition.x, dropPosition.y);
       }
@@ -413,22 +482,22 @@ function initializeComplexComponent(itemId, type) {
       contentEl.innerHTML = `
         <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; height: 100%;">
           <div style="position: relative; width: 100%; padding-bottom: 100%; overflow: hidden; border-radius: 4px; background: #f0f0f0;">
-            <img src="https://picsum.photos/seed/gallery1/400" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover;" loading="lazy" alt="Gallery image 1">
+            <img src="https://picsum.photos/400?random=${Math.random()}" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover;" loading="lazy" alt="Gallery image 1">
           </div>
           <div style="position: relative; width: 100%; padding-bottom: 100%; overflow: hidden; border-radius: 4px; background: #f0f0f0;">
-            <img src="https://picsum.photos/seed/gallery2/400" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover;" loading="lazy" alt="Gallery image 2">
+            <img src="https://picsum.photos/400?random=${Math.random()}" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover;" loading="lazy" alt="Gallery image 2">
           </div>
           <div style="position: relative; width: 100%; padding-bottom: 100%; overflow: hidden; border-radius: 4px; background: #f0f0f0;">
-            <img src="https://picsum.photos/seed/gallery3/400" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover;" loading="lazy" alt="Gallery image 3">
+            <img src="https://picsum.photos/400?random=${Math.random()}" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover;" loading="lazy" alt="Gallery image 3">
           </div>
           <div style="position: relative; width: 100%; padding-bottom: 100%; overflow: hidden; border-radius: 4px; background: #f0f0f0;">
-            <img src="https://picsum.photos/seed/gallery4/400" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover;" loading="lazy" alt="Gallery image 4">
+            <img src="https://picsum.photos/400?random=${Math.random()}" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover;" loading="lazy" alt="Gallery image 4">
           </div>
           <div style="position: relative; width: 100%; padding-bottom: 100%; overflow: hidden; border-radius: 4px; background: #f0f0f0;">
-            <img src="https://picsum.photos/seed/gallery5/400" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover;" loading="lazy" alt="Gallery image 5">
+            <img src="https://picsum.photos/400?random=${Math.random()}" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover;" loading="lazy" alt="Gallery image 5">
           </div>
           <div style="position: relative; width: 100%; padding-bottom: 100%; overflow: hidden; border-radius: 4px; background: #f0f0f0;">
-            <img src="https://picsum.photos/seed/gallery6/400" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover;" loading="lazy" alt="Gallery image 6">
+            <img src="https://picsum.photos/400?random=${Math.random()}" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover;" loading="lazy" alt="Gallery image 6">
           </div>
         </div>
       `;
@@ -618,6 +687,8 @@ function makeItemDraggable(element, item) {
       inertia: false,
       listeners: {
         start(event) {
+          perfMonitor.startOperation('drag');
+
           event.target.classList.add('dragging');
           selectItem(item.id, item.canvasId);
 
@@ -855,6 +926,8 @@ function makeItemDraggable(element, item) {
               oldGridContainer.style.minHeight = oldRequiredHeight + 'px';
             }
           }
+
+          perfMonitor.endOperation('drag');
         }
       }
     });
@@ -892,6 +965,8 @@ function makeItemResizable(element, item) {
 
       listeners: {
         start(event) {
+          perfMonitor.startOperation('resize');
+
           event.target.classList.add('resizing');
 
           // Store the starting position and size
@@ -1054,6 +1129,8 @@ function makeItemResizable(element, item) {
           event.target.style.transform = '';
           event.target.removeAttribute('data-x');
           event.target.removeAttribute('data-y');
+
+          perfMonitor.endOperation('resize');
         }
       }
     });
@@ -1399,6 +1476,8 @@ function calculateCanvasHeight(canvasId) {
 
 // Switch viewport
 function switchViewport(viewport) {
+  perfMonitor.startOperation('viewport');
+
   currentViewport = viewport;
 
   // Update button states
@@ -1437,6 +1516,8 @@ function switchViewport(viewport) {
   document.querySelectorAll('.grid-item').forEach(el => {
     el.classList.remove('selected');
   });
+
+  perfMonitor.endOperation('viewport');
 }
 
 // Viewport toggle handlers
@@ -1533,6 +1614,7 @@ document.getElementById('addStressTest').addEventListener('click', function() {
   const canvasIds = Object.keys(canvases);
 
   console.time('Add ' + count + ' items');
+  perfMonitor.startOperation('add');
 
   // Batch add items without rendering
   const itemsToAdd = [];
@@ -1573,6 +1655,7 @@ document.getElementById('addStressTest').addEventListener('click', function() {
     batchRenderItems(canvasId);
   });
 
+  perfMonitor.endOperation('add');
   console.timeEnd('Add ' + count + ' items');
   updateItemCount();
 
@@ -1667,7 +1750,8 @@ document.getElementById('addSection').addEventListener('click', function() {
       ondrop(event) {
         const componentType = event.relatedTarget.getAttribute('data-component-type');
         const canvasId = event.target.getAttribute('data-canvas-id');
-        const dropPosition = getGridPosition(event.dragEvent.clientX, event.dragEvent.clientY, canvasId);
+        // Offset cursor position to account for clone being centered (200px wide, 150px tall)
+        const dropPosition = getGridPosition(event.dragEvent.clientX - 100, event.dragEvent.clientY - 75, canvasId);
 
         addItemToGrid(canvasId, componentType, dropPosition.x, dropPosition.y);
       }
@@ -1730,6 +1814,9 @@ document.getElementById('addSection').addEventListener('click', function() {
     newContainer.classList.add('hide-grid');
   }
 
+  // Start observing the new canvas for resize events
+  observeCanvas(newCanvasId);
+
   alert(`Section ${sectionNumber} added!`);
 });
 
@@ -1775,6 +1862,12 @@ document.querySelector('.canvases-container').addEventListener('click', function
         selectedCanvasId = null;
       }
 
+      // Stop observing the canvas
+      const containerToRemove = document.getElementById(canvasId);
+      if (containerToRemove) {
+        canvasResizeObserver.unobserve(containerToRemove);
+      }
+
       // Remove from DOM
       canvasItem.remove();
 
@@ -1806,6 +1899,7 @@ document.addEventListener('keydown', function(e) {
   if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) {
     e.preventDefault();
     undo();
+    updateUndoRedoButtons();
     return;
   }
 
@@ -1813,6 +1907,7 @@ document.addEventListener('keydown', function(e) {
   if ((e.ctrlKey || e.metaKey) && (e.key === 'y' || (e.key === 'z' && e.shiftKey))) {
     e.preventDefault();
     redo();
+    updateUndoRedoButtons();
     return;
   }
 
@@ -1859,6 +1954,17 @@ document.getElementById('configPanelClose').addEventListener('click', closeConfi
 document.getElementById('configPanelCancel').addEventListener('click', closeConfigPanel);
 document.getElementById('configPanelSave').addEventListener('click', saveConfig);
 
+// Undo/Redo button event listeners
+document.getElementById('undoBtn').addEventListener('click', function() {
+  undo();
+  updateUndoRedoButtons();
+});
+
+document.getElementById('redoBtn').addEventListener('click', function() {
+  redo();
+  updateUndoRedoButtons();
+});
+
 // Z-index control buttons in config panel
 document.getElementById('sendToFront').addEventListener('click', function() {
   if (selectedConfigItem && selectedCanvasId) {
@@ -1884,22 +1990,32 @@ document.getElementById('sendToBack').addEventListener('click', function() {
   }
 });
 
-// Re-render all components when window resizes
-// Components are stored in grid units, so we need to recalculate pixel positions
-let resizeTimeout;
-window.addEventListener('resize', function() {
-  clearTimeout(resizeTimeout);
-  resizeTimeout = setTimeout(() => {
-    // Clear all mobile layout caches since grid size changed
-    if (currentViewport === 'mobile') {
-      Object.keys(canvases).forEach(canvasId => {
-        clearMobileLayoutCache(canvasId);
-      });
+// Re-render components when canvas containers resize
+// Uses ResizeObserver to only react to actual canvas size changes
+// This is more efficient than window resize which fires for any window change
+const resizeTimeouts = new Map(); // Per-canvas debounce timers
+
+// Create ResizeObserver to watch canvas containers
+const canvasResizeObserver = new ResizeObserver(entries => {
+  entries.forEach(entry => {
+    const canvasId = entry.target.id;
+
+    // Clear existing timeout for this canvas
+    if (resizeTimeouts.has(canvasId)) {
+      clearTimeout(resizeTimeouts.get(canvasId));
     }
 
-    Object.keys(canvases).forEach(canvasId => {
-      const canvas = canvases[canvasId];
+    // Debounced re-render for this specific canvas
+    const timeout = setTimeout(() => {
+      // Clear mobile layout cache for this canvas
+      if (currentViewport === 'mobile') {
+        clearMobileLayoutCache(canvasId);
+      }
 
+      const canvas = canvases[canvasId];
+      if (!canvas) return;
+
+      // Update all items in this canvas
       canvas.items.forEach(item => {
         const element = document.getElementById(item.id);
         if (element) {
@@ -1917,8 +2033,25 @@ window.addEventListener('resize', function() {
         const requiredHeight = calculateCanvasHeight(canvasId);
         gridContainer.style.minHeight = requiredHeight + 'px';
       }
-    });
-  }, 150);
+
+      resizeTimeouts.delete(canvasId);
+    }, 150);
+
+    resizeTimeouts.set(canvasId, timeout);
+  });
+});
+
+// Helper function to observe a canvas container
+function observeCanvas(canvasId) {
+  const container = document.getElementById(canvasId);
+  if (container) {
+    canvasResizeObserver.observe(container);
+  }
+}
+
+// Observe all existing canvases
+Object.keys(canvases).forEach(canvasId => {
+  observeCanvas(canvasId);
 });
 
 // Add some demo items on load
@@ -1955,4 +2088,7 @@ window.addEventListener('load', function() {
 
   // Update item count after loading demo items
   updateItemCount();
+
+  // Set initial undo/redo button states
+  updateUndoRedoButtons();
 });
