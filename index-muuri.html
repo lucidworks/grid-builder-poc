@@ -339,6 +339,7 @@
     .muuri-grid {
       position: relative;
       width: 100%;
+      min-height: 400px;
     }
 
     /* Grid Items */
@@ -485,6 +486,13 @@
         <div class="controls">
           <button id="exportState">Export State</button>
           <button id="addSection">➕ Add Section</button>
+          <div style="display: inline-flex; align-items: center; gap: 6px; margin-left: 12px; padding: 6px 12px; background: #fff3cd; border: 1px solid #ffc107; border-radius: 4px;">
+            <span style="font-size: 12px; color: #856404; font-weight: 500;">Stress Test:</span>
+            <input type="number" id="stressTestCount" value="50" min="1" max="500" style="width: 60px; padding: 4px 8px; border: 1px solid #ddd; border-radius: 3px; font-size: 12px;">
+            <button id="addStressTest" style="padding: 4px 12px; background: #ffc107; color: #000; border: 1px solid #ffc107; border-radius: 3px; cursor: pointer; font-size: 12px; font-weight: 500;">Add Items</button>
+            <button id="clearAll" style="padding: 4px 12px; background: #dc3545; color: white; border: 1px solid #dc3545; border-radius: 3px; cursor: pointer; font-size: 12px; font-weight: 500;">Clear All</button>
+            <span id="itemCount" style="font-size: 11px; color: #666; margin-left: 4px;">0 items</span>
+          </div>
           <div class="info-badge">
             ℹ️ Muuri Version Features
             <div class="tooltip">
@@ -510,7 +518,6 @@
               </div>
             </div>
           </div>
-          <span id="itemCount" style="font-size: 12px; color: #666;">0 items</span>
           <div class="version-switcher">
             <span class="version-switcher-label">Version:</span>
             <a href="index.html" class="version-switcher-link" title="Uses CSS left/top properties for positioning">Left/Top</a>
@@ -630,11 +637,6 @@
         updateItemCount();
       });
     }
-
-    // Initialize all grids
-    initializeGrid('canvas1');
-    initializeGrid('canvas2');
-    initializeGrid('canvas3');
 
     // Create grid item element
     function createGridItem(componentType, size) {
@@ -784,6 +786,9 @@
       const grid = grids[canvasId];
       grid.add(element);
 
+      // Explicitly trigger layout refresh
+      grid.layout();
+
       if (template.complex) {
         setTimeout(() => {
           initializeComplexComponent(element.id, componentType);
@@ -827,11 +832,20 @@
       document.getElementById('itemCount').textContent = totalItems + ' items';
     }
 
-    // Palette drag and drop
-    document.querySelectorAll('.palette-item').forEach(paletteItem => {
-      let dragClone = null;
+    // Initialize when DOM is ready
+    document.addEventListener('DOMContentLoaded', function() {
+      // Initialize all grids
+      initializeGrid('canvas1');
+      initializeGrid('canvas2');
+      initializeGrid('canvas3');
 
-      paletteItem.addEventListener('mousedown', function(e) {
+      // Palette drag and drop
+      const paletteItems = document.querySelectorAll('.palette-item');
+
+      paletteItems.forEach(paletteItem => {
+        let dragClone = null;
+
+        paletteItem.addEventListener('mousedown', function(e) {
         const startX = e.clientX;
         const startY = e.clientY;
         let isDragging = false;
@@ -1048,7 +1062,69 @@
       }
     });
 
-    // Set initial background colors
+    // Stress test: Add many items
+    document.getElementById('addStressTest').addEventListener('click', function() {
+      const count = parseInt(document.getElementById('stressTestCount').value) || 50;
+      const componentTypes = Object.keys(componentTemplates);
+      const sizes = ['small', 'medium', 'large', 'wide', 'tall'];
+      const canvasIds = ['canvas1', 'canvas2', 'canvas3'];
+
+      console.time('Add ' + count + ' items');
+
+      for (let i = 0; i < count; i++) {
+        const canvasId = canvasIds[i % canvasIds.length]; // Distribute across canvases
+        const type = componentTypes[Math.floor(Math.random() * componentTypes.length)];
+        const size = sizes[Math.floor(Math.random() * sizes.length)];
+
+        addItemToGrid(canvasId, type, size);
+      }
+
+      console.timeEnd('Add ' + count + ' items');
+      updateItemCount();
+
+      alert(`Added ${count} items!\nCheck console for timing.`);
+    });
+
+    // Clear all items from all canvases
+    document.getElementById('clearAll').addEventListener('click', function() {
+      let totalItems = 0;
+      for (const canvasId in grids) {
+        totalItems += grids[canvasId].getItems().length;
+      }
+
+      if (totalItems === 0) {
+        alert('No items to clear!');
+        return;
+      }
+
+      if (confirm(`Clear all ${totalItems} items from all canvases?`)) {
+        console.time('Clear all items');
+
+        for (const canvasId in grids) {
+          const grid = grids[canvasId];
+          const items = grid.getItems();
+
+          // Clear any polling intervals for complex components
+          items.forEach(item => {
+            const element = item.getElement();
+            const intervalId = element.getAttribute('data-interval-id');
+            if (intervalId) {
+              clearInterval(parseInt(intervalId));
+            }
+          });
+
+          // Remove all items from Muuri grid
+          grid.remove(items, { removeElements: true });
+        }
+
+        console.timeEnd('Clear all items');
+        updateItemCount();
+      }
+    });
+
+    }); // End of DOMContentLoaded
+
+    // Set initial background colors and add demo items
     window.addEventListener('load', function() {
       const canvas1Builder = document.getElementById('canvas1').closest('.grid-builder');
       const canvas2Builder = document.getElementById('canvas2').closest('.grid-builder');
@@ -1057,6 +1133,22 @@
       if (canvas1Builder) canvas1Builder.style.backgroundColor = '#ffffff';
       if (canvas2Builder) canvas2Builder.style.backgroundColor = '#f5f5f5';
       if (canvas3Builder) canvas3Builder.style.backgroundColor = '#ffffff';
+
+      // Section 1 - Hero section demo items
+      addItemToGrid('canvas1', 'header', 'wide');
+      addItemToGrid('canvas1', 'text', 'medium');
+      addItemToGrid('canvas1', 'button', 'small');
+      addItemToGrid('canvas1', 'image', 'medium');
+
+      // Section 2 - Content section demo items
+      addItemToGrid('canvas2', 'header', 'wide');
+      addItemToGrid('canvas2', 'text', 'medium');
+      addItemToGrid('canvas2', 'video', 'large');
+
+      // Section 3 - Footer section demo items
+      addItemToGrid('canvas3', 'text', 'medium');
+      addItemToGrid('canvas3', 'button', 'small');
+      addItemToGrid('canvas3', 'button', 'small');
 
       updateItemCount();
     });
