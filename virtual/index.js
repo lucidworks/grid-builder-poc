@@ -1076,17 +1076,23 @@
 
               // Batch DOM updates with requestAnimationFrame
               resizeRafId = requestAnimationFrame(() => {
-                // FIXED: Use event.rect directly - interact.js already snapped it
-                // No need to accumulate deltas and manually snap
-                const newX = event.rect.left;
-                const newY = event.rect.top;
-                const newWidth = event.rect.width;
-                const newHeight = event.rect.height;
+                // Use deltaRect to accumulate changes instead of absolute positions
+                // This prevents jumping when endOnly snap is used
+                const dx = event.deltaRect.left;
+                const dy = event.deltaRect.top;
+                const dw = event.deltaRect.width;
+                const dh = event.deltaRect.height;
+
+                // Update stored rect
+                startRect.x += dx;
+                startRect.y += dy;
+                startRect.width += dw;
+                startRect.height += dh;
 
                 // Update DOM
-                event.target.style.width = newWidth + 'px';
-                event.target.style.height = newHeight + 'px';
-                event.target.style.transform = `translate(${newX}px, ${newY}px)`;
+                event.target.style.transform = `translate(${startRect.x}px, ${startRect.y}px)`;
+                event.target.style.width = startRect.width + 'px';
+                event.target.style.height = startRect.height + 'px';
 
                 resizeRafId = null;
               });
@@ -1107,12 +1113,16 @@
               event.target.removeAttribute('data-width');
               event.target.removeAttribute('data-height');
 
-              // Read final position and size directly from element
-              const newWidth = parseFloat(event.target.style.width);
-              const newHeight = parseFloat(event.target.style.height);
-              const position = getTransformPosition(event.target);
-              const newX = position.x;
-              const newY = position.y;
+              // Use event.rect for final snapped values (snap modifier applies with endOnly: true)
+              const newX = event.rect.left;
+              const newY = event.rect.top;
+              const newWidth = event.rect.width;
+              const newHeight = event.rect.height;
+
+              // Apply snapped final position
+              event.target.style.transform = `translate(${newX}px, ${newY}px)`;
+              event.target.style.width = newWidth + 'px';
+              event.target.style.height = newHeight + 'px';
 
               // Save old state for undo before changing
               const oldLayout = JSON.parse(JSON.stringify(item.layouts[currentViewport]));
