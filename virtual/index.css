@@ -329,6 +329,7 @@
       color: #333;
       margin-bottom: 5px;
       font-size: 14px;
+      padding-left: 40px; /* Make room for drag handle */
     }
 
     .grid-item-content {
