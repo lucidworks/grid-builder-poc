@@ -830,7 +830,8 @@
       const resizeHandle = element.querySelector('.resize-handle.se');
       if (!resizeHandle) return;
 
-      let startSize = element.getAttribute('data-size');
+      let isResizing = false;
+      let startSize = null;
       let startRect = null;
       let currentPreviewSize = null;
 
@@ -854,73 +855,84 @@
         return newSize;
       }
 
-      interact(resizeHandle)
-        .draggable({
-          inertia: false,
-          autoScroll: false,
-          listeners: {
-            start: function(event) {
-              startSize = element.getAttribute('data-size');
-              startRect = element.querySelector('.item-content').getBoundingClientRect();
-              currentPreviewSize = startSize;
-              event.stopPropagation();
-            },
-            move: function(event) {
-              event.stopPropagation();
+      // Mouse down on resize handle
+      resizeHandle.addEventListener('mousedown', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
 
-              // Calculate current delta
-              const deltaX = event.pageX - startRect.right;
-              const deltaY = event.pageY - startRect.bottom;
+        isResizing = true;
+        startSize = element.getAttribute('data-size');
+        startRect = element.querySelector('.item-content').getBoundingClientRect();
+        currentPreviewSize = startSize;
+      });
 
-              // Determine preview size
-              const previewSize = calculateNewSize(deltaX, deltaY, startSize);
+      // Mouse move anywhere on document
+      document.addEventListener('mousemove', function(e) {
+        if (!isResizing) return;
 
-              // Only update preview if size changed
-              if (previewSize !== currentPreviewSize) {
-                currentPreviewSize = previewSize;
-                const itemContent = element.querySelector('.item-content');
-                itemContent.className = `item-content size-${previewSize}`;
+        e.preventDefault();
+        e.stopPropagation();
 
-                // Refresh Muuri layout for live preview
-                const grid = grids[canvasId];
-                grid.refreshItems([element]);
-                grid.layout();
-              }
-            },
-            end: function(event) {
-              event.stopPropagation();
+        // Calculate current delta
+        const deltaX = e.pageX - startRect.right;
+        const deltaY = e.pageY - startRect.bottom;
 
-              // Calculate final delta
-              const deltaX = event.pageX - startRect.right;
-              const deltaY = event.pageY - startRect.bottom;
+        // Determine preview size
+        const previewSize = calculateNewSize(deltaX, deltaY, startSize);
 
-              // Determine final size
-              const newSize = calculateNewSize(deltaX, deltaY, startSize);
+        // Only update preview if size changed
+        if (previewSize !== currentPreviewSize) {
+          currentPreviewSize = previewSize;
+          const itemContent = element.querySelector('.item-content');
+          itemContent.className = `item-content size-${previewSize}`;
 
-              // Update data attribute and ensure final size is applied
-              if (newSize !== startSize) {
-                const itemContent = element.querySelector('.item-content');
-                itemContent.className = `item-content size-${newSize}`;
-                element.setAttribute('data-size', newSize);
+          // Refresh Muuri layout for live preview
+          const grid = grids[canvasId];
+          grid.refreshItems([element]);
+          grid.layout();
+        }
+      });
 
-                // Final refresh
-                const grid = grids[canvasId];
-                grid.refreshItems([element]);
-                grid.layout();
-              } else if (currentPreviewSize !== startSize) {
-                // Revert to original size if no significant change
-                const itemContent = element.querySelector('.item-content');
-                itemContent.className = `item-content size-${startSize}`;
+      // Mouse up anywhere on document
+      document.addEventListener('mouseup', function(e) {
+        if (!isResizing) return;
 
-                const grid = grids[canvasId];
-                grid.refreshItems([element]);
-                grid.layout();
-              }
+        e.preventDefault();
+        e.stopPropagation();
 
-              currentPreviewSize = null;
-            }
-          }
-        });
+        isResizing = false;
+
+        // Calculate final delta
+        const deltaX = e.pageX - startRect.right;
+        const deltaY = e.pageY - startRect.bottom;
+
+        // Determine final size
+        const newSize = calculateNewSize(deltaX, deltaY, startSize);
+
+        // Update data attribute and ensure final size is applied
+        if (newSize !== startSize) {
+          const itemContent = element.querySelector('.item-content');
+          itemContent.className = `item-content size-${newSize}`;
+          element.setAttribute('data-size', newSize);
+
+          // Final refresh
+          const grid = grids[canvasId];
+          grid.refreshItems([element]);
+          grid.layout();
+        } else if (currentPreviewSize !== startSize) {
+          // Revert to original size if no significant change
+          const itemContent = element.querySelector('.item-content');
+          itemContent.className = `item-content size-${startSize}`;
+
+          const grid = grids[canvasId];
+          grid.refreshItems([element]);
+          grid.layout();
+        }
+
+        currentPreviewSize = null;
+        startSize = null;
+        startRect = null;
+      });
     }
 
     // Add item to grid
