@@ -448,24 +448,42 @@
     /* Resize Handles */
     .resize-handle {
       position: absolute;
-      width: 10px;
-      height: 10px;
+      width: 24px;
+      height: 24px;
       background: #4A90E2;
       border: 2px solid white;
-      border-radius: 50%;
-      box-shadow: 0 0 3px rgba(0,0,0,0.3);
-      opacity: 0;
-      transition: opacity 0.2s;
+      border-radius: 4px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+      opacity: 0.3;
+      transition: all 0.2s;
       z-index: 10;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .resize-handle::after {
+      content: '⇲';
+      font-size: 14px;
+      color: white;
+      font-weight: bold;
+      line-height: 1;
     }
 
     .grid-item:hover .resize-handle {
       opacity: 1;
+      transform: scale(1.1);
+      box-shadow: 0 3px 8px rgba(0,0,0,0.4);
+    }
+
+    .resize-handle:hover {
+      background: #357ABD;
+      transform: scale(1.2);
     }
 
     .resize-handle.se {
-      bottom: -5px;
-      right: -5px;
+      bottom: -2px;
+      right: -2px;
       cursor: se-resize;
     }
   </style>
