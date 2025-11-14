@@ -157,7 +157,6 @@
       border: 1px solid #dee2e6;
       border-radius: 4px;
       font-size: 12px;
-      margin-left: 12px;
     }
 
     .version-switcher-label {
@@ -165,26 +164,25 @@
       font-weight: 500;
     }
 
-    .version-switcher-link {
-      color: #4A90E2;
-      text-decoration: none;
-      font-weight: 500;
+    .version-switcher select {
       padding: 4px 8px;
+      border: 1px solid #dee2e6;
       border-radius: 3px;
-      transition: all 0.2s;
+      background: white;
+      color: #333;
+      font-size: 12px;
+      cursor: pointer;
+      outline: none;
+      transition: border-color 0.2s;
     }
 
-    .version-switcher-link:hover {
-      background: #4A90E2;
-      color: white;
+    .version-switcher select:hover {
+      border-color: #4A90E2;
     }
 
-    .version-current {
-      color: #28a745;
-      font-weight: 600;
-      padding: 4px 8px;
-      background: #d4edda;
-      border-radius: 3px;
+    .version-switcher select:focus {
+      border-color: #4A90E2;
+      box-shadow: 0 0 0 2px rgba(74, 144, 226, 0.1);
     }
 
     /* Canvases Container */
@@ -507,11 +505,11 @@
           </div>
           <div class="version-switcher">
             <span class="version-switcher-label">Version:</span>
-            <a href="index.html" class="version-switcher-link" title="Uses CSS left/top properties for positioning">Left/Top</a>
-            <span style="color: #ccc;">|</span>
-            <span class="version-current">Transform 🧪</span>
-            <span style="color: #ccc;">|</span>
-            <a href="index-muuri.html" class="version-switcher-link" title="Uses Muuri.js for auto-layout with animations">Muuri 🧪</a>
+            <select id="versionSelect" onchange="window.location.href = this.value">
+              <option value="index.html">Left/Top</option>
+              <option value="index-transform.html" selected>Transform 🧪</option>
+              <option value="index-muuri.html">Muuri 🧪</option>
+            </select>
           </div>
         </div>
       </div>
