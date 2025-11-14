@@ -814,56 +814,89 @@
 
       let startSize = element.getAttribute('data-size');
       let startRect = null;
+      let currentPreviewSize = null;
+
+      // Helper function to determine size based on delta
+      function calculateNewSize(deltaX, deltaY, startSize) {
+        const currentIndex = sizeOrder.indexOf(startSize);
+        let newSize = startSize;
+
+        if (Math.abs(deltaX) > 50 || Math.abs(deltaY) > 50) {
+          if (deltaX > 50 && deltaY < 30) {
+            newSize = 'wide';
+          } else if (deltaY > 50 && deltaX < 30) {
+            newSize = 'tall';
+          } else if (deltaX > 30 && deltaY > 30) {
+            newSize = currentIndex < sizeOrder.length - 1 ? sizeOrder[currentIndex + 1] : 'large';
+          } else if (deltaX < -30 || deltaY < -30) {
+            newSize = currentIndex > 0 ? sizeOrder[currentIndex - 1] : 'small';
+          }
+        }
+
+        return newSize;
+      }
 
       interact(resizeHandle)
         .draggable({
           onstart: function(event) {
             startSize = element.getAttribute('data-size');
             startRect = element.querySelector('.item-content').getBoundingClientRect();
+            currentPreviewSize = startSize;
             event.stopPropagation();
           },
           onmove: function(event) {
             event.stopPropagation();
+
+            // Calculate current delta
+            const deltaX = event.pageX - startRect.right;
+            const deltaY = event.pageY - startRect.bottom;
+
+            // Determine preview size
+            const previewSize = calculateNewSize(deltaX, deltaY, startSize);
+
+            // Only update preview if size changed
+            if (previewSize !== currentPreviewSize) {
+              currentPreviewSize = previewSize;
+              const itemContent = element.querySelector('.item-content');
+              itemContent.className = `item-content size-${previewSize}`;
+
+              // Refresh Muuri layout for live preview
+              const grid = grids[canvasId];
+              grid.refreshItems([element]);
+              grid.layout();
+            }
           },
           onend: function(event) {
             event.stopPropagation();
 
-            // Calculate resize delta
+            // Calculate final delta
             const deltaX = event.pageX - startRect.right;
             const deltaY = event.pageY - startRect.bottom;
 
-            // Determine new size based on delta
-            let newSize = startSize;
-            const currentIndex = sizeOrder.indexOf(startSize);
+            // Determine final size
+            const newSize = calculateNewSize(deltaX, deltaY, startSize);
 
-            // Significant horizontal drag
-            if (Math.abs(deltaX) > 50 || Math.abs(deltaY) > 50) {
-              if (deltaX > 50 && deltaY < 30) {
-                // Drag right -> wider
-                newSize = 'wide';
-              } else if (deltaY > 50 && deltaX < 30) {
-                // Drag down -> taller
-                newSize = 'tall';
-              } else if (deltaX > 30 && deltaY > 30) {
-                // Drag diagonal -> larger
-                newSize = currentIndex < sizeOrder.length - 1 ? sizeOrder[currentIndex + 1] : 'large';
-              } else if (deltaX < -30 || deltaY < -30) {
-                // Drag inward -> smaller
-                newSize = currentIndex > 0 ? sizeOrder[currentIndex - 1] : 'small';
-              }
-            }
-
-            // Update size if changed
+            // Update data attribute and ensure final size is applied
             if (newSize !== startSize) {
               const itemContent = element.querySelector('.item-content');
               itemContent.className = `item-content size-${newSize}`;
               element.setAttribute('data-size', newSize);
 
-              // Refresh Muuri layout
+              // Final refresh
+              const grid = grids[canvasId];
+              grid.refreshItems([element]);
+              grid.layout();
+            } else if (currentPreviewSize !== startSize) {
+              // Revert to original size if no significant change
+              const itemContent = element.querySelector('.item-content');
+              itemContent.className = `item-content size-${startSize}`;
+
               const grid = grids[canvasId];
               grid.refreshItems([element]);
               grid.layout();
             }
+
+            currentPreviewSize = null;
           }
         });
     }
