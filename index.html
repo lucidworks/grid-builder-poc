@@ -449,6 +449,165 @@
     .drop-zone-indicator.active {
       opacity: 1;
     }
+
+    /* Drag Handle */
+    .drag-handle {
+      position: absolute;
+      top: 8px;
+      left: 8px;
+      width: 28px;
+      height: 28px;
+      background: rgba(74, 144, 226, 0.1);
+      border: 1px solid rgba(74, 144, 226, 0.3);
+      border-radius: 4px;
+      cursor: move;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0.3;
+      transition: all 0.2s;
+      z-index: 10;
+    }
+
+    .drag-handle::before {
+      content: '⋮⋮';
+      font-size: 14px;
+      color: #4A90E2;
+      font-weight: bold;
+      letter-spacing: -2px;
+    }
+
+    .grid-item:hover .drag-handle {
+      opacity: 1;
+      background: rgba(74, 144, 226, 0.15);
+    }
+
+    .drag-handle:hover {
+      background: rgba(74, 144, 226, 0.25);
+      transform: scale(1.1);
+    }
+
+    /* Configuration Side Panel */
+    .config-panel {
+      position: fixed;
+      top: 0;
+      right: -400px;
+      width: 400px;
+      height: 100vh;
+      background: white;
+      box-shadow: -2px 0 8px rgba(0,0,0,0.15);
+      transition: right 0.3s ease;
+      z-index: 10000;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .config-panel.open {
+      right: 0;
+    }
+
+    .config-panel-header {
+      padding: 20px;
+      border-bottom: 1px solid #ddd;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .config-panel-header h2 {
+      margin: 0;
+      font-size: 18px;
+      color: #333;
+    }
+
+    .config-panel-close {
+      width: 32px;
+      height: 32px;
+      border: none;
+      background: transparent;
+      cursor: pointer;
+      font-size: 24px;
+      color: #666;
+      border-radius: 4px;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0;
+    }
+
+    .config-panel-close:hover {
+      background: #f5f5f5;
+      color: #333;
+    }
+
+    .config-panel-body {
+      padding: 20px;
+      flex: 1;
+      overflow-y: auto;
+    }
+
+    .config-field {
+      margin-bottom: 20px;
+    }
+
+    .config-field label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 600;
+      color: #333;
+      font-size: 14px;
+    }
+
+    .config-field input {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 14px;
+      font-family: inherit;
+      transition: border-color 0.2s;
+    }
+
+    .config-field input:focus {
+      outline: none;
+      border-color: #4A90E2;
+      box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.1);
+    }
+
+    .config-panel-footer {
+      padding: 20px;
+      border-top: 1px solid #ddd;
+      display: flex;
+      gap: 10px;
+      justify-content: flex-end;
+    }
+
+    .config-panel-footer button {
+      padding: 10px 20px;
+      border: 1px solid #ddd;
+      background: white;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+      transition: all 0.2s;
+    }
+
+    .config-panel-footer button:hover {
+      background: #f5f5f5;
+    }
+
+    .config-panel-footer button.primary {
+      background: #4A90E2;
+      color: white;
+      border-color: #4A90E2;
+    }
+
+    .config-panel-footer button.primary:hover {
+      background: #357ABD;
+      border-color: #357ABD;
+    }
   </style>
 </head>
 <body>
@@ -572,6 +731,24 @@
     </div>
   </div>
 
+  <!-- Configuration Side Panel -->
+  <div class="config-panel" id="configPanel">
+    <div class="config-panel-header">
+      <h2>Component Settings</h2>
+      <button class="config-panel-close" id="configPanelClose">×</button>
+    </div>
+    <div class="config-panel-body">
+      <div class="config-field">
+        <label for="componentName">Component Name</label>
+        <input type="text" id="componentName" placeholder="Enter component name">
+      </div>
+    </div>
+    <div class="config-panel-footer">
+      <button id="configPanelCancel">Cancel</button>
+      <button id="configPanelSave" class="primary">Save</button>
+    </div>
+  </div>
+
   <script>
     // State - per canvas
     const canvases = {
@@ -590,6 +767,7 @@
     };
     let selectedItemId = null;
     let selectedCanvasId = null;
+    let selectedConfigItem = null; // Track currently configured item
     let itemIdCounter = 0;
     let dragClone = null;
     let showGrid = true;
@@ -841,6 +1019,7 @@
         id,
         canvasId,
         type: componentType,
+        name: template.title, // Default name from template
         layouts: {
           desktop: {
             x: pixelsToGridX(x, canvasId),        // stored in grid units
@@ -1086,6 +1265,7 @@
       div.className = 'grid-item';
       div.id = item.id;
       div.setAttribute('data-canvas-id', item.canvasId);
+      div.setAttribute('data-component-name', item.name || template.title); // Store component name
 
       const layout = getCurrentLayout(item);
       div.style.left = layout.x + 'px';
@@ -1097,7 +1277,8 @@
       // Render complex or simple content
       if (template.complex) {
         div.innerHTML = `
-          <div class="grid-item-header">${template.icon} ${template.title}</div>
+          <div class="drag-handle"></div>
+          <div class="grid-item-header">${template.icon} ${item.name || template.title}</div>
           <div class="grid-item-content" id="${item.id}-content"></div>
           <div class="grid-item-controls">
             <button class="grid-item-control-btn" onclick="bringToFront('${item.id}', '${item.canvasId}')" title="Bring to Front">⬆️</button>
@@ -1115,7 +1296,8 @@
         `;
       } else {
         div.innerHTML = `
-          <div class="grid-item-header">${template.icon} ${template.title}</div>
+          <div class="drag-handle"></div>
+          <div class="grid-item-header">${template.icon} ${item.name || template.title}</div>
           <div class="grid-item-content">${template.content}</div>
           <div class="grid-item-controls">
             <button class="grid-item-control-btn" onclick="bringToFront('${item.id}', '${item.canvasId}')" title="Bring to Front">⬆️</button>
@@ -1133,12 +1315,17 @@
         `;
       }
 
-      // Click to select
+      // Click to open config panel
       div.addEventListener('click', (e) => {
-        if (!e.target.classList.contains('grid-item-delete') &&
-            !e.target.classList.contains('grid-item-control-btn')) {
-          selectItem(item.id, item.canvasId);
+        // Don't open config panel if clicking on drag handle, resize handle, delete button, or control buttons
+        if (e.target.classList.contains('drag-handle') ||
+            e.target.closest('.drag-handle') ||
+            e.target.classList.contains('resize-handle') ||
+            e.target.classList.contains('grid-item-delete') ||
+            e.target.classList.contains('grid-item-control-btn')) {
+          return;
         }
+        openConfigPanel(item.id, item.canvasId);
       });
 
       gridContainer.appendChild(div);
@@ -1161,6 +1348,7 @@
 
       interact(element)
         .draggable({
+          allowFrom: '.drag-handle', // Only allow drag from drag handle
           listeners: {
             start(event) {
               event.target.classList.add('dragging');
@@ -1776,6 +1964,69 @@
       }
     }
 
+    // Open configuration panel
+    function openConfigPanel(itemId, canvasId) {
+      const canvas = canvases[canvasId];
+      const item = canvas.items.find(i => i.id === itemId);
+      if (!item) return;
+
+      selectedConfigItem = itemId;
+      selectedCanvasId = canvasId;
+
+      // Populate form
+      document.getElementById('componentName').value = item.name || '';
+
+      // Show panel
+      document.getElementById('configPanel').classList.add('open');
+
+      // Add selected visual state
+      document.querySelectorAll('.grid-item').forEach(el => el.classList.remove('selected'));
+      const element = document.getElementById(itemId);
+      if (element) {
+        element.classList.add('selected');
+      }
+    }
+
+    // Close configuration panel
+    function closeConfigPanel() {
+      document.getElementById('configPanel').classList.remove('open');
+      if (selectedConfigItem) {
+        const element = document.getElementById(selectedConfigItem);
+        if (element) {
+          element.classList.remove('selected');
+        }
+      }
+      selectedConfigItem = null;
+    }
+
+    // Save configuration changes
+    function saveConfig() {
+      if (!selectedConfigItem || !selectedCanvasId) return;
+
+      const canvas = canvases[selectedCanvasId];
+      const item = canvas.items.find(i => i.id === selectedConfigItem);
+      if (!item) return;
+
+      const newName = document.getElementById('componentName').value.trim();
+      if (newName) {
+        item.name = newName;
+
+        // Update the DOM
+        const element = document.getElementById(selectedConfigItem);
+        if (element) {
+          element.setAttribute('data-component-name', newName);
+          const header = element.querySelector('.grid-item-header');
+          if (header) {
+            // Extract the icon (emoji) from the current header
+            const template = componentTemplates[item.type];
+            header.textContent = `${template.icon} ${newName}`;
+          }
+        }
+      }
+
+      closeConfigPanel();
+    }
+
     // Get grid position from mouse coordinates
     function getGridPosition(clientX, clientY, canvasId) {
       const gridContainer = document.getElementById(canvasId);
@@ -2269,6 +2520,11 @@
         }
       }
     });
+
+    // Configuration panel event listeners
+    document.getElementById('configPanelClose').addEventListener('click', closeConfigPanel);
+    document.getElementById('configPanelCancel').addEventListener('click', closeConfigPanel);
+    document.getElementById('configPanelSave').addEventListener('click', saveConfig);
 
     // Re-render all components when window resizes
     // Components are stored in grid units, so we need to recalculate pixel positions
