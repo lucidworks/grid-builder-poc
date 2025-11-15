@@ -22,28 +22,30 @@ describe('grid-builder-app', () => {
     expect(Object.keys(gridState.canvases).length).toBe(3);
   });
 
-  it('should calculate item count correctly with no items', () => {
+  it('should calculate item count correctly with prepopulated items', () => {
     gridBuilderApp.componentWillLoad();
-    expect(gridBuilderApp.itemCount).toBe(0);
+    // 4 items in canvas1 + 3 items in canvas2 + 3 items in canvas3 = 10 total
+    expect(gridBuilderApp.itemCount).toBe(10);
   });
 
   it('should calculate item count correctly with items', () => {
-    // Add items to canvas
+    // Replace canvas1 items with 2 test items
     gridState.canvases.canvas1.items = [
       { id: 'item-1', canvasId: 'canvas1', type: 'header', name: 'Header', layouts: {}, zIndex: 1 } as any,
       { id: 'item-2', canvasId: 'canvas1', type: 'text', name: 'Text', layouts: {}, zIndex: 2 } as any,
     ];
 
     gridBuilderApp.componentWillUpdate();
-    expect(gridBuilderApp.itemCount).toBe(2);
+    // 2 items in canvas1 + 3 items in canvas2 + 3 items in canvas3 = 8 total
+    expect(gridBuilderApp.itemCount).toBe(8);
   });
 
   it('should update item count when more items are added', () => {
-    // Initially should be 0
+    // Initially should be 10 (prepopulated)
     gridBuilderApp.componentWillLoad();
-    expect(gridBuilderApp.itemCount).toBe(0);
+    expect(gridBuilderApp.itemCount).toBe(10);
 
-    // Add items to multiple canvases
+    // Replace items in canvas1 and canvas2
     gridState.canvases.canvas1.items = [
       { id: 'item-1', canvasId: 'canvas1', type: 'header', name: 'Header', layouts: {}, zIndex: 1 } as any,
     ];
@@ -52,6 +54,7 @@ describe('grid-builder-app', () => {
     ];
 
     gridBuilderApp.componentWillUpdate();
-    expect(gridBuilderApp.itemCount).toBe(2);
+    // 1 item in canvas1 + 1 item in canvas2 + 3 items in canvas3 = 5 total
+    expect(gridBuilderApp.itemCount).toBe(5);
   });
 });

@@ -111,7 +111,6 @@ describe('grid-calculations', () => {
     });
 
     it('should work with different canvas IDs', () => {
-      // @ts-expect-error: Canvas objects are used for DOM setup
       createMockCanvas('canvas1', 1000);
       const _canvas2 = createMockCanvas('canvas2', 2000);
 
@@ -168,7 +167,6 @@ describe('grid-calculations', () => {
     });
 
     it('should handle different canvas widths', () => {
-      // @ts-expect-error: Canvas objects are used for DOM setup
       createMockCanvas('canvas1', 1000);
       const _canvas2 = createMockCanvas('canvas2', 2000);
 
@@ -241,7 +239,6 @@ describe('grid-calculations', () => {
     });
 
     it('should handle different canvas widths', () => {
-      // @ts-expect-error: Canvas objects are used for DOM setup
       createMockCanvas('canvas1', 1000);
       const _canvas2 = createMockCanvas('canvas2', 2000);
 

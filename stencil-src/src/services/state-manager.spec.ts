@@ -38,22 +38,22 @@ describe('state-manager', () => {
       expect(gridState.selectedCanvasId).toBeNull();
     });
 
-    it('should have empty items in each canvas', () => {
-      expect(gridState.canvases.canvas1.items).toHaveLength(0);
-      expect(gridState.canvases.canvas2.items).toHaveLength(0);
-      expect(gridState.canvases.canvas3.items).toHaveLength(0);
+    it('should have prepopulated demo items in each canvas', () => {
+      expect(gridState.canvases.canvas1.items).toHaveLength(4); // Hero section: header, text, button, image
+      expect(gridState.canvases.canvas2.items).toHaveLength(3); // Content section: header, text, video
+      expect(gridState.canvases.canvas3.items).toHaveLength(3); // Footer section: text, 2 buttons
     });
   });
 
   describe('generateItemId', () => {
-    it('should generate unique sequential IDs', () => {
+    it('should generate unique sequential IDs starting after prepopulated items', () => {
       const id1 = generateItemId();
       const id2 = generateItemId();
       const id3 = generateItemId();
 
-      expect(id1).toBe('item-1');
-      expect(id2).toBe('item-2');
-      expect(id3).toBe('item-3');
+      expect(id1).toBe('item-11'); // Starts at 11 (after 10 prepopulated items)
+      expect(id2).toBe('item-12');
+      expect(id3).toBe('item-13');
     });
   });
 
@@ -73,8 +73,8 @@ describe('state-manager', () => {
 
       addItemToCanvas('canvas1', item);
 
-      expect(gridState.canvases.canvas1.items).toHaveLength(1);
-      expect(gridState.canvases.canvas1.items[0]).toEqual(item);
+      expect(gridState.canvases.canvas1.items).toHaveLength(5); // 4 prepopulated + 1 new
+      expect(gridState.canvases.canvas1.items[4]).toEqual(item); // New item is at index 4
     });
 
     it('should not add item to non-existent canvas', () => {
@@ -92,13 +92,16 @@ describe('state-manager', () => {
 
       addItemToCanvas('canvas99', item);
 
-      // Should not throw error, just silently fail
-      expect(gridState.canvases.canvas1.items).toHaveLength(0);
+      // Should not throw error, just silently fail (prepopulated items should remain)
+      expect(gridState.canvases.canvas1.items).toHaveLength(4);
     });
   });
 
   describe('removeItemFromCanvas', () => {
     beforeEach(() => {
+      // Clear prepopulated items for isolated test
+      gridState.canvases.canvas1.items = [];
+
       const item = {
         id: 'test-1',
         canvasId: 'canvas1',
@@ -150,6 +153,9 @@ describe('state-manager', () => {
 
   describe('updateItem', () => {
     beforeEach(() => {
+      // Clear prepopulated items for isolated test
+      gridState.canvases.canvas1.items = [];
+
       const item = {
         id: 'test-1',
         canvasId: 'canvas1',
@@ -194,6 +200,9 @@ describe('state-manager', () => {
 
   describe('getItem', () => {
     beforeEach(() => {
+      // Clear prepopulated items for isolated test
+      gridState.canvases.canvas1.items = [];
+
       const item = {
         id: 'test-1',
         canvasId: 'canvas1',
@@ -231,6 +240,10 @@ describe('state-manager', () => {
 
   describe('moveItemToCanvas', () => {
     beforeEach(() => {
+      // Clear prepopulated items for isolated test
+      gridState.canvases.canvas1.items = [];
+      gridState.canvases.canvas2.items = [];
+
       const item = {
         id: 'test-1',
         canvasId: 'canvas1',

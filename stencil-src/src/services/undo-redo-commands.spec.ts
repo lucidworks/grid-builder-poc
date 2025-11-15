@@ -24,6 +24,9 @@ describe('undo-redo-commands', () => {
 
   describe('AddItemCommand', () => {
     it('should undo item addition by removing it', () => {
+      // Clear prepopulated items for isolated test
+      gridState.canvases.canvas1.items = [];
+
       const item = createTestItem('item-1', 'canvas1');
       const command = new AddItemCommand('canvas1', item);
 
@@ -37,6 +40,9 @@ describe('undo-redo-commands', () => {
     });
 
     it('should redo item addition', () => {
+      // Clear prepopulated items for isolated test
+      gridState.canvases.canvas1.items = [];
+
       const item = createTestItem('item-1', 'canvas1');
       const command = new AddItemCommand('canvas1', item);
 
@@ -87,6 +93,9 @@ describe('undo-redo-commands', () => {
     });
 
     it('should preserve item state across undo/redo', () => {
+      // Clear prepopulated items for isolated test
+      gridState.canvases.canvas1.items = [];
+
       const item = createTestItem('item-1', 'canvas1', 5, 10);
       const command = new AddItemCommand('canvas1', item);
 
@@ -103,6 +112,9 @@ describe('undo-redo-commands', () => {
 
   describe('DeleteItemCommand', () => {
     it('should undo item deletion by re-adding it', () => {
+      // Clear prepopulated items for isolated test
+      gridState.canvases.canvas1.items = [];
+
       const item = createTestItem('item-1', 'canvas1');
       const command = new DeleteItemCommand('canvas1', item, 0);
 
@@ -113,6 +125,9 @@ describe('undo-redo-commands', () => {
     });
 
     it('should redo item deletion by removing it again', () => {
+      // Clear prepopulated items for isolated test
+      gridState.canvases.canvas1.items = [];
+
       const item = createTestItem('item-1', 'canvas1');
       const command = new DeleteItemCommand('canvas1', item, 0);
 
@@ -126,6 +141,9 @@ describe('undo-redo-commands', () => {
     });
 
     it('should restore item at original index when undoing', () => {
+      // Clear prepopulated items for isolated test
+      gridState.canvases.canvas1.items = [];
+
       const item1 = createTestItem('item-1', 'canvas1');
       const item2 = createTestItem('item-2', 'canvas1');
       const item3 = createTestItem('item-3', 'canvas1');
@@ -143,6 +161,9 @@ describe('undo-redo-commands', () => {
     });
 
     it('should handle invalid index by appending to end', () => {
+      // Clear prepopulated items for isolated test
+      gridState.canvases.canvas1.items = [];
+
       const item1 = createTestItem('item-1', 'canvas1');
       const item2 = createTestItem('item-2', 'canvas1');
 
@@ -156,6 +177,9 @@ describe('undo-redo-commands', () => {
     });
 
     it('should clear selection when redoing if item was selected', () => {
+      // Clear prepopulated items for isolated test
+      gridState.canvases.canvas1.items = [];
+
       const item = createTestItem('item-1', 'canvas1');
       const command = new DeleteItemCommand('canvas1', item, 0);
 
@@ -180,6 +204,9 @@ describe('undo-redo-commands', () => {
     });
 
     it('should preserve item state across undo/redo', () => {
+      // Clear prepopulated items for isolated test
+      gridState.canvases.canvas1.items = [];
+
       const item = createTestItem('item-1', 'canvas1', 15, 20);
       const command = new DeleteItemCommand('canvas1', item, 0);
 
@@ -196,6 +223,10 @@ describe('undo-redo-commands', () => {
 
   describe('MoveItemCommand', () => {
     it('should undo item move by restoring to source position', () => {
+      // Clear prepopulated items for isolated test
+      gridState.canvases.canvas1.items = [];
+      gridState.canvases.canvas2.items = [];
+
       const item = createTestItem('item-1', 'canvas2', 10, 10);
       gridState.canvases.canvas2.items.push(item);
 
@@ -210,6 +241,10 @@ describe('undo-redo-commands', () => {
     });
 
     it('should redo item move to target position', () => {
+      // Clear prepopulated items for isolated test
+      gridState.canvases.canvas1.items = [];
+      gridState.canvases.canvas2.items = [];
+
       const item = createTestItem('item-1', 'canvas1', 0, 0);
       gridState.canvases.canvas1.items.push(item);
 
@@ -224,6 +259,9 @@ describe('undo-redo-commands', () => {
     });
 
     it('should handle move within same canvas', () => {
+      // Clear prepopulated items for isolated test
+      gridState.canvases.canvas1.items = [];
+
       const item = createTestItem('item-1', 'canvas1', 0, 0);
       gridState.canvases.canvas1.items.push(item);
 
@@ -243,6 +281,10 @@ describe('undo-redo-commands', () => {
     });
 
     it('should restore item at original index when undoing', () => {
+      // Clear prepopulated items for isolated test
+      gridState.canvases.canvas1.items = [];
+      gridState.canvases.canvas2.items = [];
+
       const item1 = createTestItem('item-1', 'canvas1');
       const item2 = createTestItem('item-2', 'canvas2');
       const item3 = createTestItem('item-3', 'canvas1');
@@ -268,6 +310,10 @@ describe('undo-redo-commands', () => {
     });
 
     it('should handle invalid source index by appending to end', () => {
+      // Clear prepopulated items for isolated test
+      gridState.canvases.canvas1.items = [];
+      gridState.canvases.canvas2.items = [];
+
       const item = createTestItem('item-1', 'canvas2');
       gridState.canvases.canvas2.items = [item];
 
@@ -294,6 +340,9 @@ describe('undo-redo-commands', () => {
     });
 
     it('should handle non-existent canvas gracefully', () => {
+      // Clear prepopulated items for isolated test
+      gridState.canvases.canvas1.items = [];
+
       const item = createTestItem('item-1', 'canvas1');
       gridState.canvases.canvas1.items = [item];
 
@@ -305,6 +354,10 @@ describe('undo-redo-commands', () => {
     });
 
     it('should update canvasId when moving between canvases', () => {
+      // Clear prepopulated items for isolated test
+      gridState.canvases.canvas1.items = [];
+      gridState.canvases.canvas2.items = [];
+
       const item = createTestItem('item-1', 'canvas1', 0, 0);
       gridState.canvases.canvas1.items.push(item);
 
@@ -320,6 +373,10 @@ describe('undo-redo-commands', () => {
     });
 
     it('should preserve other item properties during move', () => {
+      // Clear prepopulated items for isolated test
+      gridState.canvases.canvas1.items = [];
+      gridState.canvases.canvas2.items = [];
+
       const item = createTestItem('item-1', 'canvas1', 0, 0);
       item.name = 'Special Item';
       item.type = 'header';
@@ -338,6 +395,10 @@ describe('undo-redo-commands', () => {
 
   describe('Complex Scenarios', () => {
     it('should handle sequence of add, delete, move commands', () => {
+      // Clear prepopulated items for isolated test
+      gridState.canvases.canvas1.items = [];
+      gridState.canvases.canvas2.items = [];
+
       // Add item1 to canvas1
       const item1 = createTestItem('item-1', 'canvas1', 0, 0);
       const addCmd = new AddItemCommand('canvas1', item1);
@@ -370,6 +431,9 @@ describe('undo-redo-commands', () => {
     });
 
     it('should handle multiple undo/redo cycles', () => {
+      // Clear prepopulated items for isolated test
+      gridState.canvases.canvas1.items = [];
+
       const item = createTestItem('item-1', 'canvas1');
       const command = new AddItemCommand('canvas1', item);
 
@@ -384,6 +448,9 @@ describe('undo-redo-commands', () => {
     });
 
     it('should maintain state consistency across multiple commands', () => {
+      // Clear prepopulated items for isolated test
+      gridState.canvases.canvas1.items = [];
+
       const item1 = createTestItem('item-1', 'canvas1', 0, 0);
       const item2 = createTestItem('item-2', 'canvas1', 5, 5);
 

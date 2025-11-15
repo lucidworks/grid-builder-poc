@@ -47,23 +47,139 @@ export interface GridState {
 }
 
 /**
- * Initial State
+ * Initial State with prepopulated demo items
  */
 const initialState: GridState = {
   canvases: {
     canvas1: {
-      items: [],
-      zIndexCounter: 1,
+      items: [
+        // Hero section demo items
+        {
+          id: 'item-1',
+          canvasId: 'canvas1',
+          type: 'header',
+          name: 'Header',
+          layouts: {
+            desktop: { x: 2, y: 2, width: 20, height: 6 },
+            mobile: { x: null, y: null, width: null, height: null, customized: false },
+          },
+          zIndex: 1,
+        },
+        {
+          id: 'item-2',
+          canvasId: 'canvas1',
+          type: 'text',
+          name: 'Text',
+          layouts: {
+            desktop: { x: 2, y: 9, width: 20, height: 5 },
+            mobile: { x: null, y: null, width: null, height: null, customized: false },
+          },
+          zIndex: 2,
+        },
+        {
+          id: 'item-3',
+          canvasId: 'canvas1',
+          type: 'button',
+          name: 'Button',
+          layouts: {
+            desktop: { x: 2, y: 15, width: 9, height: 4 },
+            mobile: { x: null, y: null, width: null, height: null, customized: false },
+          },
+          zIndex: 3,
+        },
+        {
+          id: 'item-4',
+          canvasId: 'canvas1',
+          type: 'image',
+          name: 'Image',
+          layouts: {
+            desktop: { x: 23, y: 2, width: 15, height: 12 },
+            mobile: { x: null, y: null, width: null, height: null, customized: false },
+          },
+          zIndex: 4,
+        },
+      ],
+      zIndexCounter: 5,
       backgroundColor: '#ffffff',
     },
     canvas2: {
-      items: [],
-      zIndexCounter: 1,
+      items: [
+        // Content section demo items
+        {
+          id: 'item-5',
+          canvasId: 'canvas2',
+          type: 'header',
+          name: 'Header',
+          layouts: {
+            desktop: { x: 2, y: 2, width: 18, height: 4 },
+            mobile: { x: null, y: null, width: null, height: null, customized: false },
+          },
+          zIndex: 1,
+        },
+        {
+          id: 'item-6',
+          canvasId: 'canvas2',
+          type: 'text',
+          name: 'Text',
+          layouts: {
+            desktop: { x: 2, y: 7, width: 18, height: 8 },
+            mobile: { x: null, y: null, width: null, height: null, customized: false },
+          },
+          zIndex: 2,
+        },
+        {
+          id: 'item-7',
+          canvasId: 'canvas2',
+          type: 'video',
+          name: 'Video',
+          layouts: {
+            desktop: { x: 21, y: 2, width: 17, height: 13 },
+            mobile: { x: null, y: null, width: null, height: null, customized: false },
+          },
+          zIndex: 3,
+        },
+      ],
+      zIndexCounter: 4,
       backgroundColor: '#f5f5f5',
     },
     canvas3: {
-      items: [],
-      zIndexCounter: 1,
+      items: [
+        // Footer section demo items
+        {
+          id: 'item-8',
+          canvasId: 'canvas3',
+          type: 'text',
+          name: 'Text',
+          layouts: {
+            desktop: { x: 2, y: 2, width: 15, height: 5 },
+            mobile: { x: null, y: null, width: null, height: null, customized: false },
+          },
+          zIndex: 1,
+        },
+        {
+          id: 'item-9',
+          canvasId: 'canvas3',
+          type: 'button',
+          name: 'Button',
+          layouts: {
+            desktop: { x: 18, y: 2, width: 8, height: 4 },
+            mobile: { x: null, y: null, width: null, height: null, customized: false },
+          },
+          zIndex: 2,
+        },
+        {
+          id: 'item-10',
+          canvasId: 'canvas3',
+          type: 'button',
+          name: 'Button',
+          layouts: {
+            desktop: { x: 27, y: 2, width: 8, height: 4 },
+            mobile: { x: null, y: null, width: null, height: null, customized: false },
+          },
+          zIndex: 3,
+        },
+      ],
+      zIndexCounter: 4,
       backgroundColor: '#ffffff',
     },
   },
@@ -78,28 +194,12 @@ const initialState: GridState = {
  */
 const { state, onChange, dispose } = createStore<GridState>(initialState);
 
-// Wrap reset to also reset the ID counter and properly clear arrays
+// Wrap reset to also reset the ID counter and restore initial state
 export function reset() {
-  itemIdCounter = 0;
+  itemIdCounter = 10; // Reset to 10 to account for prepopulated items
 
-  // Manually reset state to ensure arrays are properly cleared
-  state.canvases = {
-    canvas1: {
-      items: [],
-      zIndexCounter: 1,
-      backgroundColor: '#ffffff',
-    },
-    canvas2: {
-      items: [],
-      zIndexCounter: 1,
-      backgroundColor: '#f5f5f5',
-    },
-    canvas3: {
-      items: [],
-      zIndexCounter: 1,
-      backgroundColor: '#ffffff',
-    },
-  };
+  // Restore initial state with prepopulated items
+  state.canvases = JSON.parse(JSON.stringify(initialState.canvases));
   state.selectedItemId = null;
   state.selectedCanvasId = null;
   state.currentViewport = 'desktop';
@@ -199,7 +299,7 @@ export function moveItemToCanvas(fromCanvasId: string, toCanvasId: string, itemI
 /**
  * Generate unique item ID
  */
-let itemIdCounter = 0;
+let itemIdCounter = 10; // Start at 10 to account for prepopulated items (item-1 through item-10)
 export function generateItemId(): string {
   return `item-${++itemIdCounter}`;
 }
