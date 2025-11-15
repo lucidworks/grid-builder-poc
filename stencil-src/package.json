@@ -64,7 +64,7 @@
     "jest-jasmine2": "^27.5.1",
     "jsdom": "^16.7.0",
     "prettier": "^3.4.2",
-    "puppeteer": "^21.0.0",
+    "puppeteer": "^24.30.0",
     "stylelint": "^14.16.1",
     "stylelint-config-idiomatic-order": "^9.0.0",
     "stylelint-config-recommended-scss": "^8.0.0",
