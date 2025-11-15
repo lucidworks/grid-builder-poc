@@ -106,7 +106,6 @@ export class CanvasSection {
 
     const interactable = interact(this.gridContainerRef);
 
-    // @ts-expect-error - Using modular interact.js types
     interactable.dropzone({
       accept: '.palette-item, .grid-item', // Accept both palette items and grid items
       overlap: 'pointer', // Use pointer position instead of element overlap
