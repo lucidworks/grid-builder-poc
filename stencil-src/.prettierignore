@@ -1,0 +1,10 @@
+package.json
+package-lock.json
+*rc.js
+.github/*
+.stencil/*
+# probably don't need most of these rn
+build/*
+dist/*
+www/*
+node_modules/*

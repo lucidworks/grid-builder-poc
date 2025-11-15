@@ -1,0 +1,47 @@
+useTabs: false # Indent lines with tabs instead of spaces.
+printWidth: 120 # Specify the length of line that the printer will wrap on.
+tabWidth: 2 # Specify the number of spaces per indentation-level.
+singleQuote: true # Use single quotes instead of double quotes.
+bracketSpacing: true # Print spaces between brackets in object literals.
+
+# JSX
+bracketSameLine: false
+
+# Print trailing commas wherever possible.
+# Valid options:
+#   - "none" - no trailing commas
+#   - "es5" - trailing commas where valid in ES5 (objects, arrays, etc)
+#   - "all" - trailing commas wherever possible (function arguments)
+trailingComma: es5
+
+# Specify which parser to use.
+parser: typescript
+
+# Print semicolons at the ends of statements.
+semi: true
+
+# Include parentheses around a sole arrow function parameter.
+arrowParens: avoid
+
+overrides:
+  - files: '*.css'
+    options:
+      parser: css
+  - files: '*.less'
+    options:
+      parser: less
+  - files: '*.scss'
+    options:
+      parser: scss
+  - files: '*.json'
+    options:
+      parser: json
+  - files: '*.html'
+    options:
+      parser: html
+  - files: '*.md'
+    options:
+      parser: markdown
+  - files: '*.yaml'
+    options:
+      parser: yaml
