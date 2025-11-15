@@ -41,7 +41,7 @@ export class ConfigPanel {
               type="text"
               id="componentName"
               value={this.componentName}
-              onInput={e => this.handleNameInput(e)}
+              onInput={(e) => this.handleNameInput(e)}
               placeholder="Enter component name"
             />
           </div>
@@ -81,8 +81,10 @@ export class ConfigPanel {
 
     // Get item from state
     const canvas = gridState.canvases[canvasId];
-    const item = canvas?.items.find(i => i.id === itemId);
-    if (!item) { return; }
+    const item = canvas?.items.find((i) => i.id === itemId);
+    if (!item) {
+      return;
+    }
 
     // Populate form
     const template = componentTemplates[item.type];
@@ -110,11 +112,15 @@ export class ConfigPanel {
   }
 
   private saveConfig() {
-    if (!this.selectedItemId || !this.selectedCanvasId) { return; }
+    if (!this.selectedItemId || !this.selectedCanvasId) {
+      return;
+    }
 
     const canvas = gridState.canvases[this.selectedCanvasId];
-    const item = canvas?.items.find(i => i.id === this.selectedItemId);
-    if (!item) { return; }
+    const item = canvas?.items.find((i) => i.id === this.selectedItemId);
+    if (!item) {
+      return;
+    }
 
     const newName = this.componentName.trim();
     if (newName) {
@@ -126,11 +132,15 @@ export class ConfigPanel {
   }
 
   private bringToFront() {
-    if (!this.selectedItemId || !this.selectedCanvasId) { return; }
+    if (!this.selectedItemId || !this.selectedCanvasId) {
+      return;
+    }
 
     const canvas = gridState.canvases[this.selectedCanvasId];
-    const item = canvas?.items.find(i => i.id === this.selectedItemId);
-    if (!item) { return; }
+    const item = canvas?.items.find((i) => i.id === this.selectedItemId);
+    if (!item) {
+      return;
+    }
 
     // Increment canvas z-index counter and assign to item
     item.zIndex = ++canvas.zIndexCounter;
@@ -138,19 +148,23 @@ export class ConfigPanel {
   }
 
   private bringForward() {
-    if (!this.selectedItemId || !this.selectedCanvasId) { return; }
+    if (!this.selectedItemId || !this.selectedCanvasId) {
+      return;
+    }
 
     const canvas = gridState.canvases[this.selectedCanvasId];
-    const item = canvas?.items.find(i => i.id === this.selectedItemId);
-    if (!item) { return; }
+    const item = canvas?.items.find((i) => i.id === this.selectedItemId);
+    if (!item) {
+      return;
+    }
 
     // Find items with z-index greater than current
-    const itemsAbove = canvas.items.filter(i => i.zIndex > item.zIndex);
+    const itemsAbove = canvas.items.filter((i) => i.zIndex > item.zIndex);
     if (itemsAbove.length > 0) {
       // Get the lowest z-index above this item
-      const nextZIndex = Math.min(...itemsAbove.map(i => i.zIndex));
+      const nextZIndex = Math.min(...itemsAbove.map((i) => i.zIndex));
       // Swap z-indexes
-      const itemAbove = canvas.items.find(i => i.zIndex === nextZIndex);
+      const itemAbove = canvas.items.find((i) => i.zIndex === nextZIndex);
       if (itemAbove) {
         const temp = item.zIndex;
         item.zIndex = itemAbove.zIndex;
@@ -161,19 +175,23 @@ export class ConfigPanel {
   }
 
   private sendBackward() {
-    if (!this.selectedItemId || !this.selectedCanvasId) { return; }
+    if (!this.selectedItemId || !this.selectedCanvasId) {
+      return;
+    }
 
     const canvas = gridState.canvases[this.selectedCanvasId];
-    const item = canvas?.items.find(i => i.id === this.selectedItemId);
-    if (!item) { return; }
+    const item = canvas?.items.find((i) => i.id === this.selectedItemId);
+    if (!item) {
+      return;
+    }
 
     // Find items with z-index less than current
-    const itemsBelow = canvas.items.filter(i => i.zIndex < item.zIndex);
+    const itemsBelow = canvas.items.filter((i) => i.zIndex < item.zIndex);
     if (itemsBelow.length > 0) {
       // Get the highest z-index below this item
-      const prevZIndex = Math.max(...itemsBelow.map(i => i.zIndex));
+      const prevZIndex = Math.max(...itemsBelow.map((i) => i.zIndex));
       // Swap z-indexes
-      const itemBelow = canvas.items.find(i => i.zIndex === prevZIndex);
+      const itemBelow = canvas.items.find((i) => i.zIndex === prevZIndex);
       if (itemBelow) {
         const temp = item.zIndex;
         item.zIndex = itemBelow.zIndex;
@@ -184,14 +202,18 @@ export class ConfigPanel {
   }
 
   private sendToBack() {
-    if (!this.selectedItemId || !this.selectedCanvasId) { return; }
+    if (!this.selectedItemId || !this.selectedCanvasId) {
+      return;
+    }
 
     const canvas = gridState.canvases[this.selectedCanvasId];
-    const item = canvas?.items.find(i => i.id === this.selectedItemId);
-    if (!item) { return; }
+    const item = canvas?.items.find((i) => i.id === this.selectedItemId);
+    if (!item) {
+      return;
+    }
 
     // Find the lowest z-index
-    const minZIndex = Math.min(...canvas.items.map(i => i.zIndex));
+    const minZIndex = Math.min(...canvas.items.map((i) => i.zIndex));
     item.zIndex = Math.max(1, minZIndex - 1);
 
     // If the item is already at the back, reorder all z-indexes
@@ -201,11 +223,7 @@ export class ConfigPanel {
 
       // Reassign z-indexes starting from 1, with this item first
       sortedItems.forEach((itm, index) => {
-        if (itm.id === this.selectedItemId) {
-          itm.zIndex = 1;
-        } else {
-          itm.zIndex = index + 2;
-        }
+        itm.zIndex = itm.id === this.selectedItemId ? 1 : index + 2;
       });
     }
 

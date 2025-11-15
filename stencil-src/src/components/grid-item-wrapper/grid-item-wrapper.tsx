@@ -99,11 +99,11 @@ export class GridItemWrapper {
         data-canvas-id={this.item.canvasId}
         data-component-name={this.item.name || template.title}
         style={itemStyle}
-        onClick={e => this.handleClick(e)}
-        ref={el => (this.itemRef = el)}
+        onClick={(e) => this.handleClick(e)}
+        ref={(el) => (this.itemRef = el)}
       >
         {/* Drag Handle */}
-        <div class="drag-handle"/>
+        <div class="drag-handle" />
 
         {/* Item Header */}
         <div class="grid-item-header">
@@ -112,12 +112,7 @@ export class GridItemWrapper {
 
         {/* Item Content */}
         <div class="grid-item-content" id={`${this.item.id}-content`}>
-          {template.complex ? (
-            <div class="loading-placeholder">Loading...</div>
-          ) : (
-            
-            <div innerHTML={template.content}/>
-          )}
+          {template.complex ? <div class="loading-placeholder">Loading...</div> : <div innerHTML={template.content} />}
         </div>
 
         {/* Item Controls */}
@@ -134,14 +129,14 @@ export class GridItemWrapper {
         </div>
 
         {/* Resize Handles (8 points) */}
-        <div class="resize-handle nw"/>
-        <div class="resize-handle ne"/>
-        <div class="resize-handle sw"/>
-        <div class="resize-handle se"/>
-        <div class="resize-handle n"/>
-        <div class="resize-handle s"/>
-        <div class="resize-handle e"/>
-        <div class="resize-handle w"/>
+        <div class="resize-handle nw" />
+        <div class="resize-handle ne" />
+        <div class="resize-handle sw" />
+        <div class="resize-handle se" />
+        <div class="resize-handle n" />
+        <div class="resize-handle s" />
+        <div class="resize-handle e" />
+        <div class="resize-handle w" />
       </div>
     );
   }
@@ -167,7 +162,7 @@ export class GridItemWrapper {
       if (positionChanged || canvasChanged) {
         // Find source canvas and index
         const sourceCanvas = gridState.canvases[snapshot.canvasId];
-        const sourceIndex = sourceCanvas?.items.findIndex(i => i.id === this.item.id) || 0;
+        const sourceIndex = sourceCanvas?.items.findIndex((i) => i.id === this.item.id) || 0;
 
         // Push undo command before updating state
         pushCommand(
@@ -191,7 +186,7 @@ export class GridItemWrapper {
 
     // Update item in state (triggers re-render)
     const canvas = gridState.canvases[this.item.canvasId];
-    const itemIndex = canvas.items.findIndex(i => i.id === this.item.id);
+    const itemIndex = canvas.items.findIndex((i) => i.id === this.item.id);
     if (itemIndex !== -1) {
       canvas.items[itemIndex] = updatedItem;
       gridState.canvases = { ...gridState.canvases }; // Trigger update
@@ -222,14 +217,14 @@ export class GridItemWrapper {
 
   private handleBringToFront() {
     const canvas = gridState.canvases[this.item.canvasId];
-    const maxZ = Math.max(...canvas.items.map(i => i.zIndex));
+    const maxZ = Math.max(...canvas.items.map((i) => i.zIndex));
     this.item.zIndex = maxZ + 1;
     gridState.canvases = { ...gridState.canvases }; // Trigger update
   }
 
   private handleSendToBack() {
     const canvas = gridState.canvases[this.item.canvasId];
-    const minZ = Math.min(...canvas.items.map(i => i.zIndex));
+    const minZ = Math.min(...canvas.items.map((i) => i.zIndex));
     this.item.zIndex = minZ - 1;
     gridState.canvases = { ...gridState.canvases }; // Trigger update
   }

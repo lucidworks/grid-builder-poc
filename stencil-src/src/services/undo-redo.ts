@@ -75,7 +75,9 @@ export function pushCommand(command: Command): void {
  * Undo the last command
  */
 export function undo(): void {
-  if (historyPosition < 0) { return; }
+  if (historyPosition < 0) {
+    return;
+  }
 
   const command = commandHistory[historyPosition];
   command.undo();
@@ -88,7 +90,9 @@ export function undo(): void {
  * Redo the next command
  */
 export function redo(): void {
-  if (historyPosition >= commandHistory.length - 1) { return; }
+  if (historyPosition >= commandHistory.length - 1) {
+    return;
+  }
 
   historyPosition++;
   const command = commandHistory[historyPosition];

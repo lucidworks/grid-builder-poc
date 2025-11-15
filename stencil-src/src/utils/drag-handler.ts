@@ -150,7 +150,9 @@ export class DragHandler {
 
     // Calculate new position relative to current canvas (same-canvas drag only)
     const targetContainer = document.getElementById(targetCanvasId);
-    if (!targetContainer) { return; }
+    if (!targetContainer) {
+      return;
+    }
 
     const gridSizeX = getGridSizeHorizontal(targetCanvasId);
     const gridSizeY = getGridSizeVertical();

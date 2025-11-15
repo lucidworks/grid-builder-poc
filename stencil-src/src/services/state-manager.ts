@@ -76,7 +76,7 @@ const initialState: GridState = {
 /**
  * Global Grid State Store
  */
-const { state, onChange, reset: _storeReset, dispose } = createStore<GridState>(initialState);
+const { state, onChange, dispose } = createStore<GridState>(initialState);
 
 // Wrap reset to also reset the ID counter and properly clear arrays
 export function reset() {
@@ -117,7 +117,9 @@ export { state as gridState, onChange, dispose };
  */
 export function addItemToCanvas(canvasId: string, item: GridItem) {
   const canvas = state.canvases[canvasId];
-  if (!canvas) { return; }
+  if (!canvas) {
+    return;
+  }
 
   canvas.items.push(item);
   state.canvases = { ...state.canvases }; // Trigger update
@@ -128,9 +130,11 @@ export function addItemToCanvas(canvasId: string, item: GridItem) {
  */
 export function removeItemFromCanvas(canvasId: string, itemId: string) {
   const canvas = state.canvases[canvasId];
-  if (!canvas) { return; }
+  if (!canvas) {
+    return;
+  }
 
-  canvas.items = canvas.items.filter(item => item.id !== itemId);
+  canvas.items = canvas.items.filter((item) => item.id !== itemId);
   state.canvases = { ...state.canvases }; // Trigger update
 }
 
@@ -139,10 +143,14 @@ export function removeItemFromCanvas(canvasId: string, itemId: string) {
  */
 export function updateItem(canvasId: string, itemId: string, updates: Partial<GridItem>) {
   const canvas = state.canvases[canvasId];
-  if (!canvas) { return; }
+  if (!canvas) {
+    return;
+  }
 
-  const item = canvas.items.find(i => i.id === itemId);
-  if (!item) { return; }
+  const item = canvas.items.find((i) => i.id === itemId);
+  if (!item) {
+    return;
+  }
 
   Object.assign(item, updates);
   state.canvases = { ...state.canvases }; // Trigger update
@@ -153,9 +161,11 @@ export function updateItem(canvasId: string, itemId: string, updates: Partial<Gr
  */
 export function getItem(canvasId: string, itemId: string): GridItem | null {
   const canvas = state.canvases[canvasId];
-  if (!canvas) { return null; }
+  if (!canvas) {
+    return null;
+  }
 
-  return canvas.items.find(i => i.id === itemId) || null;
+  return canvas.items.find((i) => i.id === itemId) || null;
 }
 
 /**
@@ -165,13 +175,17 @@ export function moveItemToCanvas(fromCanvasId: string, toCanvasId: string, itemI
   const fromCanvas = state.canvases[fromCanvasId];
   const toCanvas = state.canvases[toCanvasId];
 
-  if (!fromCanvas || !toCanvas) { return; }
+  if (!fromCanvas || !toCanvas) {
+    return;
+  }
 
-  const item = fromCanvas.items.find(i => i.id === itemId);
-  if (!item) { return; }
+  const item = fromCanvas.items.find((i) => i.id === itemId);
+  if (!item) {
+    return;
+  }
 
   // Remove from old canvas
-  fromCanvas.items = fromCanvas.items.filter(i => i.id !== itemId);
+  fromCanvas.items = fromCanvas.items.filter((i) => i.id !== itemId);
 
   // Update item's canvasId
   item.canvasId = toCanvasId;

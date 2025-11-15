@@ -112,7 +112,7 @@ describe('grid-calculations', () => {
 
     it('should work with different canvas IDs', () => {
       // @ts-expect-error: Canvas objects are used for DOM setup
-      const _canvas1 = createMockCanvas('canvas1', 1000);
+      createMockCanvas('canvas1', 1000);
       const _canvas2 = createMockCanvas('canvas2', 2000);
 
       expect(getGridSizeHorizontal('canvas1')).toBe(20);
@@ -169,7 +169,7 @@ describe('grid-calculations', () => {
 
     it('should handle different canvas widths', () => {
       // @ts-expect-error: Canvas objects are used for DOM setup
-      const _canvas1 = createMockCanvas('canvas1', 1000);
+      createMockCanvas('canvas1', 1000);
       const _canvas2 = createMockCanvas('canvas2', 2000);
 
       expect(gridToPixelsX(10, 'canvas1')).toBe(200); // 10% of 1000
@@ -242,7 +242,7 @@ describe('grid-calculations', () => {
 
     it('should handle different canvas widths', () => {
       // @ts-expect-error: Canvas objects are used for DOM setup
-      const _canvas1 = createMockCanvas('canvas1', 1000);
+      createMockCanvas('canvas1', 1000);
       const _canvas2 = createMockCanvas('canvas2', 2000);
 
       // 200px in canvas1 (1000px) = 10 grid units
@@ -329,7 +329,7 @@ describe('grid-calculations', () => {
         createMockCanvas('canvas3', 2000),
       ];
 
-      canvases.forEach(canvas => {
+      canvases.forEach((canvas) => {
         const gridUnits = 25; // Quarter width
         const pixels = gridToPixelsX(gridUnits, canvas.id);
         const backToGrid = pixelsToGridX(pixels, canvas.id);
@@ -337,7 +337,7 @@ describe('grid-calculations', () => {
       });
 
       // Clean up
-      canvases.slice(1).forEach(c => c.parentNode?.removeChild(c));
+      canvases.slice(1).forEach((c) => c.parentNode?.removeChild(c));
     });
   });
 });

@@ -29,7 +29,7 @@ describe('component-palette', () => {
       html: `<component-palette></component-palette>`,
     });
 
-    const headerItem = Array.from(page.root.querySelectorAll('.palette-item')).find(item =>
+    const headerItem = Array.from(page.root.querySelectorAll('.palette-item')).find((item) =>
       item.textContent.includes('Header')
     );
 
@@ -42,7 +42,7 @@ describe('component-palette', () => {
       html: `<component-palette></component-palette>`,
     });
 
-    const galleryItem = Array.from(page.root.querySelectorAll('.palette-item')).find(item =>
+    const galleryItem = Array.from(page.root.querySelectorAll('.palette-item')).find((item) =>
       item.textContent.includes('Image Gallery')
     );
 

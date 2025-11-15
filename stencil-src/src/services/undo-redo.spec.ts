@@ -418,7 +418,7 @@ describe('undo-redo', () => {
       const commands = Array.from({ length: 5 }, () => new MockCommand());
 
       // Push 5 commands
-      commands.forEach(cmd => pushCommand(cmd));
+      commands.forEach((cmd) => pushCommand(cmd));
       expect(canUndo()).toBe(true);
       expect(canRedo()).toBe(false);
 

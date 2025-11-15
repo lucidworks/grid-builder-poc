@@ -20,8 +20,8 @@ export class VirtualRenderer {
   constructor() {
     // Create observer with 200px margin (pre-render before entering viewport)
     this.observer = new IntersectionObserver(
-      entries => {
-        entries.forEach(entry => {
+      (entries) => {
+        entries.forEach((entry) => {
           const itemElement = entry.target as HTMLElement;
           const itemId = itemElement.id;
           const itemType = itemElement.getAttribute('data-item-type') as ComplexComponentType;
@@ -76,7 +76,7 @@ export class VirtualRenderer {
     this.observer.disconnect();
 
     // Cleanup all intervals
-    this.intervalIds.forEach(intervalId => clearInterval(intervalId));
+    this.intervalIds.forEach((intervalId) => clearInterval(intervalId));
     this.intervalIds.clear();
     this.visibleItems.clear();
   }
@@ -98,10 +98,14 @@ export class VirtualRenderer {
    */
   private initializeComplexComponent(itemId: string, type: ComplexComponentType): void {
     const contentEl = document.getElementById(`${itemId}-content`);
-    if (!contentEl) { return; }
+    if (!contentEl) {
+      return;
+    }
 
     // Check if already initialized (prevent double-init)
-    if (contentEl.dataset.initialized === 'true') { return; }
+    if (contentEl.dataset.initialized === 'true') {
+      return;
+    }
     contentEl.dataset.initialized = 'true';
 
     switch (type) {

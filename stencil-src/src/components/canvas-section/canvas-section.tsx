@@ -31,7 +31,7 @@ export class CanvasSection {
           this.canvas = gridState.canvases[this.canvasId];
           this.renderVersion++; // Force re-render
         }
-      } catch (e) {
+      } catch (_e) {
         // Component may not be fully initialized yet (e.g., during test setup)
       }
     });
@@ -67,7 +67,7 @@ export class CanvasSection {
                 type="color"
                 class="canvas-bg-color"
                 value={backgroundColor}
-                onInput={e => this.handleColorChange(e)}
+                onInput={(e) => this.handleColorChange(e)}
               />
             </label>
             <button class="clear-canvas-btn" onClick={() => this.handleClearCanvas()}>
@@ -89,12 +89,10 @@ export class CanvasSection {
             style={{
               backgroundColor,
             }}
-            ref={el => (this.gridContainerRef = el)}
+            ref={(el) => (this.gridContainerRef = el)}
           >
             {/* Grid items will be rendered here by grid-item-wrapper components */}
-            {this.canvas?.items.map((item: GridItem) => (
-              <grid-item-wrapper key={item.id} item={item} />
-            ))}
+            {this.canvas?.items.map((item: GridItem) => <grid-item-wrapper key={item.id} item={item} />)}
           </div>
         </div>
       </div>
@@ -108,8 +106,8 @@ export class CanvasSection {
 
     const interactable = interact(this.gridContainerRef);
 
-    // @ts-ignore - Using modular interact.js types
-    const result = interactable.dropzone({
+    // @ts-expect-error - Using modular interact.js types
+    interactable.dropzone({
       accept: '.palette-item, .grid-item', // Accept both palette items and grid items
       overlap: 'pointer', // Use pointer position instead of element overlap
 

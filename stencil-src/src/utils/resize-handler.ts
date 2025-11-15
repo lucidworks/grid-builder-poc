@@ -171,7 +171,9 @@ export class ResizeHandler {
 
     // Get the container to calculate relative position
     const container = document.getElementById(this.item.canvasId);
-    if (!container) { return; }
+    if (!container) {
+      return;
+    }
 
     const containerRect = container.getBoundingClientRect();
     const gridSizeX = getGridSizeHorizontal(this.item.canvasId);

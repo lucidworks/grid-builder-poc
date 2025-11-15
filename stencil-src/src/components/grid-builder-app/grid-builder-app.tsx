@@ -124,11 +124,15 @@ export class GridBuilderApp {
 
     // Find the item and its index before deletion
     const canvas = gridState.canvases[canvasId];
-    if (!canvas) { return; }
+    if (!canvas) {
+      return;
+    }
 
-    const itemIndex = canvas.items.findIndex(i => i.id === itemId);
+    const itemIndex = canvas.items.findIndex((i) => i.id === itemId);
     const item = canvas.items[itemIndex];
-    if (!item) { return; }
+    if (!item) {
+      return;
+    }
 
     // Push undo command before deleting
     pushCommand(new DeleteItemCommand(canvasId, item, itemIndex));
@@ -144,10 +148,12 @@ export class GridBuilderApp {
 
     // Find the item in the source canvas
     const sourceCanvas = gridState.canvases[sourceCanvasId];
-    const sourceIndex = sourceCanvas.items.findIndex(i => i.id === itemId);
+    const sourceIndex = sourceCanvas.items.findIndex((i) => i.id === itemId);
     const item = sourceCanvas.items[sourceIndex];
 
-    if (!item) { return; }
+    if (!item) {
+      return;
+    }
 
     // Capture source position
     const sourcePosition = {
@@ -176,7 +182,7 @@ export class GridBuilderApp {
     item.layouts.desktop.y = gridY;
 
     // Remove from source canvas
-    sourceCanvas.items = sourceCanvas.items.filter(i => i.id !== itemId);
+    sourceCanvas.items = sourceCanvas.items.filter((i) => i.id !== itemId);
 
     // Add to target canvas
     const targetCanvas = gridState.canvases[targetCanvasId];
@@ -256,12 +262,12 @@ export class GridBuilderApp {
                 {/* Version Switcher */}
                 <div class="version-switcher">
                   <span class="version-switcher-label">Version:</span>
-                  <select onChange={e => (window.location.href = (e.target as HTMLSelectElement).value)}>
+                  <select onChange={(e) => (window.location.href = (e.target as HTMLSelectElement).value)}>
                     <option value="../left-top/">Left/Top</option>
                     <option value="../transform/">Transform 🧪</option>
                     <option value="../masonry/">Masonry 🧪</option>
                     <option value="../virtual/">Virtual 🧪</option>
-                    <option value="../stencil/" selected={true}>
+                    <option value="../stencil/" selected>
                       StencilJS 🧪
                     </option>
                   </select>
@@ -321,21 +327,27 @@ export class GridBuilderApp {
   }
 
   private handleDeleteSelected() {
-    if (!gridState.selectedItemId || !gridState.selectedCanvasId) { return; }
+    if (!gridState.selectedItemId || !gridState.selectedCanvasId) {
+      return;
+    }
 
     const canvas = gridState.canvases[gridState.selectedCanvasId];
-    if (!canvas) { return; }
+    if (!canvas) {
+      return;
+    }
 
     // Find the item and its index before deletion
-    const itemIndex = canvas.items.findIndex(item => item.id === gridState.selectedItemId);
+    const itemIndex = canvas.items.findIndex((i) => i.id === gridState.selectedItemId);
     const item = canvas.items[itemIndex];
-    if (!item) { return; }
+    if (!item) {
+      return;
+    }
 
     // Push undo command before deleting
     pushCommand(new DeleteItemCommand(gridState.selectedCanvasId, item, itemIndex));
 
     // Delete the item
-    canvas.items = canvas.items.filter(item => item.id !== gridState.selectedItemId);
+    canvas.items = canvas.items.filter((i) => i.id !== gridState.selectedItemId);
     gridState.selectedItemId = null;
     gridState.selectedCanvasId = null;
 
@@ -383,7 +395,9 @@ export class GridBuilderApp {
   private handleStressTest() {
     // Prompt for number of items
     const input = prompt('How many items to add? (1-1000)', '100');
-    if (!input) { return; }
+    if (!input) {
+      return;
+    }
 
     const count = parseInt(input, 10);
     if (isNaN(count) || count < 1 || count > 1000) {

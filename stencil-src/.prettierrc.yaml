@@ -21,7 +21,7 @@ parser: typescript
 semi: true
 
 # Include parentheses around a sole arrow function parameter.
-arrowParens: avoid
+arrowParens: "always"
 
 overrides:
   - files: '*.css'

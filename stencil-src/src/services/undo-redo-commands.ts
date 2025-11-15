@@ -23,9 +23,11 @@ export class AddItemCommand implements Command {
   undo(): void {
     // Remove the item from the canvas
     const canvas = gridState.canvases[this.canvasId];
-    if (!canvas) { return; }
+    if (!canvas) {
+      return;
+    }
 
-    canvas.items = canvas.items.filter(i => i.id !== this.item.id);
+    canvas.items = canvas.items.filter((i) => i.id !== this.item.id);
     gridState.canvases = { ...gridState.canvases };
 
     // Clear selection if this item was selected
@@ -38,7 +40,9 @@ export class AddItemCommand implements Command {
   redo(): void {
     // Re-add the item to the canvas
     const canvas = gridState.canvases[this.canvasId];
-    if (!canvas) { return; }
+    if (!canvas) {
+      return;
+    }
 
     // Use the cloned item state
     const itemCopy = JSON.parse(JSON.stringify(this.item));
@@ -66,7 +70,9 @@ export class DeleteItemCommand implements Command {
   undo(): void {
     // Re-add the item to its original position
     const canvas = gridState.canvases[this.canvasId];
-    if (!canvas) { return; }
+    if (!canvas) {
+      return;
+    }
 
     const itemCopy = JSON.parse(JSON.stringify(this.item));
     // Insert at original index if possible, otherwise push to end
@@ -81,9 +87,11 @@ export class DeleteItemCommand implements Command {
   redo(): void {
     // Remove the item again
     const canvas = gridState.canvases[this.canvasId];
-    if (!canvas) { return; }
+    if (!canvas) {
+      return;
+    }
 
-    canvas.items = canvas.items.filter(i => i.id !== this.item.id);
+    canvas.items = canvas.items.filter((i) => i.id !== this.item.id);
     gridState.canvases = { ...gridState.canvases };
 
     // Clear selection if this item was selected
@@ -125,11 +133,13 @@ export class MoveItemCommand implements Command {
   undo(): void {
     // Find the item in target canvas
     const targetCanvas = gridState.canvases[this.targetCanvasId];
-    const item = targetCanvas?.items.find(i => i.id === this.itemId);
-    if (!item) { return; }
+    const item = targetCanvas?.items.find((i) => i.id === this.itemId);
+    if (!item) {
+      return;
+    }
 
     // Remove from target canvas
-    targetCanvas.items = targetCanvas.items.filter(i => i.id !== this.itemId);
+    targetCanvas.items = targetCanvas.items.filter((i) => i.id !== this.itemId);
 
     // Update item's position and canvasId back to source
     item.canvasId = this.sourceCanvasId;
@@ -138,7 +148,9 @@ export class MoveItemCommand implements Command {
 
     // Add back to source canvas at original index
     const sourceCanvas = gridState.canvases[this.sourceCanvasId];
-    if (!sourceCanvas) { return; }
+    if (!sourceCanvas) {
+      return;
+    }
 
     if (this.sourceIndex >= 0 && this.sourceIndex <= sourceCanvas.items.length) {
       sourceCanvas.items.splice(this.sourceIndex, 0, item);
@@ -152,11 +164,13 @@ export class MoveItemCommand implements Command {
   redo(): void {
     // Find the item in source canvas
     const sourceCanvas = gridState.canvases[this.sourceCanvasId];
-    const item = sourceCanvas?.items.find(i => i.id === this.itemId);
-    if (!item) { return; }
+    const item = sourceCanvas?.items.find((i) => i.id === this.itemId);
+    if (!item) {
+      return;
+    }
 
     // Remove from source canvas
-    sourceCanvas.items = sourceCanvas.items.filter(i => i.id !== this.itemId);
+    sourceCanvas.items = sourceCanvas.items.filter((i) => i.id !== this.itemId);
 
     // Update item's position and canvasId to target
     item.canvasId = this.targetCanvasId;
@@ -165,7 +179,9 @@ export class MoveItemCommand implements Command {
 
     // Add to target canvas
     const targetCanvas = gridState.canvases[this.targetCanvasId];
-    if (!targetCanvas) { return; }
+    if (!targetCanvas) {
+      return;
+    }
 
     targetCanvas.items.push(item);
 
