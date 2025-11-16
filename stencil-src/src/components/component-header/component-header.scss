@@ -1,0 +1,21 @@
+@import '../../global/variables';
+
+component-header {
+  .component-header-content {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: $spacing-xl;
+
+    h1 {
+      font-size: $font-size-lg;
+      font-weight: $font-weight-semibold;
+      color: $color-main-text;
+      margin: 0;
+      line-height: 1.3;
+      text-align: center;
+    }
+  }
+}

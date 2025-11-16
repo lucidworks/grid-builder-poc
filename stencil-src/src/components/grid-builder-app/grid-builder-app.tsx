@@ -1,6 +1,8 @@
+// External libraries (alphabetical)
 import { Component, h, Host, Listen, State } from '@stencil/core';
-// Use the standard interactjs package import
 import interact from 'interactjs';
+
+// Internal imports (alphabetical)
 import { componentTemplates } from '../../data/component-templates';
 import { addItemToCanvas, generateItemId, gridState, removeItemFromCanvas } from '../../services/state-manager';
 import { pushCommand, redo, undo } from '../../services/undo-redo';
@@ -10,11 +12,13 @@ import { VirtualRenderer } from '../../utils/virtual-rendering';
 
 @Component({
   tag: 'grid-builder-app',
-  styleUrl: 'grid-builder-app.css',
+  styleUrl: 'grid-builder-app.scss',
   shadow: false, // Use light DOM for compatibility with interact.js
 })
 export class GridBuilderApp {
   @State() itemCount: number = 0;
+  @State() showErrorHeading: boolean = false;
+  @State() errorHeadingText: string = '';
 
   componentWillLoad() {
     // Expose interact to global scope before child components load
@@ -56,67 +60,73 @@ export class GridBuilderApp {
     };
 
     // Set up keyboard shortcuts
-    document.addEventListener('keydown', this.handleKeyboard.bind(this));
+    document.addEventListener('keydown', this.handleKeyboard);
   }
 
   disconnectedCallback() {
-    document.removeEventListener('keydown', this.handleKeyboard.bind(this));
+    document.removeEventListener('keydown', this.handleKeyboard);
   }
 
   @Listen('canvas-drop', { target: 'document' })
   handleCanvasDrop(event: CustomEvent) {
     const { canvasId, componentType, x, y } = event.detail;
 
-    // Get template for the component type
-    const template = componentTemplates[componentType];
-    if (!template) {
-      console.error('Unknown component type:', componentType);
-      return;
-    }
+    try {
+      // Get template for the component type
+      const template = componentTemplates[componentType];
+      if (!template) {
+        throw new Error(`Unknown component type: ${componentType}`);
+      }
 
-    // Convert pixel coordinates to grid units
-    const gridX = pixelsToGridX(x, canvasId);
-    const gridY = pixelsToGridY(y);
+      // Convert pixel coordinates to grid units
+      const gridX = pixelsToGridX(x, canvasId);
+      const gridY = pixelsToGridY(y);
 
-    // Get canvas to determine next z-index
-    const canvas = gridState.canvases[canvasId];
-    if (!canvas) {
-      console.error('Canvas not found:', canvasId);
-      return;
-    }
+      // Get canvas to determine next z-index
+      const canvas = gridState.canvases[canvasId];
+      if (!canvas) {
+        throw new Error(`Canvas not found: ${canvasId}`);
+      }
 
-    // Create new item
-    const newItem = {
-      id: generateItemId(),
-      canvasId,
-      type: componentType,
-      name: template.title,
-      layouts: {
-        desktop: {
-          x: gridX,
-          y: gridY,
-          width: 10, // Default 10 grid units wide
-          height: 6, // Default 6 grid units tall
+      // Create new item
+      const newItem = {
+        id: generateItemId(),
+        canvasId,
+        type: componentType,
+        name: template.title,
+        layouts: {
+          desktop: {
+            x: gridX,
+            y: gridY,
+            width: 10, // Default 10 grid units wide
+            height: 6, // Default 6 grid units tall
+          },
+          mobile: {
+            x: null,
+            y: null,
+            width: null,
+            height: null,
+            customized: false,
+          },
         },
-        mobile: {
-          x: null,
-          y: null,
-          width: null,
-          height: null,
-          customized: false,
-        },
-      },
-      zIndex: canvas.zIndexCounter++,
-    };
+        zIndex: canvas.zIndexCounter++,
+      };
 
-    // Add item to canvas
-    addItemToCanvas(canvasId, newItem);
+      // Add item to canvas
+      addItemToCanvas(canvasId, newItem);
 
-    // Push undo command
-    pushCommand(new AddItemCommand(canvasId, newItem));
+      // Push undo command
+      pushCommand(new AddItemCommand(canvasId, newItem));
 
-    // Trigger update
-    gridState.canvases = { ...gridState.canvases };
+      // Trigger update
+      gridState.canvases = { ...gridState.canvases };
+    } catch (e) {
+      this.showErrorHeading = true;
+      this.errorHeadingText = `Error adding component: ${e.message || e}`;
+      setTimeout(() => {
+        this.showErrorHeading = false;
+      }, 5000); // Auto-dismiss after 5 seconds
+    }
   }
 
   @Listen('item-delete', { target: 'document' })
@@ -198,6 +208,17 @@ export class GridBuilderApp {
 
     return (
       <Host>
+        {/* Error Notification */}
+        {this.showErrorHeading && (
+          <div class="error-notification">
+            <span class="error-icon">⚠️</span>
+            <span class="error-text">{this.errorHeadingText}</span>
+            <button class="error-dismiss" onClick={() => (this.showErrorHeading = false)}>
+              ×
+            </button>
+          </div>
+        )}
+
         <div class="app">
           {/* Component Palette */}
           <component-palette />
@@ -296,11 +317,55 @@ export class GridBuilderApp {
     );
   }
 
-  private updateItemCount() {
+  private updateItemCount = () => {
     this.itemCount = Object.values(gridState.canvases).reduce((sum, canvas) => sum + canvas.items.length, 0);
-  }
+  };
 
-  private handleKeyboard(e: KeyboardEvent) {
+  private handleKeyboard = (e: KeyboardEvent) => {
+    console.log('Keyboard event:', e.key, 'selectedItemId:', gridState.selectedItemId);
+
+    // Arrow keys for nudging - handle first to prevent page scrolling
+    if ((e.key === 'ArrowUp' || e.key === 'ArrowDown' || e.key === 'ArrowLeft' || e.key === 'ArrowRight')) {
+      if (gridState.selectedItemId && gridState.selectedCanvasId) {
+        e.preventDefault(); // Prevent page scrolling
+        console.log('Arrow key pressed, nudging item:', e.key);
+
+        const canvas = gridState.canvases[gridState.selectedCanvasId];
+        const item = canvas?.items.find((i) => i.id === gridState.selectedItemId);
+
+        if (item) {
+          const currentViewport = gridState.currentViewport;
+          const layout = item.layouts[currentViewport];
+          const nudgeAmount = e.shiftKey ? 10 : 1; // Shift key for larger nudges (10 units vs 1 unit)
+
+          switch (e.key) {
+            case 'ArrowUp':
+              layout.y = Math.max(0, layout.y - nudgeAmount);
+              break;
+            case 'ArrowDown':
+              layout.y = layout.y + nudgeAmount;
+              break;
+            case 'ArrowLeft':
+              layout.x = Math.max(0, layout.x - nudgeAmount);
+              break;
+            case 'ArrowRight':
+              layout.x = layout.x + nudgeAmount;
+              break;
+          }
+
+          // If in mobile view, mark as customized
+          if (currentViewport === 'mobile') {
+            item.layouts.mobile.customized = true;
+          }
+
+          // Trigger re-render
+          gridState.canvases = { ...gridState.canvases };
+        }
+        return; // Item selected - handled the arrow key, don't do anything else
+      }
+      // No item selected - allow normal page scrolling (don't return)
+    }
+
     // Undo (Ctrl+Z or Cmd+Z)
     if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) {
       e.preventDefault();
@@ -315,19 +380,26 @@ export class GridBuilderApp {
       return;
     }
 
-    // Delete key
-    if (e.key === 'Delete' && gridState.selectedItemId) {
+    // Delete key (Delete on Windows/Linux, Backspace on Mac)
+    if ((e.key === 'Delete' || e.key === 'Backspace') && gridState.selectedItemId) {
+      console.log('Deleting item:', gridState.selectedItemId);
+      e.preventDefault(); // Prevent browser back navigation
       this.handleDeleteSelected();
     }
 
     // Escape key
     if (e.key === 'Escape') {
+      console.log('Escape pressed, clearing selection');
       gridState.selectedItemId = null;
       gridState.selectedCanvasId = null;
+      // Trigger re-render by updating canvases reference
+      const canvases = gridState.canvases;
+      gridState.canvases = { ...canvases };
+      console.log('Canvases updated to trigger re-render');
     }
-  }
+  };
 
-  private handleDeleteSelected() {
+  private handleDeleteSelected = () => {
     if (!gridState.selectedItemId || !gridState.selectedCanvasId) {
       return;
     }
@@ -354,9 +426,9 @@ export class GridBuilderApp {
 
     // Trigger update
     gridState.canvases = { ...gridState.canvases };
-  }
+  };
 
-  private handleViewportChange(viewport: 'desktop' | 'mobile') {
+  private handleViewportChange = (viewport: 'desktop' | 'mobile') => {
     /**
      * Viewport switching with automatic read/write batching:
      *
@@ -370,13 +442,13 @@ export class GridBuilderApp {
      * and all style updates are batched by StencilJS for a single reflow
      */
     gridState.currentViewport = viewport;
-  }
+  };
 
-  private handleGridToggle() {
+  private handleGridToggle = () => {
     gridState.showGrid = !gridState.showGrid;
-  }
+  };
 
-  private handleExportState() {
+  private handleExportState = () => {
     const state = {
       canvases: gridState.canvases,
       currentViewport: gridState.currentViewport,
@@ -385,9 +457,9 @@ export class GridBuilderApp {
 
     console.log('Grid State:', state);
     alert(`Grid state exported to console!\n\nTotal Items: ${this.itemCount}\nViewport: ${gridState.currentViewport}`);
-  }
+  };
 
-  private handleAddSection() {
+  private handleAddSection = () => {
     // Add new section logic
     const canvasIds = Object.keys(gridState.canvases);
     const nextId = canvasIds.length + 1;
@@ -403,9 +475,9 @@ export class GridBuilderApp {
     };
 
     alert(`Section ${nextId} added!`);
-  }
+  };
 
-  private handleStressTest() {
+  private handleStressTest = () => {
     // Prompt for number of items
     const input = prompt('How many items to add? (1-1000)', '100');
     if (!input) {
@@ -468,5 +540,5 @@ export class GridBuilderApp {
     gridState.canvases = { ...gridState.canvases };
 
     alert(`Added ${count} items!`);
-  }
+  };
 }

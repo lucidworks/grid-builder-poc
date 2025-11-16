@@ -2,7 +2,7 @@ import { Component, h, Prop } from '@stencil/core';
 
 @Component({
   tag: 'component-text-block',
-  styleUrl: 'component-text-block.css',
+  styleUrl: 'component-text-block.scss',
   shadow: false,
 })
 export class ComponentTextBlock {

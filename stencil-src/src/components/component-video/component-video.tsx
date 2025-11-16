@@ -2,7 +2,7 @@ import { Component, h, Prop, State } from '@stencil/core';
 
 @Component({
   tag: 'component-video',
-  styleUrl: 'component-video.css',
+  styleUrl: 'component-video.scss',
   shadow: false,
 })
 export class ComponentVideo {

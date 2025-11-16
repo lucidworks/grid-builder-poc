@@ -1,0 +1,152 @@
+@import '../../global/variables';
+
+// Configuration Side Panel
+config-panel {
+  .config-panel {
+    position: fixed;
+    z-index: $z-index-modal;
+    top: 0;
+    right: -400px;
+    display: flex;
+    width: 400px;
+    height: 100vh;
+    flex-direction: column;
+    background: white;
+    box-shadow: -2px 0 8px rgba(0, 0, 0, 0.15);
+    transition: right $transition-slow;
+
+    &.open {
+      right: 0;
+    }
+  }
+
+  // Panel Header
+  .config-panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: $spacing-xl;
+    border-bottom: 1px solid $color-main-dim;
+
+    h2 {
+      margin: 0;
+      color: $color-main-text;
+      font-size: $font-size-lg;
+    }
+  }
+
+  .config-panel-close {
+    display: flex;
+    width: 32px;
+    height: 32px;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    border: none;
+    border-radius: $border-radius-sm;
+    background: transparent;
+    color: $color-grey-medium;
+    cursor: pointer;
+    font-size: $font-size-xxl;
+    transition: all $transition-normal;
+
+    &:hover {
+      background: $color-grey-light;
+      color: $color-main-text;
+    }
+  }
+
+  // Panel Body
+  .config-panel-body {
+    flex: 1;
+    padding: $spacing-xl;
+    overflow-y: auto;
+  }
+
+  .config-field {
+    margin-bottom: $spacing-xl;
+
+    label {
+      display: block;
+      margin-bottom: $spacing-sm;
+      color: $color-main-text;
+      font-size: $font-size-sm;
+      font-weight: $font-weight-semibold;
+    }
+
+    input {
+      width: 100%;
+      box-sizing: border-box;
+      padding: 10px $spacing-md;
+      border: 1px solid $color-main-dim;
+      border-radius: $border-radius-sm;
+      font-size: $font-size-sm;
+      transition: border-color $transition-normal;
+
+      &:focus {
+        border-color: $color-blue-normal;
+        outline: none;
+      }
+    }
+  }
+
+  // Z-Index Controls
+  .z-index-controls {
+    display: grid;
+    gap: $spacing-sm;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .z-index-btn {
+    padding: 10px $spacing-md;
+    border: 1px solid $color-main-dim;
+    border-radius: $border-radius-sm;
+    background: white;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: $font-weight-medium;
+    text-align: center;
+    transition: all $transition-normal;
+
+    &:hover {
+      border-color: $color-blue-normal;
+      background: $color-grey-light;
+      color: $color-blue-normal;
+    }
+  }
+
+  // Panel Footer
+  .config-panel-footer {
+    display: flex;
+    justify-content: flex-end;
+    padding: $spacing-xl;
+    border-top: 1px solid $color-main-dim;
+    gap: 10px;
+
+    button {
+      padding: 10px $spacing-xl;
+      border: 1px solid $color-main-dim;
+      border-radius: $border-radius-sm;
+      background: white;
+      cursor: pointer;
+      font-size: $font-size-sm;
+      font-weight: $font-weight-medium;
+      transition: all $transition-normal;
+
+      &:hover {
+        background: $color-grey-light;
+      }
+
+      &.primary {
+        border-color: $color-blue-normal;
+        background: $color-blue-normal;
+        color: white;
+
+        &:hover {
+          border-color: $color-blue-light;
+          background: $color-blue-light;
+        }
+      }
+    }
+  }
+}

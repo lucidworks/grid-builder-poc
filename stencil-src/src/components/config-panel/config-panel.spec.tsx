@@ -171,7 +171,7 @@ describe('config-panel', () => {
     expect(gridState.selectedCanvasId).toBe('canvas1');
   });
 
-  it('should close panel and clear selection when close button clicked', async () => {
+  it('should close panel but keep selection when close button clicked', async () => {
     const page = await newSpecPage({
       components: [ConfigPanel],
       html: `<config-panel></config-panel>`,
@@ -192,7 +192,8 @@ describe('config-panel', () => {
 
     const panel = page.root.querySelector('.config-panel');
     expect(panel.classList.contains('open')).toBe(false);
-    expect(gridState.selectedItemId).toBe(null);
-    expect(gridState.selectedCanvasId).toBe(null);
+    // Selection should persist after closing (for keyboard shortcuts)
+    expect(gridState.selectedItemId).toBe('item-1');
+    expect(gridState.selectedCanvasId).toBe('canvas1');
   });
 });

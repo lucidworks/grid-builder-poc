@@ -1,9 +1,11 @@
 import { Config } from '@stencil/core';
+import { sass } from '@stencil/sass';
 import path from 'path';
 
 export const config: Config = {
   namespace: 'grid-builder',
-  globalStyle: 'src/global/global.css',
+  globalStyle: 'src/global/global.scss',
+  plugins: [sass()],
   outputTargets: [
     {
       type: 'www',

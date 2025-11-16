@@ -40,6 +40,7 @@
     "@babel/preset-env": "^7.28.5",
     "@babel/preset-typescript": "^7.28.5",
     "@stencil/core": "^4.8.2",
+    "@stencil/sass": "^3.2.3",
     "@stylistic/eslint-plugin": "^2.12.1",
     "@stylistic/eslint-plugin-js": "^2.12.1",
     "@types/jest": "^27.0.3",

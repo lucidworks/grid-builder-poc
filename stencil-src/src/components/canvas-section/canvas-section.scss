@@ -1,0 +1,113 @@
+@import '../../global/variables';
+
+/* Canvas Section */
+.canvas-item {
+  position: relative;
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+}
+
+.canvas-item-header {
+  position: absolute;
+  z-index: 1000;
+  top: 10px;
+  right: 10px;
+  display: flex;
+  align-items: center;
+  padding: 8px 12px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 95%);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 10%);
+  color: #666;
+  font-size: 12px;
+  gap: 10px;
+  opacity: 0.7;
+  transition: opacity 0.2s;
+}
+
+.canvas-item:hover .canvas-item-header {
+  opacity: 1;
+}
+
+.canvas-item-header h3 {
+  margin: 0;
+  color: #999;
+  font-size: 11px;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+.canvas-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.canvas-controls label {
+  display: flex;
+  align-items: center;
+  color: #999;
+  cursor: pointer;
+  font-size: 11px;
+  gap: 4px;
+}
+
+.canvas-bg-color {
+  width: 30px;
+  height: 24px;
+  border: 1px solid #ddd;
+  border-radius: 3px;
+  cursor: pointer;
+}
+
+.clear-canvas-btn,
+.delete-section-btn {
+  padding: 4px 10px;
+  border: 1px solid #ddd;
+  border-radius: 3px;
+  background: white;
+  color: #666;
+  cursor: pointer;
+  font-size: 11px;
+  transition: all 0.2s;
+}
+
+.clear-canvas-btn:hover {
+  border-color: #4a90e2;
+  background: #f5f5f5;
+  color: #4a90e2;
+}
+
+.delete-section-btn {
+  padding: 4px 8px;
+}
+
+.delete-section-btn:hover {
+  border-color: #dc3545;
+  background: #fee;
+}
+
+/* Grid Builder Container */
+.grid-builder {
+  width: 100%;
+  padding: 0;
+  border-radius: 0;
+  margin-bottom: 0;
+  background: transparent;
+}
+
+/* Grid Container */
+.grid-container {
+  position: relative;
+  width: 100%;
+  min-height: 400px;
+  background-image: linear-gradient(rgba(0, 0, 0, 5%) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 0, 0, 5%) 1px, transparent 1px);
+  background-size: 2% 20px;
+  transition: background-color 0.2s;
+}
+
+.grid-container.hide-grid {
+  background-image: none;
+}

@@ -1,0 +1,73 @@
+// Grid Builder SCSS Variables
+// Based on patterns from external-ui for consistency
+
+// Colors - Main
+$color-main-text: #212529;
+$color-main-dim: #dee2e6;
+$color-main-border: #ced4da;
+
+// Colors - Grey
+$color-grey-light: #f8f9fa;
+$color-grey-medium: #6c757d;
+$color-grey-dark: #495057;
+$color-grey-text: #646F7A;
+
+// Colors - Blue
+$color-blue-normal: #4a90e2;
+$color-blue-light: #357abd;
+$color-blue-light-active: #5ba3f5;
+$color-blue-background: #F7FBFF;
+
+// Colors - States
+$color-success: #28a745;
+$color-warning: #ffc107;
+$color-danger: #dc3545;
+$color-info: #17a2b8;
+
+// Spacing
+$spacing-xs: 4px;
+$spacing-sm: 8px;
+$spacing-md: 12px;
+$spacing-lg: 16px;
+$spacing-xl: 20px;
+$spacing-xxl: 24px;
+$spacing-xxxl: 28px;
+
+// Grid System
+$grid-unit-horizontal: 20px; // 1 grid unit = 20px (2%)
+$grid-unit-vertical: 20px; // 1 grid unit = 20px
+$grid-columns: 50; // 50 units = 100% width
+
+// Border Radius
+$border-radius-sm: 4px;
+$border-radius-md: 6px;
+$border-radius-lg: 8px;
+
+// Shadows
+$shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.1);
+$shadow-md: 0 4px 8px rgba(0, 0, 0, 0.15);
+$shadow-lg: 0 8px 16px rgba(0, 0, 0, 0.2);
+
+// Typography
+$font-size-xs: 12px;
+$font-size-sm: 14px;
+$font-size-md: 15px;
+$font-size-lg: 18px;
+$font-size-xl: 24px;
+$font-size-xxl: 28px;
+
+$font-weight-normal: 400;
+$font-weight-medium: 500;
+$font-weight-semibold: 600;
+$font-weight-bold: 700;
+
+// Transitions
+$transition-fast: 0.15s ease;
+$transition-normal: 0.2s ease;
+$transition-slow: 0.3s ease;
+
+// Z-index layers
+$z-index-base: 1;
+$z-index-dropdown: 1000;
+$z-index-modal: 1050;
+$z-index-tooltip: 1070;

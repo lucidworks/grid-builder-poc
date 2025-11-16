@@ -1,10 +1,13 @@
+// External libraries (alphabetical)
 import { Component, h, Listen, State } from '@stencil/core';
+
+// Internal imports (alphabetical)
 import { componentTemplates } from '../../data/component-templates';
 import { gridState } from '../../services/state-manager';
 
 @Component({
   tag: 'config-panel',
-  styleUrl: 'config-panel.css',
+  styleUrl: 'config-panel.scss',
   shadow: false,
 })
 export class ConfigPanel {
@@ -78,7 +81,7 @@ export class ConfigPanel {
     );
   }
 
-  private openPanel(itemId: string, canvasId: string) {
+  private openPanel = (itemId: string, canvasId: string) => {
     this.selectedItemId = itemId;
     this.selectedCanvasId = canvasId;
 
@@ -105,9 +108,9 @@ export class ConfigPanel {
 
     // Open panel
     this.isOpen = true;
-  }
+  };
 
-  private closePanel() {
+  private closePanel = () => {
     // Revert changes on cancel
     if (this.selectedItemId && this.selectedCanvasId && this.originalState) {
       const canvas = gridState.canvases[this.selectedCanvasId];
@@ -125,33 +128,33 @@ export class ConfigPanel {
 
     this.isOpen = false;
 
-    // Clear selection
-    gridState.selectedItemId = null;
-    gridState.selectedCanvasId = null;
+    // Don't clear selection - let it persist for keyboard shortcuts
+    // gridState.selectedItemId = null;
+    // gridState.selectedCanvasId = null;
 
     // Clear component state
     this.selectedItemId = null;
     this.selectedCanvasId = null;
     this.componentName = '';
     this.originalState = null;
-  }
+  };
 
-  private saveConfig() {
+  private saveConfig = () => {
     // Changes are already applied live, so just close without reverting
     this.isOpen = false;
 
-    // Clear selection
-    gridState.selectedItemId = null;
-    gridState.selectedCanvasId = null;
+    // Don't clear selection - let it persist for keyboard shortcuts
+    // gridState.selectedItemId = null;
+    // gridState.selectedCanvasId = null;
 
     // Clear component state
     this.selectedItemId = null;
     this.selectedCanvasId = null;
     this.componentName = '';
     this.originalState = null;
-  }
+  };
 
-  private bringToFront() {
+  private bringToFront = () => {
     if (!this.selectedItemId || !this.selectedCanvasId) {
       return;
     }
@@ -166,9 +169,9 @@ export class ConfigPanel {
     const newZIndex = ++canvas.zIndexCounter;
     canvas.items[itemIndex] = { ...canvas.items[itemIndex], zIndex: newZIndex };
     gridState.canvases = { ...gridState.canvases }; // Trigger update
-  }
+  };
 
-  private bringForward() {
+  private bringForward = () => {
     if (!this.selectedItemId || !this.selectedCanvasId) {
       return;
     }
@@ -194,9 +197,9 @@ export class ConfigPanel {
         gridState.canvases = { ...gridState.canvases }; // Trigger update
       }
     }
-  }
+  };
 
-  private sendBackward() {
+  private sendBackward = () => {
     if (!this.selectedItemId || !this.selectedCanvasId) {
       return;
     }
@@ -222,9 +225,9 @@ export class ConfigPanel {
         gridState.canvases = { ...gridState.canvases }; // Trigger update
       }
     }
-  }
+  };
 
-  private sendToBack() {
+  private sendToBack = () => {
     if (!this.selectedItemId || !this.selectedCanvasId) {
       return;
     }
@@ -254,9 +257,9 @@ export class ConfigPanel {
     }
 
     gridState.canvases = { ...gridState.canvases }; // Trigger update
-  }
+  };
 
-  private handleNameInput(e: Event) {
+  private handleNameInput = (e: Event) => {
     const target = e.target as HTMLInputElement;
     this.componentName = target.value;
 
@@ -270,5 +273,5 @@ export class ConfigPanel {
         gridState.canvases = { ...gridState.canvases }; // Trigger update
       }
     }
-  }
+  };
 }

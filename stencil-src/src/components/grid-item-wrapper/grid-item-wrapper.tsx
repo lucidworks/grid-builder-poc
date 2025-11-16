@@ -1,4 +1,7 @@
+// External libraries (alphabetical)
 import { Component, h, Prop, State } from '@stencil/core';
+
+// Internal imports (alphabetical)
 import { componentTemplates } from '../../data/component-templates';
 import { GridItem, gridState } from '../../services/state-manager';
 import { pushCommand } from '../../services/undo-redo';
@@ -10,7 +13,7 @@ import { ResizeHandler } from '../../utils/resize-handler';
 
 @Component({
   tag: 'grid-item-wrapper',
-  styleUrl: 'grid-item-wrapper.css',
+  styleUrl: 'grid-item-wrapper.scss',
   shadow: false, // Use light DOM for compatibility with interact.js
 })
 export class GridItemWrapper {
@@ -43,8 +46,8 @@ export class GridItemWrapper {
 
   componentDidLoad() {
     // Initialize drag and resize handlers
-    this.dragHandler = new DragHandler(this.itemRef, this.item, this.handleItemUpdate.bind(this));
-    this.resizeHandler = new ResizeHandler(this.itemRef, this.item, this.handleItemUpdate.bind(this));
+    this.dragHandler = new DragHandler(this.itemRef, this.item, this.handleItemUpdate);
+    this.resizeHandler = new ResizeHandler(this.itemRef, this.item, this.handleItemUpdate);
 
     // Set up virtual rendering observer
     virtualRenderer.observe(this.itemRef, this.item.id, (isVisible) => {
@@ -125,9 +128,12 @@ export class GridItemWrapper {
       };
     }
 
+    // Compute selection directly from gridState (not cached state)
+    const isSelected = gridState.selectedItemId === this.item.id;
+
     const itemClasses = {
       'grid-item': true,
-      selected: this.isSelected,
+      selected: isSelected,
     };
 
     // Convert grid units to pixels
@@ -192,12 +198,12 @@ export class GridItemWrapper {
     );
   }
 
-  private captureItemSnapshot() {
+  private captureItemSnapshot = () => {
     // Deep clone the item to capture its state before drag/resize
     this.itemSnapshot = JSON.parse(JSON.stringify(this.item));
-  }
+  };
 
-  private handleItemUpdate(updatedItem: GridItem) {
+  private handleItemUpdate = (updatedItem: GridItem) => {
     // Called by drag/resize handlers at end of operation
 
     // Check if position or canvas changed (for undo/redo)
@@ -242,9 +248,9 @@ export class GridItemWrapper {
       canvas.items[itemIndex] = updatedItem;
       gridState.canvases = { ...gridState.canvases }; // Trigger update
     }
-  }
+  };
 
-  private handleClick(e: MouseEvent) {
+  private handleClick = (e: MouseEvent) => {
     // Don't open config panel if clicking on drag handle, resize handle, or control buttons
     const target = e.target as HTMLElement;
     if (
@@ -258,6 +264,10 @@ export class GridItemWrapper {
       return;
     }
 
+    // Set selection state immediately (so keyboard shortcuts work)
+    gridState.selectedItemId = this.item.id;
+    gridState.selectedCanvasId = this.item.canvasId;
+
     // Dispatch event to open config panel
     const event = new CustomEvent('item-click', {
       detail: { itemId: this.item.id, canvasId: this.item.canvasId },
@@ -265,23 +275,23 @@ export class GridItemWrapper {
       composed: true,
     });
     this.itemRef.dispatchEvent(event);
-  }
+  };
 
-  private handleBringToFront() {
+  private handleBringToFront = () => {
     const canvas = gridState.canvases[this.item.canvasId];
     const maxZ = Math.max(...canvas.items.map((i) => i.zIndex));
     this.item.zIndex = maxZ + 1;
     gridState.canvases = { ...gridState.canvases }; // Trigger update
-  }
+  };
 
-  private handleSendToBack() {
+  private handleSendToBack = () => {
     const canvas = gridState.canvases[this.item.canvasId];
     const minZ = Math.min(...canvas.items.map((i) => i.zIndex));
     this.item.zIndex = minZ - 1;
     gridState.canvases = { ...gridState.canvases }; // Trigger update
-  }
+  };
 
-  private handleDelete() {
+  private handleDelete = () => {
     // Dispatch event to grid-builder-app to handle
     const event = new CustomEvent('item-delete', {
       detail: { itemId: this.item.id, canvasId: this.item.canvasId },
@@ -289,5 +299,5 @@ export class GridItemWrapper {
       composed: true,
     });
     this.itemRef.dispatchEvent(event);
-  }
+  };
 }

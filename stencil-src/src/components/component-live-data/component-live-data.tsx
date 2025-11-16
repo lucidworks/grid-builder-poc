@@ -2,7 +2,7 @@ import { Component, h, Prop, State } from '@stencil/core';
 
 @Component({
   tag: 'component-live-data',
-  styleUrl: 'component-live-data.css',
+  styleUrl: 'component-live-data.scss',
   shadow: false,
 })
 export class ComponentLiveData {

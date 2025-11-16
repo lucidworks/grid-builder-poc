@@ -2,7 +2,7 @@ import { Component, h, Prop } from '@stencil/core';
 
 @Component({
   tag: 'component-dashboard-widget',
-  styleUrl: 'component-dashboard-widget.css',
+  styleUrl: 'component-dashboard-widget.scss',
   shadow: false,
 })
 export class ComponentDashboardWidget {

@@ -1,13 +1,15 @@
+// External libraries (alphabetical)
 import { Component, h } from '@stencil/core';
-// Use the standard interactjs package import
 import interact from 'interactjs';
+
+// Internal imports (alphabetical)
 import { componentTemplates } from '../../data/component-templates';
 import { redo, undo, undoRedoState } from '../../services/undo-redo';
 import { gridToPixelsX, gridToPixelsY } from '../../utils/grid-calculations';
 
 @Component({
   tag: 'component-palette',
-  styleUrl: 'component-palette.css',
+  styleUrl: 'component-palette.scss',
   shadow: false,
 })
 export class ComponentPalette {
@@ -86,7 +88,7 @@ export class ComponentPalette {
     );
   }
 
-  private initializePaletteItems() {
+  private initializePaletteItems = () => {
     const paletteItems = document.querySelectorAll('.palette-item');
 
     paletteItems.forEach((element: HTMLElement) => {
@@ -156,5 +158,5 @@ export class ComponentPalette {
         },
       });
     });
-  }
+  };
 }

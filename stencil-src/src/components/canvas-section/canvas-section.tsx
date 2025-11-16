@@ -1,12 +1,14 @@
+// External libraries (alphabetical)
 import { Component, h, Prop, State } from '@stencil/core';
-// Use the standard interactjs package import
 import interact from 'interactjs';
+
+// Internal imports (alphabetical)
 import { Canvas, GridItem, gridState, onChange } from '../../services/state-manager';
 import { clearGridSizeCache, gridToPixelsX, gridToPixelsY } from '../../utils/grid-calculations';
 
 @Component({
   tag: 'canvas-section',
-  styleUrl: 'canvas-section.css',
+  styleUrl: 'canvas-section.scss',
   shadow: false, // Use light DOM for compatibility with interact.js
 })
 export class CanvasSection {
@@ -60,7 +62,7 @@ export class CanvasSection {
     }
   }
 
-  private setupResizeObserver() {
+  private setupResizeObserver = () => {
     if (!this.gridContainerRef) {
       return;
     }
@@ -75,7 +77,7 @@ export class CanvasSection {
     });
 
     this.resizeObserver.observe(this.gridContainerRef);
-  }
+  };
 
   render() {
     const showGrid = gridState.showGrid;
@@ -125,7 +127,7 @@ export class CanvasSection {
     );
   }
 
-  private initializeDropzone() {
+  private initializeDropzone = () => {
     if (!this.gridContainerRef || this.dropzoneInitialized) {
       return;
     }
@@ -209,9 +211,9 @@ export class CanvasSection {
     });
 
     this.dropzoneInitialized = true;
-  }
+  };
 
-  private handleColorChange(e: Event) {
+  private handleColorChange = (e: Event) => {
     const target = e.target as HTMLInputElement;
     const color = target.value;
 
@@ -223,9 +225,9 @@ export class CanvasSection {
     if (this.gridContainerRef) {
       this.gridContainerRef.style.backgroundColor = color;
     }
-  }
+  };
 
-  private handleClearCanvas() {
+  private handleClearCanvas = () => {
     if (confirm(`Are you sure you want to clear all items from this section?`)) {
       // Clear items from state
       this.canvas.items = [];
@@ -242,9 +244,9 @@ export class CanvasSection {
         this.gridContainerRef.style.minHeight = '400px';
       }
     }
-  }
+  };
 
-  private handleDeleteSection() {
+  private handleDeleteSection = () => {
     if (this.canvas.items.length > 0) {
       if (!confirm(`This section has ${this.canvas.items.length} items. Are you sure you want to delete it?`)) {
         return;
@@ -258,5 +260,5 @@ export class CanvasSection {
       composed: true,
     });
     this.gridContainerRef.dispatchEvent(deleteEvent);
-  }
+  };
 }
