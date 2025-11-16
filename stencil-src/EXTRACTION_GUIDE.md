@@ -884,6 +884,21 @@ export interface GridConfig {
    * @default true
    */
   showGridLines?: boolean;
+
+  /**
+   * Virtual rendering pre-render margin
+   * Components start rendering this distance before entering viewport
+   *
+   * @default '200px'
+   *
+   * Options:
+   * - '200px' (default): Balanced - 1 second buffer for smooth loading
+   * - '400px': Aggressive - 2 second buffer, uses more memory, better for slow devices
+   * - '100px': Conservative - Less memory usage, might see brief pop-in on slow devices
+   *
+   * Rule of thumb: Higher margin = smoother experience but more memory usage
+   */
+  virtualRenderMargin?: string;
 }
 ```
 
