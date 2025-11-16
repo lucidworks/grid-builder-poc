@@ -14,7 +14,7 @@
 
 export type VisibilityCallback = (isVisible: boolean) => void;
 
-class VirtualRendererService {
+export class VirtualRendererService {
   private observer: IntersectionObserver | null = null;
   private observedElements: Map<string, VisibilityCallback> = new Map();
 
