@@ -8,8 +8,22 @@ import { HTMLStencilElement, JSXBase } from "@stencil/core/internal";
 import { GridItem } from "./services/state-manager";
 export { GridItem } from "./services/state-manager";
 export namespace Components {
+    /**
+     * CanvasSection Component
+     * =======================
+     * StencilJS component providing individual canvas dropzone with item management.
+     * **Tag**: `<canvas-section>`
+     * **Shadow DOM**: Disabled (required for interact.js compatibility)
+     * **Lifecycle**: Standard StencilJS (componentWillLoad → componentDidLoad → render → disconnectedCallback)
+     */
     interface CanvasSection {
+        /**
+          * Canvas ID for state management  **Format**: 'canvas1', 'canvas2', etc. **Purpose**: Key for accessing canvas data in gridState.canvases **Required**: Component won't render without valid canvasId
+         */
         "canvasId": string;
+        /**
+          * Section number for UI display  **Format**: 1, 2, 3, etc. **Purpose**: User-facing label ("Section 1", "Section 2") **Decoupled from canvasId**: Allows reordering without breaking state
+         */
         "sectionNumber": number;
     }
     interface ComponentButton {
@@ -30,6 +44,14 @@ export namespace Components {
     interface ComponentLiveData {
         "itemId": string;
     }
+    /**
+     * ComponentPalette Component
+     * ===========================
+     * StencilJS component providing draggable component library UI.
+     * **Tag**: `<component-palette>`
+     * **Shadow DOM**: Disabled (integrates with global styles)
+     * **Lifecycle**: Standard StencilJS (componentWillLoad → componentDidLoad → render)
+     */
     interface ComponentPalette {
     }
     interface ComponentTextBlock {
@@ -42,12 +64,34 @@ export namespace Components {
     }
     interface GridBuilderApp {
     }
+    /**
+     * GridItemWrapper Component
+     * ==========================
+     * StencilJS component wrapping individual grid items with drag/resize/selection.
+     * **Tag**: `<grid-item-wrapper>`
+     * **Shadow DOM**: Disabled (required for interact.js compatibility)
+     * **Lifecycle**: Standard StencilJS (componentWillLoad → componentDidLoad → render → disconnectedCallback)
+     */
     interface GridItemWrapper {
+        /**
+          * Grid item data (position, size, type, etc.)  **Source**: Parent canvas-section component **Contains**: id, canvasId, type, name, layouts (desktop/mobile), zIndex **Updates**: Trigger re-render and grid calculations
+         */
         "item": GridItem;
+        /**
+          * Render version (force re-render trigger)  **Source**: Parent canvas-section (incremented on resize) **Purpose**: Force grid calculation refresh when container resizes **Optional**: Defaults to undefined  **Why needed**: - Grid calculations cached based on container width - Container resize invalidates cache - Parent increments renderVersion → wrapper recalculates
+         */
         "renderVersion"?: number;
     }
 }
 declare global {
+    /**
+     * CanvasSection Component
+     * =======================
+     * StencilJS component providing individual canvas dropzone with item management.
+     * **Tag**: `<canvas-section>`
+     * **Shadow DOM**: Disabled (required for interact.js compatibility)
+     * **Lifecycle**: Standard StencilJS (componentWillLoad → componentDidLoad → render → disconnectedCallback)
+     */
     interface HTMLCanvasSectionElement extends Components.CanvasSection, HTMLStencilElement {
     }
     var HTMLCanvasSectionElement: {
@@ -90,6 +134,14 @@ declare global {
         prototype: HTMLComponentLiveDataElement;
         new (): HTMLComponentLiveDataElement;
     };
+    /**
+     * ComponentPalette Component
+     * ===========================
+     * StencilJS component providing draggable component library UI.
+     * **Tag**: `<component-palette>`
+     * **Shadow DOM**: Disabled (integrates with global styles)
+     * **Lifecycle**: Standard StencilJS (componentWillLoad → componentDidLoad → render)
+     */
     interface HTMLComponentPaletteElement extends Components.ComponentPalette, HTMLStencilElement {
     }
     var HTMLComponentPaletteElement: {
@@ -120,6 +172,14 @@ declare global {
         prototype: HTMLGridBuilderAppElement;
         new (): HTMLGridBuilderAppElement;
     };
+    /**
+     * GridItemWrapper Component
+     * ==========================
+     * StencilJS component wrapping individual grid items with drag/resize/selection.
+     * **Tag**: `<grid-item-wrapper>`
+     * **Shadow DOM**: Disabled (required for interact.js compatibility)
+     * **Lifecycle**: Standard StencilJS (componentWillLoad → componentDidLoad → render → disconnectedCallback)
+     */
     interface HTMLGridItemWrapperElement extends Components.GridItemWrapper, HTMLStencilElement {
     }
     var HTMLGridItemWrapperElement: {
@@ -143,8 +203,22 @@ declare global {
     }
 }
 declare namespace LocalJSX {
+    /**
+     * CanvasSection Component
+     * =======================
+     * StencilJS component providing individual canvas dropzone with item management.
+     * **Tag**: `<canvas-section>`
+     * **Shadow DOM**: Disabled (required for interact.js compatibility)
+     * **Lifecycle**: Standard StencilJS (componentWillLoad → componentDidLoad → render → disconnectedCallback)
+     */
     interface CanvasSection {
+        /**
+          * Canvas ID for state management  **Format**: 'canvas1', 'canvas2', etc. **Purpose**: Key for accessing canvas data in gridState.canvases **Required**: Component won't render without valid canvasId
+         */
         "canvasId": string;
+        /**
+          * Section number for UI display  **Format**: 1, 2, 3, etc. **Purpose**: User-facing label ("Section 1", "Section 2") **Decoupled from canvasId**: Allows reordering without breaking state
+         */
         "sectionNumber": number;
     }
     interface ComponentButton {
@@ -165,6 +239,14 @@ declare namespace LocalJSX {
     interface ComponentLiveData {
         "itemId": string;
     }
+    /**
+     * ComponentPalette Component
+     * ===========================
+     * StencilJS component providing draggable component library UI.
+     * **Tag**: `<component-palette>`
+     * **Shadow DOM**: Disabled (integrates with global styles)
+     * **Lifecycle**: Standard StencilJS (componentWillLoad → componentDidLoad → render)
+     */
     interface ComponentPalette {
     }
     interface ComponentTextBlock {
@@ -177,8 +259,22 @@ declare namespace LocalJSX {
     }
     interface GridBuilderApp {
     }
+    /**
+     * GridItemWrapper Component
+     * ==========================
+     * StencilJS component wrapping individual grid items with drag/resize/selection.
+     * **Tag**: `<grid-item-wrapper>`
+     * **Shadow DOM**: Disabled (required for interact.js compatibility)
+     * **Lifecycle**: Standard StencilJS (componentWillLoad → componentDidLoad → render → disconnectedCallback)
+     */
     interface GridItemWrapper {
+        /**
+          * Grid item data (position, size, type, etc.)  **Source**: Parent canvas-section component **Contains**: id, canvasId, type, name, layouts (desktop/mobile), zIndex **Updates**: Trigger re-render and grid calculations
+         */
         "item": GridItem;
+        /**
+          * Render version (force re-render trigger)  **Source**: Parent canvas-section (incremented on resize) **Purpose**: Force grid calculation refresh when container resizes **Optional**: Defaults to undefined  **Why needed**: - Grid calculations cached based on container width - Container resize invalidates cache - Parent increments renderVersion → wrapper recalculates
+         */
         "renderVersion"?: number;
     }
     interface IntrinsicElements {
@@ -201,6 +297,14 @@ export { LocalJSX as JSX };
 declare module "@stencil/core" {
     export namespace JSX {
         interface IntrinsicElements {
+            /**
+             * CanvasSection Component
+             * =======================
+             * StencilJS component providing individual canvas dropzone with item management.
+             * **Tag**: `<canvas-section>`
+             * **Shadow DOM**: Disabled (required for interact.js compatibility)
+             * **Lifecycle**: Standard StencilJS (componentWillLoad → componentDidLoad → render → disconnectedCallback)
+             */
             "canvas-section": LocalJSX.CanvasSection & JSXBase.HTMLAttributes<HTMLCanvasSectionElement>;
             "component-button": LocalJSX.ComponentButton & JSXBase.HTMLAttributes<HTMLComponentButtonElement>;
             "component-dashboard-widget": LocalJSX.ComponentDashboardWidget & JSXBase.HTMLAttributes<HTMLComponentDashboardWidgetElement>;
@@ -208,11 +312,27 @@ declare module "@stencil/core" {
             "component-image": LocalJSX.ComponentImage & JSXBase.HTMLAttributes<HTMLComponentImageElement>;
             "component-image-gallery": LocalJSX.ComponentImageGallery & JSXBase.HTMLAttributes<HTMLComponentImageGalleryElement>;
             "component-live-data": LocalJSX.ComponentLiveData & JSXBase.HTMLAttributes<HTMLComponentLiveDataElement>;
+            /**
+             * ComponentPalette Component
+             * ===========================
+             * StencilJS component providing draggable component library UI.
+             * **Tag**: `<component-palette>`
+             * **Shadow DOM**: Disabled (integrates with global styles)
+             * **Lifecycle**: Standard StencilJS (componentWillLoad → componentDidLoad → render)
+             */
             "component-palette": LocalJSX.ComponentPalette & JSXBase.HTMLAttributes<HTMLComponentPaletteElement>;
             "component-text-block": LocalJSX.ComponentTextBlock & JSXBase.HTMLAttributes<HTMLComponentTextBlockElement>;
             "component-video": LocalJSX.ComponentVideo & JSXBase.HTMLAttributes<HTMLComponentVideoElement>;
             "config-panel": LocalJSX.ConfigPanel & JSXBase.HTMLAttributes<HTMLConfigPanelElement>;
             "grid-builder-app": LocalJSX.GridBuilderApp & JSXBase.HTMLAttributes<HTMLGridBuilderAppElement>;
+            /**
+             * GridItemWrapper Component
+             * ==========================
+             * StencilJS component wrapping individual grid items with drag/resize/selection.
+             * **Tag**: `<grid-item-wrapper>`
+             * **Shadow DOM**: Disabled (required for interact.js compatibility)
+             * **Lifecycle**: Standard StencilJS (componentWillLoad → componentDidLoad → render → disconnectedCallback)
+             */
             "grid-item-wrapper": LocalJSX.GridItemWrapper & JSXBase.HTMLAttributes<HTMLGridItemWrapperElement>;
         }
     }
