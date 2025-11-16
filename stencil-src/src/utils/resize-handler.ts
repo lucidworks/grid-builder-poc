@@ -52,7 +52,14 @@ export class ResizeHandler {
     this.item = item;
     this.onUpdate = onUpdate;
 
-    this.initialize();
+    // Ensure element has width/height before initializing interact.js
+    // StencilJS might not have applied styles yet
+    if (!element.style.width || !element.style.height) {
+      console.warn('Element missing width/height styles, waiting for next frame');
+      requestAnimationFrame(() => this.initialize());
+    } else {
+      this.initialize();
+    }
   }
 
   /**
@@ -80,7 +87,11 @@ export class ResizeHandler {
       edges: { left: true, right: true, bottom: true, top: true },
 
       modifiers: [
-        // Snap to grid only when resize ends (prevents initial jump)
+        // Enforce minimum size
+        interact.modifiers.restrictSize({
+          min: { width: 100, height: 80 },
+        }),
+        // Snap to grid only when resize ends (prevents jump during resize)
         interact.modifiers.snap({
           targets: [
             interact.snappers.grid({
@@ -90,14 +101,6 @@ export class ResizeHandler {
           ],
           range: Infinity,
           endOnly: true,
-        }),
-        // Enforce minimum size
-        interact.modifiers.restrictSize({
-          min: { width: 100, height: 80 },
-        }),
-        // Keep within parent boundaries
-        interact.modifiers.restrictEdges({
-          outer: 'parent',
         }),
       ],
 
@@ -133,8 +136,7 @@ export class ResizeHandler {
 
     // Batch DOM updates with requestAnimationFrame for 60fps
     this.resizeRafId = requestAnimationFrame(() => {
-      // Use deltaRect to accumulate changes instead of absolute positions
-      // This prevents jumping when endOnly snap is used
+      // Use deltaRect to accumulate changes
       const dx = event.deltaRect.left;
       const dy = event.deltaRect.top;
       const dw = event.deltaRect.width;
@@ -146,7 +148,7 @@ export class ResizeHandler {
       this.startRect.width += dw;
       this.startRect.height += dh;
 
-      // Direct DOM manipulation - no StencilJS re-render during resize
+      // Apply styles
       event.target.style.transform = `translate(${this.startRect.x}px, ${this.startRect.y}px)`;
       event.target.style.width = this.startRect.width + 'px';
       event.target.style.height = this.startRect.height + 'px';
@@ -194,6 +196,12 @@ export class ResizeHandler {
     newWidth = Math.round(newWidth / gridSizeX) * gridSizeX;
     newHeight = Math.round(newHeight / gridSizeY) * gridSizeY;
 
+    // Keep within parent boundaries (manual implementation since interact.js restrictEdges breaks deltaRect)
+    newX = Math.max(0, newX); // Don't go past left edge
+    newY = Math.max(0, newY); // Don't go past top edge
+    newX = Math.min(newX, container.clientWidth - newWidth); // Don't go past right edge
+    newY = Math.min(newY, container.clientHeight - newHeight); // Don't go past bottom edge
+
     // Apply snapped final position
     event.target.style.transform = `translate(${newX}px, ${newY}px)`;
     event.target.style.width = newWidth + 'px';
@@ -212,13 +220,6 @@ export class ResizeHandler {
     if (currentViewport === 'mobile') {
       this.item.layouts.mobile.customized = true;
     }
-
-    // Commit to transform-based position (no left/top)
-    event.target.style.transform = `translate(${newX}px, ${newY}px)`;
-    event.target.style.width = newWidth + 'px';
-    event.target.style.height = newHeight + 'px';
-    event.target.removeAttribute('data-x');
-    event.target.removeAttribute('data-y');
 
     // End performance tracking
     if ((window as any).perfMonitor) {
