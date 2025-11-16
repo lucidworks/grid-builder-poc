@@ -1,25 +1,30 @@
 # Grid Builder Variants Comparison
 
-This document explains the differences between the four grid builder implementations and discusses opportunities for reducing code duplication.
+This document explains the differences between the five grid builder implementations and discusses opportunities for reducing code duplication.
 
 ## Quick Comparison Table
 
-| Feature | Left-Top | Transform | Virtual | Masonry |
-|---------|----------|-----------|---------|---------|
-| **Positioning Method** | CSS left/top | CSS transform | CSS transform | Muuri auto-layout |
-| **Performance Target** | 50-200 items | 50-200 items | 500-2000 items | 100-500 items |
-| **Virtual Rendering** | ❌ No | ❌ No | ✅ Yes (IntersectionObserver) | ❌ No |
-| **DOM Caching** | ❌ No | ❌ No | ✅ Yes | ❌ No |
-| **Grid Size Caching** | ❌ No | ❌ No | ✅ Yes | N/A (no grid) |
-| **Batch Rendering** | ❌ No | ❌ No | ✅ Yes (DocumentFragment) | ❌ No |
-| **Read/Write Batching** | ❌ No | ❌ No | ✅ Yes (prevents thrashing) | ❌ No |
-| **RAF Optimization** | ❌ No | ❌ No | ✅ Yes (resize) | ❌ No |
-| **ResizeObserver** | ✅ Yes | ✅ Yes | ✅ Yes | ❌ No |
-| **Undo/Redo** | ✅ Yes | ✅ Yes | ✅ Yes | ❌ No |
-| **Desktop/Mobile Toggle** | ✅ Yes | ✅ Yes | ✅ Yes | ❌ No |
-| **Free-form Resize** | ✅ Yes | ✅ Yes | ✅ Yes | ❌ No (presets) |
-| **Grid Snapping** | ✅ Yes | ✅ Yes | ✅ Yes | ❌ No |
-| **Status** | Baseline | Experimental | Production-ready | Experimental |
+| Feature | Left-Top | Transform | Virtual | StencilJS | Masonry |
+|---------|----------|-----------|---------|-----------|---------|
+| **Framework** | Vanilla JS | Vanilla JS | Vanilla JS | StencilJS | Vanilla JS + Muuri |
+| **Positioning Method** | CSS left/top | CSS transform | CSS transform | CSS transform | Muuri auto-layout |
+| **Performance Target** | 50-200 items | 50-200 items | 500-2000 items | 500-2000 items | 100-500 items |
+| **Virtual Rendering** | ❌ No | ❌ No | ✅ Yes (IntersectionObserver) | ✅ Yes (IntersectionObserver) | ❌ No |
+| **DOM Caching** | ❌ No | ❌ No | ✅ Yes | ✅ Yes | ❌ No |
+| **Grid Size Caching** | ❌ No | ❌ No | ✅ Yes | ✅ Yes | N/A (no grid) |
+| **Batch Rendering** | ❌ No | ❌ No | ✅ Yes (DocumentFragment) | ✅ Yes (StencilJS) | ❌ No |
+| **Read/Write Batching** | ❌ No | ❌ No | ✅ Yes (prevents thrashing) | ✅ Yes (StencilJS) | ❌ No |
+| **RAF Optimization** | ❌ No | ❌ No | ✅ Yes (resize) | ✅ Yes (resize) | ❌ No |
+| **ResizeObserver** | ✅ Yes | ✅ Yes | ✅ Yes | ✅ Yes | ❌ No |
+| **Undo/Redo** | ✅ Yes | ✅ Yes | ✅ Yes | ✅ Yes (Command Pattern) | ❌ No |
+| **Desktop/Mobile Toggle** | ✅ Yes | ✅ Yes | ✅ Yes | ✅ Yes | ❌ No |
+| **Free-form Resize** | ✅ Yes | ✅ Yes | ✅ Yes | ✅ Yes | ❌ No (presets) |
+| **Grid Snapping** | ✅ Yes | ✅ Yes | ✅ Yes | ✅ Yes | ❌ No |
+| **Type Safety** | ❌ No | ❌ No | ❌ No | ✅ Yes (TypeScript) | ❌ No |
+| **Component Architecture** | ❌ No | ❌ No | ❌ No | ✅ Yes (Web Components) | ❌ No |
+| **Reactive State** | ❌ Manual | ❌ Manual | ❌ Manual | ✅ Yes (@stencil/store) | ❌ Manual |
+| **Documentation** | Basic | Basic | Detailed | ✅ Comprehensive (~8420 lines) | Basic |
+| **Status** | Baseline | Experimental | Production-ready | ✅ Production-ready | Experimental |
 
 ## Detailed Variant Descriptions
 
@@ -79,7 +84,43 @@ Fully optimized variant with multiple performance enhancements.
 - When performance is critical
 - When users will stress-test with many components
 
-### 4. Masonry (Experimental)
+### 4. StencilJS (Production-Ready)
+**Files:** `stencil-src/` (source), `stencil/` (build output)
+
+Production-ready web component architecture with TypeScript and comprehensive documentation.
+
+**Key Characteristics:**
+- **Framework:** StencilJS with TypeScript for type safety
+- **Component architecture:** Proper web components with lifecycle management
+- **Reactive state:** @stencil/store for automatic re-renders
+- **All Virtual optimizations:** Transform positioning, virtual rendering, DOM/grid caching, RAF batching
+- **Command pattern:** Gang of Four undo/redo implementation
+- **Layered architecture:** Clean separation (Components → Utils → Services)
+- **Comprehensive documentation:** ~8420 lines across 12 core files
+- **Architecture diagrams:** Mermaid diagrams in ARCHITECTURE.md
+- **Extraction guides:** Framework adaptation guides for React/Vue/Angular/Svelte
+- **206 passing tests:** Comprehensive unit test coverage
+
+**Performance characteristics** (inherited from Virtual):
+- Virtual rendering with IntersectionObserver (10× faster initial load)
+- Transform-based positioning (6-10× faster than left/top)
+- Grid calculation caching (100× fewer DOM reads)
+- RAF batching for resize (3-4× fewer DOM operations)
+- Handles 500-2000+ items efficiently
+
+**When to use:**
+- Production applications requiring type safety
+- Teams wanting component architecture and reactive state
+- Projects needing comprehensive inline documentation
+- When extracting patterns to other frameworks (React, Vue, Angular, Svelte)
+- Long-term maintainable codebases
+
+**Documentation:**
+- See [stencil-src/ARCHITECTURE.md](stencil-src/ARCHITECTURE.md) for high-level overview
+- See [stencil-src/README.md](stencil-src/README.md) for build/dev instructions
+- All 12 core files have extensive inline documentation
+
+### 5. Masonry (Experimental)
 **File:** `masonry/index.js`
 
 Pinterest-style automatic layout using Muuri.js library.
