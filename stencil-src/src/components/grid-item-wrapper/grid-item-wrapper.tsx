@@ -3,6 +3,7 @@ import { componentTemplates } from '../../data/component-templates';
 import { GridItem, gridState } from '../../services/state-manager';
 import { pushCommand } from '../../services/undo-redo';
 import { MoveItemCommand } from '../../services/undo-redo-commands';
+import { virtualRenderer } from '../../services/virtual-renderer';
 import { DragHandler } from '../../utils/drag-handler';
 import { gridToPixelsX, gridToPixelsY } from '../../utils/grid-calculations';
 import { ResizeHandler } from '../../utils/resize-handler';
@@ -16,6 +17,7 @@ export class GridItemWrapper {
   @Prop() item!: GridItem;
 
   @State() isSelected: boolean = false;
+  @State() isVisible: boolean = false;
 
   private itemRef: HTMLElement;
   private dragHandler: DragHandler;
@@ -42,6 +44,11 @@ export class GridItemWrapper {
     // Initialize drag and resize handlers
     this.dragHandler = new DragHandler(this.itemRef, this.item, this.handleItemUpdate.bind(this));
     this.resizeHandler = new ResizeHandler(this.itemRef, this.item, this.handleItemUpdate.bind(this));
+
+    // Set up virtual rendering observer
+    virtualRenderer.observe(this.itemRef, this.item.id, (isVisible) => {
+      this.isVisible = isVisible;
+    });
   }
 
   disconnectedCallback() {
@@ -52,9 +59,19 @@ export class GridItemWrapper {
     if (this.resizeHandler) {
       this.resizeHandler.destroy();
     }
+
+    // Cleanup virtual renderer
+    if (this.itemRef) {
+      virtualRenderer.unobserve(this.itemRef, this.item.id);
+    }
   }
 
   private renderComponent() {
+    // Virtual rendering: only render component content when visible
+    if (!this.isVisible) {
+      return <div class="component-placeholder">Loading...</div>;
+    }
+
     switch (this.item.type) {
       case 'header':
         return <component-header itemId={this.item.id} />;
