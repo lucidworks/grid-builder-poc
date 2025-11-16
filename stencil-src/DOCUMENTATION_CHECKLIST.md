@@ -1,6 +1,6 @@
 # Documentation Checklist
 
-## Progress: 4/11 Complete
+## Progress: 5/12 Complete
 
 This checklist tracks comprehensive inline documentation for all core functionality in the Grid Builder POC. Each file should include:
 - Architecture/design patterns used
@@ -72,24 +72,25 @@ This checklist tracks comprehensive inline documentation for all core functional
 
 ---
 
-## 🔄 State Management & History (0/3 Complete)
+## 🔄 State Management & History (1/3 Complete)
 
-### ⬜ state-manager.ts - Global State
-**Key topics to cover:**
-- [ ] Module overview: reactive state pattern
-- [ ] State structure (canvases, items, layouts)
-- [ ] Desktop vs mobile layout system
-- [ ] Selection state management
-- [ ] Reactive updates with @stencil/store
-- [ ] Why StencilJS store vs Redux/Zustand
-- [ ] State mutation patterns
-- [ ] Grid item structure (GridItem type)
-- [ ] Canvas structure
-- [ ] Z-index management
-- [ ] Helper functions documentation
-- [ ] Extraction guide: adapting to different frameworks
+### ✅ state-manager.ts - Global State
+**Completed:**
+- [x] Module overview: reactive state pattern with StencilJS Store
+- [x] State structure (canvases, items, layouts)
+- [x] Desktop vs mobile dual layout system (auto-generation vs customized)
+- [x] Selection state management (selectedItemId/selectedCanvasId)
+- [x] Reactive updates with @stencil/store
+- [x] Why StencilJS store vs Redux/Zustand (detailed comparison)
+- [x] State mutation patterns (immutable spread pattern)
+- [x] Grid item structure (GridItem interface with full property docs)
+- [x] Canvas structure (items, zIndexCounter, backgroundColor)
+- [x] Z-index management (per-canvas monotonic counters)
+- [x] Helper functions: addItemToCanvas, removeItemFromCanvas, updateItem, getItem, moveItemToCanvas, generateItemId, selectItem, deselectItem
+- [x] Reset function with deep clone pattern
+- [x] Extraction guide: React+Zustand, Vue+Pinia, Angular+NgRx
 
-**Estimated lines of documentation:** ~200-250
+**Actual lines of documentation:** ~835
 
 ### ⬜ undo-redo.ts - Undo/Redo Stack
 **Key topics to cover:**
@@ -235,10 +236,10 @@ This checklist tracks comprehensive inline documentation for all core functional
 |----------|-------|----------|-----------|-----------------|
 | Performance Layer | 2 | 2 | 0 | ~600 ✅ |
 | Interaction Handlers | 2 | 2 | 0 | ~800 ✅ |
-| State Management | 3 | 0 | 3 | ~550-700 |
+| State Management | 3 | 1 | 2 | ~835 + ~350-450 remaining |
 | Component Layer | 4 | 0 | 4 | ~1100-1300 |
 | Performance Optimizations | 1 | 0 | 1 | ~250-300 |
-| **TOTAL** | **12** | **4** | **8** | **~3000-3500** |
+| **TOTAL** | **12** | **5** | **7** | **~3500-4200** |
 
 ---
 
