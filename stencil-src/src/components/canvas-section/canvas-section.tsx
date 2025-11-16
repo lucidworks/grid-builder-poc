@@ -34,8 +34,10 @@ export class CanvasSection {
           this.canvas = gridState.canvases[this.canvasId];
           this.renderVersion++; // Force re-render
         }
-      } catch (_e) {
+      } catch (error) {
         // Component may not be fully initialized yet (e.g., during test setup)
+        // This can happen during rapid component mounting/unmounting in tests
+        console.debug('Canvas section state update skipped:', error);
       }
     });
   }

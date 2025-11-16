@@ -151,7 +151,7 @@ describe('canvas-section', () => {
 
       // Trigger componentDidLoad manually (in tests this may not happen automatically)
       if (component.componentDidLoad) {
-        await component.componentDidLoad();
+        component.componentDidLoad();
       }
 
       // ResizeObserver should be created
@@ -167,7 +167,7 @@ describe('canvas-section', () => {
       const component = page.rootInstance as CanvasSection;
 
       if (component.componentDidLoad) {
-        await component.componentDidLoad();
+        component.componentDidLoad();
       }
 
       // Simulate resize event
@@ -208,7 +208,7 @@ describe('canvas-section', () => {
       const component = page.rootInstance as CanvasSection;
 
       if (component.componentDidLoad) {
-        await component.componentDidLoad();
+        component.componentDidLoad();
       }
 
       // Trigger disconnectedCallback

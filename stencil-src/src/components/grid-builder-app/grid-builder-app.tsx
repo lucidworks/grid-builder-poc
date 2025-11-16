@@ -324,79 +324,101 @@ export class GridBuilderApp {
   private handleKeyboard = (e: KeyboardEvent) => {
     console.log('Keyboard event:', e.key, 'selectedItemId:', gridState.selectedItemId);
 
-    // Arrow keys for nudging - handle first to prevent page scrolling
-    if ((e.key === 'ArrowUp' || e.key === 'ArrowDown' || e.key === 'ArrowLeft' || e.key === 'ArrowRight')) {
-      if (gridState.selectedItemId && gridState.selectedCanvasId) {
-        e.preventDefault(); // Prevent page scrolling
-        console.log('Arrow key pressed, nudging item:', e.key);
+    if (this.handleArrowKeys(e)) return;
+    if (this.handleUndoRedo(e)) return;
+    if (this.handleDelete(e)) return;
+    if (this.handleEscape(e)) return;
+  };
 
-        const canvas = gridState.canvases[gridState.selectedCanvasId];
-        const item = canvas?.items.find((i) => i.id === gridState.selectedItemId);
-
-        if (item) {
-          const currentViewport = gridState.currentViewport;
-          const layout = item.layouts[currentViewport];
-          const nudgeAmount = e.shiftKey ? 10 : 1; // Shift key for larger nudges (10 units vs 1 unit)
-
-          switch (e.key) {
-            case 'ArrowUp':
-              layout.y = Math.max(0, layout.y - nudgeAmount);
-              break;
-            case 'ArrowDown':
-              layout.y = layout.y + nudgeAmount;
-              break;
-            case 'ArrowLeft':
-              layout.x = Math.max(0, layout.x - nudgeAmount);
-              break;
-            case 'ArrowRight':
-              layout.x = layout.x + nudgeAmount;
-              break;
-          }
-
-          // If in mobile view, mark as customized
-          if (currentViewport === 'mobile') {
-            item.layouts.mobile.customized = true;
-          }
-
-          // Trigger re-render
-          gridState.canvases = { ...gridState.canvases };
-        }
-        return; // Item selected - handled the arrow key, don't do anything else
-      }
-      // No item selected - allow normal page scrolling (don't return)
+  private handleArrowKeys = (e: KeyboardEvent): boolean => {
+    if (e.key !== 'ArrowUp' && e.key !== 'ArrowDown' && e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') {
+      return false;
     }
 
+    if (!gridState.selectedItemId || !gridState.selectedCanvasId) {
+      return false; // Allow normal page scrolling
+    }
+
+    e.preventDefault();
+    console.log('Arrow key pressed, nudging item:', e.key);
+
+    const canvas = gridState.canvases[gridState.selectedCanvasId];
+    const item = canvas?.items.find((i) => i.id === gridState.selectedItemId);
+
+    if (!item) {
+      return true;
+    }
+
+    this.nudgeItem(item, e.key, e.shiftKey);
+    return true;
+  };
+
+  private nudgeItem = (item: any, key: string, shiftKey: boolean) => {
+    const currentViewport = gridState.currentViewport;
+    const layout = item.layouts[currentViewport];
+    const nudgeAmount = shiftKey ? 10 : 1;
+
+    switch (key) {
+      case 'ArrowUp':
+        layout.y = Math.max(0, layout.y - nudgeAmount);
+        break;
+      case 'ArrowDown':
+        layout.y = layout.y + nudgeAmount;
+        break;
+      case 'ArrowLeft':
+        layout.x = Math.max(0, layout.x - nudgeAmount);
+        break;
+      case 'ArrowRight':
+        layout.x = layout.x + nudgeAmount;
+        break;
+    }
+
+    if (currentViewport === 'mobile') {
+      item.layouts.mobile.customized = true;
+    }
+
+    gridState.canvases = { ...gridState.canvases };
+  };
+
+  private handleUndoRedo = (e: KeyboardEvent): boolean => {
     // Undo (Ctrl+Z or Cmd+Z)
     if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) {
       e.preventDefault();
       undo();
-      return;
+      return true;
     }
 
     // Redo (Ctrl+Y or Ctrl+Shift+Z or Cmd+Shift+Z)
     if ((e.ctrlKey || e.metaKey) && (e.key === 'y' || (e.key === 'z' && e.shiftKey))) {
       e.preventDefault();
       redo();
-      return;
+      return true;
     }
 
-    // Delete key (Delete on Windows/Linux, Backspace on Mac)
+    return false;
+  };
+
+  private handleDelete = (e: KeyboardEvent): boolean => {
     if ((e.key === 'Delete' || e.key === 'Backspace') && gridState.selectedItemId) {
       console.log('Deleting item:', gridState.selectedItemId);
-      e.preventDefault(); // Prevent browser back navigation
+      e.preventDefault();
       this.handleDeleteSelected();
+      return true;
     }
+    return false;
+  };
 
-    // Escape key
+  private handleEscape = (e: KeyboardEvent): boolean => {
     if (e.key === 'Escape') {
       console.log('Escape pressed, clearing selection');
       gridState.selectedItemId = null;
       gridState.selectedCanvasId = null;
-      // Trigger re-render by updating canvases reference
       const canvases = gridState.canvases;
       gridState.canvases = { ...canvases };
       console.log('Canvases updated to trigger re-render');
+      return true;
     }
+    return false;
   };
 
   private handleDeleteSelected = () => {

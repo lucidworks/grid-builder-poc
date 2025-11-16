@@ -7,6 +7,25 @@ import { GridItem, gridState } from './state-manager';
 import { Command } from './undo-redo';
 
 /**
+ * Helper function to remove an item from a canvas and clear selection if needed
+ */
+function removeItemFromCanvas(canvasId: string, itemId: string): void {
+  const canvas = gridState.canvases[canvasId];
+  if (!canvas) {
+    return;
+  }
+
+  canvas.items = canvas.items.filter((i) => i.id !== itemId);
+  gridState.canvases = { ...gridState.canvases };
+
+  // Clear selection if this item was selected
+  if (gridState.selectedItemId === itemId) {
+    gridState.selectedItemId = null;
+    gridState.selectedCanvasId = null;
+  }
+}
+
+/**
  * AddItemCommand
  * Captures the addition of a new item to a canvas
  */
@@ -22,19 +41,7 @@ export class AddItemCommand implements Command {
 
   undo(): void {
     // Remove the item from the canvas
-    const canvas = gridState.canvases[this.canvasId];
-    if (!canvas) {
-      return;
-    }
-
-    canvas.items = canvas.items.filter((i) => i.id !== this.item.id);
-    gridState.canvases = { ...gridState.canvases };
-
-    // Clear selection if this item was selected
-    if (gridState.selectedItemId === this.item.id) {
-      gridState.selectedItemId = null;
-      gridState.selectedCanvasId = null;
-    }
+    removeItemFromCanvas(this.canvasId, this.item.id);
   }
 
   redo(): void {
@@ -86,19 +93,7 @@ export class DeleteItemCommand implements Command {
 
   redo(): void {
     // Remove the item again
-    const canvas = gridState.canvases[this.canvasId];
-    if (!canvas) {
-      return;
-    }
-
-    canvas.items = canvas.items.filter((i) => i.id !== this.item.id);
-    gridState.canvases = { ...gridState.canvases };
-
-    // Clear selection if this item was selected
-    if (gridState.selectedItemId === this.item.id) {
-      gridState.selectedItemId = null;
-      gridState.selectedCanvasId = null;
-    }
+    removeItemFromCanvas(this.canvasId, this.item.id);
   }
 }
 

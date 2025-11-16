@@ -29,18 +29,18 @@ export class GridItemWrapper {
   private itemSnapshot: GridItem | null = null;
 
   componentWillLoad() {
-    // Initial selection state
-    this.isSelected = gridState.selectedItemId === this.item.id;
-
-    // Store snapshot for undo/redo before operations
-    this.captureItemSnapshot();
+    this.updateComponentState();
   }
 
   componentWillUpdate() {
-    // Update selection state when state changes
+    this.updateComponentState();
+  }
+
+  private updateComponentState() {
+    // Update selection state
     this.isSelected = gridState.selectedItemId === this.item.id;
 
-    // Capture new snapshot after state update
+    // Capture item snapshot for undo/redo
     this.captureItemSnapshot();
   }
 

@@ -18,7 +18,7 @@ import { getGridSizeHorizontal, getGridSizeVertical, pixelsToGridX, pixelsToGrid
  */
 function getTransformPosition(element: HTMLElement): { x: number; y: number } {
   const transform = element.style.transform;
-  const match = transform.match(/translate\(([^,]+)px,\s*([^)]+)px\)/);
+  const match = transform.match(/translate\(([\d.-]+)px,\s*([\d.-]+)px\)/);
 
   if (match) {
     return {
