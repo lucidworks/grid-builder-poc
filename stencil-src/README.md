@@ -2,6 +2,11 @@
 
 This directory contains the source code for the StencilJS variant of the grid builder POC.
 
+## Documentation
+
+- **[Architecture Overview](ARCHITECTURE.md)** - High-level system design, component dependencies, workflows
+- **[Extraction Guide](EXTRACTION_GUIDE.md)** - Complete guide for creating `@lucidworks/stencil-grid-builder` library from this POC
+
 ## Setup
 
 ```bash

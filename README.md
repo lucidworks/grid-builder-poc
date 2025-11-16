@@ -215,6 +215,7 @@ A minimal proof-of-concept demonstrating a drag-and-drop grid builder system wit
   - ✅ Comprehensive inline documentation (~8420 lines across 12 core files)
   - ✅ All features identical to Virtual version
 - Architecture documentation: See [stencil-src/ARCHITECTURE.md](stencil-src/ARCHITECTURE.md)
+- **Extraction guide**: See [stencil-src/EXTRACTION_GUIDE.md](stencil-src/EXTRACTION_GUIDE.md) - Complete guide for creating `@lucidworks/stencil-grid-builder` reusable library
 - Best for: Production implementations requiring type safety, component architecture, and comprehensive documentation
 
 ### Developer Tools
