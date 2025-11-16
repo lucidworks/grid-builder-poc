@@ -56,7 +56,17 @@ A minimal proof-of-concept demonstrating a drag-and-drop grid builder system wit
 - Better performance with 500-2000+ items (fewer dropped frames than other variants)
 - All features work identically to transform version
 
-**Option 6: Local**
+**Option 6: Live Demo - StencilJS Variant (Experimental)**
+- Visit [http://javadoc.lucidworks.com/grid-builder-poc/stencil/](http://javadoc.lucidworks.com/grid-builder-poc/stencil/)
+- Production-ready web component architecture using StencilJS
+- Hybrid approach: StencilJS components + Vanilla JS performance-critical code
+- Type-safe component development with TypeScript
+- Reactive state management with @stencil/store
+- All performance optimizations from Virtual variant
+- Comprehensive inline documentation (~8420 lines across 12 core files)
+- See [stencil-src/ARCHITECTURE.md](stencil-src/ARCHITECTURE.md) for detailed architecture overview
+
+**Option 7: Local**
 1. Clone the repository
 2. Open `index.html` in your web browser for the overview page
 3. Or navigate to any POC folder and open its `index.html`
@@ -187,6 +197,26 @@ A minimal proof-of-concept demonstrating a drag-and-drop grid builder system wit
   - Better framerate during drag/resize operations (still some frame drops at very high item counts)
 - Best for: High-volume layouts with 100+ items, scenarios requiring better scalability
 
+**StencilJS Variant (`stencil/`)** 🧪
+- Production-ready web component architecture using StencilJS framework
+- Hybrid approach: StencilJS components + Vanilla JS utilities for performance-critical code
+- Type-safe development with comprehensive TypeScript interfaces
+- Reactive state management using @stencil/store
+- All performance optimizations from Virtual variant (transform positioning, caching, lazy loading)
+- Command pattern for undo/redo (Gang of Four design pattern)
+- Layered architecture: Component Layer → Utils Layer → Services Layer
+- Includes undo/redo
+- Features:
+  - ✅ Transform-based GPU-accelerated positioning (6-10× faster)
+  - ✅ Grid calculation caching (100× fewer DOM reads)
+  - ✅ RAF batching for resize operations (3-4× fewer DOM operations)
+  - ✅ Virtual rendering with IntersectionObserver (10× faster initial load)
+  - ✅ Singleton pattern for shared services (DOM cache, virtual renderer)
+  - ✅ Comprehensive inline documentation (~8420 lines across 12 core files)
+  - ✅ All features identical to Virtual version
+- Architecture documentation: See [stencil-src/ARCHITECTURE.md](stencil-src/ARCHITECTURE.md)
+- Best for: Production implementations requiring type safety, component architecture, and comprehensive documentation
+
 ### Developer Tools
 
 #### Performance Monitoring (Diagnostic Tool)
@@ -216,11 +246,12 @@ See `shared/PERFORMANCE_MONITORING.md` for detailed technical documentation.
 
 ### Technologies Used
 
-- **Vanilla JavaScript** - No frameworks, just pure JS
+- **Vanilla JavaScript** - No frameworks, just pure JS (left-top, transform, masonry, virtual variants)
+- **StencilJS** - Web component framework with TypeScript and reactive state (stencil variant)
 - **Interact.js** - Drag, drop, and resize functionality (loaded from CDN)
 - **Muuri.js** - Auto-layout grid system with animations (masonry variant only)
 - **CSS Grid Background** - Visual grid overlay
-- **Absolute Positioning** (standard) / **Transform Positioning** (experimental) / **Muuri Auto-Layout** (experimental) - Different approaches to component positioning
+- **Absolute Positioning** (standard) / **Transform Positioning** (experimental) / **Muuri Auto-Layout** (experimental) / **StencilJS Components** (experimental) - Different approaches to component positioning and architecture
 
 **Diagnostic Tools:**
 - **Performance Monitor** (`shared/performance-monitor.js`) - Developer tool for comparing variant performance
@@ -370,10 +401,22 @@ grid-builder-poc/
 │   ├── index.html
 │   ├── index.css
 │   └── index.js
-└── virtual/            # Experimental virtual rendering (performance optimized)
-    ├── index.html
-    ├── index.css
-    └── index.js
+├── virtual/            # Experimental virtual rendering (performance optimized)
+│   ├── index.html
+│   ├── index.css
+│   └── index.js
+├── stencil/            # Build output for StencilJS variant (generated from stencil-src/)
+│   ├── index.html      # Entry point
+│   ├── build/          # Compiled components and bundles
+│   └── shared/         # Shared assets
+└── stencil-src/        # StencilJS variant source code
+    ├── src/            # TypeScript source files
+    │   ├── components/ # StencilJS components
+    │   ├── utils/      # Vanilla JS utilities
+    │   └── services/   # State management
+    ├── ARCHITECTURE.md # Architecture documentation
+    ├── README.md       # Build and development instructions
+    └── package.json    # Dependencies and scripts
 ```
 
 To customize any version:

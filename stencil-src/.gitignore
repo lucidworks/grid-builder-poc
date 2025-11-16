@@ -22,3 +22,9 @@ coverage/
 # OS
 .DS_Store
 Thumbs.db
+
+# Backup files
+*.bak
+*.tmp
+*~
+*.orig

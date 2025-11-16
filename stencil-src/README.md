@@ -126,3 +126,17 @@ This variant uses a **hybrid approach** for optimal performance:
 - **Vanilla JS Utilities** - Performance-critical code (drag/resize handlers)
 
 This ensures we get the benefits of StencilJS (component architecture, type safety, reactive updates) while maintaining the performance of the virtual variant for drag/resize operations.
+
+## Documentation
+
+For a comprehensive overview of the system architecture, component interactions, and performance optimizations, see:
+
+**📖 [ARCHITECTURE.md](ARCHITECTURE.md)** - High-level architecture overview with:
+- System architecture diagrams (Mermaid)
+- Component layer dependencies
+- Key workflows (sequence diagrams)
+- Performance optimizations and metrics
+- Design patterns used
+- File reference with line counts
+
+All 12 core files have comprehensive inline documentation (~8420 lines total) covering implementation details, design decisions, and extraction guides for other frameworks.
