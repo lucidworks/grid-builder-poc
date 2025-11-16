@@ -1,6 +1,6 @@
 # Documentation Checklist
 
-## Progress: 6/12 Complete
+## Progress: 7/12 Complete
 
 This checklist tracks comprehensive inline documentation for all core functionality in the Grid Builder POC. Each file should include:
 - Architecture/design patterns used
@@ -72,7 +72,7 @@ This checklist tracks comprehensive inline documentation for all core functional
 
 ---
 
-## 🔄 State Management & History (2/3 Complete)
+## ✅ State Management & History (3/3 Complete)
 
 ### ✅ state-manager.ts - Global State
 **Completed:**
@@ -109,21 +109,22 @@ This checklist tracks comprehensive inline documentation for all core functional
 
 **Actual lines of documentation:** ~650
 
-### ⬜ undo-redo-commands.ts - Command Implementations
-**Key topics to cover:**
-- [ ] Module overview: concrete Command classes
-- [ ] AddItemCommand: creation flow
-- [ ] DeleteItemCommand: deletion with index preservation
-- [ ] MoveItemCommand: cross-canvas moves
-- [ ] ResizeCommand: dimension changes
-- [ ] Why deep cloning (JSON.parse/stringify)
-- [ ] Selection state handling on undo/redo
-- [ ] Helper function: removeItemFromCanvas
-- [ ] Command pattern benefits for undo/redo
-- [ ] Class docs for each command
-- [ ] Extraction guide: adding new command types
+### ✅ undo-redo-commands.ts - Command Implementations
+**Completed:**
+- [x] Module overview: concrete Command classes for all grid operations
+- [x] Deep cloning strategy: JSON.parse/stringify with trade-offs
+- [x] Index preservation pattern: restore items at original position
+- [x] Selection state management: clear selection on delete
+- [x] Cross-canvas move support: tracking source and target
+- [x] Command lifecycle: when to create (before vs after operation)
+- [x] Helper function: removeItemFromCanvas with full docs
+- [x] AddItemCommand: creation flow with deep cloning
+- [x] DeleteItemCommand: deletion with index preservation
+- [x] MoveItemCommand: cross-canvas moves with position tracking
+- [x] All command constructors, undo(), redo() methods documented
+- [x] Extraction guide: pattern for creating new command types
 
-**Estimated lines of documentation:** ~200-250
+**Actual lines of documentation:** ~575
 
 ---
 
@@ -238,10 +239,10 @@ This checklist tracks comprehensive inline documentation for all core functional
 |----------|-------|----------|-----------|-----------------|
 | Performance Layer | 2 | 2 | 0 | ~600 ✅ |
 | Interaction Handlers | 2 | 2 | 0 | ~800 ✅ |
-| State Management | 3 | 2 | 1 | ~1485 + ~200-250 remaining |
+| State Management | 3 | 3 | 0 | ~2060 ✅ |
 | Component Layer | 4 | 0 | 4 | ~1100-1300 |
 | Performance Optimizations | 1 | 0 | 1 | ~250-300 |
-| **TOTAL** | **12** | **6** | **6** | **~4000-4700** |
+| **TOTAL** | **12** | **7** | **5** | **~4810-5260** |
 
 ---
 
