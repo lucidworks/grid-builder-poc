@@ -44,6 +44,7 @@ export namespace Components {
     }
     interface GridItemWrapper {
         "item": GridItem;
+        "renderVersion"?: number;
     }
 }
 declare global {
@@ -178,6 +179,7 @@ declare namespace LocalJSX {
     }
     interface GridItemWrapper {
         "item": GridItem;
+        "renderVersion"?: number;
     }
     interface IntrinsicElements {
         "canvas-section": CanvasSection;

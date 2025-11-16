@@ -357,6 +357,18 @@ export class GridBuilderApp {
   }
 
   private handleViewportChange(viewport: 'desktop' | 'mobile') {
+    /**
+     * Viewport switching with automatic read/write batching:
+     *
+     * 1. Setting currentViewport triggers re-render of all grid-item-wrapper components
+     * 2. Each component's render() calls gridToPixelsX() which uses getGridSizeHorizontal()
+     * 3. Grid size caching ensures container.clientWidth is only read once per canvas
+     * 4. All subsequent components use the cached grid size (no DOM reads)
+     * 5. StencilJS automatically batches all resulting DOM writes
+     *
+     * Result: With 100+ items, only 1 DOM read per canvas instead of 100+,
+     * and all style updates are batched by StencilJS for a single reflow
+     */
     gridState.currentViewport = viewport;
   }
 
