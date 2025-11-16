@@ -15,6 +15,7 @@ import { ResizeHandler } from '../../utils/resize-handler';
 })
 export class GridItemWrapper {
   @Prop() item!: GridItem;
+  @Prop() renderVersion?: number; // Force re-render when parent updates
 
   @State() isSelected: boolean = false;
   @State() isVisible: boolean = false;
@@ -99,9 +100,30 @@ export class GridItemWrapper {
     const currentViewport = gridState.currentViewport;
     const layout = this.item.layouts[currentViewport];
 
-    // For mobile viewport, use desktop layout if not customized
-    const actualLayout =
-      currentViewport === 'mobile' && !this.item.layouts.mobile.customized ? this.item.layouts.desktop : layout;
+    // For mobile viewport, calculate auto-layout if not customized
+    let actualLayout = layout;
+    if (currentViewport === 'mobile' && !this.item.layouts.mobile.customized) {
+      // Auto-layout for mobile: stack components vertically at full width
+      const canvas = gridState.canvases[this.item.canvasId];
+      const itemIndex = canvas?.items.findIndex((i) => i.id === this.item.id) ?? 0;
+
+      // Calculate Y position by summing heights of all previous items
+      let yPosition = 0;
+      if (canvas && itemIndex > 0) {
+        for (let i = 0; i < itemIndex; i++) {
+          const prevItem = canvas.items[i];
+          // Use desktop height or default to 6 units
+          yPosition += prevItem.layouts.desktop.height || 6;
+        }
+      }
+
+      actualLayout = {
+        x: 0, // Full left
+        y: yPosition,
+        width: 50, // Full width (50 units = 100%)
+        height: this.item.layouts.desktop.height || 6, // Keep desktop height
+      };
+    }
 
     const itemClasses = {
       'grid-item': true,

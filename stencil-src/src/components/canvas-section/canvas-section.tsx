@@ -116,7 +116,9 @@ export class CanvasSection {
             ref={(el) => (this.gridContainerRef = el)}
           >
             {/* Grid items will be rendered here by grid-item-wrapper components */}
-            {this.canvas?.items.map((item: GridItem) => <grid-item-wrapper key={item.id} item={item} />)}
+            {this.canvas?.items.map((item: GridItem) => (
+              <grid-item-wrapper key={item.id} item={item} renderVersion={this.renderVersion} />
+            ))}
           </div>
         </div>
       </div>
