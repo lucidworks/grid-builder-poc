@@ -11,6 +11,8 @@
   ],
   "scripts": {
     "build": "stencil build",
+    "fix-paths": "node -e \"const fs = require('fs'); const html = fs.readFileSync('../stencil/index.html', 'utf8'); const fixed = html.replace(/href=\\\"\\/build\\//g, 'href=\\\"./build/').replace(/src=\\\"\\/build\\//g, 'src=\\\"./build/').replace(/src=\\\"\\/shared\\//g, 'src=\\\"./shared/').replace(/data-resources-url=\\\"\\/build\\//g, 'data-resources-url=\\\"./build/'); fs.writeFileSync('../stencil/index.html', fixed);\"",
+    "build:gh-pages": "npm run build && npm run fix-paths",
     "start": "stencil build --dev --watch --serve",
     "test": "jest --config jest.config.js",
     "test:watch": "jest --config jest.config.js --watch",

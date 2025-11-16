@@ -13,6 +13,9 @@ export const config: Config = {
       // Output to parent directory's stencil/ folder
       dir: '../stencil',
       buildDir: 'build',
+      baseUrl: '.',  // Attempt to use relative paths (but StencilJS still generates absolute paths)
+                      // WORKAROUND: Run `npm run fix-paths` after building to convert absolute paths
+                      // to relative paths for GitHub Pages subdirectory deployment
       empty: true,
       copy: [
         { src: 'assets' },
