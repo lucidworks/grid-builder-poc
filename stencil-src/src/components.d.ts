@@ -62,6 +62,14 @@ export namespace Components {
     }
     interface ConfigPanel {
     }
+    /**
+     * GridBuilderApp Component
+     * =========================
+     * StencilJS root component providing app coordination and global event handling.
+     * **Tag**: `<grid-builder-app>`
+     * **Shadow DOM**: Disabled (required for interact.js compatibility)
+     * **Lifecycle**: Standard StencilJS (componentWillLoad → componentDidLoad → render → disconnectedCallback)
+     */
     interface GridBuilderApp {
     }
     /**
@@ -166,6 +174,14 @@ declare global {
         prototype: HTMLConfigPanelElement;
         new (): HTMLConfigPanelElement;
     };
+    /**
+     * GridBuilderApp Component
+     * =========================
+     * StencilJS root component providing app coordination and global event handling.
+     * **Tag**: `<grid-builder-app>`
+     * **Shadow DOM**: Disabled (required for interact.js compatibility)
+     * **Lifecycle**: Standard StencilJS (componentWillLoad → componentDidLoad → render → disconnectedCallback)
+     */
     interface HTMLGridBuilderAppElement extends Components.GridBuilderApp, HTMLStencilElement {
     }
     var HTMLGridBuilderAppElement: {
@@ -257,6 +273,14 @@ declare namespace LocalJSX {
     }
     interface ConfigPanel {
     }
+    /**
+     * GridBuilderApp Component
+     * =========================
+     * StencilJS root component providing app coordination and global event handling.
+     * **Tag**: `<grid-builder-app>`
+     * **Shadow DOM**: Disabled (required for interact.js compatibility)
+     * **Lifecycle**: Standard StencilJS (componentWillLoad → componentDidLoad → render → disconnectedCallback)
+     */
     interface GridBuilderApp {
     }
     /**
@@ -324,6 +348,14 @@ declare module "@stencil/core" {
             "component-text-block": LocalJSX.ComponentTextBlock & JSXBase.HTMLAttributes<HTMLComponentTextBlockElement>;
             "component-video": LocalJSX.ComponentVideo & JSXBase.HTMLAttributes<HTMLComponentVideoElement>;
             "config-panel": LocalJSX.ConfigPanel & JSXBase.HTMLAttributes<HTMLConfigPanelElement>;
+            /**
+             * GridBuilderApp Component
+             * =========================
+             * StencilJS root component providing app coordination and global event handling.
+             * **Tag**: `<grid-builder-app>`
+             * **Shadow DOM**: Disabled (required for interact.js compatibility)
+             * **Lifecycle**: Standard StencilJS (componentWillLoad → componentDidLoad → render → disconnectedCallback)
+             */
             "grid-builder-app": LocalJSX.GridBuilderApp & JSXBase.HTMLAttributes<HTMLGridBuilderAppElement>;
             /**
              * GridItemWrapper Component
