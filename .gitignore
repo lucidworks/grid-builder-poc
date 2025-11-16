@@ -7,3 +7,7 @@
 
 # Node modules (if ever added)
 node_modules/
+
+# Build outputs from stencil-src
+stencil/build/
+stencil/loader/
