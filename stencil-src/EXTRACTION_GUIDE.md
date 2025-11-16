@@ -417,7 +417,7 @@ private renderComponentContent() {
     return <div class="unknown-component">Unknown: {this.item.type}</div>;
   }
 
-  // Show placeholder until component enters viewport (200px pre-render margin)
+  // Show placeholder until component enters viewport (default: 20% viewport pre-render margin)
   if (!this.isVisible) {
     return (
       <div class="lazy-placeholder">
@@ -439,7 +439,7 @@ private renderComponentContent() {
 **Why virtual rendering is always-on:**
 - **Negligible overhead**: ~342 KB for 1000 components
 - **Massive savings**: 15-60 MB saved for typical layouts
-- **200px pre-render margin**: Components load BEFORE visible (no flash)
+- **Configurable pre-render margin** (default 20% viewport): Components load BEFORE visible (no flash)
 - **Benefits all components**: Simple components render fast anyway, complex ones get huge boost
 - **No configuration needed**: Works automatically, no `isComplex` flag to manage
 
@@ -889,14 +889,24 @@ export interface GridConfig {
    * Virtual rendering pre-render margin
    * Components start rendering this distance before entering viewport
    *
-   * @default '200px'
+   * Accepts pixels ('200px') or percentage of viewport ('20%')
    *
-   * Options:
-   * - '200px' (default): Balanced - 1 second buffer for smooth loading
-   * - '400px': Aggressive - 2 second buffer, uses more memory, better for slow devices
-   * - '100px': Conservative - Less memory usage, might see brief pop-in on slow devices
+   * @default '20%'
    *
-   * Rule of thumb: Higher margin = smoother experience but more memory usage
+   * Recommended (percentage - adapts to screen size):
+   * - '20%' (default): Balanced - smooth loading on all devices
+   * - '30%': Aggressive - better for slow devices/connections, more memory
+   * - '10%': Conservative - less memory, might see brief pop-in
+   *
+   * Alternative (pixels - fixed distance):
+   * - '200px': Fixed 200px margin (good for desktop-only apps)
+   * - '400px': Larger fixed margin (desktop)
+   * - '100px': Smaller fixed margin (desktop)
+   *
+   * Rule of thumb:
+   * - Use % for responsive apps (mobile + desktop)
+   * - Use px for fixed-size apps (desktop-only)
+   * - Higher margin = smoother but more memory
    */
   virtualRenderMargin?: string;
 }
@@ -1357,7 +1367,7 @@ The library uses IntersectionObserver to lazy-load **ALL** components only when 
 
 **From POC** (`virtual-rendering.ts`):
 - IntersectionObserver watches **ALL** grid items (simple and complex)
-- Components render only when entering viewport (with 200px pre-render margin)
+- Components render only when entering viewport (default: 20% viewport pre-render margin)
 - Once rendered, components **stay rendered** (no de-rendering on scroll away)
 - Provides ~10× faster initial load for pages with 100+ items
 
@@ -1854,7 +1864,7 @@ const restrictedComponent: ComponentDefinition = {
 
 **Virtual Rendering** (Always Enabled):
 - **Automatic** for all components (no configuration needed)
-- Components lazy-load when entering viewport (200px pre-render margin)
+- Components lazy-load when entering viewport (default: 20% viewport pre-render margin)
 - Once rendered, components stay rendered (no de-rendering)
 - Use `onVisible`/`onHidden` hooks for resource management (pause/resume)
 - Provides 10× faster initial load and 50% memory reduction
