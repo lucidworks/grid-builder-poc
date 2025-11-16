@@ -1119,42 +1119,64 @@ function MyApp() {
 
 #### Component Render Memoization
 
-**Update Section 2.3.3** - Add this to grid-item-wrapper:
+**Important Note**: StencilJS components with internal `@State` (like live data feeds with `setInterval`) will continue to update correctly even when wrapped, because StencilJS manages their internal state reactivity independently. The wrapper's render memoization only caches the **component reference**, not the rendered output.
+
+**Update Section 2.3.3** - Grid-item-wrapper should pass through component references:
 
 ```typescript
 export class GridItemWrapper {
-  // Cache rendered components to avoid recreating on every render
-  private componentCache = new Map<string, any>();
-  
   private renderComponentContent() {
     const definition = this.componentRegistry.get(this.item.type);
     if (!definition) {
       return <div class="unknown-component">Unknown: {this.item.type}</div>;
     }
-    
-    // Create cache key from item ID + config
-    const cacheKey = `${this.item.id}-${JSON.stringify(this.item.config)}`;
-    
-    // Only re-render if config changed
-    if (!this.componentCache.has(cacheKey)) {
-      this.componentCache.set(
-        cacheKey,
-        definition.render({
-          itemId: this.item.id,
-          config: this.item.config,
-        })
-      );
-    }
-    
-    return this.componentCache.get(cacheKey);
+
+    // Call render function - returns StencilJS component reference
+    // StencilJS handles internal state updates (like @State in live data components)
+    return definition.render({
+      itemId: this.item.id,
+      config: this.item.config,
+    });
   }
-  
-  // Clear cache when item is removed
-  disconnectedCallback() {
-    this.componentCache.clear();
-    // ... other cleanup
+
+  // StencilJS automatically manages component lifecycle and state updates
+  // No manual caching needed - components with @State decorators will re-render
+  // when their internal state changes, regardless of wrapper's render cycle
+}
+```
+
+**Why this works for live updates:**
+- `definition.render()` returns a component **reference** like `<component-live-data itemId={...} />`
+- StencilJS tracks that component's internal `@State` decorators independently
+- When `component-live-data` updates `this.value` via `setInterval`, StencilJS re-renders **that component only**
+- The wrapper doesn't need to re-render - it just holds the component reference
+
+**Example: Live Data Component**
+```typescript
+@Component({ tag: 'component-live-data' })
+export class ComponentLiveData {
+  @State() value: number = 0;  // StencilJS tracks this
+
+  componentDidLoad() {
+    setInterval(() => {
+      this.value = Math.random() * 100;  // ✅ Triggers re-render automatically
+    }, 2000);
+  }
+
+  render() {
+    return <div>{this.value}</div>;  // ✅ Updates every 2 seconds
   }
 }
+
+// Component definition (in library)
+const liveDataComponent: ComponentDefinition = {
+  type: 'livedata',
+  render: ({ itemId, config }) => (
+    <component-live-data itemId={itemId} config={config} />
+    // ✅ This returns a reference, not rendered output
+    // ✅ StencilJS manages component's internal state updates
+  ),
+};
 ```
 
 ### 7.2 Batch Operations for Bulk Additions
