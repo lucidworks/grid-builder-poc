@@ -1,6 +1,6 @@
 # Documentation Checklist
 
-## Progress: 5/12 Complete
+## Progress: 6/12 Complete
 
 This checklist tracks comprehensive inline documentation for all core functionality in the Grid Builder POC. Each file should include:
 - Architecture/design patterns used
@@ -72,7 +72,7 @@ This checklist tracks comprehensive inline documentation for all core functional
 
 ---
 
-## 🔄 State Management & History (1/3 Complete)
+## 🔄 State Management & History (2/3 Complete)
 
 ### ✅ state-manager.ts - Global State
 **Completed:**
@@ -92,20 +92,22 @@ This checklist tracks comprehensive inline documentation for all core functional
 
 **Actual lines of documentation:** ~835
 
-### ⬜ undo-redo.ts - Undo/Redo Stack
-**Key topics to cover:**
-- [ ] Module overview: Command pattern implementation
-- [ ] Stack-based history management
-- [ ] Command interface design
-- [ ] Undo/redo execution flow
-- [ ] History limits and memory management
-- [ ] State snapshot strategy
-- [ ] Integration with user actions
-- [ ] Keyboard shortcuts (Ctrl+Z, Ctrl+Y)
-- [ ] Function docs: undo, redo, pushCommand
-- [ ] Extraction guide: adapting Command pattern
+### ✅ undo-redo.ts - Undo/Redo Stack
+**Completed:**
+- [x] Module overview: Gang of Four Command pattern implementation
+- [x] Stack-based history management with position pointer
+- [x] Command interface design (self-contained with undo/redo methods)
+- [x] Undo/redo execution flow (operation sequence documented)
+- [x] History limits and memory management (MAX_HISTORY = 50, sliding window)
+- [x] State snapshot strategy (deep cloning with JSON.parse/stringify)
+- [x] Branching behavior (discards future on new action)
+- [x] Integration with user actions (keyboard shortcuts, UI buttons)
+- [x] Keyboard shortcuts: Ctrl+Z/Cmd+Z (undo), Ctrl+Y/Cmd+Y (redo)
+- [x] Reactive state for UI (undoRedoState with canUndo/canRedo)
+- [x] Function docs: pushCommand, undo, redo, canUndo, canRedo, clearHistory, updateButtonStates
+- [x] Extraction guide: minimal implementation + framework adaptations
 
-**Estimated lines of documentation:** ~150-200
+**Actual lines of documentation:** ~650
 
 ### ⬜ undo-redo-commands.ts - Command Implementations
 **Key topics to cover:**
@@ -236,10 +238,10 @@ This checklist tracks comprehensive inline documentation for all core functional
 |----------|-------|----------|-----------|-----------------|
 | Performance Layer | 2 | 2 | 0 | ~600 ✅ |
 | Interaction Handlers | 2 | 2 | 0 | ~800 ✅ |
-| State Management | 3 | 1 | 2 | ~835 + ~350-450 remaining |
+| State Management | 3 | 2 | 1 | ~1485 + ~200-250 remaining |
 | Component Layer | 4 | 0 | 4 | ~1100-1300 |
 | Performance Optimizations | 1 | 0 | 1 | ~250-300 |
-| **TOTAL** | **12** | **5** | **7** | **~3500-4200** |
+| **TOTAL** | **12** | **6** | **6** | **~4000-4700** |
 
 ---
 
