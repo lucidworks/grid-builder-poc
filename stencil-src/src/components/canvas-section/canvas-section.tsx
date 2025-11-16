@@ -2,7 +2,7 @@ import { Component, h, Prop, State } from '@stencil/core';
 // Use the standard interactjs package import
 import interact from 'interactjs';
 import { Canvas, GridItem, gridState, onChange } from '../../services/state-manager';
-import { gridToPixelsX, gridToPixelsY } from '../../utils/grid-calculations';
+import { clearGridSizeCache, gridToPixelsX, gridToPixelsY } from '../../utils/grid-calculations';
 
 @Component({
   tag: 'canvas-section',
@@ -18,6 +18,7 @@ export class CanvasSection {
 
   private gridContainerRef: HTMLElement;
   private dropzoneInitialized: boolean = false;
+  private resizeObserver: ResizeObserver;
 
   componentWillLoad() {
     // Initial load
@@ -44,6 +45,7 @@ export class CanvasSection {
 
   componentDidLoad() {
     this.initializeDropzone();
+    this.setupResizeObserver();
   }
 
   disconnectedCallback() {
@@ -51,6 +53,28 @@ export class CanvasSection {
     if (this.gridContainerRef && this.dropzoneInitialized) {
       interact(this.gridContainerRef).unset();
     }
+
+    // Cleanup ResizeObserver
+    if (this.resizeObserver) {
+      this.resizeObserver.disconnect();
+    }
+  }
+
+  private setupResizeObserver() {
+    if (!this.gridContainerRef) {
+      return;
+    }
+
+    // Watch for canvas container size changes
+    this.resizeObserver = new ResizeObserver(() => {
+      // Clear grid size cache when container resizes
+      clearGridSizeCache();
+
+      // Force re-render to update item positions
+      this.renderVersion++;
+    });
+
+    this.resizeObserver.observe(this.gridContainerRef);
   }
 
   render() {
