@@ -808,26 +808,25 @@ export const textComponent: ComponentDefinition = {
 };
 
 /**
- * Example: Dashboard Component (Complex - uses virtual rendering)
+ * Example: Dashboard Component (with lifecycle hooks)
  */
 export const dashboardComponent: ComponentDefinition = {
   type: 'dashboard',
   name: 'Dashboard Widget',
   icon: '📊',
   defaultSize: { width: 20, height: 15 },
-  isComplex: true,  // ✅ Enable lazy loading
 
   render: ({ itemId, config }) => (
     <component-dashboard itemId={itemId} config={config} />
   ),
 
-  // Optional: Initialize charts when visible
+  // Optional: Initialize charts when visible (virtual rendering is automatic)
   onVisible: (itemId, config) => {
     console.log(`Dashboard ${itemId} now visible, initializing charts...`);
     // Start chart rendering, data fetching, etc.
   },
 
-  // Optional: Cleanup when hidden
+  // Optional: Cleanup when hidden (pause resources, not destroy DOM)
   onHidden: (itemId) => {
     console.log(`Dashboard ${itemId} hidden, pausing updates...`);
     // Stop timers, pause animations, etc.
@@ -1838,11 +1837,13 @@ const restrictedComponent: ComponentDefinition = {
 - Use `updateConfigsBatch()` for bulk config updates
 - Provides 10-100× performance improvement for large operations
 
-**Virtual Rendering**:
-- Mark heavy components as `isComplex: true`
-- Components lazy-load when visible in viewport
-- Use `onVisible`/`onHidden` hooks for lifecycle management
+**Virtual Rendering** (Always Enabled):
+- **Automatic** for all components (no configuration needed)
+- Components lazy-load when entering viewport (200px pre-render margin)
+- Once rendered, components stay rendered (no de-rendering)
+- Use `onVisible`/`onHidden` hooks for resource management (pause/resume)
 - Provides 10× faster initial load and 50% memory reduction
+- Negligible overhead (342 KB for 1000 components)
 
 ### UI Customization Summary
 
