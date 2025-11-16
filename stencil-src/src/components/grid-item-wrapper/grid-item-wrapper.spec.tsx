@@ -1,3 +1,16 @@
+// Mock IntersectionObserver and interact.js BEFORE imports
+(global as any).IntersectionObserver = jest.fn(() => ({
+  observe: jest.fn(),
+  unobserve: jest.fn(),
+  disconnect: jest.fn(),
+}));
+
+(global as any).interact = jest.fn(() => ({
+  draggable: jest.fn().mockReturnThis(),
+  resizable: jest.fn().mockReturnThis(),
+  unset: jest.fn(),
+}));
+
 import { h } from '@stencil/core';
 import { newSpecPage } from '@stencil/core/testing';
 import { GridItem, gridState } from '../../services/state-manager';
@@ -7,6 +20,9 @@ describe('grid-item-wrapper', () => {
   let testItem: GridItem;
 
   beforeEach(() => {
+    // Mock window.interact
+    (window as any).interact = (global as any).interact;
+
     // Reset state before each test
     gridState.canvases = {
       canvas1: {
@@ -167,32 +183,35 @@ describe('grid-item-wrapper', () => {
     expect(gridItem.classList.contains('selected')).toBe(false);
   });
 
-  it('should render simple component content directly', async () => {
+  it('should render loading placeholder initially (virtual rendering)', async () => {
     const page = await newSpecPage({
       components: [GridItemWrapper],
       template: () => <grid-item-wrapper item={testItem} />,
     });
 
+    // With virtual rendering, components start as not visible and show loading placeholder
     const content = page.root.querySelector('.grid-item-content');
     expect(content).toBeTruthy();
-    expect(content.textContent).toContain('This is a header component');
+    expect(content.textContent).toContain('Loading...');
   });
 
-  it('should render loading placeholder for complex components', async () => {
-    testItem.type = 'gallery'; // Complex component
-
+  it('should show loading placeholder with correct class', async () => {
     const page = await newSpecPage({
       components: [GridItemWrapper],
       template: () => <grid-item-wrapper item={testItem} />,
     });
 
-    const placeholder = page.root.querySelector('.loading-placeholder');
+    // Should have component-placeholder class
+    const placeholder = page.root.querySelector('.component-placeholder');
     expect(placeholder).toBeTruthy();
     expect(placeholder.textContent).toContain('Loading...');
   });
 
-  it('should use desktop layout for mobile viewport when not customized', async () => {
+  it('should use auto-layout for mobile viewport when not customized', async () => {
     gridState.currentViewport = 'mobile';
+
+    // Add test item to canvas so auto-layout can find it
+    gridState.canvases.canvas1.items = [testItem];
 
     // Create page with empty document first
     const page = await newSpecPage({
@@ -219,7 +238,11 @@ describe('grid-item-wrapper', () => {
     await page.waitForChanges();
 
     const gridItem = wrapper.querySelector('.grid-item') as HTMLElement;
-    // Should use desktop layout since mobile not customized
-    expect(gridItem.style.transform).toBe('translate(2000px, 2000px)');
+    // Should use auto-layout: full width (x:0) and stacked vertically (y:0 for first item)
+    expect(gridItem.style.transform).toBe('translate(0px, 0px)');
+    // Should be full width (50 grid units * 20px = 1000px for 1000px container)
+    expect(gridItem.style.width).toBe('1000px');
+    // Should keep desktop height (150 grid units * 20px = 3000px)
+    expect(gridItem.style.height).toBe('3000px');
   });
 });
