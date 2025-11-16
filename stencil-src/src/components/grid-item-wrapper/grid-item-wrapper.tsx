@@ -42,12 +42,6 @@ export class GridItemWrapper {
     // Initialize drag and resize handlers
     this.dragHandler = new DragHandler(this.itemRef, this.item, this.handleItemUpdate.bind(this));
     this.resizeHandler = new ResizeHandler(this.itemRef, this.item, this.handleItemUpdate.bind(this));
-
-    // If complex component, observe with global VirtualRenderer
-    const template = componentTemplates[this.item.type];
-    if (template?.complex && (window as any).virtualRenderer) {
-      (window as any).virtualRenderer.observe(this.itemRef, this.item.id, this.item.type);
-    }
   }
 
   disconnectedCallback() {
@@ -58,10 +52,28 @@ export class GridItemWrapper {
     if (this.resizeHandler) {
       this.resizeHandler.destroy();
     }
+  }
 
-    // Unobserve from VirtualRenderer
-    if ((window as any).virtualRenderer) {
-      (window as any).virtualRenderer.unobserve(this.item.id);
+  private renderComponent() {
+    switch (this.item.type) {
+      case 'header':
+        return <component-header itemId={this.item.id} />;
+      case 'text':
+        return <component-text-block itemId={this.item.id} />;
+      case 'image':
+        return <component-image itemId={this.item.id} />;
+      case 'button':
+        return <component-button itemId={this.item.id} />;
+      case 'video':
+        return <component-video itemId={this.item.id} />;
+      case 'imageGallery':
+        return <component-image-gallery itemId={this.item.id} />;
+      case 'dashboardWidget':
+        return <component-dashboard-widget itemId={this.item.id} />;
+      case 'liveData':
+        return <component-live-data itemId={this.item.id} />;
+      default:
+        return <div>Unknown component type: {this.item.type}</div>;
     }
   }
 
@@ -112,7 +124,7 @@ export class GridItemWrapper {
 
         {/* Item Content */}
         <div class="grid-item-content" id={`${this.item.id}-content`}>
-          {template.complex ? <div class="loading-placeholder">Loading...</div> : <div innerHTML={template.content} />}
+          {this.renderComponent()}
         </div>
 
         {/* Item Controls */}

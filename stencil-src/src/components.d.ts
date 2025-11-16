@@ -12,7 +12,31 @@ export namespace Components {
         "canvasId": string;
         "sectionNumber": number;
     }
+    interface ComponentButton {
+        "itemId": string;
+    }
+    interface ComponentDashboardWidget {
+        "itemId": string;
+    }
+    interface ComponentHeader {
+        "itemId": string;
+    }
+    interface ComponentImage {
+        "itemId": string;
+    }
+    interface ComponentImageGallery {
+        "itemId": string;
+    }
+    interface ComponentLiveData {
+        "itemId": string;
+    }
     interface ComponentPalette {
+    }
+    interface ComponentTextBlock {
+        "itemId": string;
+    }
+    interface ComponentVideo {
+        "itemId": string;
     }
     interface ConfigPanel {
     }
@@ -29,11 +53,59 @@ declare global {
         prototype: HTMLCanvasSectionElement;
         new (): HTMLCanvasSectionElement;
     };
+    interface HTMLComponentButtonElement extends Components.ComponentButton, HTMLStencilElement {
+    }
+    var HTMLComponentButtonElement: {
+        prototype: HTMLComponentButtonElement;
+        new (): HTMLComponentButtonElement;
+    };
+    interface HTMLComponentDashboardWidgetElement extends Components.ComponentDashboardWidget, HTMLStencilElement {
+    }
+    var HTMLComponentDashboardWidgetElement: {
+        prototype: HTMLComponentDashboardWidgetElement;
+        new (): HTMLComponentDashboardWidgetElement;
+    };
+    interface HTMLComponentHeaderElement extends Components.ComponentHeader, HTMLStencilElement {
+    }
+    var HTMLComponentHeaderElement: {
+        prototype: HTMLComponentHeaderElement;
+        new (): HTMLComponentHeaderElement;
+    };
+    interface HTMLComponentImageElement extends Components.ComponentImage, HTMLStencilElement {
+    }
+    var HTMLComponentImageElement: {
+        prototype: HTMLComponentImageElement;
+        new (): HTMLComponentImageElement;
+    };
+    interface HTMLComponentImageGalleryElement extends Components.ComponentImageGallery, HTMLStencilElement {
+    }
+    var HTMLComponentImageGalleryElement: {
+        prototype: HTMLComponentImageGalleryElement;
+        new (): HTMLComponentImageGalleryElement;
+    };
+    interface HTMLComponentLiveDataElement extends Components.ComponentLiveData, HTMLStencilElement {
+    }
+    var HTMLComponentLiveDataElement: {
+        prototype: HTMLComponentLiveDataElement;
+        new (): HTMLComponentLiveDataElement;
+    };
     interface HTMLComponentPaletteElement extends Components.ComponentPalette, HTMLStencilElement {
     }
     var HTMLComponentPaletteElement: {
         prototype: HTMLComponentPaletteElement;
         new (): HTMLComponentPaletteElement;
+    };
+    interface HTMLComponentTextBlockElement extends Components.ComponentTextBlock, HTMLStencilElement {
+    }
+    var HTMLComponentTextBlockElement: {
+        prototype: HTMLComponentTextBlockElement;
+        new (): HTMLComponentTextBlockElement;
+    };
+    interface HTMLComponentVideoElement extends Components.ComponentVideo, HTMLStencilElement {
+    }
+    var HTMLComponentVideoElement: {
+        prototype: HTMLComponentVideoElement;
+        new (): HTMLComponentVideoElement;
     };
     interface HTMLConfigPanelElement extends Components.ConfigPanel, HTMLStencilElement {
     }
@@ -55,7 +127,15 @@ declare global {
     };
     interface HTMLElementTagNameMap {
         "canvas-section": HTMLCanvasSectionElement;
+        "component-button": HTMLComponentButtonElement;
+        "component-dashboard-widget": HTMLComponentDashboardWidgetElement;
+        "component-header": HTMLComponentHeaderElement;
+        "component-image": HTMLComponentImageElement;
+        "component-image-gallery": HTMLComponentImageGalleryElement;
+        "component-live-data": HTMLComponentLiveDataElement;
         "component-palette": HTMLComponentPaletteElement;
+        "component-text-block": HTMLComponentTextBlockElement;
+        "component-video": HTMLComponentVideoElement;
         "config-panel": HTMLConfigPanelElement;
         "grid-builder-app": HTMLGridBuilderAppElement;
         "grid-item-wrapper": HTMLGridItemWrapperElement;
@@ -66,7 +146,31 @@ declare namespace LocalJSX {
         "canvasId": string;
         "sectionNumber": number;
     }
+    interface ComponentButton {
+        "itemId": string;
+    }
+    interface ComponentDashboardWidget {
+        "itemId": string;
+    }
+    interface ComponentHeader {
+        "itemId": string;
+    }
+    interface ComponentImage {
+        "itemId": string;
+    }
+    interface ComponentImageGallery {
+        "itemId": string;
+    }
+    interface ComponentLiveData {
+        "itemId": string;
+    }
     interface ComponentPalette {
+    }
+    interface ComponentTextBlock {
+        "itemId": string;
+    }
+    interface ComponentVideo {
+        "itemId": string;
     }
     interface ConfigPanel {
     }
@@ -77,7 +181,15 @@ declare namespace LocalJSX {
     }
     interface IntrinsicElements {
         "canvas-section": CanvasSection;
+        "component-button": ComponentButton;
+        "component-dashboard-widget": ComponentDashboardWidget;
+        "component-header": ComponentHeader;
+        "component-image": ComponentImage;
+        "component-image-gallery": ComponentImageGallery;
+        "component-live-data": ComponentLiveData;
         "component-palette": ComponentPalette;
+        "component-text-block": ComponentTextBlock;
+        "component-video": ComponentVideo;
         "config-panel": ConfigPanel;
         "grid-builder-app": GridBuilderApp;
         "grid-item-wrapper": GridItemWrapper;
@@ -88,7 +200,15 @@ declare module "@stencil/core" {
     export namespace JSX {
         interface IntrinsicElements {
             "canvas-section": LocalJSX.CanvasSection & JSXBase.HTMLAttributes<HTMLCanvasSectionElement>;
+            "component-button": LocalJSX.ComponentButton & JSXBase.HTMLAttributes<HTMLComponentButtonElement>;
+            "component-dashboard-widget": LocalJSX.ComponentDashboardWidget & JSXBase.HTMLAttributes<HTMLComponentDashboardWidgetElement>;
+            "component-header": LocalJSX.ComponentHeader & JSXBase.HTMLAttributes<HTMLComponentHeaderElement>;
+            "component-image": LocalJSX.ComponentImage & JSXBase.HTMLAttributes<HTMLComponentImageElement>;
+            "component-image-gallery": LocalJSX.ComponentImageGallery & JSXBase.HTMLAttributes<HTMLComponentImageGalleryElement>;
+            "component-live-data": LocalJSX.ComponentLiveData & JSXBase.HTMLAttributes<HTMLComponentLiveDataElement>;
             "component-palette": LocalJSX.ComponentPalette & JSXBase.HTMLAttributes<HTMLComponentPaletteElement>;
+            "component-text-block": LocalJSX.ComponentTextBlock & JSXBase.HTMLAttributes<HTMLComponentTextBlockElement>;
+            "component-video": LocalJSX.ComponentVideo & JSXBase.HTMLAttributes<HTMLComponentVideoElement>;
             "config-panel": LocalJSX.ConfigPanel & JSXBase.HTMLAttributes<HTMLConfigPanelElement>;
             "grid-builder-app": LocalJSX.GridBuilderApp & JSXBase.HTMLAttributes<HTMLGridBuilderAppElement>;
             "grid-item-wrapper": LocalJSX.GridItemWrapper & JSXBase.HTMLAttributes<HTMLGridItemWrapperElement>;
