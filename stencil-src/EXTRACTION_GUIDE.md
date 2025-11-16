@@ -484,12 +484,26 @@ const liveDataComponent: ComponentDefinition = {
 <input type="text" id="componentName" placeholder="Enter component name" />
 ```
 
-**New library code**: Generate form from component definition:
+**New library code**: Two approaches supported:
+
+**Approach 1: Auto-generated forms (default)** - Library generates form from `configSchema`:
 ```typescript
 @Prop() componentRegistry: Map<string, ComponentDefinition>;
 
 private renderConfigFields() {
   const definition = this.componentRegistry.get(selectedItem.type);
+
+  // Check if component has custom renderer
+  if (definition?.renderConfigPanel) {
+    return definition.renderConfigPanel({
+      config: this.tempConfig,
+      onChange: this.handleConfigChange,
+      onSave: this.handleSave,
+      onCancel: this.handleCancel,
+    });
+  }
+
+  // Otherwise auto-generate from schema
   if (!definition?.configSchema) return null;
 
   return definition.configSchema.map(field => {
@@ -505,6 +519,65 @@ private renderConfigFields() {
   });
 }
 ```
+
+**Approach 2: Custom forms per component** - Component definition provides custom UI:
+```typescript
+// Example: Dashboard component with custom config wizard
+const dashboardComponent: ComponentDefinition = {
+  type: 'dashboard',
+  name: 'Dashboard Widget',
+
+  // Custom config panel instead of auto-generated form
+  renderConfigPanel: ({ config, onChange, onSave, onCancel }) => (
+    <div class="dashboard-config-wizard">
+      <h3>Configure Dashboard</h3>
+
+      {/* Step 1: Data Source */}
+      <div class="config-step">
+        <label>Data Source</label>
+        <select
+          value={config.dataSource}
+          onChange={(e) => onChange('dataSource', e.target.value)}
+        >
+          <option value="sales">Sales Data</option>
+          <option value="analytics">Analytics</option>
+          <option value="custom">Custom API</option>
+        </select>
+      </div>
+
+      {/* Step 2: Chart Type with Visual Picker */}
+      <div class="config-step">
+        <label>Chart Type</label>
+        <div class="chart-picker">
+          {['bar', 'line', 'pie'].map(type => (
+            <div
+              class={config.chartType === type ? 'selected' : ''}
+              onClick={() => onChange('chartType', type)}
+            >
+              <img src={`/previews/${type}.png`} />
+              <span>{type}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div class="actions">
+        <button onClick={onCancel}>Cancel</button>
+        <button class="primary" onClick={onSave}>Apply</button>
+      </div>
+    </div>
+  ),
+
+  render: ({ itemId, config }) => (
+    <component-dashboard itemId={itemId} config={config} />
+  ),
+};
+```
+
+**Why support both?**
+- **Auto-generated forms** are convenient for simple text/color/select fields
+- **Custom forms** enable complex UIs like image uploaders, multi-step wizards, or visual pickers
+- Component authors choose the appropriate approach per component type
 
 #### 2.3.5 Component Palette Component
 
@@ -601,9 +674,28 @@ export interface ComponentDefinition {
   render: (props: { itemId: string; config?: Record<string, any> }) => any;
 
   /**
-   * Configuration schema for config panel
+   * Configuration schema for auto-generated config panel
+   * If renderConfigPanel is not provided, library generates form from this schema
    */
   configSchema?: ConfigField[];
+
+  /**
+   * Optional: Custom config panel renderer
+   * If provided, this completely overrides the auto-generated form
+   * Useful for complex configuration UIs (wizards, image uploaders, etc.)
+   *
+   * @param props.config - Current configuration values
+   * @param props.onChange - Callback to update a config field
+   * @param props.onSave - Callback to save changes
+   * @param props.onCancel - Callback to cancel and discard changes
+   * @returns Custom config panel UI
+   */
+  renderConfigPanel?: (props: {
+    config: Record<string, any>;
+    onChange: (fieldName: string, value: any) => void;
+    onSave: () => void;
+    onCancel: () => void;
+  }) => any;
 
   /**
    * Validation function for placement
