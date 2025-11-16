@@ -8,6 +8,5 @@
 # Node modules (if ever added)
 node_modules/
 
-# Build outputs from stencil-src (build/ and loader/ only - index.html and shared/ are deployed to GitHub Pages)
-stencil/build/
-stencil/loader/
+# Build outputs from stencil-src - MUST be committed for GitHub Pages deployment
+# (GitHub Pages serves files directly without running a build step)
