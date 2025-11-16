@@ -1245,6 +1245,27 @@ export class GridBuilderApp {
                   <span style={{ fontSize: '11px', color: '#666', marginLeft: '4px' }}>{this.itemCount} items</span>
                 </div>
 
+                {/* Architecture Documentation Badge */}
+                <div
+                  class="info-badge"
+                  style={{
+                    display: 'inline-block',
+                    position: 'relative',
+                    padding: '6px 12px',
+                    background: '#007bff',
+                    color: 'white',
+                    borderRadius: '4px',
+                    fontSize: '12px',
+                    fontWeight: '600',
+                    marginLeft: '12px',
+                    cursor: 'pointer',
+                  }}
+                  onClick={() => window.open('https://github.com/lucidworks/grid-builder-poc/blob/main/stencil-src/ARCHITECTURE.md', '_blank')}
+                  title="View Architecture Documentation"
+                >
+                  📚 Architecture
+                </div>
+
                 {/* Version Switcher */}
                 <div class="version-switcher">
                   <span class="version-switcher-label">Version:</span>
