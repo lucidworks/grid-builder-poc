@@ -17,6 +17,10 @@ export class GridBuilderApp {
   @State() itemCount: number = 0;
 
   componentWillLoad() {
+    // Expose interact to global scope before child components load
+    // This ensures drag/resize handlers in grid-item-wrapper can initialize
+    (window as any).interact = interact;
+
     // Initial item count
     this.updateItemCount();
   }
@@ -37,9 +41,6 @@ export class GridBuilderApp {
 
     // Initialize global VirtualRenderer for lazy-loading complex components
     (window as any).virtualRenderer = new VirtualRenderer();
-
-    // Expose interact to global scope for debugging
-    (window as any).interact = interact;
 
     // Add debug helper to inspect all interactables
     (window as any).debugInteractables = () => {
