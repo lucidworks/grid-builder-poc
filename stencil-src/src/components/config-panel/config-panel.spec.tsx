@@ -1,35 +1,17 @@
 import { newSpecPage } from '@stencil/core/testing';
 import { GridItem, gridState } from '../../services/state-manager';
+import { createTestItem, dispatchCustomEvent, resetGridState } from '../../utils/test-utils';
 import { ConfigPanel } from './config-panel';
 
 describe('config-panel', () => {
   let testItem: GridItem;
 
   beforeEach(() => {
-    // Reset state before each test
-    gridState.canvases = {
-      canvas1: {
-        items: [],
-        zIndexCounter: 1,
-        backgroundColor: '#ffffff',
-      },
-    };
-    gridState.selectedItemId = null;
-    gridState.selectedCanvasId = null;
+    // Reset state using test utility
+    resetGridState();
 
-    // Create test item
-    testItem = {
-      id: 'item-1',
-      canvasId: 'canvas1',
-      type: 'header',
-      name: 'Test Header',
-      layouts: {
-        desktop: { x: 100, y: 100, width: 200, height: 150 },
-        mobile: { x: null, y: null, width: null, height: null, customized: false },
-      },
-      zIndex: 1,
-    };
-
+    // Create test item using test utility
+    testItem = createTestItem();
     gridState.canvases.canvas1.items.push(testItem);
   });
 
@@ -120,12 +102,8 @@ describe('config-panel', () => {
       html: `<config-panel></config-panel>`,
     });
 
-    // Dispatch item-click event
-    const event = new CustomEvent('item-click', {
-      detail: { itemId: 'item-1', canvasId: 'canvas1' },
-      bubbles: true,
-    });
-    document.dispatchEvent(event);
+    // Dispatch item-click event using test utility
+    dispatchCustomEvent(document, 'item-click', { itemId: 'item-1', canvasId: 'canvas1' });
 
     await page.waitForChanges();
 
@@ -139,12 +117,8 @@ describe('config-panel', () => {
       html: `<config-panel></config-panel>`,
     });
 
-    // Dispatch item-click event
-    const event = new CustomEvent('item-click', {
-      detail: { itemId: 'item-1', canvasId: 'canvas1' },
-      bubbles: true,
-    });
-    document.dispatchEvent(event);
+    // Dispatch item-click event using test utility
+    dispatchCustomEvent(document, 'item-click', { itemId: 'item-1', canvasId: 'canvas1' });
 
     await page.waitForChanges();
 
@@ -158,12 +132,8 @@ describe('config-panel', () => {
       html: `<config-panel></config-panel>`,
     });
 
-    // Dispatch item-click event
-    const event = new CustomEvent('item-click', {
-      detail: { itemId: 'item-1', canvasId: 'canvas1' },
-      bubbles: true,
-    });
-    document.dispatchEvent(event);
+    // Dispatch item-click event using test utility
+    dispatchCustomEvent(document, 'item-click', { itemId: 'item-1', canvasId: 'canvas1' });
 
     await page.waitForChanges();
 
@@ -177,12 +147,8 @@ describe('config-panel', () => {
       html: `<config-panel></config-panel>`,
     });
 
-    // Open panel first
-    const openEvent = new CustomEvent('item-click', {
-      detail: { itemId: 'item-1', canvasId: 'canvas1' },
-      bubbles: true,
-    });
-    document.dispatchEvent(openEvent);
+    // Open panel first using test utility
+    dispatchCustomEvent(document, 'item-click', { itemId: 'item-1', canvasId: 'canvas1' });
     await page.waitForChanges();
 
     // Close panel

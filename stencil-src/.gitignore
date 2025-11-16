@@ -6,6 +6,9 @@ dist/
 www/
 loader/
 
+# Generated CSS files from SCSS
+src/**/*.css
+
 # Testing
 coverage/
 .stencil/
