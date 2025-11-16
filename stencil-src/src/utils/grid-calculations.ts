@@ -7,6 +7,8 @@
  * - Vertical: Fixed 20px grid
  */
 
+import { domCache } from './dom-cache';
+
 const GRID_SIZE_VERTICAL = 20; // Fixed 20px vertical grid
 const GRID_SIZE_HORIZONTAL_PERCENT = 0.02; // 2% horizontal grid
 
@@ -32,7 +34,8 @@ export function getGridSizeHorizontal(canvasId: string, forceRecalc: boolean = f
     return gridSizeCache.get(cacheKey)!;
   }
 
-  const container = document.getElementById(canvasId);
+  // Use DOM cache instead of getElementById
+  const container = domCache.getCanvas(canvasId);
   if (!container) {
     console.warn(`Canvas container not found: ${canvasId}`);
     return 0;
@@ -55,14 +58,9 @@ export function getGridSizeVertical(): number {
  * Uses percentage calculation to match CSS background grid
  */
 export function gridToPixelsX(gridUnits: number, canvasId: string): number {
-  const container = document.getElementById(canvasId);
-  if (!container) {
-    console.warn(`Canvas container not found: ${canvasId}`);
-    return 0;
-  }
-
-  const percentage = gridUnits * GRID_SIZE_HORIZONTAL_PERCENT;
-  return Math.round(container.clientWidth * percentage);
+  // Use cached grid size for better performance
+  const gridSize = getGridSizeHorizontal(canvasId);
+  return Math.round(gridUnits * gridSize);
 }
 
 /**
@@ -77,14 +75,12 @@ export function gridToPixelsY(gridUnits: number): number {
  * Convert pixels to grid units for horizontal values (x, width)
  */
 export function pixelsToGridX(pixels: number, canvasId: string): number {
-  const container = document.getElementById(canvasId);
-  if (!container) {
-    console.warn(`Canvas container not found: ${canvasId}`);
+  // Use cached grid size for better performance
+  const gridSize = getGridSizeHorizontal(canvasId);
+  if (gridSize === 0) {
     return 0;
   }
-
-  const percentage = pixels / container.clientWidth;
-  return Math.round(percentage / GRID_SIZE_HORIZONTAL_PERCENT);
+  return Math.round(pixels / gridSize);
 }
 
 /**

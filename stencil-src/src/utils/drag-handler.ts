@@ -10,6 +10,7 @@
  */
 
 import { GridItem } from '../services/state-manager';
+import { domCache } from './dom-cache';
 import { getGridSizeHorizontal, getGridSizeVertical, pixelsToGridX, pixelsToGridY } from './grid-calculations';
 
 /**
@@ -149,7 +150,7 @@ export class DragHandler {
     }
 
     // Calculate new position relative to current canvas (same-canvas drag only)
-    const targetContainer = document.getElementById(targetCanvasId);
+    const targetContainer = domCache.getCanvas(targetCanvasId);
     if (!targetContainer) {
       return;
     }

@@ -10,6 +10,7 @@
  */
 
 import { GridItem } from '../services/state-manager';
+import { domCache } from './dom-cache';
 import { getGridSizeHorizontal, getGridSizeVertical, pixelsToGridX, pixelsToGridY } from './grid-calculations';
 
 /**
@@ -170,7 +171,7 @@ export class ResizeHandler {
     event.target.removeAttribute('data-height');
 
     // Get the container to calculate relative position
-    const container = document.getElementById(this.item.canvasId);
+    const container = domCache.getCanvas(this.item.canvasId);
     if (!container) {
       return;
     }
