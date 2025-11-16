@@ -200,6 +200,7 @@ export class GridItemWrapper {
       target.classList.contains('drag-handle') ||
       target.closest('.drag-handle') ||
       target.classList.contains('resize-handle') ||
+      target.closest('.resize-handle') ||
       target.classList.contains('grid-item-delete') ||
       target.classList.contains('grid-item-control-btn')
     ) {
