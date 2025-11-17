@@ -1,0 +1,30 @@
+/**
+ * Canvas Section Styles
+ * ======================
+ *
+ * Styles for canvas-section component providing grid background and container.
+ */
+
+/* Canvas Section Container */
+.canvas-section {
+  position: relative;
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+}
+
+/* Grid Container */
+.grid-container {
+  position: relative;
+  width: 100%;
+  min-height: 400px;
+  background-image: linear-gradient(rgba(0, 0, 0, 5%) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 0, 0, 5%) 1px, transparent 1px);
+  background-size: 2% 20px;
+  transition: background-color 0.2s;
+}
+
+/* Hide grid when toggle disabled */
+.grid-container.hide-grid {
+  background-image: none;
+}

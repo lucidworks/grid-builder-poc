@@ -1,0 +1,461 @@
+/**
+ * Canvas Section Component
+ * ========================
+ *
+ * Individual canvas dropzone with grid background and item rendering.
+ * This is a library component designed to work with the grid-builder component.
+ *
+ * ## Purpose
+ *
+ * Provides a single canvas section with:
+ * - **Dropzone**: Accepts palette items and grid items via interact.js
+ * - **Grid background**: Visual 2% horizontal × 20px vertical grid
+ * - **Item rendering**: Renders all items on this canvas
+ * - **ResizeObserver**: Invalidates grid cache on resize
+ *
+ * ## Key Differences from POC
+ *
+ * **Removed POC-specific features**:
+ * - Section controls (background color picker, clear button, delete button)
+ * - Section header with number
+ * - Confirm dialogs
+ * - section-delete events
+ *
+ * **Library-specific features**:
+ * - Clean canvas without UI controls
+ * - Grid background based on GridConfig
+ * - Designed to be used inside grid-builder component
+ *
+ * ## Dropzone Behavior
+ *
+ * **Accepts two types of drops**:
+ *
+ * ### 1. Palette Item (Create New)
+ * ```typescript
+ * new CustomEvent('canvas-drop', {
+ *   detail: { canvasId, componentType, x, y },
+ *   bubbles: true,
+ *   composed: true
+ * })
+ * ```
+ *
+ * ### 2. Grid Item (Cross-Canvas Move)
+ * ```typescript
+ * new CustomEvent('canvas-move', {
+ *   detail: { itemId, sourceCanvasId, targetCanvasId, x, y },
+ *   bubbles: true,
+ *   composed: true
+ * })
+ * ```
+ *
+ * ## Grid Background
+ *
+ * **CSS grid pattern**:
+ * - Horizontal: 2% of container width (responsive)
+ * - Vertical: 20px (fixed)
+ * - Color: rgba(0,0,0,0.05)
+ * - Toggleable via gridState.showGrid
+ *
+ * ## Performance
+ *
+ * **ResizeObserver**: Clears grid cache on container resize
+ * **Virtual rendering**: Items use VirtualRenderer for lazy loading
+ * **Render version**: Forces item recalculation on resize
+ *
+ * @module canvas-section
+ */
+
+import { Component, h, Prop, State } from '@stencil/core';
+import interact from 'interactjs';
+
+// Internal imports
+import { Canvas, GridItem, gridState, onChange } from '../../services/state-manager';
+import { clearGridSizeCache, gridToPixelsX, gridToPixelsY } from '../../utils/grid-calculations';
+import { GridConfig } from '../../types/grid-config';
+import { ComponentDefinition } from '../../types/component-definition';
+
+/**
+ * CanvasSection Component
+ * =======================
+ *
+ * Library component providing individual canvas dropzone.
+ *
+ * **Tag**: `<canvas-section>`
+ * **Shadow DOM**: Disabled (required for interact.js compatibility)
+ * **Reactivity**: Listens to gridState changes via StencilJS store
+ */
+@Component({
+  tag: 'canvas-section',
+  styleUrl: 'canvas-section.scss',
+  shadow: false, // Light DOM required for interact.js
+})
+export class CanvasSection {
+  /**
+   * Canvas ID for state management
+   *
+   * **Format**: 'canvas1', 'canvas2', etc.
+   * **Purpose**: Key for accessing canvas data in gridState.canvases
+   * **Required**: Component won't render without valid canvasId
+   */
+  @Prop() canvasId!: string;
+
+  /**
+   * Grid configuration options
+   *
+   * **Optional**: Customizes grid system behavior
+   * **Passed from**: grid-builder component
+   * **Used for**: Grid size calculations, constraints
+   */
+  @Prop() config?: GridConfig;
+
+  /**
+   * Component registry (from parent grid-builder)
+   *
+   * **Source**: grid-builder component (built from components prop)
+   * **Structure**: Map<type, ComponentDefinition>
+   * **Purpose**: Pass to grid-item-wrapper for dynamic rendering
+   */
+  @Prop() componentRegistry?: Map<string, ComponentDefinition>;
+
+  /**
+   * Canvas state (reactive)
+   *
+   * **Source**: gridState.canvases[canvasId]
+   * **Updates**: componentWillLoad, componentWillUpdate, onChange subscription
+   * **Contains**: items array, zIndexCounter, backgroundColor
+   */
+  @State() canvas: Canvas;
+
+  /**
+   * Render version counter (forces re-renders)
+   *
+   * **Purpose**: Trigger re-renders when grid calculations change
+   * **Incremented on**: ResizeObserver events, state changes
+   * **Passed to**: grid-item-wrapper as prop
+   * **Why needed**: Grid calculations cached, need to recalculate on resize
+   */
+  @State() renderVersion: number = 0;
+
+  /**
+   * Grid container DOM reference
+   *
+   * **Used for**:
+   * - interact.js dropzone setup
+   * - ResizeObserver monitoring
+   * - Position calculations (getBoundingClientRect)
+   */
+  private gridContainerRef: HTMLElement;
+
+  /**
+   * Dropzone initialization flag
+   *
+   * **Prevents**: Multiple dropzone setups on same element
+   * **Set in**: initializeDropzone()
+   * **Checked in**: initializeDropzone(), disconnectedCallback()
+   */
+  private dropzoneInitialized: boolean = false;
+
+  /**
+   * ResizeObserver instance
+   *
+   * **Monitors**: gridContainerRef size changes
+   * **Callback**: Clears grid cache, increments renderVersion
+   * **Cleanup**: disconnectedCallback() disconnects observer
+   */
+  private resizeObserver: ResizeObserver;
+
+  /**
+   * Component will load lifecycle hook
+   *
+   * **Called**: Before first render
+   * **Purpose**: Load initial canvas state and subscribe to changes
+   *
+   * **Operations**:
+   * 1. Load canvas from global state
+   * 2. Subscribe to 'canvases' state changes
+   * 3. Update local canvas state on changes
+   * 4. Increment renderVersion to trigger item re-renders
+   */
+  componentWillLoad() {
+    // Initial load
+    this.canvas = gridState.canvases[this.canvasId];
+
+    // Subscribe to state changes
+    onChange('canvases', () => {
+      try {
+        if (this.canvasId && gridState.canvases[this.canvasId]) {
+          this.canvas = gridState.canvases[this.canvasId];
+          this.renderVersion++; // Force re-render
+        }
+      } catch (error) {
+        console.debug('Canvas section state update skipped:', error);
+      }
+    });
+  }
+
+  /**
+   * Component will update lifecycle hook
+   *
+   * **Called**: Before each re-render
+   * **Purpose**: Ensure canvas reference is fresh from state
+   */
+  componentWillUpdate() {
+    this.canvas = gridState.canvases[this.canvasId];
+  }
+
+  /**
+   * Component did load lifecycle hook
+   *
+   * **Called**: After first render (DOM available)
+   * **Purpose**: Initialize interact.js dropzone and ResizeObserver
+   */
+  componentDidLoad() {
+    this.initializeDropzone();
+    this.setupResizeObserver();
+  }
+
+  /**
+   * Disconnected callback (cleanup)
+   *
+   * **Called**: When component removed from DOM
+   * **Purpose**: Clean up interact.js and ResizeObserver
+   */
+  disconnectedCallback() {
+    // Cleanup interact.js
+    if (this.gridContainerRef && this.dropzoneInitialized) {
+      interact(this.gridContainerRef).unset();
+    }
+
+    // Cleanup ResizeObserver
+    if (this.resizeObserver) {
+      this.resizeObserver.disconnect();
+    }
+  }
+
+  /**
+   * Setup ResizeObserver for grid cache invalidation
+   *
+   * **Purpose**: Detect container size changes and force grid recalculation
+   *
+   * **Observer callback**:
+   * 1. Clear grid size cache (grid-calculations.ts)
+   * 2. Increment renderVersion (triggers item re-renders)
+   *
+   * **Why needed**:
+   * - Grid calculations cached for performance
+   * - Cache based on container width (responsive 2% units)
+   * - Container resize invalidates cache
+   * - Items need to recalculate positions with new dimensions
+   */
+  private setupResizeObserver = () => {
+    if (!this.gridContainerRef) {
+      return;
+    }
+
+    // Watch for canvas container size changes
+    this.resizeObserver = new ResizeObserver(() => {
+      // Clear grid size cache when container resizes
+      clearGridSizeCache();
+
+      // Force re-render to update item positions
+      this.renderVersion++;
+    });
+
+    this.resizeObserver.observe(this.gridContainerRef);
+  };
+
+  /**
+   * Initialize interact.js dropzone
+   *
+   * **Called from**: componentDidLoad (after DOM available)
+   * **Purpose**: Setup dropzone to receive palette items and grid items
+   *
+   * ## Dropzone Configuration
+   *
+   * **Accept pattern**: `.palette-item, .grid-item`
+   * - `.palette-item` - New components from palette
+   * - `.grid-item` - Existing items for cross-canvas moves
+   *
+   * **Overlap mode**: `'pointer'`
+   * - Drop detection based on cursor position
+   * - More intuitive than element overlap
+   *
+   * ## Drop Event Handling
+   *
+   * ### 1. Palette Item Drop (Create New)
+   *
+   * **Component type extraction**:
+   * ```typescript
+   * const componentType = droppedElement.getAttribute('data-component-type');
+   * ```
+   *
+   * **Position calculation**:
+   * - Get component's defaultSize from definition
+   * - Calculate half dimensions for cursor-centering
+   * - Subtract half dimensions from cursor position
+   *
+   * **Custom event dispatch**:
+   * ```typescript
+   * dispatchEvent(new CustomEvent('canvas-drop', {
+   *   detail: { canvasId, componentType, x, y },
+   *   bubbles: true,
+   *   composed: true
+   * }));
+   * ```
+   *
+   * ### 2. Grid Item Drop (Cross-Canvas Move)
+   *
+   * **Only process cross-canvas moves**:
+   * - Same-canvas moves handled by drag handler
+   * - Prevents duplicate events
+   *
+   * **Position calculation**:
+   * - Use element's bounding rect (already positioned by drag handler)
+   * - Calculate position relative to target canvas
+   *
+   * **Custom event dispatch**:
+   * ```typescript
+   * dispatchEvent(new CustomEvent('canvas-move', {
+   *   detail: { itemId, sourceCanvasId, targetCanvasId, x, y },
+   *   bubbles: true,
+   *   composed: true
+   * }));
+   * ```
+   */
+  private initializeDropzone = () => {
+    if (!this.gridContainerRef || this.dropzoneInitialized) {
+      return;
+    }
+
+    const interactable = interact(this.gridContainerRef);
+
+    interactable.dropzone({
+      accept: '.palette-item, .grid-item',
+      overlap: 'pointer',
+
+      checker: (_dragEvent: any, _event: any, dropped: boolean) => {
+        return dropped;
+      },
+
+      ondrop: (event: any) => {
+        const droppedElement = event.relatedTarget;
+        const isPaletteItem = droppedElement.classList.contains('palette-item');
+        const isGridItem = droppedElement.classList.contains('grid-item');
+
+        if (isPaletteItem) {
+          // Dropping from palette - create new item
+          const componentType = droppedElement.getAttribute('data-component-type');
+
+          // Get default size from component definition (defaults to 10×6 if not found)
+          const defaultWidth = 10;
+          const defaultHeight = 6;
+          const widthPx = gridToPixelsX(defaultWidth, this.canvasId, this.config);
+          const heightPx = gridToPixelsY(defaultHeight);
+          const halfWidth = widthPx / 2;
+          const halfHeight = heightPx / 2;
+
+          // Get drop position relative to grid container (cursor-centered)
+          const rect = this.gridContainerRef.getBoundingClientRect();
+          const x = event.dragEvent.clientX - rect.left - halfWidth;
+          const y = event.dragEvent.clientY - rect.top - halfHeight;
+
+          // Dispatch custom event for grid-builder to handle
+          const dropEvent = new CustomEvent('canvas-drop', {
+            detail: {
+              canvasId: this.canvasId,
+              componentType,
+              x,
+              y,
+            },
+            bubbles: true,
+            composed: true,
+          });
+          this.gridContainerRef.dispatchEvent(dropEvent);
+        } else if (isGridItem) {
+          // Moving existing grid item to different canvas
+          const itemId = droppedElement.id;
+          const sourceCanvasId = droppedElement.getAttribute('data-canvas-id');
+
+          // Only process cross-canvas moves
+          if (sourceCanvasId !== this.canvasId) {
+            // Get element's position (already positioned by drag handler)
+            const droppedRect = droppedElement.getBoundingClientRect();
+            const rect = this.gridContainerRef.getBoundingClientRect();
+
+            // Calculate position relative to target canvas
+            const x = droppedRect.left - rect.left;
+            const y = droppedRect.top - rect.top;
+
+            // Dispatch custom event for cross-canvas move
+            const moveEvent = new CustomEvent('canvas-move', {
+              detail: {
+                itemId,
+                sourceCanvasId,
+                targetCanvasId: this.canvasId,
+                x,
+                y,
+              },
+              bubbles: true,
+              composed: true,
+            });
+            this.gridContainerRef.dispatchEvent(moveEvent);
+          }
+        }
+      },
+    });
+
+    this.dropzoneInitialized = true;
+  };
+
+  /**
+   * Render component template
+   *
+   * **Structure**:
+   * - Grid container with background
+   * - Dynamic class for grid visibility
+   * - Background color from canvas state
+   * - Item rendering loop
+   *
+   * **Grid background**:
+   * - CSS linear gradients (2% horizontal, 20px vertical)
+   * - Toggleable via gridState.showGrid
+   * - Hidden when .hide-grid class applied
+   *
+   * **Item rendering**:
+   * - Maps over canvas.items
+   * - Renders grid-item-wrapper for each item
+   * - Passes renderVersion to force recalculation
+   */
+  render() {
+    const showGrid = gridState.showGrid;
+    const backgroundColor = this.canvas?.backgroundColor || '#ffffff';
+
+    return (
+      <div class="canvas-section" data-canvas-id={this.canvasId}>
+        <div
+          class={{
+            'grid-container': true,
+            'hide-grid': !showGrid,
+          }}
+          id={this.canvasId}
+          data-canvas-id={this.canvasId}
+          style={{
+            backgroundColor,
+          }}
+          ref={(el) => (this.gridContainerRef = el)}
+        >
+          {/* Grid items rendered by grid-item-wrapper components */}
+          {this.canvas?.items.map((item: GridItem) => (
+            <grid-item-wrapper
+              key={item.id}
+              item={item}
+              renderVersion={this.renderVersion}
+              config={this.config}
+              componentRegistry={this.componentRegistry}
+            />
+          ))}
+        </div>
+      </div>
+    );
+  }
+}
