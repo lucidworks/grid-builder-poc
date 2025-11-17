@@ -33,6 +33,7 @@ import { GridItem, gridState } from '../../services/state-manager';
 import { pushCommand } from '../../services/undo-redo';
 import { MoveItemCommand } from '../../services/undo-redo-commands';
 import { virtualRenderer } from '../../services/virtual-rendering';
+import { eventManager } from '../../services/event-manager';
 import { DragHandler } from '../../utils/drag-handler';
 import { ResizeHandler } from '../../utils/resize-handler';
 import { gridToPixelsX, gridToPixelsY } from '../../utils/grid-calculations';
@@ -374,16 +375,25 @@ export class GridItemWrapper {
    */
   private handleItemUpdate = (updatedItem: GridItem) => {
     // Check if position or canvas changed (for undo/redo)
+    let isDrag = false;
+    let isResize = false;
+
     if (this.itemSnapshot) {
       const snapshot = this.itemSnapshot;
-      const positionChanged =
-        snapshot.layouts.desktop.x !== updatedItem.layouts.desktop.x ||
-        snapshot.layouts.desktop.y !== updatedItem.layouts.desktop.y ||
+      const positionOnlyChanged =
+        (snapshot.layouts.desktop.x !== updatedItem.layouts.desktop.x ||
+          snapshot.layouts.desktop.y !== updatedItem.layouts.desktop.y) &&
+        snapshot.layouts.desktop.width === updatedItem.layouts.desktop.width &&
+        snapshot.layouts.desktop.height === updatedItem.layouts.desktop.height;
+      const sizeChanged =
         snapshot.layouts.desktop.width !== updatedItem.layouts.desktop.width ||
         snapshot.layouts.desktop.height !== updatedItem.layouts.desktop.height;
       const canvasChanged = snapshot.canvasId !== updatedItem.canvasId;
 
-      if (positionChanged || canvasChanged) {
+      isDrag = positionOnlyChanged || canvasChanged;
+      isResize = sizeChanged;
+
+      if (isDrag || isResize) {
         // Find source canvas and index
         const sourceCanvas = gridState.canvases[snapshot.canvasId];
         const sourceIndex = sourceCanvas?.items.findIndex((i) => i.id === this.item.id) || 0;
@@ -415,6 +425,28 @@ export class GridItemWrapper {
       canvas.items[itemIndex] = updatedItem;
       gridState.canvases = { ...gridState.canvases };
     }
+
+    // Emit events for plugins
+    if (isDrag) {
+      eventManager.emit('componentDragged', {
+        itemId: updatedItem.id,
+        canvasId: updatedItem.canvasId,
+        position: {
+          x: updatedItem.layouts.desktop.x,
+          y: updatedItem.layouts.desktop.y,
+        },
+      });
+    }
+    if (isResize) {
+      eventManager.emit('componentResized', {
+        itemId: updatedItem.id,
+        canvasId: updatedItem.canvasId,
+        size: {
+          width: updatedItem.layouts.desktop.width,
+          height: updatedItem.layouts.desktop.height,
+        },
+      });
+    }
   };
 
   /**
@@ -437,6 +469,12 @@ export class GridItemWrapper {
     // Set selection state immediately
     gridState.selectedItemId = this.item.id;
     gridState.selectedCanvasId = this.item.canvasId;
+
+    // Emit selection event for plugins
+    eventManager.emit('componentSelected', {
+      itemId: this.item.id,
+      canvasId: this.item.canvasId,
+    });
 
     // Dispatch event to open config panel
     const event = new CustomEvent('item-click', {
