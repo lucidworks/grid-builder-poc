@@ -1,0 +1,43 @@
+/**
+ * Global Styles for Grid Builder StencilJS Variant
+ * These styles are output as a separate CSS file
+ */
+
+// Import variables
+@import './variables';
+
+// Import all component SCSS files to make them available globally
+// Note: Component styles are also scoped to components via shadow DOM or class names
+@import '../components/grid-builder-app/grid-builder-app.scss';
+@import '../components/component-palette/component-palette.scss';
+@import '../components/canvas-section/canvas-section.scss';
+@import '../components/grid-item-wrapper/grid-item-wrapper.scss';
+@import '../components/config-panel/config-panel.scss';
+
+* {
+  box-sizing: border-box;
+  padding: 0;
+  margin: 0;
+}
+
+body {
+  background: $color-grey-light;
+  color: $color-main-text;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  font-size: $font-size-sm;
+  line-height: 1.5;
+  overflow-x: hidden;
+}
+
+// StencilJS component host elements
+grid-builder-app {
+  display: block;
+  height: 100vh;
+}
+
+component-palette,
+canvas-section,
+grid-item-wrapper,
+config-panel {
+  display: block;
+}
