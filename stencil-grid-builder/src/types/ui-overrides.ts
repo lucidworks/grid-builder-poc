@@ -25,27 +25,26 @@ import { ComponentDefinition } from './component-definition';
  *
  * **Example: Custom Config Panel**
  * ```typescript
- * const CustomConfigPanel = ({ item, config, onChange, onSave, onCancel }: ConfigPanelProps) => (
- *   <div class="my-custom-config-panel">
- *     <h3>Configure {item.name}</h3>
- *
- *     {/* Render fields from component definition's configSchema */}
- *     {config && Object.keys(config).map(key => (
- *       <div class="field">
- *         <label>{key}</label>
- *         <input
- *           value={config[key]}
- *           onChange={(e) => onChange(key, e.target.value)}
- *         />
+ * const CustomConfigPanel = ({ item, config, onChange, onSave, onCancel }: ConfigPanelProps) => {
+ *   return (
+ *     <div class="my-custom-config-panel">
+ *       <h3>Configure {item.name}</h3>
+ *       {config && Object.keys(config).map(key => (
+ *         <div class="field" key={key}>
+ *           <label>{key}</label>
+ *           <input
+ *             value={config[key]}
+ *             onChange={(e) => onChange(key, e.target.value)}
+ *           />
+ *         </div>
+ *       ))}
+ *       <div class="actions">
+ *         <button onClick={onCancel}>Cancel</button>
+ *         <button class="primary" onClick={onSave}>Save</button>
  *       </div>
- *     ))}
- *
- *     <div class="actions">
- *       <button onClick={onCancel}>Cancel</button>
- *       <button class="primary" onClick={onSave}>Save</button>
  *     </div>
- *   </div>
- * );
+ *   );
+ * };
  * ```
  */
 export interface ConfigPanelProps {

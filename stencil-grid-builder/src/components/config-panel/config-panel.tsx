@@ -240,14 +240,18 @@ export class ConfigPanel {
             <label htmlFor={field.name}>{field.label}</label>
             <select
               id={field.name}
-              value={value}
               onChange={(e) => this.handleConfigChange(field.name, (e.target as HTMLSelectElement).value)}
             >
-              {field.options?.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
+              {field.options?.map((option) => {
+                // Handle both string and object options
+                const optionValue = typeof option === 'string' ? option : option.value;
+                const optionLabel = typeof option === 'string' ? option : option.label;
+                return (
+                  <option key={optionValue} value={optionValue} selected={value === optionValue}>
+                    {optionLabel}
+                  </option>
+                );
+              })}
             </select>
           </div>
         );

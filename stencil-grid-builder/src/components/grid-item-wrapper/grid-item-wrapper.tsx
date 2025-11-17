@@ -32,7 +32,7 @@ import { Component, h, Prop, State } from '@stencil/core';
 import { GridItem, gridState } from '../../services/state-manager';
 import { pushCommand } from '../../services/undo-redo';
 import { MoveItemCommand } from '../../services/undo-redo-commands';
-import { virtualRenderer } from '../../services/virtual-rendering';
+import { virtualRenderer } from '../../services/virtual-renderer';
 import { eventManager } from '../../services/event-manager';
 import { DragHandler } from '../../utils/drag-handler';
 import { ResizeHandler } from '../../utils/resize-handler';

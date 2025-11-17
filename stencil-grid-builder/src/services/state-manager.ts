@@ -372,6 +372,26 @@ export interface GridItem {
    * **Per-canvas**: Z-indexes only compete within same canvas
    */
   zIndex: number;
+
+  /**
+   * Component configuration data
+   *
+   * **Purpose**: Store component-specific settings (text, color, etc.)
+   * **Structure**: Record<string, any> matching ComponentDefinition.configSchema
+   * **Default**: Empty object {} when component created
+   *
+   * **Example**:
+   * ```typescript
+   * // Header component config
+   * config: {
+   *   text: 'Welcome!',
+   *   level: 'H1',
+   *   color: '#000000',
+   *   alignment: 'center'
+   * }
+   * ```
+   */
+  config?: Record<string, any>;
 }
 
 /**
@@ -878,7 +898,7 @@ export function moveItemToCanvas(fromCanvasId: string, toCanvasId: string, itemI
  * **Increments**: Each call to generateItemId() returns next ID
  * **Format**: 'item-N' where N is the counter value
  */
-let itemIdCounter = 0; // Start at 0 (library starts empty)
+export let itemIdCounter = 0; // Start at 0 (library starts empty)
 
 /**
  * Generate unique item ID

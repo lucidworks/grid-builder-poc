@@ -22,8 +22,8 @@ export interface ConfigField {
   /** Default value when component is created */
   defaultValue?: any;
 
-  /** Options for select fields */
-  options?: string[];
+  /** Options for select fields (array of {label, value} or strings) */
+  options?: Array<{ label: string; value: string } | string>;
 
   /** Optional validation function */
   validation?: (value: any) => boolean;
@@ -33,6 +33,18 @@ export interface ConfigField {
 
   /** Help text shown below field */
   helpText?: string;
+
+  /** Minimum value for number inputs */
+  min?: number;
+
+  /** Maximum value for number inputs */
+  max?: number;
+
+  /** Step size for number inputs */
+  step?: number;
+
+  /** Number of rows for textarea */
+  rows?: number;
 }
 
 /**

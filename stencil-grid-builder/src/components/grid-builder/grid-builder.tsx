@@ -55,8 +55,8 @@ import { UIComponentOverrides } from '../../types/ui-overrides';
 import { GridBuilderAPI } from '../../types/api';
 
 // Service imports
-import { gridState, GridState, reset as resetState } from '../../services/state-manager';
-import { VirtualRenderer } from '../../services/virtual-rendering';
+import { gridState, GridState, generateItemId } from '../../services/state-manager';
+import { virtualRenderer } from '../../services/virtual-renderer';
 import { eventManager } from '../../services/event-manager';
 
 /**
@@ -262,14 +262,6 @@ export class GridBuilder {
   @State() private initializedPlugins: GridBuilderPlugin[] = [];
 
   /**
-   * Virtual renderer instance (internal state)
-   *
-   * **Purpose**: Manages lazy loading of components
-   * **Lifecycle**: Created in componentDidLoad, cleaned up in disconnectedCallback
-   */
-  private virtualRenderer?: VirtualRenderer;
-
-  /**
    * GridBuilderAPI instance (internal state)
    *
    * **Purpose**: Provides API to plugins and external code
@@ -327,16 +319,15 @@ export class GridBuilder {
    * **Purpose**: Initialize global dependencies and plugins
    *
    * **Initialization sequence**:
-   * 1. Create VirtualRenderer for lazy loading
+   * 1. Expose virtualRenderer singleton globally
    * 2. Create GridBuilderAPI instance
    * 3. Initialize plugins via plugin.init(api)
    * 4. Apply theme via CSS variables
    * 5. Expose debug helpers
    */
   componentDidLoad() {
-    // Initialize VirtualRenderer
-    this.virtualRenderer = new VirtualRenderer();
-    (window as any).virtualRenderer = this.virtualRenderer;
+    // Expose virtualRenderer singleton globally (for debugging)
+    (window as any).virtualRenderer = virtualRenderer;
 
     // Create GridBuilderAPI instance
     this.api = this.createAPI();
@@ -382,8 +373,7 @@ export class GridBuilder {
    *
    * **Cleanup sequence**:
    * 1. Destroy all plugins
-   * 2. Dispose VirtualRenderer
-   * 3. Clear global references
+   * 2. Clear global references
    */
   disconnectedCallback() {
     // Destroy plugins
@@ -397,11 +387,6 @@ export class GridBuilder {
         }
       });
       this.initializedPlugins = [];
-    }
-
-    // Cleanup VirtualRenderer
-    if (this.virtualRenderer) {
-      this.virtualRenderer = undefined;
     }
 
     // Clear global references
@@ -478,7 +463,9 @@ export class GridBuilder {
 
         // Create new item
         const newItem = {
-          id: `item-${++gridState.itemIdCounter}`,
+          id: generateItemId(),
+          canvasId,
+          name: componentType,
           type: componentType,
           zIndex: ++canvas.zIndexCounter,
           layouts: {
@@ -561,7 +548,9 @@ export class GridBuilder {
 
           // Create new item
           const newItem = {
-            id: `item-${++gridState.itemIdCounter}`,
+            id: generateItemId(),
+            canvasId,
+            name: type,
             type,
             zIndex: ++canvas.zIndexCounter,
             layouts: {
