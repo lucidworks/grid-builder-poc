@@ -57,6 +57,7 @@ import { GridBuilderAPI } from '../../types/api';
 // Service imports
 import { gridState, GridState, reset as resetState } from '../../services/state-manager';
 import { VirtualRenderer } from '../../services/virtual-rendering';
+import { eventManager } from '../../services/event-manager';
 
 /**
  * GridBuilder Component
@@ -426,28 +427,227 @@ export class GridBuilder {
    * **Purpose**: Provide API to plugins and external code
    * **Returns**: GridBuilderAPI implementation
    *
-   * **Note**: Full implementation will be added in Phase 4 when we implement
-   * the event system and programmatic operations
+   * **Implementation**: Full API with event system integration
    */
   private createAPI(): GridBuilderAPI {
-    // TODO: Implement full API in Phase 4
-    // For now, return minimal stub
     return {
-      on: () => {},
-      off: () => {},
+      // ======================
+      // Event Subscriptions
+      // ======================
+
+      on: <T = any>(eventName: string, callback: (data: T) => void) => {
+        eventManager.on(eventName, callback);
+      },
+
+      off: <T = any>(eventName: string, callback: (data: T) => void) => {
+        eventManager.off(eventName, callback);
+      },
+
+      // ======================
+      // State Access (Read)
+      // ======================
+
       getState: () => gridState,
-      getItems: (canvasId: string) => gridState.canvases[canvasId]?.items || [],
-      getItem: () => null,
-      addComponent: () => null,
-      deleteComponent: () => false,
-      updateConfig: () => false,
-      addComponentsBatch: () => [],
-      deleteComponentsBatch: () => {},
-      updateConfigsBatch: () => {},
+
+      getItems: (canvasId: string) => {
+        return gridState.canvases[canvasId]?.items || [];
+      },
+
+      getItem: (itemId: string) => {
+        // Search across all canvases
+        for (const canvasId in gridState.canvases) {
+          const canvas = gridState.canvases[canvasId];
+          const item = canvas.items.find((i) => i.id === itemId);
+          if (item) {
+            return item;
+          }
+        }
+        return null;
+      },
+
+      // ======================
+      // Programmatic Operations
+      // ======================
+
+      addComponent: (canvasId: string, componentType: string, position: { x: number; y: number; width: number; height: number }, config?: Record<string, any>) => {
+        const canvas = gridState.canvases[canvasId];
+        if (!canvas) {
+          console.error(`Canvas not found: ${canvasId}`);
+          return null;
+        }
+
+        // Create new item
+        const newItem = {
+          id: `item-${++gridState.itemIdCounter}`,
+          type: componentType,
+          zIndex: ++canvas.zIndexCounter,
+          layouts: {
+            desktop: { ...position },
+            mobile: { x: 0, y: 0, width: 50, height: position.height, customized: false },
+          },
+          config: config || {},
+        };
+
+        // Add to canvas
+        canvas.items.push(newItem);
+        gridState.canvases = { ...gridState.canvases };
+
+        // Emit event
+        eventManager.emit('componentAdded', { item: newItem, canvasId });
+
+        return newItem.id;
+      },
+
+      deleteComponent: (itemId: string) => {
+        // Find and delete item across all canvases
+        for (const canvasId in gridState.canvases) {
+          const canvas = gridState.canvases[canvasId];
+          const itemIndex = canvas.items.findIndex((i) => i.id === itemId);
+          if (itemIndex !== -1) {
+            canvas.items.splice(itemIndex, 1);
+            gridState.canvases = { ...gridState.canvases };
+
+            // Deselect if deleted item was selected
+            if (gridState.selectedItemId === itemId) {
+              gridState.selectedItemId = null;
+              gridState.selectedCanvasId = null;
+            }
+
+            // Emit event
+            eventManager.emit('componentDeleted', { itemId, canvasId });
+
+            return true;
+          }
+        }
+        return false;
+      },
+
+      updateConfig: (itemId: string, config: Record<string, any>) => {
+        // Find and update item across all canvases
+        for (const canvasId in gridState.canvases) {
+          const canvas = gridState.canvases[canvasId];
+          const itemIndex = canvas.items.findIndex((i) => i.id === itemId);
+          if (itemIndex !== -1) {
+            // Merge config
+            canvas.items[itemIndex] = {
+              ...canvas.items[itemIndex],
+              config: { ...canvas.items[itemIndex].config, ...config },
+            };
+            gridState.canvases = { ...gridState.canvases };
+
+            // Emit event
+            eventManager.emit('configChanged', { itemId, canvasId, config });
+
+            return true;
+          }
+        }
+        return false;
+      },
+
+      // ======================
+      // Batch Operations
+      // ======================
+
+      addComponentsBatch: (components: Array<{ canvasId: string; type: string; position: { x: number; y: number; width: number; height: number }; config?: Record<string, any> }>) => {
+        const createdIds: string[] = [];
+        const createdItems: Array<{ item: any; canvasId: string }> = [];
+
+        components.forEach(({ canvasId, type, position, config }) => {
+          const canvas = gridState.canvases[canvasId];
+          if (!canvas) {
+            console.error(`Canvas not found: ${canvasId}`);
+            return;
+          }
+
+          // Create new item
+          const newItem = {
+            id: `item-${++gridState.itemIdCounter}`,
+            type,
+            zIndex: ++canvas.zIndexCounter,
+            layouts: {
+              desktop: { ...position },
+              mobile: { x: 0, y: 0, width: 50, height: position.height, customized: false },
+            },
+            config: config || {},
+          };
+
+          // Add to canvas
+          canvas.items.push(newItem);
+          createdIds.push(newItem.id);
+          createdItems.push({ item: newItem, canvasId });
+        });
+
+        // Single state update
+        gridState.canvases = { ...gridState.canvases };
+
+        // Emit batch event
+        eventManager.emit('componentsBatchAdded', { items: createdItems });
+
+        return createdIds;
+      },
+
+      deleteComponentsBatch: (itemIds: string[]) => {
+        const deletedItems: Array<{ itemId: string; canvasId: string }> = [];
+
+        itemIds.forEach((itemId) => {
+          for (const canvasId in gridState.canvases) {
+            const canvas = gridState.canvases[canvasId];
+            const itemIndex = canvas.items.findIndex((i) => i.id === itemId);
+            if (itemIndex !== -1) {
+              canvas.items.splice(itemIndex, 1);
+              deletedItems.push({ itemId, canvasId });
+
+              // Deselect if deleted
+              if (gridState.selectedItemId === itemId) {
+                gridState.selectedItemId = null;
+                gridState.selectedCanvasId = null;
+              }
+              break;
+            }
+          }
+        });
+
+        // Single state update
+        gridState.canvases = { ...gridState.canvases };
+
+        // Emit batch event
+        eventManager.emit('componentsBatchDeleted', { items: deletedItems });
+      },
+
+      updateConfigsBatch: (updates: Array<{ itemId: string; config: Record<string, any> }>) => {
+        const updatedItems: Array<{ itemId: string; canvasId: string; config: Record<string, any> }> = [];
+
+        updates.forEach(({ itemId, config }) => {
+          for (const canvasId in gridState.canvases) {
+            const canvas = gridState.canvases[canvasId];
+            const itemIndex = canvas.items.findIndex((i) => i.id === itemId);
+            if (itemIndex !== -1) {
+              // Merge config
+              canvas.items[itemIndex] = {
+                ...canvas.items[itemIndex],
+                config: { ...canvas.items[itemIndex].config, ...config },
+              };
+              updatedItems.push({ itemId, canvasId, config });
+              break;
+            }
+          }
+        });
+
+        // Single state update
+        gridState.canvases = { ...gridState.canvases };
+
+        // Emit batch event
+        eventManager.emit('configsBatchChanged', { items: updatedItems });
+      },
+
+      // ======================
+      // Canvas Access
+      // ======================
+
       getCanvasElement: (canvasId: string) => {
         return document.getElementById(canvasId);
       },
-    } as GridBuilderAPI;
+    };
   }
 
   /**
