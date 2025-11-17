@@ -518,9 +518,9 @@ export class GridBuilder {
     return (
       <Host ref={(el) => this.el = el}>
         <div class="grid-builder-container">
-          {/* Component Palette - will be implemented next */}
+          {/* Component Palette */}
           <div class="palette-area">
-            Component Palette (TODO)
+            <component-palette components={this.components} config={this.config} />
           </div>
 
           {/* Canvas Area */}
@@ -538,10 +538,8 @@ export class GridBuilder {
             </div>
           </div>
 
-          {/* Config Panel - will be implemented later */}
-          <div class="config-area">
-            Config Panel (TODO)
-          </div>
+          {/* Config Panel */}
+          <config-panel componentRegistry={this.componentRegistry} />
         </div>
       </Host>
     );
