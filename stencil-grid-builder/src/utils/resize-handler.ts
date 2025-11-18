@@ -196,8 +196,10 @@
  */
 
 import { GridItem } from '../services/state-manager';
+import { ComponentDefinition } from '../types/component-definition';
 import { domCache } from './dom-cache';
-import { getGridSizeHorizontal, getGridSizeVertical, pixelsToGridX, pixelsToGridY } from './grid-calculations';
+import { getGridSizeHorizontal, getGridSizeVertical, pixelsToGridX, pixelsToGridY, gridToPixelsX, gridToPixelsY } from './grid-calculations';
+import { BUILD_TIMESTAMP } from './version';
 
 /**
  * Extract current transform position from element's inline style
@@ -292,6 +294,9 @@ export class ResizeHandler {
   /** Grid item data (position, size, layouts) */
   private item: GridItem;
 
+  /** Component definition (for min/max size constraints) */
+  private componentDefinition?: ComponentDefinition;
+
   /** Callback to update parent state after resize ends */
   private onUpdate: (item: GridItem) => void;
 
@@ -301,13 +306,27 @@ export class ResizeHandler {
   /** RAF ID for cancelling pending frame updates */
   private resizeRafId: number | null = null;
 
-  /** Accumulated position and size during resize (deltaRect tracking) */
+  /** Starting position and size at resize start (for deltaRect calculations) */
   private startRect: { x: number; y: number; width: number; height: number } = {
     x: 0,
     y: 0,
     width: 0,
     height: 0,
   };
+
+  /** Last calculated position and size from handleResizeMove (for handleResizeEnd) */
+  private lastCalculated: { x: number; y: number; width: number; height: number } = {
+    x: 0,
+    y: 0,
+    width: 0,
+    height: 0,
+  };
+
+  /** Min/max size constraints in pixels (cached from component definition) */
+  private minWidth: number = 100;
+  private minHeight: number = 80;
+  private maxWidth: number = Infinity;
+  private maxHeight: number = Infinity;
 
   /**
    * Create resize handler and initialize interact.js
@@ -330,6 +349,7 @@ export class ResizeHandler {
    * @param element - DOM element to make resizable (grid-item-wrapper)
    * @param item - Grid item data for dimension/position management
    * @param onUpdate - Callback invoked with updated item after resize ends
+   * @param componentDefinition - Optional component definition for min/max size constraints
    *
    * @example
    * ```typescript
@@ -337,18 +357,21 @@ export class ResizeHandler {
    * private resizeHandler: ResizeHandler;
    *
    * componentDidLoad() {
+   *   const definition = this.componentRegistry.get(this.item.type);
    *   this.resizeHandler = new ResizeHandler(
    *     this.element,
    *     this.item,
-   *     (item) => this.handleItemUpdate(item)
+   *     (item) => this.handleItemUpdate(item),
+   *     definition
    *   );
    * }
    * ```
    */
-  constructor(element: HTMLElement, item: GridItem, onUpdate: (item: GridItem) => void) {
+  constructor(element: HTMLElement, item: GridItem, onUpdate: (item: GridItem) => void, componentDefinition?: ComponentDefinition) {
     this.element = element;
     this.item = item;
     this.onUpdate = onUpdate;
+    this.componentDefinition = componentDefinition;
 
     // Ensure element has width/height before initializing interact.js
     // StencilJS might not have applied styles yet
@@ -461,32 +484,68 @@ export class ResizeHandler {
    * ```
    */
   private initialize(): void {
+    // DEBUG: Log build timestamp for debugging (easy to remove/disable)
+    console.log('📦 resize-handler.ts build:', BUILD_TIMESTAMP);
+
     const interact = (window as any).interact;
     if (!interact) {
       console.warn('interact.js not loaded');
       return;
     }
 
-    this.interactInstance = interact(this.element).resizable({
-      edges: { left: true, right: true, bottom: true, top: true },
+    // Get min/max size from component definition (in grid units), convert to pixels
+    const minSizeGridUnits = this.componentDefinition?.minSize;
+    const maxSizeGridUnits = this.componentDefinition?.maxSize;
 
-      modifiers: [
-        // Enforce minimum size
-        interact.modifiers.restrictSize({
-          min: { width: 100, height: 80 },
-        }),
-        // Snap to grid only when resize ends (prevents jump during resize)
-        interact.modifiers.snap({
-          targets: [
-            interact.snappers.grid({
-              x: () => getGridSizeHorizontal(this.item.canvasId),
-              y: () => getGridSizeVertical(),
-            }),
-          ],
-          range: Infinity,
-          endOnly: true,
-        }),
-      ],
+    this.minWidth = minSizeGridUnits
+      ? gridToPixelsX(minSizeGridUnits.width, this.item.canvasId)
+      : 100;
+    this.minHeight = minSizeGridUnits
+      ? gridToPixelsY(minSizeGridUnits.height)
+      : 80;
+
+    this.maxWidth = maxSizeGridUnits
+      ? gridToPixelsX(maxSizeGridUnits.width, this.item.canvasId)
+      : Infinity;
+    this.maxHeight = maxSizeGridUnits
+      ? gridToPixelsY(maxSizeGridUnits.height)
+      : Infinity;
+
+    // Determine which edges should be enabled based on min/max constraints
+    // If min == max for a dimension, disable resizing on that dimension
+    const canResizeWidth = this.maxWidth === Infinity || this.maxWidth > this.minWidth;
+    const canResizeHeight = this.maxHeight === Infinity || this.maxHeight > this.minHeight;
+
+    console.log('🔧 ResizeHandler init for', this.item.id, {
+      minWidth: this.minWidth,
+      maxWidth: this.maxWidth,
+      minHeight: this.minHeight,
+      maxHeight: this.maxHeight,
+      canResizeWidth,
+      canResizeHeight,
+      componentDefinition: this.componentDefinition,
+    });
+
+    // Apply disabled class to element to control handle visibility via CSS
+    if (!canResizeWidth) {
+      console.log('  ❌ Disabling width resize');
+      this.element.classList.add('resize-width-disabled');
+    }
+    if (!canResizeHeight) {
+      console.log('  ❌ Disabling height resize');
+      this.element.classList.add('resize-height-disabled');
+    }
+
+    this.interactInstance = interact(this.element).resizable({
+      edges: {
+        left: canResizeWidth,
+        right: canResizeWidth,
+        bottom: canResizeHeight,
+        top: canResizeHeight
+      },
+
+      // No modifiers - we handle all constraints manually in handleResizeMove
+      // This prevents fighting between interact.js modifiers and our RAF-batched updates
 
       listeners: {
         start: this.handleResizeStart.bind(this),
@@ -553,6 +612,18 @@ export class ResizeHandler {
     this.startRect.y = position.y;
     this.startRect.width = parseFloat(event.target.style.width) || 0;
     this.startRect.height = parseFloat(event.target.style.height) || 0;
+
+    // Reset data attributes for tracking cumulative deltas (like drag-handler)
+    event.target.setAttribute('data-x', '0');
+    event.target.setAttribute('data-y', '0');
+    event.target.setAttribute('data-width', '0');
+    event.target.setAttribute('data-height', '0');
+
+    console.log('🟢 RESIZE START:', {
+      edges: event.edges,
+      startRect: { ...this.startRect },
+      itemId: this.item.id,
+    });
   }
 
   /**
@@ -634,32 +705,36 @@ export class ResizeHandler {
    * ```
    */
   private handleResizeMove(event: any): void {
-    // Cancel any pending frame
-    if (this.resizeRafId) {
-      cancelAnimationFrame(this.resizeRafId);
-    }
+    // Use data attributes to track cumulative deltas (same pattern as drag-handler)
+    // This prevents interact.js from getting confused about element position
+    const deltaX = (parseFloat(event.target.getAttribute('data-x')) || 0) + event.deltaRect.left;
+    const deltaY = (parseFloat(event.target.getAttribute('data-y')) || 0) + event.deltaRect.top;
+    const deltaWidth = (parseFloat(event.target.getAttribute('data-width')) || 0) + event.deltaRect.width;
+    const deltaHeight = (parseFloat(event.target.getAttribute('data-height')) || 0) + event.deltaRect.height;
 
-    // Batch DOM updates with requestAnimationFrame for 60fps
-    this.resizeRafId = requestAnimationFrame(() => {
-      // Use deltaRect to accumulate changes
-      const dx = event.deltaRect.left;
-      const dy = event.deltaRect.top;
-      const dw = event.deltaRect.width;
-      const dh = event.deltaRect.height;
+    // Calculate new dimensions and position from base + deltas
+    const newWidth = this.startRect.width + deltaWidth;
+    const newHeight = this.startRect.height + deltaHeight;
+    const newX = this.startRect.x + deltaX;
+    const newY = this.startRect.y + deltaY;
 
-      // Update stored rect
-      this.startRect.x += dx;
-      this.startRect.y += dy;
-      this.startRect.width += dw;
-      this.startRect.height += dh;
-
-      // Apply styles
-      event.target.style.transform = `translate(${this.startRect.x}px, ${this.startRect.y}px)`;
-      event.target.style.width = this.startRect.width + 'px';
-      event.target.style.height = this.startRect.height + 'px';
-
-      this.resizeRafId = null;
+    console.log('🔵 RESIZE MOVE:', {
+      edges: event.edges,
+      deltas: { deltaX, deltaY, deltaWidth, deltaHeight },
+      startRect: { ...this.startRect },
+      calculated: { newX, newY, newWidth, newHeight },
     });
+
+    // Apply styles directly - smooth free-form resizing
+    event.target.style.transform = `translate(${newX}px, ${newY}px)`;
+    event.target.style.width = newWidth + 'px';
+    event.target.style.height = newHeight + 'px';
+
+    // Update data attributes for next move event
+    event.target.setAttribute('data-x', deltaX.toString());
+    event.target.setAttribute('data-y', deltaY.toString());
+    event.target.setAttribute('data-width', deltaWidth.toString());
+    event.target.setAttribute('data-height', deltaHeight.toString());
   }
 
   /**
@@ -778,12 +853,6 @@ export class ResizeHandler {
 
     event.target.classList.remove('resizing');
 
-    // Clean up data attributes
-    event.target.removeAttribute('data-x');
-    event.target.removeAttribute('data-y');
-    event.target.removeAttribute('data-width');
-    event.target.removeAttribute('data-height');
-
     // Get the container to calculate relative position
     const container = domCache.getCanvas(this.item.canvasId);
     if (!container) {
@@ -794,19 +863,91 @@ export class ResizeHandler {
     const gridSizeX = getGridSizeHorizontal(this.item.canvasId);
     const gridSizeY = getGridSizeVertical();
 
-    // Convert absolute event.rect to container-relative coordinates
-    let newX = event.rect.left - containerRect.left;
-    let newY = event.rect.top - containerRect.top;
-    let newWidth = event.rect.width;
-    let newHeight = event.rect.height;
+    // Get final deltas from data attributes BEFORE cleaning them up (like drag-handler)
+    const deltaX = parseFloat(event.target.getAttribute('data-x')) || 0;
+    const deltaY = parseFloat(event.target.getAttribute('data-y')) || 0;
+    const deltaWidth = parseFloat(event.target.getAttribute('data-width')) || 0;
+    const deltaHeight = parseFloat(event.target.getAttribute('data-height')) || 0;
 
-    // Snap position to grid
-    newX = Math.round(newX / gridSizeX) * gridSizeX;
-    newY = Math.round(newY / gridSizeY) * gridSizeY;
+    // Clean up data attributes AFTER reading them
+    event.target.removeAttribute('data-x');
+    event.target.removeAttribute('data-y');
+    event.target.removeAttribute('data-width');
+    event.target.removeAttribute('data-height');
 
-    // Snap dimensions to grid
-    newWidth = Math.round(newWidth / gridSizeX) * gridSizeX;
-    newHeight = Math.round(newHeight / gridSizeY) * gridSizeY;
+    // Calculate final position and size from base + deltas
+    let newX = this.startRect.x + deltaX;
+    let newY = this.startRect.y + deltaY;
+    let newWidth = this.startRect.width + deltaWidth;
+    let newHeight = this.startRect.height + deltaHeight;
+
+    console.log('🔴 RESIZE END:', {
+      edges: event.edges,
+      eventRect: { left: event.rect.left, top: event.rect.top, width: event.rect.width, height: event.rect.height },
+      containerRect: { left: containerRect.left, top: containerRect.top },
+      beforeSnap: { newX, newY, newWidth, newHeight },
+      gridSize: { gridSizeX, gridSizeY },
+      startRect: { ...this.startRect },
+      lastCalculated: { ...this.lastCalculated },
+    });
+
+    // Grid snap AFTER user releases mouse (not during resize)
+    // Use directional rounding based on resize direction to prevent snap-back
+    // If user made item bigger, round UP. If smaller, round DOWN.
+
+    // Width: directional rounding based on whether user grew or shrunk
+    if (newWidth > this.startRect.width) {
+      // User made it wider → round UP to next grid cell
+      newWidth = Math.ceil(newWidth / gridSizeX) * gridSizeX;
+    } else if (newWidth < this.startRect.width) {
+      // User made it narrower → round DOWN to previous grid cell
+      newWidth = Math.floor(newWidth / gridSizeX) * gridSizeX;
+    } else {
+      // No change → keep original (round normally)
+      newWidth = Math.round(newWidth / gridSizeX) * gridSizeX;
+    }
+
+    // Height: directional rounding based on whether user grew or shrunk
+    if (newHeight > this.startRect.height) {
+      // User made it taller → round UP to next grid cell
+      newHeight = Math.ceil(newHeight / gridSizeY) * gridSizeY;
+    } else if (newHeight < this.startRect.height) {
+      // User made it shorter → round DOWN to previous grid cell
+      newHeight = Math.floor(newHeight / gridSizeY) * gridSizeY;
+    } else {
+      // No change → keep original
+      newHeight = Math.round(newHeight / gridSizeY) * gridSizeY;
+    }
+
+    // Position: directional rounding for top/left edge resizes
+    if (newX < this.startRect.x) {
+      // User moved left edge left → round DOWN (move further left to grid)
+      newX = Math.floor(newX / gridSizeX) * gridSizeX;
+    } else if (newX > this.startRect.x) {
+      // User moved left edge right → round UP (move further right to grid)
+      newX = Math.ceil(newX / gridSizeX) * gridSizeX;
+    } else {
+      newX = Math.round(newX / gridSizeX) * gridSizeX;
+    }
+
+    if (newY < this.startRect.y) {
+      // User moved top edge up → round DOWN (move further up to grid)
+      newY = Math.floor(newY / gridSizeY) * gridSizeY;
+    } else if (newY > this.startRect.y) {
+      // User moved top edge down → round UP (move further down to grid)
+      newY = Math.ceil(newY / gridSizeY) * gridSizeY;
+    } else {
+      newY = Math.round(newY / gridSizeY) * gridSizeY;
+    }
+
+    console.log('  afterDirectionalSnap:', { newX, newY, newWidth, newHeight });
+
+    // Apply min/max size constraints AFTER grid snapping
+    // This ensures the final size respects component constraints
+    newWidth = Math.max(this.minWidth, Math.min(this.maxWidth, newWidth));
+    newHeight = Math.max(this.minHeight, Math.min(this.maxHeight, newHeight));
+
+    console.log('  afterMinMaxClamp:', { newX, newY, newWidth, newHeight });
 
     // Keep within parent boundaries (manual implementation since interact.js restrictEdges breaks deltaRect)
     newX = Math.max(0, newX); // Don't go past left edge
@@ -814,10 +955,18 @@ export class ResizeHandler {
     newX = Math.min(newX, container.clientWidth - newWidth); // Don't go past right edge
     newY = Math.min(newY, container.clientHeight - newHeight); // Don't go past bottom edge
 
-    // Apply snapped final position
+    console.log('  afterBoundaryCheck:', { newX, newY, newWidth, newHeight });
+
+    // Apply final snapped position
     event.target.style.transform = `translate(${newX}px, ${newY}px)`;
     event.target.style.width = newWidth + 'px';
     event.target.style.height = newHeight + 'px';
+
+    console.log('  appliedToDOM:', {
+      transform: `translate(${newX}px, ${newY}px)`,
+      width: `${newWidth}px`,
+      height: `${newHeight}px`,
+    });
 
     // Update item size and position in current viewport's layout (convert to grid units)
     const currentViewport = (window as any).gridState?.currentViewport || 'desktop';
@@ -827,6 +976,14 @@ export class ResizeHandler {
     layout.height = pixelsToGridY(newHeight);
     layout.x = pixelsToGridX(newX, this.item.canvasId);
     layout.y = pixelsToGridY(newY);
+
+    console.log('  finalGridUnits:', {
+      x: layout.x,
+      y: layout.y,
+      width: layout.width,
+      height: layout.height,
+    });
+    console.log('---');
 
     // If in mobile view, mark as customized
     if (currentViewport === 'mobile') {
