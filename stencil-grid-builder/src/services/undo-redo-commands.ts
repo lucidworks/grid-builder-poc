@@ -155,7 +155,12 @@
  * @module undo-redo-commands
  */
 
-import { GridItem, gridState } from './state-manager';
+import {
+  addItemToCanvas,
+  GridItem,
+  gridState,
+  updateItem as updateItemInState,
+} from './state-manager';
 import { Command } from './undo-redo';
 
 /**
@@ -884,5 +889,116 @@ export class MoveItemCommand implements Command {
     targetCanvas.items.push(item);
 
     gridState.canvases = { ...gridState.canvases };
+  }
+}
+
+/**
+ * UpdateItemCommand - Update item properties
+ *
+ * Records old item state and applies updates
+ */
+export class UpdateItemCommand implements Command {
+  constructor(
+    private canvasId: string,
+    private itemId: string,
+    private oldItem: GridItem,
+    private updates: Partial<GridItem>
+  ) {}
+
+  undo(): void {
+    updateItemInState(this.canvasId, this.itemId, this.oldItem);
+  }
+
+  redo(): void {
+    updateItemInState(this.canvasId, this.itemId, this.updates);
+  }
+}
+
+/**
+ * RemoveItemCommand - Remove item from canvas
+ *
+ * Stores removed item for restoration
+ */
+export class RemoveItemCommand implements Command {
+  constructor(
+    private canvasId: string,
+    private item: GridItem
+  ) {}
+
+  undo(): void {
+    addItemToCanvas(this.canvasId, this.item);
+  }
+
+  redo(): void {
+    removeItemFromCanvas(this.canvasId, this.item.id);
+  }
+}
+
+/**
+ * SetViewportCommand - Change current viewport
+ *
+ * Stores old and new viewport states
+ */
+export class SetViewportCommand implements Command {
+  constructor(
+    private oldViewport: 'desktop' | 'mobile',
+    private newViewport: 'desktop' | 'mobile'
+  ) {}
+
+  undo(): void {
+    gridState.currentViewport = this.oldViewport;
+  }
+
+  redo(): void {
+    gridState.currentViewport = this.newViewport;
+  }
+}
+
+/**
+ * ToggleGridCommand - Toggle grid visibility
+ *
+ * Stores old and new visibility states
+ */
+export class ToggleGridCommand implements Command {
+  constructor(
+    private oldValue: boolean,
+    private newValue: boolean
+  ) {}
+
+  undo(): void {
+    gridState.showGrid = this.oldValue;
+  }
+
+  redo(): void {
+    gridState.showGrid = this.newValue;
+  }
+}
+
+/**
+ * SetCanvasBackgroundCommand - Change canvas background color
+ *
+ * Stores old and new background colors
+ */
+export class SetCanvasBackgroundCommand implements Command {
+  constructor(
+    private canvasId: string,
+    private oldColor: string,
+    private newColor: string
+  ) {}
+
+  undo(): void {
+    const canvas = gridState.canvases[this.canvasId];
+    if (canvas) {
+      canvas.backgroundColor = this.oldColor;
+      gridState.canvases = { ...gridState.canvases };
+    }
+  }
+
+  redo(): void {
+    const canvas = gridState.canvases[this.canvasId];
+    if (canvas) {
+      canvas.backgroundColor = this.newColor;
+      gridState.canvases = { ...gridState.canvases };
+    }
   }
 }

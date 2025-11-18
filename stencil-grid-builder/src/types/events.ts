@@ -707,6 +707,88 @@ export interface EventMap {
 }
 
 /**
+ * GridBuilderAPI Event Types
+ * ============================
+ *
+ * Additional event types used by the GridBuilderAPI.
+ * These follow a different naming convention (item* vs component*)
+ * for consistency with the API method names.
+ */
+
+/** Fired when an item is added to a canvas */
+export interface ItemAddedEvent {
+  canvasId: string;
+  item: GridItem;
+}
+
+/** Fired when an item is removed from a canvas */
+export interface ItemRemovedEvent {
+  canvasId: string;
+  itemId: string;
+}
+
+/** Fired when an item is updated */
+export interface ItemUpdatedEvent {
+  canvasId: string;
+  itemId: string;
+  updates: Partial<GridItem>;
+}
+
+/** Fired when an item is moved between canvases */
+export interface ItemMovedEvent {
+  itemId: string;
+  fromCanvasId: string;
+  toCanvasId: string;
+}
+
+/** Fired when item selection changes */
+export interface SelectionChangedEvent {
+  itemId: string | null;
+  canvasId: string | null;
+}
+
+/** Fired when grid visibility changes */
+export interface GridVisibilityChangedEvent {
+  visible: boolean;
+}
+
+/** Fired when canvas background color changes */
+export interface CanvasBackgroundChangedEvent {
+  canvasId: string;
+  color: string;
+}
+
+/** Generic state change event */
+export interface StateChangedEvent {
+  // Empty - just signals that state changed
+}
+
+/**
+ * GridBuilderAPI Event Map
+ * ==========================
+ *
+ * Type-safe mapping of event names to event data types for GridBuilderAPI.
+ */
+export interface GridBuilderEventMap {
+  // Item events
+  itemAdded: ItemAddedEvent;
+  itemRemoved: ItemRemovedEvent;
+  itemUpdated: ItemUpdatedEvent;
+  itemMoved: ItemMovedEvent;
+
+  // Selection events
+  selectionChanged: SelectionChangedEvent;
+
+  // Display events
+  viewportChanged: ViewportChangedEvent;
+  gridVisibilityChanged: GridVisibilityChangedEvent;
+  canvasBackgroundChanged: CanvasBackgroundChangedEvent;
+
+  // State events
+  stateChanged: StateChangedEvent;
+}
+
+/**
  * Event name type (union of all event names)
  *
  * **Use cases**:

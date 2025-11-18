@@ -25,7 +25,7 @@
 }
 
 .grid-item.selected {
-  z-index: 1000;
+  /* z-index handled via inline style to respect actual item.zIndex */
   border: 3px solid #2563eb; /* Thicker border with darker blue */
   padding: 19px 19px 19px 43px; /* Compensate for thicker border to prevent content shift */
   box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2), 0 4px 12px rgba(74, 144, 226, 0.4);
@@ -90,6 +90,7 @@
   position: absolute;
   top: 8px;
   right: 8px;
+  z-index: 10; /* Ensure controls appear above item content */
   display: flex;
   gap: 4px;
   opacity: 0;
@@ -147,6 +148,7 @@
   position: absolute;
   top: 8px;
   left: 8px;
+  z-index: 10; /* Ensure handle appears above item content */
   display: flex;
   width: 28px;
   height: 28px;
@@ -186,6 +188,7 @@
 /* Resize Handles */
 .resize-handle {
   position: absolute;
+  z-index: 10; /* Ensure handles appear above item content */
   width: 10px;
   height: 10px;
   border: 2px solid white;
@@ -276,4 +279,21 @@
 .grid-item.selected .resize-handle.e,
 .grid-item.selected .resize-handle.se {
   right: -6px; /* -5px - 1px for thicker border */
+}
+
+/* Hide resize handles when dimension is disabled (min == max) */
+/* Hide horizontal handles (left, right, and corners) when width resize is disabled */
+.grid-item.resize-width-disabled .resize-handle.w,
+.grid-item.resize-width-disabled .resize-handle.e,
+.grid-item.resize-width-disabled .resize-handle.nw,
+.grid-item.resize-width-disabled .resize-handle.ne,
+.grid-item.resize-width-disabled .resize-handle.sw,
+.grid-item.resize-width-disabled .resize-handle.se {
+  display: none;
+}
+
+/* Hide vertical handles (top, bottom) when height resize is disabled */
+.grid-item.resize-height-disabled .resize-handle.n,
+.grid-item.resize-height-disabled .resize-handle.s {
+  display: none;
 }

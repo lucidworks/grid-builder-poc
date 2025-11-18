@@ -346,9 +346,9 @@ export class CanvasSection {
           // Dropping from palette - create new item
           const componentType = droppedElement.getAttribute('data-component-type');
 
-          // Get default size from component definition (defaults to 10×6 if not found)
-          const defaultWidth = 10;
-          const defaultHeight = 6;
+          // Get stored dimensions from palette drag handler (or fall back to 10×6 default)
+          const defaultWidth = (droppedElement as any)._defaultWidth || 10;
+          const defaultHeight = (droppedElement as any)._defaultHeight || 6;
           const widthPx = gridToPixelsX(defaultWidth, this.canvasId, this.config);
           const heightPx = gridToPixelsY(defaultHeight);
           const halfWidth = widthPx / 2;

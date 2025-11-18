@@ -1,0 +1,28 @@
+/**
+ * Custom drag clone that mimics the actual button component appearance.
+ * This fills the exact dimensions provided and looks like a real button.
+ */
+.custom-drag-clone {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  /* Button-like appearance matching blog-button component */
+  background: linear-gradient(135deg, #4a90e2 0%, #357abd 100%);
+  border-radius: 6px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  color: #ffffff;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+
+  /* Semi-transparent to indicate it's a preview */
+  opacity: 0.9;
+
+  /* Cursor feedback */
+  cursor: grabbing;
+
+  /* Slight elevation effect */
+  transform: translateY(-2px);
+  transition: transform 0.2s ease;
+}

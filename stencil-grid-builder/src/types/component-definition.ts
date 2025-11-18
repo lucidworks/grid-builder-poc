@@ -439,4 +439,181 @@ export interface ComponentDefinition {
    * ```
    */
   onHidden?: (itemId: string) => void;
+
+  /**
+   * Optional: Custom palette item renderer
+   *
+   * **When provided**: Returns HTML string with a Stencil web component tag
+   * that will be rendered as the palette item.
+   *
+   * **When NOT provided**: Library uses default palette item (icon + name).
+   *
+   * **Use cases**:
+   * - Custom branding or styling for palette items
+   * - Visual previews or thumbnails in palette
+   * - Enhanced component descriptions
+   *
+   * **Props provided**:
+   * - `componentType`: The component type
+   * - `name`: Component display name
+   * - `icon`: Component icon/emoji
+   *
+   * **Return value**: HTML string with custom element tag
+   *
+   * @param props - Palette item rendering context
+   * @returns HTML string with web component tag
+   *
+   * @example
+   * ```typescript
+   * renderPaletteItem: ({ componentType, name, icon }) =>
+   *   `<custom-palette-item
+   *      component-type="${componentType}"
+   *      name="${name}"
+   *      icon="${icon}">
+   *    </custom-palette-item>`
+   * ```
+   */
+  renderPaletteItem?: (props: {
+    componentType: string;
+    name: string;
+    icon: string;
+  }) => string;
+
+  /**
+   * Optional: Custom drag clone renderer
+   *
+   * **When provided**: Returns HTML string with a Stencil web component tag
+   * that will be rendered as the drag clone.
+   *
+   * **When NOT provided**: Library uses default drag clone styling.
+   *
+   * **Use cases**:
+   * - Custom branding or animations
+   * - Complex visual preview
+   * - Match exact component appearance
+   *
+   * **Props provided**:
+   * - `componentType`: The component type being dragged
+   * - `name`: Component display name
+   * - `icon`: Component icon/emoji
+   * - `width`: Calculated width in pixels (from defaultSize)
+   * - `height`: Calculated height in pixels (from defaultSize)
+   *
+   * **Return value**: HTML string with custom element tag
+   *
+   * **Note**: The library automatically positions and manages the drag clone.
+   * You only need to provide the HTML tag string.
+   *
+   * @param props - Drag clone rendering context
+   * @returns HTML string with web component tag
+   *
+   * @example
+   * ```typescript
+   * // Custom Stencil component for drag clone
+   * renderDragClone: ({ componentType, name, icon, width, height }) =>
+   *   `<custom-drag-clone
+   *      component-type="${componentType}"
+   *      name="${name}"
+   *      icon="${icon}"
+   *      width="${width}"
+   *      height="${height}">
+   *    </custom-drag-clone>`
+   * ```
+   */
+  renderDragClone?: (props: {
+    componentType: string;
+    name: string;
+    icon: string;
+    width: number;
+    height: number;
+  }) => string;
+
+  /**
+   * Optional: Custom item wrapper/chrome renderer
+   *
+   * **When provided**: Returns HTML string with a Stencil web component tag
+   * that will replace the default grid item chrome (drag handle, header, controls).
+   *
+   * **When NOT provided**: Library uses default grid item wrapper.
+   *
+   * **Use cases**:
+   * - Custom control layouts
+   * - Different header designs
+   * - Alternative drag handles
+   * - Custom branding
+   *
+   * **Props provided**:
+   * - `itemId`: The grid item ID
+   * - `componentType`: The component type
+   * - `name`: Component display name
+   * - `icon`: Component icon/emoji
+   * - `isSelected`: Whether the item is currently selected
+   * - `contentSlotId`: ID for the content container (your component renders here)
+   *
+   * **Return value**: HTML string with custom element tag
+   *
+   * **IMPORTANT REQUIREMENTS**:
+   * Your custom wrapper component MUST include:
+   *
+   * 1. **Content Slot**: A container with `id="${contentSlotId}"` where the actual component will render
+   *    ```html
+   *    <div id="${contentSlotId}" class="component-content"></div>
+   *    ```
+   *
+   * 2. **Drag Handle**: An element with class `drag-handle` for dragging functionality
+   *    ```html
+   *    <div class="drag-handle"></div>
+   *    ```
+   *
+   * 3. **Event Emission**: Your component must emit the following standard events for user actions
+   *    ```typescript
+   *    // Delete button clicked
+   *    this.el.dispatchEvent(new CustomEvent('item-delete', { bubbles: true, composed: true }));
+   *
+   *    // Bring to front button clicked
+   *    this.el.dispatchEvent(new CustomEvent('item-bring-to-front', { bubbles: true, composed: true }));
+   *
+   *    // Send to back button clicked
+   *    this.el.dispatchEvent(new CustomEvent('item-send-to-back', { bubbles: true, composed: true }));
+   *    ```
+   *
+   * **Event-based architecture**:
+   * The library uses Stencil's `@Listen` decorator to listen for these standard events.
+   * Your wrapper emits events → Library handles the business logic (undo/redo, state updates, etc.).
+   * This provides clean separation of concerns and follows web component best practices.
+   *
+   * Without the required elements and events, drag, resize, and delete functionality will not work.
+   * The resize handles (8-point) are added automatically by the library outside your custom chrome.
+   *
+   * @param props - Item wrapper rendering context
+   * @returns HTML string with web component tag
+   *
+   * @example
+   * ```typescript
+   * renderItemWrapper: ({ itemId, componentType, name, icon, isSelected, contentSlotId }) =>
+   *   `<custom-item-wrapper
+   *      item-id="${itemId}"
+   *      component-type="${componentType}"
+   *      name="${name}"
+   *      icon="${icon}"
+   *      is-selected="${isSelected}"
+   *      content-slot-id="${contentSlotId}">
+   *    </custom-item-wrapper>`
+   * ```
+   *
+   * Example custom wrapper component:
+   * - Use @Element() decorator to get host element reference
+   * - Create handler methods that dispatch custom events
+   * - Include drag-handle element with class="drag-handle"
+   * - Include content slot element with id={contentSlotId}
+   * - Dispatch 'item-delete', 'item-bring-to-front', 'item-send-to-back' events
+   */
+  renderItemWrapper?: (props: {
+    itemId: string;
+    componentType: string;
+    name: string;
+    icon: string;
+    isSelected: boolean;
+    contentSlotId: string;
+  }) => string;
 }

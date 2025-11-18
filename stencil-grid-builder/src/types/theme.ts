@@ -164,6 +164,84 @@ export interface GridBuilderTheme {
   fontFamily?: string;
 
   /**
+   * Grid item header background color
+   *
+   * **Used for**: Background of the header area showing component icon and name
+   * **Typical values**:
+   * - Light gray: 'rgba(0, 0, 0, 0.05)' ✅ Default
+   * - Primary color: '#007bff'
+   * - Transparent: 'transparent'
+   *
+   * @default 'rgba(0, 0, 0, 0.05)'
+   */
+  itemHeaderBackground?: string;
+
+  /**
+   * Grid item header text color
+   *
+   * **Used for**: Text color in the header area
+   * **Typical values**:
+   * - Dark: '#333333' ✅ Default
+   * - White: '#ffffff' (for dark header backgrounds)
+   * - Primary: '#007bff'
+   *
+   * @default '#333333'
+   */
+  itemHeaderColor?: string;
+
+  /**
+   * Grid item drag handle color
+   *
+   * **Used for**: Color of the drag handle (⋮⋮) indicator
+   * **Typical values**:
+   * - Gray: '#999999' ✅ Default
+   * - Primary: '#007bff'
+   * - White: '#ffffff' (for dark themes)
+   *
+   * @default '#999999'
+   */
+  itemDragHandleColor?: string;
+
+  /**
+   * Grid item control button color
+   *
+   * **Used for**: Color of control buttons (bring to front, send to back, delete)
+   * **Typical values**:
+   * - White: '#ffffff' ✅ Default
+   * - Primary: '#007bff'
+   * - Custom: '#333333'
+   *
+   * @default '#ffffff'
+   */
+  itemControlButtonColor?: string;
+
+  /**
+   * Grid item control button background
+   *
+   * **Used for**: Background color of control buttons
+   * **Typical values**:
+   * - Primary: '#007bff' ✅ Default
+   * - Gray: '#666666'
+   * - Semi-transparent: 'rgba(0, 0, 0, 0.7)'
+   *
+   * @default '#007bff'
+   */
+  itemControlButtonBackground?: string;
+
+  /**
+   * Grid item border color
+   *
+   * **Used for**: Border around grid items
+   * **Typical values**:
+   * - Light gray: '#e0e0e0' ✅ Default
+   * - Transparent: 'transparent' (no border)
+   * - Primary: '#007bff'
+   *
+   * @default '#e0e0e0'
+   */
+  itemBorderColor?: string;
+
+  /**
    * Custom CSS properties (CSS variables)
    *
    * **Used for**: Advanced theming beyond predefined colors

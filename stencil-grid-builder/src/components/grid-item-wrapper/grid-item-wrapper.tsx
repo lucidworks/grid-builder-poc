@@ -26,10 +26,10 @@
  * @module grid-item-wrapper
  */
 
-import { Component, h, Prop, State } from '@stencil/core';
+import { Component, h, Listen, Prop, State } from '@stencil/core';
 
 // Internal imports
-import { GridItem, gridState } from '../../services/state-manager';
+import { GridItem, gridState, updateItem } from '../../services/state-manager';
 import { pushCommand } from '../../services/undo-redo';
 import { MoveItemCommand } from '../../services/undo-redo-commands';
 import { virtualRenderer } from '../../services/virtual-renderer';
@@ -162,9 +162,12 @@ export class GridItemWrapper {
    * Component did load lifecycle hook
    */
   componentDidLoad() {
+    // Get component definition for min/max size constraints
+    const componentDefinition = this.componentRegistry?.get(this.item.type);
+
     // Initialize drag and resize handlers
     this.dragHandler = new DragHandler(this.itemRef, this.item, this.handleItemUpdate);
-    this.resizeHandler = new ResizeHandler(this.itemRef, this.item, this.handleItemUpdate);
+    this.resizeHandler = new ResizeHandler(this.itemRef, this.item, this.handleItemUpdate, componentDefinition);
 
     // Set up virtual rendering observer
     virtualRenderer.observe(this.itemRef, this.item.id, (isVisible) => {
@@ -188,6 +191,57 @@ export class GridItemWrapper {
     if (this.itemRef) {
       virtualRenderer.unobserve(this.itemRef, this.item.id);
     }
+  }
+
+  /**
+   * Listen for item-delete events from custom wrapper components
+   * This is the PUBLIC API for custom wrappers to request item deletion
+   * We intercept these and re-dispatch as internal 'grid-item:delete' events
+   */
+  @Listen('item-delete')
+  handleItemDeleteEvent(event: CustomEvent) {
+    console.log('🔴 @Listen(item-delete) - from custom wrapper', {
+      eventTarget: event.target,
+      itemId: this.item.id,
+    });
+
+    // Stop the public event from bubbling
+    event.stopPropagation();
+
+    // Re-dispatch as internal event that grid-builder listens for
+    const deleteEvent = new CustomEvent('grid-item:delete', {
+      detail: { itemId: this.item.id, canvasId: this.item.canvasId },
+      bubbles: true,
+      composed: true,
+    });
+    console.log('  📤 Re-dispatching as grid-item:delete');
+    this.itemRef.dispatchEvent(deleteEvent);
+  }
+
+  /**
+   * Listen for item-bring-to-front events from custom wrapper components
+   */
+  @Listen('item-bring-to-front')
+  handleItemBringToFrontEvent(event: CustomEvent) {
+    event.stopPropagation();
+    const canvas = gridState.canvases[this.item.canvasId];
+    if (!canvas) return;
+
+    const maxZ = Math.max(...canvas.items.map((i) => i.zIndex));
+    updateItem(this.item.canvasId, this.item.id, { zIndex: maxZ + 1 });
+  }
+
+  /**
+   * Listen for item-send-to-back events from custom wrapper components
+   */
+  @Listen('item-send-to-back')
+  handleItemSendToBackEvent(event: CustomEvent) {
+    event.stopPropagation();
+    const canvas = gridState.canvases[this.item.canvasId];
+    if (!canvas) return;
+
+    const minZ = Math.min(...canvas.items.map((i) => i.zIndex));
+    updateItem(this.item.canvasId, this.item.id, { zIndex: minZ - 1 });
   }
 
   /**
@@ -231,10 +285,19 @@ export class GridItemWrapper {
 
     // Call component definition's render function
     // Pass itemId and config so component can look up state and use config
-    return definition.render({
+    const rendered = definition.render({
       itemId: this.item.id,
       config: this.item.config,
     });
+
+    // If render returns a DOM element (HTMLElement), wrap it in a div for Stencil
+    // This handles cases where consumer uses document.createElement()
+    if (rendered instanceof HTMLElement) {
+      return <div ref={(el) => el && el.appendChild(rendered)} />;
+    }
+
+    // Otherwise return the vNode directly (JSX)
+    return rendered;
   }
 
   /**
@@ -314,6 +377,64 @@ export class GridItemWrapper {
     const icon = definition?.icon || '�';
     const displayName = this.item.name || definition?.name || this.item.type;
 
+    // Generate unique content slot ID for custom wrapper
+    const contentSlotId = `${this.item.id}-content`;
+
+    // Check if custom item wrapper is provided
+    if (definition?.renderItemWrapper) {
+      const customWrapperHTML = definition.renderItemWrapper({
+        itemId: this.item.id,
+        componentType: this.item.type,
+        name: displayName,
+        icon: icon,
+        isSelected: isSelected,
+        contentSlotId: contentSlotId,
+      });
+
+      return (
+        <div
+          class={itemClasses}
+          id={this.item.id}
+          data-canvas-id={this.item.canvasId}
+          data-component-name={displayName}
+          style={itemStyle}
+          onClick={(e) => this.handleClick(e)}
+          ref={(el) => {
+            this.itemRef = el;
+            if (el && !el.hasAttribute('data-custom-chrome-initialized')) {
+              // Set innerHTML after ref is set
+              el.innerHTML = customWrapperHTML;
+              el.setAttribute('data-custom-chrome-initialized', 'true');
+
+              // Render component content into the content slot
+              const contentSlot = el.querySelector(`#${contentSlotId}`);
+              if (contentSlot) {
+                const componentContent = this.renderComponent();
+                if (componentContent instanceof HTMLElement) {
+                  contentSlot.appendChild(componentContent);
+                } else {
+                  // For Stencil vNodes, we need to render them manually
+                  // This is a simplified approach - Stencil will handle this in the default case
+                  contentSlot.textContent = '';
+                }
+              }
+            }
+          }}
+        >
+          {/* Resize Handles (8 points) */}
+          <div class="resize-handle nw" />
+          <div class="resize-handle ne" />
+          <div class="resize-handle sw" />
+          <div class="resize-handle se" />
+          <div class="resize-handle n" />
+          <div class="resize-handle s" />
+          <div class="resize-handle e" />
+          <div class="resize-handle w" />
+        </div>
+      );
+    }
+
+    // Default item wrapper
     return (
       <div
         class={itemClasses}
@@ -333,16 +454,16 @@ export class GridItemWrapper {
         </div>
 
         {/* Item Content */}
-        <div class="grid-item-content" id={`${this.item.id}-content`}>
+        <div class="grid-item-content" id={contentSlotId}>
           {this.renderComponent()}
         </div>
 
         {/* Item Controls */}
         <div class="grid-item-controls">
-          <button class="grid-item-control-btn" onClick={() => this.handleBringToFront()} title="Bring to Front">
+          <button class="grid-item-control-btn bring-to-front" onClick={() => this.handleBringToFront()} title="Bring to Front">
             ⬆️
           </button>
-          <button class="grid-item-control-btn" onClick={() => this.handleSendToBack()} title="Send to Back">
+          <button class="grid-item-control-btn send-to-back" onClick={() => this.handleSendToBack()} title="Send to Back">
             ⬇️
           </button>
           <button class="grid-item-delete" onClick={() => this.handleDelete()}>
@@ -489,31 +610,49 @@ export class GridItemWrapper {
    * Handle bring to front (increase z-index)
    */
   private handleBringToFront = () => {
+    console.log('⬆️ handleBringToFront', { itemId: this.item.id, currentZ: this.item.zIndex });
     const canvas = gridState.canvases[this.item.canvasId];
+    if (!canvas) {
+      console.log('  ❌ Canvas not found');
+      return;
+    }
+
     const maxZ = Math.max(...canvas.items.map((i) => i.zIndex));
-    this.item.zIndex = maxZ + 1;
-    gridState.canvases = { ...gridState.canvases };
+    console.log('  📊 Max Z-index:', maxZ, '→ New Z:', maxZ + 1);
+    updateItem(this.item.canvasId, this.item.id, { zIndex: maxZ + 1 });
   };
 
   /**
    * Handle send to back (decrease z-index)
    */
   private handleSendToBack = () => {
+    console.log('⬇️ handleSendToBack', { itemId: this.item.id, currentZ: this.item.zIndex });
     const canvas = gridState.canvases[this.item.canvasId];
+    if (!canvas) {
+      console.log('  ❌ Canvas not found');
+      return;
+    }
+
     const minZ = Math.min(...canvas.items.map((i) => i.zIndex));
-    this.item.zIndex = minZ - 1;
-    gridState.canvases = { ...gridState.canvases };
+    console.log('  📊 Min Z-index:', minZ, '→ New Z:', minZ - 1);
+    updateItem(this.item.canvasId, this.item.id, { zIndex: minZ - 1 });
   };
 
   /**
-   * Handle delete (dispatch event to app)
+   * Handle delete from default wrapper button
+   * Dispatches internal 'grid-item:delete' event directly to grid-builder
    */
   private handleDelete = () => {
-    const event = new CustomEvent('item-delete', {
+    console.log('🗑️ handleDelete (default wrapper button)', {
+      itemId: this.item.id,
+      canvasId: this.item.canvasId,
+    });
+    const event = new CustomEvent('grid-item:delete', {
       detail: { itemId: this.item.id, canvasId: this.item.canvasId },
       bubbles: true,
       composed: true,
     });
+    console.log('  📤 Dispatching grid-item:delete (internal event)');
     this.itemRef.dispatchEvent(event);
   };
 }

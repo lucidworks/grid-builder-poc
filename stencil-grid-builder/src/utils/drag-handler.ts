@@ -499,17 +499,24 @@ export class DragHandler {
    * Handle drag end event - finalize position and update state
    *
    * **Most Complex Method**: Handles grid snapping, boundary constraints, cross-canvas
-   * detection, mobile layout handling, and state persistence.
+   * detection, canvas boundary snap-back, mobile layout handling, and state persistence.
    *
    * ## Processing Steps
    *
-   * ### 1. Cross-Canvas Detection
-   * - Calculate item center point in viewport coordinates
+   * ### 1. Cross-Canvas and Boundary Detection
+   * - Calculate item bounds in viewport coordinates
    * - Hit-test against all canvas bounding boxes
-   * - Detect if dragged to different canvas
+   * - Detect if dragged to different canvas OR overlapping canvas boundary
+   * - **Snap-back logic**: If item overlaps boundary, snap to canvas it's mostly within
    * - **Early exit**: Let dropzone handler manage cross-canvas moves
    *
-   * **Why check center point**:
+   * **Canvas Boundary Snap-Back**:
+   * - Calculate percentage of item area within each canvas
+   * - If item overlaps a boundary, determine which canvas contains majority
+   * - Snap to bottom/top edge of the canvas containing >50% of item area
+   * - Prevents components from spanning multiple canvases
+   *
+   * **Why check center point for cross-canvas**:
    * - More intuitive than checking any corner
    * - Prevents accidental canvas switches when edge crosses boundary
    * - Matches user mental model ("where did I drop it?")
@@ -568,6 +575,7 @@ export class DragHandler {
    *
    * **Total execution time**: ~5-10ms
    * - Cross-canvas detection: ~1-2ms (querySelectorAll + getBoundingClientRect)
+   * - Boundary overlap calculation: ~1ms
    * - Grid calculations: ~1ms
    * - Boundary checks: ~0.5ms
    * - State update: ~3-5ms (single re-render)
@@ -581,6 +589,7 @@ export class DragHandler {
    *
    * - Item dragged outside canvas bounds → clamped to canvas
    * - Item dragged to different canvas → delegated to dropzone
+   * - Item overlapping canvas boundary → snapped back to majority canvas
    * - Canvas container not found → early exit (safety)
    * - Mobile view with no mobile layout → initialized from desktop
    * - Item near edge → snapped to edge for alignment
@@ -657,9 +666,48 @@ export class DragHandler {
     newX = Math.round(newX / gridSizeX) * gridSizeX;
     newY = Math.round(newY / gridSizeY) * gridSizeY;
 
-    // Ensure item stays fully within target canvas
+    // Get item dimensions
     const itemWidth = parseFloat(event.target.style.width) || 0;
     const itemHeight = parseFloat(event.target.style.height) || 0;
+
+    // Canvas boundary snap-back logic
+    // Check if item would overlap canvas boundary after grid snapping
+    const containerRect = targetContainer.getBoundingClientRect();
+    const itemBottom = containerRect.top + newY + itemHeight;
+    const canvasBottom = containerRect.bottom;
+
+    // If item extends below canvas bottom, check if we should snap it back
+    if (itemBottom > canvasBottom) {
+      // Calculate how much of the item is within vs outside the canvas
+      const itemTop = containerRect.top + newY;
+      const overlapHeight = itemBottom - canvasBottom;
+      const withinHeight = itemHeight - overlapHeight;
+
+      // If more than 50% is within canvas, snap to bottom edge of canvas
+      if (withinHeight > itemHeight / 2) {
+        // Snap to bottom edge (position item so its bottom aligns with canvas bottom)
+        newY = targetContainer.clientHeight - itemHeight;
+        // Re-snap to grid
+        newY = Math.round(newY / gridSizeY) * gridSizeY;
+        // Ensure it doesn't go negative
+        newY = Math.max(0, newY);
+      } else {
+        // Less than 50% within - this shouldn't happen with proper constraints
+        // but clamp it to bottom anyway
+        newY = targetContainer.clientHeight - itemHeight;
+      }
+    }
+
+    // Similarly check top boundary (though less common)
+    if (newY < 0) {
+      const itemBottom = newY + itemHeight;
+      if (itemBottom > itemHeight / 2) {
+        // More than 50% is within canvas (below top edge), snap to top
+        newY = 0;
+      }
+    }
+
+    // Ensure item stays fully within target canvas bounds
     newX = Math.max(0, Math.min(newX, targetContainer.clientWidth - itemWidth));
     newY = Math.max(0, Math.min(newY, targetContainer.clientHeight - itemHeight));
 

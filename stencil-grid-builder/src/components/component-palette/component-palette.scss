@@ -48,16 +48,9 @@
   opacity: 0.5;
 }
 
-/* Drag Clone */
+/* Drag Clone - only positioning, no visual styling */
 .dragging-clone {
   position: fixed;
   z-index: 10000;
-  width: 200px;
-  height: 150px;
-  padding: 20px;
-  border-radius: 4px;
-  background: rgba(74, 144, 226, 90%);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 20%);
-  color: white;
   pointer-events: none;
 }

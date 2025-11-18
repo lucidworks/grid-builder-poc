@@ -5,4 +5,5 @@ module.exports = {
   testRegex: '(/__tests__/.*|(\\.| /)(test|spec|e2e))\\.[jt]sx?$',
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json'],
   testRunner: 'jest-jasmine2',
+  setupFilesAfterEnv: ['<rootDir>/jest.setup.ts'],
 };

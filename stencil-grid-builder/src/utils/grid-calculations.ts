@@ -182,7 +182,8 @@ export function getGridSizeHorizontal(
   }
 
   // Get grid size percent from config or use default
-  const gridSizePercent = (config?.gridSizePercent ?? GRID_SIZE_HORIZONTAL_PERCENT) / 100;
+  // Config gridSizePercent is whole number (2 = 2%), default is already decimal (0.02)
+  const gridSizePercent = config?.gridSizePercent ? config.gridSizePercent / 100 : GRID_SIZE_HORIZONTAL_PERCENT;
 
   // Calculate raw grid size
   const rawSize = container.clientWidth * gridSizePercent;

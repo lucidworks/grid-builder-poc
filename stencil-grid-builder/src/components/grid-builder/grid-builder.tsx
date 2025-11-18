@@ -43,7 +43,7 @@
  * @module grid-builder
  */
 
-import { Component, h, Host, Prop, State, Watch } from '@stencil/core';
+import { Component, Element, h, Host, Listen, Prop, State, Watch } from '@stencil/core';
 import interact from 'interactjs';
 
 // Type imports
@@ -55,9 +55,12 @@ import { UIComponentOverrides } from '../../types/ui-overrides';
 import { GridBuilderAPI } from '../../types/api';
 
 // Service imports
-import { gridState, GridState, generateItemId } from '../../services/state-manager';
+import { gridState, GridState, generateItemId, deleteItemsBatch } from '../../services/state-manager';
 import { virtualRenderer } from '../../services/virtual-renderer';
 import { eventManager } from '../../services/event-manager';
+
+// Utility imports
+import { pixelsToGridX, pixelsToGridY } from '../../utils/grid-calculations';
 
 /**
  * GridBuilder Component
@@ -270,6 +273,19 @@ export class GridBuilder {
   private api?: GridBuilderAPI;
 
   /**
+   * Host element reference
+   *
+   * **Purpose**: Access to host element for event listeners
+   */
+  @Element() private hostElement!: HTMLElement;
+
+  /**
+   * Event listener references for cleanup
+   */
+  private canvasDropHandler?: (e: Event) => void;
+  private canvasMoveHandler?: (e: Event) => void;
+
+  /**
    * Component will load lifecycle
    *
    * **Purpose**: Validate props and initialize component registry
@@ -287,6 +303,24 @@ export class GridBuilder {
    * - If initialState provided, merge into gridState
    * - Otherwise use empty canvases
    */
+
+  /**
+   * Handle item deletion from grid-item-wrapper
+   * Internal event dispatched by grid-item-wrapper after user clicks delete
+   */
+  @Listen('grid-item:delete')
+  handleGridItemDelete(event: CustomEvent) {
+    console.log('🗑️ @Listen(grid-item:delete) in grid-builder', {
+      detail: event.detail,
+    });
+
+    const { itemId } = event.detail;
+    if (itemId) {
+      console.log('  ✅ Deleting item:', itemId);
+      deleteItemsBatch([itemId]);
+    }
+  }
+
   componentWillLoad() {
     // Validate required props
     if (!this.components || this.components.length === 0) {
@@ -364,6 +398,55 @@ export class GridBuilder {
         });
       });
     };
+
+    // Setup canvas drop event handler for palette items
+    this.canvasDropHandler = (event: Event) => {
+      const customEvent = event as CustomEvent;
+      const { canvasId, componentType, x, y } = customEvent.detail;
+
+      console.log('🎯 canvas-drop event received:', { canvasId, componentType, x, y });
+
+      // Get component definition to determine default size
+      const definition = this.componentRegistry.get(componentType);
+      if (!definition) {
+        console.warn(`Component definition not found for type: ${componentType}`);
+        return;
+      }
+
+      const defaultSize = definition.defaultSize || { width: 10, height: 6 };
+
+      // Convert pixel position to grid units
+      const gridX = pixelsToGridX(x, canvasId);
+      const gridY = pixelsToGridY(y);
+
+      console.log('  Converting to grid units:', { gridX, gridY, width: defaultSize.width, height: defaultSize.height });
+
+      // Use existing addComponent API method
+      const newItem = this.api?.addComponent(canvasId, componentType, {
+        x: gridX,
+        y: gridY,
+        width: defaultSize.width,
+        height: defaultSize.height,
+      });
+
+      console.log('  Created item:', newItem);
+    };
+
+    this.hostElement.addEventListener('canvas-drop', this.canvasDropHandler);
+
+    // Setup canvas move event handler for cross-canvas moves
+    this.canvasMoveHandler = (event: Event) => {
+      const customEvent = event as CustomEvent;
+      const { itemId, sourceCanvasId, targetCanvasId, x, y } = customEvent.detail;
+
+      console.log('🔄 canvas-move event received:', { itemId, sourceCanvasId, targetCanvasId, x, y });
+
+      // TODO: Implement cross-canvas move
+      // This would require updating the item's canvasId and position
+      console.warn('Cross-canvas moves not yet implemented');
+    };
+
+    this.hostElement.addEventListener('canvas-move', this.canvasMoveHandler);
   }
 
   /**
@@ -372,10 +455,19 @@ export class GridBuilder {
    * **Purpose**: Clean up resources when component unmounts
    *
    * **Cleanup sequence**:
-   * 1. Destroy all plugins
-   * 2. Clear global references
+   * 1. Remove event listeners
+   * 2. Destroy all plugins
+   * 3. Clear global references
    */
   disconnectedCallback() {
+    // Remove event listeners
+    if (this.canvasDropHandler) {
+      this.hostElement.removeEventListener('canvas-drop', this.canvasDropHandler);
+    }
+    if (this.canvasMoveHandler) {
+      this.hostElement.removeEventListener('canvas-move', this.canvasMoveHandler);
+    }
+
     // Destroy plugins
     if (this.initializedPlugins.length > 0) {
       this.initializedPlugins.forEach(plugin => {

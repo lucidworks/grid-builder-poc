@@ -213,9 +213,20 @@ export class ComponentPalette {
         <h2>Components</h2>
 
         {this.components.map((component) => (
-          <div class="palette-item" data-component-type={component.type} key={component.type}>
-            {component.icon} {component.name}
-          </div>
+          <div
+            class="palette-item"
+            data-component-type={component.type}
+            key={component.type}
+            innerHTML={
+              component.renderPaletteItem
+                ? component.renderPaletteItem({
+                    componentType: component.type,
+                    name: component.name,
+                    icon: component.icon,
+                  })
+                : `${component.icon} ${component.name}`
+            }
+          ></div>
         ))}
       </div>
     );
@@ -333,34 +344,72 @@ export class ComponentPalette {
 
             // Calculate actual component size from definition (or use default)
             const defaultSize = definition.defaultSize || { width: 10, height: 6 };
-            const widthPx = gridToPixelsX(defaultSize.width, 'canvas1', this.config);
-            const heightPx = gridToPixelsY(defaultSize.height);
+
+            // Get first available canvas ID from gridState for size calculation
+            const gridState = (window as any).gridState;
+            const canvasIds = gridState?.canvases ? Object.keys(gridState.canvases) : [];
+            const canvasId = canvasIds.length > 0 ? canvasIds[0] : null;
+
+            // Calculate size - if no canvas exists yet, use fallback calculation
+            let widthPx: number;
+            let heightPx: number;
+
+            if (canvasId) {
+              // Use actual canvas for accurate sizing
+              widthPx = gridToPixelsX(defaultSize.width, canvasId, this.config);
+              heightPx = gridToPixelsY(defaultSize.height);
+            } else {
+              // Fallback: estimate size based on default grid settings (2% of 1000px = 20px per unit)
+              const estimatedGridSize = 20; // Approximate default grid size
+              widthPx = defaultSize.width * estimatedGridSize;
+              heightPx = defaultSize.height * estimatedGridSize;
+            }
+
             const halfWidth = widthPx / 2;
             const halfHeight = heightPx / 2;
 
-            // Create drag clone with actual component size
+            // Create drag clone container
             const dragClone = document.createElement('div');
             dragClone.className = 'dragging-clone';
             dragClone.style.position = 'fixed';
-            dragClone.style.width = widthPx + 'px';
-            dragClone.style.height = heightPx + 'px';
             dragClone.style.left = event.clientX - halfWidth + 'px';
             dragClone.style.top = event.clientY - halfHeight + 'px';
-            dragClone.style.padding = '20px 20px 20px 44px';
-            dragClone.style.background = 'rgba(74, 144, 226, 0.9)';
-            dragClone.style.color = 'white';
-            dragClone.style.borderRadius = '4px';
             dragClone.style.pointerEvents = 'none';
             dragClone.style.zIndex = '10000';
-            dragClone.innerHTML = `
-              <div style="font-weight: 600; color: #fff; margin-bottom: 5px; font-size: 14px;">${definition.icon} ${definition.name}</div>
-            `;
+
+            // Use custom renderer if provided, otherwise use simple default
+            if (definition.renderDragClone) {
+              // Render custom drag clone HTML - no additional styling on container
+              const customHTML = definition.renderDragClone({
+                componentType: componentType,
+                name: definition.name,
+                icon: definition.icon,
+                width: widthPx,
+                height: heightPx,
+              });
+
+              dragClone.innerHTML = customHTML;
+            } else {
+              // Use simple default styled div
+              dragClone.style.width = widthPx + 'px';
+              dragClone.style.height = heightPx + 'px';
+              dragClone.style.padding = '20px';
+              dragClone.style.background = 'rgba(74, 144, 226, 0.9)';
+              dragClone.style.color = '#ffffff';
+              dragClone.style.borderRadius = '4px';
+              dragClone.innerHTML = `
+                <div style="font-weight: 600; color: #ffffff; font-size: 14px;">${definition.icon} ${definition.name}</div>
+              `;
+            }
+
             document.body.appendChild(dragClone);
 
-            // Store clone reference and half dimensions for move event
+            // Store clone reference, half dimensions, and default size for move/drop events
             (event.target as any)._dragClone = dragClone;
             (event.target as any)._halfWidth = halfWidth;
             (event.target as any)._halfHeight = halfHeight;
+            (event.target as any)._defaultWidth = defaultSize.width;
+            (event.target as any)._defaultHeight = defaultSize.height;
           },
 
           /**

@@ -18,6 +18,34 @@ export { GridBuilderPlugin } from "./types/plugin";
 export { UIComponentOverrides } from "./types/ui-overrides";
 export { GridItem, GridState } from "./services/state-manager";
 export namespace Components {
+    interface BlogApp {
+    }
+    interface BlogArticle {
+        "author"?: string;
+        /**
+          * @default 'Article content goes here'
+         */
+        "content": string;
+        "date"?: string;
+    }
+    interface BlogButton {
+        "href"?: string;
+        /**
+          * @default 'Click me!'
+         */
+        "label": string;
+        /**
+          * @default 'primary'
+         */
+        "variant": 'primary' | 'secondary';
+    }
+    interface BlogHeader {
+        /**
+          * @default 'Default Header'
+         */
+        "headerTitle": string;
+        "subtitle"?: string;
+    }
     /**
      * CanvasSection Component
      * =======================
@@ -70,6 +98,56 @@ export namespace Components {
           * Component registry (from parent grid-builder)  **Source**: grid-builder component **Purpose**: Look up component definitions for config forms
          */
         "componentRegistry"?: Map<string, ComponentDefinition>;
+    }
+    /**
+     * Custom Drag Clone Component
+     * ============================
+     * Example custom drag clone that mimics a button component appearance.
+     * This shows how to create a drag preview that looks exactly like the
+     * component that will be dropped - helping with visual alignment.
+     * The component fills the exact width and height provided, with no extra chrome.
+     */
+    interface CustomDragClone {
+        /**
+          * Component type being dragged
+         */
+        "componentType": string;
+        /**
+          * Height in pixels
+         */
+        "height": number;
+        /**
+          * Icon/emoji
+         */
+        "icon": string;
+        /**
+          * Display name
+         */
+        "name": string;
+        /**
+          * Width in pixels
+         */
+        "width": number;
+    }
+    /**
+     * Custom Palette Item Component
+     * ==============================
+     * Example custom palette item that shows how consumers can create
+     * fully customized palette entries for their components.
+     */
+    interface CustomPaletteItem {
+        /**
+          * Component type
+         */
+        "componentType": string;
+        /**
+          * Icon/emoji
+         */
+        "icon": string;
+        /**
+          * Display name
+         */
+        "name": string;
     }
     /**
      * GridBuilder Component
@@ -132,7 +210,46 @@ export namespace Components {
         "renderVersion"?: number;
     }
 }
+export interface BlogButtonCustomEvent<T> extends CustomEvent<T> {
+    detail: T;
+    target: HTMLBlogButtonElement;
+}
 declare global {
+    interface HTMLBlogAppElement extends Components.BlogApp, HTMLStencilElement {
+    }
+    var HTMLBlogAppElement: {
+        prototype: HTMLBlogAppElement;
+        new (): HTMLBlogAppElement;
+    };
+    interface HTMLBlogArticleElement extends Components.BlogArticle, HTMLStencilElement {
+    }
+    var HTMLBlogArticleElement: {
+        prototype: HTMLBlogArticleElement;
+        new (): HTMLBlogArticleElement;
+    };
+    interface HTMLBlogButtonElementEventMap {
+        "buttonClick": void;
+    }
+    interface HTMLBlogButtonElement extends Components.BlogButton, HTMLStencilElement {
+        addEventListener<K extends keyof HTMLBlogButtonElementEventMap>(type: K, listener: (this: HTMLBlogButtonElement, ev: BlogButtonCustomEvent<HTMLBlogButtonElementEventMap[K]>) => any, options?: boolean | AddEventListenerOptions): void;
+        addEventListener<K extends keyof DocumentEventMap>(type: K, listener: (this: Document, ev: DocumentEventMap[K]) => any, options?: boolean | AddEventListenerOptions): void;
+        addEventListener<K extends keyof HTMLElementEventMap>(type: K, listener: (this: HTMLElement, ev: HTMLElementEventMap[K]) => any, options?: boolean | AddEventListenerOptions): void;
+        addEventListener(type: string, listener: EventListenerOrEventListenerObject, options?: boolean | AddEventListenerOptions): void;
+        removeEventListener<K extends keyof HTMLBlogButtonElementEventMap>(type: K, listener: (this: HTMLBlogButtonElement, ev: BlogButtonCustomEvent<HTMLBlogButtonElementEventMap[K]>) => any, options?: boolean | EventListenerOptions): void;
+        removeEventListener<K extends keyof DocumentEventMap>(type: K, listener: (this: Document, ev: DocumentEventMap[K]) => any, options?: boolean | EventListenerOptions): void;
+        removeEventListener<K extends keyof HTMLElementEventMap>(type: K, listener: (this: HTMLElement, ev: HTMLElementEventMap[K]) => any, options?: boolean | EventListenerOptions): void;
+        removeEventListener(type: string, listener: EventListenerOrEventListenerObject, options?: boolean | EventListenerOptions): void;
+    }
+    var HTMLBlogButtonElement: {
+        prototype: HTMLBlogButtonElement;
+        new (): HTMLBlogButtonElement;
+    };
+    interface HTMLBlogHeaderElement extends Components.BlogHeader, HTMLStencilElement {
+    }
+    var HTMLBlogHeaderElement: {
+        prototype: HTMLBlogHeaderElement;
+        new (): HTMLBlogHeaderElement;
+    };
     /**
      * CanvasSection Component
      * =======================
@@ -175,6 +292,32 @@ declare global {
         new (): HTMLConfigPanelElement;
     };
     /**
+     * Custom Drag Clone Component
+     * ============================
+     * Example custom drag clone that mimics a button component appearance.
+     * This shows how to create a drag preview that looks exactly like the
+     * component that will be dropped - helping with visual alignment.
+     * The component fills the exact width and height provided, with no extra chrome.
+     */
+    interface HTMLCustomDragCloneElement extends Components.CustomDragClone, HTMLStencilElement {
+    }
+    var HTMLCustomDragCloneElement: {
+        prototype: HTMLCustomDragCloneElement;
+        new (): HTMLCustomDragCloneElement;
+    };
+    /**
+     * Custom Palette Item Component
+     * ==============================
+     * Example custom palette item that shows how consumers can create
+     * fully customized palette entries for their components.
+     */
+    interface HTMLCustomPaletteItemElement extends Components.CustomPaletteItem, HTMLStencilElement {
+    }
+    var HTMLCustomPaletteItemElement: {
+        prototype: HTMLCustomPaletteItemElement;
+        new (): HTMLCustomPaletteItemElement;
+    };
+    /**
      * GridBuilder Component
      * ======================
      * Main library component providing complete grid builder functionality.
@@ -203,14 +346,49 @@ declare global {
         new (): HTMLGridItemWrapperElement;
     };
     interface HTMLElementTagNameMap {
+        "blog-app": HTMLBlogAppElement;
+        "blog-article": HTMLBlogArticleElement;
+        "blog-button": HTMLBlogButtonElement;
+        "blog-header": HTMLBlogHeaderElement;
         "canvas-section": HTMLCanvasSectionElement;
         "component-palette": HTMLComponentPaletteElement;
         "config-panel": HTMLConfigPanelElement;
+        "custom-drag-clone": HTMLCustomDragCloneElement;
+        "custom-palette-item": HTMLCustomPaletteItemElement;
         "grid-builder": HTMLGridBuilderElement;
         "grid-item-wrapper": HTMLGridItemWrapperElement;
     }
 }
 declare namespace LocalJSX {
+    interface BlogApp {
+    }
+    interface BlogArticle {
+        "author"?: string;
+        /**
+          * @default 'Article content goes here'
+         */
+        "content"?: string;
+        "date"?: string;
+    }
+    interface BlogButton {
+        "href"?: string;
+        /**
+          * @default 'Click me!'
+         */
+        "label"?: string;
+        "onButtonClick"?: (event: BlogButtonCustomEvent<void>) => void;
+        /**
+          * @default 'primary'
+         */
+        "variant"?: 'primary' | 'secondary';
+    }
+    interface BlogHeader {
+        /**
+          * @default 'Default Header'
+         */
+        "headerTitle"?: string;
+        "subtitle"?: string;
+    }
     /**
      * CanvasSection Component
      * =======================
@@ -263,6 +441,56 @@ declare namespace LocalJSX {
           * Component registry (from parent grid-builder)  **Source**: grid-builder component **Purpose**: Look up component definitions for config forms
          */
         "componentRegistry"?: Map<string, ComponentDefinition>;
+    }
+    /**
+     * Custom Drag Clone Component
+     * ============================
+     * Example custom drag clone that mimics a button component appearance.
+     * This shows how to create a drag preview that looks exactly like the
+     * component that will be dropped - helping with visual alignment.
+     * The component fills the exact width and height provided, with no extra chrome.
+     */
+    interface CustomDragClone {
+        /**
+          * Component type being dragged
+         */
+        "componentType": string;
+        /**
+          * Height in pixels
+         */
+        "height": number;
+        /**
+          * Icon/emoji
+         */
+        "icon": string;
+        /**
+          * Display name
+         */
+        "name": string;
+        /**
+          * Width in pixels
+         */
+        "width": number;
+    }
+    /**
+     * Custom Palette Item Component
+     * ==============================
+     * Example custom palette item that shows how consumers can create
+     * fully customized palette entries for their components.
+     */
+    interface CustomPaletteItem {
+        /**
+          * Component type
+         */
+        "componentType": string;
+        /**
+          * Icon/emoji
+         */
+        "icon": string;
+        /**
+          * Display name
+         */
+        "name": string;
     }
     /**
      * GridBuilder Component
@@ -325,9 +553,15 @@ declare namespace LocalJSX {
         "renderVersion"?: number;
     }
     interface IntrinsicElements {
+        "blog-app": BlogApp;
+        "blog-article": BlogArticle;
+        "blog-button": BlogButton;
+        "blog-header": BlogHeader;
         "canvas-section": CanvasSection;
         "component-palette": ComponentPalette;
         "config-panel": ConfigPanel;
+        "custom-drag-clone": CustomDragClone;
+        "custom-palette-item": CustomPaletteItem;
         "grid-builder": GridBuilder;
         "grid-item-wrapper": GridItemWrapper;
     }
@@ -336,6 +570,10 @@ export { LocalJSX as JSX };
 declare module "@stencil/core" {
     export namespace JSX {
         interface IntrinsicElements {
+            "blog-app": LocalJSX.BlogApp & JSXBase.HTMLAttributes<HTMLBlogAppElement>;
+            "blog-article": LocalJSX.BlogArticle & JSXBase.HTMLAttributes<HTMLBlogArticleElement>;
+            "blog-button": LocalJSX.BlogButton & JSXBase.HTMLAttributes<HTMLBlogButtonElement>;
+            "blog-header": LocalJSX.BlogHeader & JSXBase.HTMLAttributes<HTMLBlogHeaderElement>;
             /**
              * CanvasSection Component
              * =======================
@@ -362,6 +600,22 @@ declare module "@stencil/core" {
              * **Shadow DOM**: Disabled (for consistency with other components)
              */
             "config-panel": LocalJSX.ConfigPanel & JSXBase.HTMLAttributes<HTMLConfigPanelElement>;
+            /**
+             * Custom Drag Clone Component
+             * ============================
+             * Example custom drag clone that mimics a button component appearance.
+             * This shows how to create a drag preview that looks exactly like the
+             * component that will be dropped - helping with visual alignment.
+             * The component fills the exact width and height provided, with no extra chrome.
+             */
+            "custom-drag-clone": LocalJSX.CustomDragClone & JSXBase.HTMLAttributes<HTMLCustomDragCloneElement>;
+            /**
+             * Custom Palette Item Component
+             * ==============================
+             * Example custom palette item that shows how consumers can create
+             * fully customized palette entries for their components.
+             */
+            "custom-palette-item": LocalJSX.CustomPaletteItem & JSXBase.HTMLAttributes<HTMLCustomPaletteItemElement>;
             /**
              * GridBuilder Component
              * ======================

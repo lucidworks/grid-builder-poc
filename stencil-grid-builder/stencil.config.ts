@@ -2,10 +2,15 @@ import { Config } from '@stencil/core';
 import { sass } from '@stencil/sass';
 import path from 'path';
 
+// Build demo components only when BUILD_DEMO=true
+const buildDemo = process.env.BUILD_DEMO === 'true';
+
 export const config: Config = {
   namespace: 'grid-builder',
   globalStyle: 'src/global/global.scss',
   plugins: [sass()],
+  // Exclude demo components from production builds
+  excludeSrc: buildDemo ? [] : ['**/blog-*/**', '**/demo-utils/**'],
   outputTargets: [
     // NPM distribution
     {
@@ -20,10 +25,13 @@ export const config: Config = {
     {
       type: 'docs-readme',
     },
-    // Demo/testing (optional)
+    // Demo/testing (includes demo components)
     {
       type: 'www',
       serviceWorker: null,
+      copy: [
+        { src: 'demo' } // Copy demo folder to www
+      ]
     },
   ],
   testing: {
