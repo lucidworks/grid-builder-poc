@@ -375,4 +375,113 @@ describe('grid-builder', () => {
       expect((element as any).__mockListener).toHaveBeenCalled();
     });
   });
+
+  describe('Custom Selection Colors', () => {
+    it('should support optional selectionColor in component definition', () => {
+      const customColorDef = [
+        {
+          type: 'custom-header',
+          name: 'Custom Header',
+          icon: '📄',
+          defaultSize: { width: 20, height: 6 },
+          selectionColor: '#3b82f6', // Custom blue
+          render: () => <div>Header</div>,
+        },
+      ];
+
+      const component = new GridBuilder();
+      component.components = customColorDef;
+
+      expect(component.components[0].selectionColor).toBe('#3b82f6');
+    });
+
+    it('should work without selectionColor (using default)', () => {
+      const defaultColorDef = [
+        {
+          type: 'default-header',
+          name: 'Default Header',
+          icon: '📄',
+          defaultSize: { width: 20, height: 6 },
+          render: () => <div>Header</div>,
+        },
+      ];
+
+      const component = new GridBuilder();
+      component.components = defaultColorDef;
+
+      expect(component.components[0].selectionColor).toBeUndefined();
+    });
+
+    it('should support different colors for different component types', () => {
+      const multiColorDefs = [
+        {
+          type: 'header',
+          name: 'Header',
+          icon: '📄',
+          defaultSize: { width: 20, height: 6 },
+          selectionColor: '#3b82f6', // Blue
+          render: () => <div>Header</div>,
+        },
+        {
+          type: 'article',
+          name: 'Article',
+          icon: '📝',
+          defaultSize: { width: 25, height: 10 },
+          selectionColor: '#10b981', // Green
+          render: () => <div>Article</div>,
+        },
+        {
+          type: 'button',
+          name: 'Button',
+          icon: '🔘',
+          defaultSize: { width: 15, height: 5 },
+          selectionColor: '#ef4444', // Red
+          render: () => <div>Button</div>,
+        },
+      ];
+
+      const component = new GridBuilder();
+      component.components = multiColorDefs;
+
+      expect(component.components[0].selectionColor).toBe('#3b82f6');
+      expect(component.components[1].selectionColor).toBe('#10b981');
+      expect(component.components[2].selectionColor).toBe('#ef4444');
+    });
+
+    it('should accept various color formats', () => {
+      const colorFormatDefs = [
+        {
+          type: 'hex-color',
+          name: 'Hex Color',
+          icon: '🎨',
+          defaultSize: { width: 20, height: 6 },
+          selectionColor: '#ff5733', // 6-digit hex
+          render: () => <div>Hex</div>,
+        },
+        {
+          type: 'rgb-color',
+          name: 'RGB Color',
+          icon: '🎨',
+          defaultSize: { width: 20, height: 6 },
+          selectionColor: 'rgb(255, 87, 51)', // RGB
+          render: () => <div>RGB</div>,
+        },
+        {
+          type: 'rgba-color',
+          name: 'RGBA Color',
+          icon: '🎨',
+          defaultSize: { width: 20, height: 6 },
+          selectionColor: 'rgba(255, 87, 51, 0.8)', // RGBA
+          render: () => <div>RGBA</div>,
+        },
+      ];
+
+      const component = new GridBuilder();
+      component.components = colorFormatDefs;
+
+      expect(component.components[0].selectionColor).toBe('#ff5733');
+      expect(component.components[1].selectionColor).toBe('rgb(255, 87, 51)');
+      expect(component.components[2].selectionColor).toBe('rgba(255, 87, 51, 0.8)');
+    });
+  });
 });
