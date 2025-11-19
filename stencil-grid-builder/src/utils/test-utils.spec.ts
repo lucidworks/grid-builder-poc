@@ -40,8 +40,8 @@ describe('test-utils', () => {
     it('should reset state to defaults', () => {
       // Modify state
       gridState.canvases = {
-        canvas1: { items: [createTestItem()], zIndexCounter: 5, backgroundColor: '#000000' },
-        canvas2: { items: [], zIndexCounter: 1, backgroundColor: '#ffffff' },
+        canvas1: { items: [createTestItem()], zIndexCounter: 5 },
+        canvas2: { items: [], zIndexCounter: 1 },
       };
       gridState.selectedItemId = 'item-1';
       gridState.selectedCanvasId = 'canvas1';
@@ -55,7 +55,6 @@ describe('test-utils', () => {
       expect(Object.keys(gridState.canvases)).toEqual(['canvas1']);
       expect(gridState.canvases.canvas1.items).toEqual([]);
       expect(gridState.canvases.canvas1.zIndexCounter).toBe(1);
-      expect(gridState.canvases.canvas1.backgroundColor).toBe('#ffffff');
       expect(gridState.selectedItemId).toBeNull();
       expect(gridState.selectedCanvasId).toBeNull();
       expect(gridState.currentViewport).toBe('desktop');

@@ -37,7 +37,6 @@ export function resetGridState(): void {
     canvas1: {
       items: [],
       zIndexCounter: 1,
-      backgroundColor: '#ffffff',
     },
   };
   gridState.selectedItemId = null;
