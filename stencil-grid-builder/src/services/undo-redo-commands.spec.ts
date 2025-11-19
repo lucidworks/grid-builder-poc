@@ -1,5 +1,5 @@
-import { GridItem, gridState, reset } from './state-manager';
-import { AddItemCommand, DeleteItemCommand, MoveItemCommand } from './undo-redo-commands';
+import { GridItem, gridState, reset, addItemsBatch } from './state-manager';
+import { AddItemCommand, DeleteItemCommand, MoveItemCommand, BatchAddCommand, BatchDeleteCommand, BatchUpdateConfigCommand } from './undo-redo-commands';
 
 // Helper function to create a test item
 function createTestItem(id: string, canvasId: string, x: number = 0, y: number = 0): GridItem {
@@ -474,6 +474,224 @@ describe('undo-redo-commands', () => {
 
       add2.redo();
       expect(gridState.canvases.canvas1.items).toHaveLength(2);
+    });
+  });
+
+  describe('Batch Commands', () => {
+    beforeEach(() => {
+      // Clear prepopulated items for isolated test
+      gridState.canvases.canvas1.items = [];
+      gridState.canvases.canvas2.items = [];
+    });
+
+    describe('BatchAddCommand', () => {
+      it('should undo/redo batch add operation', () => {
+        const items = [
+          { canvasId: 'canvas1', type: 'header', name: 'Header' },
+          { canvasId: 'canvas1', type: 'text', name: 'Text' },
+        ];
+        const itemIds = addItemsBatch(items);
+        const command = new BatchAddCommand(itemIds);
+
+        expect(gridState.canvases.canvas1.items).toHaveLength(2);
+
+        command.undo();
+        expect(gridState.canvases.canvas1.items).toHaveLength(0);
+
+        command.redo();
+        expect(gridState.canvases.canvas1.items).toHaveLength(2);
+      });
+
+      it('should preserve item properties across undo/redo', () => {
+        const items = [
+          {
+            canvasId: 'canvas1',
+            type: 'header',
+            name: 'My Header',
+            config: { text: 'Test Header', color: 'blue' },
+          },
+        ];
+        const itemIds = addItemsBatch(items);
+        const command = new BatchAddCommand(itemIds);
+
+        command.undo();
+        command.redo();
+
+        const item = gridState.canvases.canvas1.items[0];
+        expect(item.name).toBe('My Header');
+        expect(item.config.text).toBe('Test Header');
+        expect(item.config.color).toBe('blue');
+      });
+
+      it('should handle batch add across multiple canvases', () => {
+        const items = [
+          { canvasId: 'canvas1', type: 'header', name: 'Header 1' },
+          { canvasId: 'canvas2', type: 'text', name: 'Text 2' },
+        ];
+        const itemIds = addItemsBatch(items);
+        const command = new BatchAddCommand(itemIds);
+
+        expect(gridState.canvases.canvas1.items).toHaveLength(1);
+        expect(gridState.canvases.canvas2.items).toHaveLength(1);
+
+        command.undo();
+        expect(gridState.canvases.canvas1.items).toHaveLength(0);
+        expect(gridState.canvases.canvas2.items).toHaveLength(0);
+
+        command.redo();
+        expect(gridState.canvases.canvas1.items).toHaveLength(1);
+        expect(gridState.canvases.canvas2.items).toHaveLength(1);
+      });
+    });
+
+    describe('BatchDeleteCommand', () => {
+      it('should undo/redo batch delete operation', () => {
+        const items = [
+          { canvasId: 'canvas1', type: 'header', name: 'Header' },
+          { canvasId: 'canvas1', type: 'text', name: 'Text' },
+        ];
+        const itemIds = addItemsBatch(items);
+        const command = new BatchDeleteCommand(itemIds);
+
+        expect(gridState.canvases.canvas1.items).toHaveLength(2);
+
+        command.redo();
+        expect(gridState.canvases.canvas1.items).toHaveLength(0);
+
+        command.undo();
+        expect(gridState.canvases.canvas1.items).toHaveLength(2);
+      });
+
+      it('should preserve item properties on undo', () => {
+        const items = [
+          {
+            canvasId: 'canvas1',
+            type: 'header',
+            name: 'My Header',
+            config: { text: 'Test Header', color: 'blue' },
+          },
+        ];
+        const itemIds = addItemsBatch(items);
+        const command = new BatchDeleteCommand(itemIds);
+
+        command.redo();
+        command.undo();
+
+        const item = gridState.canvases.canvas1.items[0];
+        expect(item.name).toBe('My Header');
+        expect(item.config.text).toBe('Test Header');
+        expect(item.config.color).toBe('blue');
+      });
+
+      it('should handle batch delete across multiple canvases', () => {
+        const items = [
+          { canvasId: 'canvas1', type: 'header', name: 'Header 1' },
+          { canvasId: 'canvas2', type: 'text', name: 'Text 2' },
+        ];
+        const itemIds = addItemsBatch(items);
+        const command = new BatchDeleteCommand(itemIds);
+
+        command.redo();
+        expect(gridState.canvases.canvas1.items).toHaveLength(0);
+        expect(gridState.canvases.canvas2.items).toHaveLength(0);
+
+        command.undo();
+        expect(gridState.canvases.canvas1.items).toHaveLength(1);
+        expect(gridState.canvases.canvas2.items).toHaveLength(1);
+      });
+    });
+
+    describe('BatchUpdateConfigCommand', () => {
+      it('should undo/redo batch config updates', () => {
+        const items = [
+          {
+            canvasId: 'canvas1',
+            type: 'header',
+            name: 'Header',
+            config: { text: 'Old Header', color: 'blue' },
+          },
+        ];
+        const itemIds = addItemsBatch(items);
+
+        const updates = [
+          {
+            itemId: itemIds[0],
+            canvasId: 'canvas1',
+            updates: { config: { text: 'New Header', color: 'red' } },
+          },
+        ];
+        const command = new BatchUpdateConfigCommand(updates);
+
+        command.redo();
+        const item1 = gridState.canvases.canvas1.items[0];
+        expect(item1.config.text).toBe('New Header');
+        expect(item1.config.color).toBe('red');
+
+        command.undo();
+        const item2 = gridState.canvases.canvas1.items[0];
+        expect(item2.config.text).toBe('Old Header');
+        expect(item2.config.color).toBe('blue');
+      });
+
+      it('should handle multiple config updates', () => {
+        const items = [
+          { canvasId: 'canvas1', type: 'header', name: 'Header', config: { text: 'Old 1' } },
+          { canvasId: 'canvas1', type: 'text', name: 'Text', config: { content: 'Old 2' } },
+        ];
+        const itemIds = addItemsBatch(items);
+
+        const updates = [
+          {
+            itemId: itemIds[0],
+            canvasId: 'canvas1',
+            updates: { config: { text: 'New 1' } },
+          },
+          {
+            itemId: itemIds[1],
+            canvasId: 'canvas1',
+            updates: { config: { content: 'New 2' } },
+          },
+        ];
+        const command = new BatchUpdateConfigCommand(updates);
+
+        command.redo();
+        expect(gridState.canvases.canvas1.items[0].config.text).toBe('New 1');
+        expect(gridState.canvases.canvas1.items[1].config.content).toBe('New 2');
+
+        command.undo();
+        expect(gridState.canvases.canvas1.items[0].config.text).toBe('Old 1');
+        expect(gridState.canvases.canvas1.items[1].config.content).toBe('Old 2');
+      });
+
+      it('should handle updates across multiple canvases', () => {
+        const items = [
+          { canvasId: 'canvas1', type: 'header', name: 'Header', config: { text: 'Canvas 1' } },
+          { canvasId: 'canvas2', type: 'text', name: 'Text', config: { text: 'Canvas 2' } },
+        ];
+        const itemIds = addItemsBatch(items);
+
+        const updates = [
+          {
+            itemId: itemIds[0],
+            canvasId: 'canvas1',
+            updates: { config: { text: 'Updated 1' } },
+          },
+          {
+            itemId: itemIds[1],
+            canvasId: 'canvas2',
+            updates: { config: { text: 'Updated 2' } },
+          },
+        ];
+        const command = new BatchUpdateConfigCommand(updates);
+
+        command.redo();
+        expect(gridState.canvases.canvas1.items[0].config.text).toBe('Updated 1');
+        expect(gridState.canvases.canvas2.items[0].config.text).toBe('Updated 2');
+
+        command.undo();
+        expect(gridState.canvases.canvas1.items[0].config.text).toBe('Canvas 1');
+        expect(gridState.canvases.canvas2.items[0].config.text).toBe('Canvas 2');
+      });
     });
   });
 });

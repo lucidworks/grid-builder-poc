@@ -355,6 +355,50 @@ const { state: undoRedoState } = createStore<UndoRedoState>({
 export { undoRedoState };
 
 /**
+ * Undo/Redo Service API
+ * =====================
+ *
+ * Provides a clear, namespaced API for undo/redo operations.
+ * Use this instead of individual function imports for better clarity.
+ *
+ * @example
+ * ```typescript
+ * import { undoRedo } from './services/undo-redo';
+ *
+ * // Add command to history
+ * undoRedo.push(new AddItemCommand(canvasId, item));
+ *
+ * // Undo/redo
+ * undoRedo.undo();
+ * undoRedo.redo();
+ *
+ * // Check availability
+ * if (undoRedo.canUndo()) {
+ *   undoRedo.undo();
+ * }
+ * ```
+ */
+export const undoRedo = {
+  /** Add command to undo/redo history */
+  push: pushCommand,
+
+  /** Undo last command */
+  undo,
+
+  /** Redo previously undone command */
+  redo,
+
+  /** Check if undo is available */
+  canUndo,
+
+  /** Check if redo is available */
+  canRedo,
+
+  /** Clear entire history */
+  clearHistory,
+};
+
+/**
  * Internal Command History State
  * ===============================
  *
@@ -504,6 +548,8 @@ function updateButtonStates(): void {
  * ```
  */
 export function pushCommand(command: Command): void {
+  console.log('➕ PUSH: Adding command to history:', (command as any).description || command);
+
   // Remove any commands after current position
   commandHistory.splice(historyPosition + 1);
 
@@ -516,6 +562,8 @@ export function pushCommand(command: Command): void {
   } else {
     historyPosition++;
   }
+
+  console.log('  History position now:', historyPosition, ', Total commands:', commandHistory.length);
 
   // Update button states
   updateButtonStates();
@@ -572,8 +620,11 @@ export function undo(): void {
   }
 
   const command = commandHistory[historyPosition];
+  console.log('🔙 UNDO: Executing command at position', historyPosition, ':', command);
+  console.log('  Command description:', (command as any).description);
   command.undo();
   historyPosition--;
+  console.log('  New position after undo:', historyPosition);
 
   updateButtonStates();
 }

@@ -752,10 +752,52 @@ export interface GridVisibilityChangedEvent {
   visible: boolean;
 }
 
-/** Fired when canvas background color changes */
-export interface CanvasBackgroundChangedEvent {
+/**
+ * Canvas Added Event
+ * ===================
+ *
+ * Fired when a canvas is added to the library state.
+ *
+ * **Library emits**: canvasId only (no metadata)
+ * **Host app responsibility**: Manage canvas metadata (title, colors, etc.) separately
+ *
+ * @example
+ * ```typescript
+ * // Host app maintains canvas metadata
+ * const canvasMetadata = {};
+ *
+ * api.on('canvasAdded', (event) => {
+ *   // Host app can add its own metadata
+ *   canvasMetadata[event.canvasId] = {
+ *     title: 'New Section',
+ *     backgroundColor: '#f5f5f5'
+ *   };
+ * });
+ * ```
+ */
+export interface CanvasAddedEvent {
   canvasId: string;
-  color: string;
+}
+
+/**
+ * Canvas Removed Event
+ * =====================
+ *
+ * Fired when a canvas is removed from the library state.
+ *
+ * **Library emits**: canvasId only
+ * **Host app responsibility**: Clean up canvas metadata on removal
+ *
+ * @example
+ * ```typescript
+ * api.on('canvasRemoved', (event) => {
+ *   // Host app removes its own metadata
+ *   delete canvasMetadata[event.canvasId];
+ * });
+ * ```
+ */
+export interface CanvasRemovedEvent {
+  canvasId: string;
 }
 
 /** Generic state change event */
@@ -769,6 +811,64 @@ export interface StateChangedEvent {
  *
  * Type-safe mapping of event names to event data types for GridBuilderAPI.
  */
+/**
+ * Items Batch Added Event
+ * =========================
+ *
+ * Fired when multiple items are added in a single batch operation via GridBuilderAPI.
+ *
+ * @example
+ * ```typescript
+ * api.on('itemsBatchAdded', (event) => {
+ *   console.log(`Added ${event.items.length} items in batch`);
+ * });
+ * ```
+ */
+export interface ItemsBatchAddedEvent {
+  /** Array of all added GridItem objects */
+  items: GridItem[];
+}
+
+/**
+ * Items Batch Deleted Event
+ * ===========================
+ *
+ * Fired when multiple items are deleted in a single batch operation via GridBuilderAPI.
+ *
+ * @example
+ * ```typescript
+ * api.on('itemsBatchDeleted', (event) => {
+ *   console.log(`Deleted ${event.itemIds.length} items in batch`);
+ * });
+ * ```
+ */
+export interface ItemsBatchDeletedEvent {
+  /** Array of deleted item IDs */
+  itemIds: string[];
+}
+
+/**
+ * Items Batch Updated Event
+ * ===========================
+ *
+ * Fired when multiple item configs are updated in a single batch operation via GridBuilderAPI.
+ *
+ * @example
+ * ```typescript
+ * api.on('itemsBatchUpdated', (event) => {
+ *   console.log(`Updated ${event.updates.length} items in batch`);
+ * });
+ * ```
+ */
+export interface ItemsBatchUpdatedEvent {
+  /** Array of { itemId, config } update records */
+  updates: Array<{
+    itemId: string;
+    canvasId: string;
+    config: Record<string, any>;
+  }>;
+}
+
 export interface GridBuilderEventMap {
   // Item events
   itemAdded: ItemAddedEvent;
@@ -776,13 +876,21 @@ export interface GridBuilderEventMap {
   itemUpdated: ItemUpdatedEvent;
   itemMoved: ItemMovedEvent;
 
+  // Batch item events
+  itemsBatchAdded: ItemsBatchAddedEvent;
+  itemsBatchDeleted: ItemsBatchDeletedEvent;
+  itemsBatchUpdated: ItemsBatchUpdatedEvent;
+
   // Selection events
   selectionChanged: SelectionChangedEvent;
+
+  // Canvas events
+  canvasAdded: CanvasAddedEvent;
+  canvasRemoved: CanvasRemovedEvent;
 
   // Display events
   viewportChanged: ViewportChangedEvent;
   gridVisibilityChanged: GridVisibilityChangedEvent;
-  canvasBackgroundChanged: CanvasBackgroundChangedEvent;
 
   // State events
   stateChanged: StateChangedEvent;

@@ -160,8 +160,11 @@ import {
   GridItem,
   gridState,
   updateItem as updateItemInState,
+  deleteItemsBatch,
+  updateItemsBatch,
 } from './state-manager';
 import { Command } from './undo-redo';
+import { eventManager } from './event-manager';
 
 /**
  * Helper function to remove an item from a canvas and clear selection
@@ -813,14 +816,28 @@ export class MoveItemCommand implements Command {
    * **Safety**: Returns early if canvas or item not found
    */
   undo(): void {
-    // Find the item in target canvas
-    const targetCanvas = gridState.canvases[this.targetCanvasId];
-    const item = targetCanvas?.items.find((i) => i.id === this.itemId);
+    // Find the item in target canvas first
+    let targetCanvas = gridState.canvases[this.targetCanvasId];
+    let item = targetCanvas?.items.find((i) => i.id === this.itemId);
+
+    // If target canvas doesn't exist or item not found there, search all canvases
+    // This handles the case where the target canvas was deleted
     if (!item) {
+      for (const canvasId in gridState.canvases) {
+        const canvas = gridState.canvases[canvasId];
+        item = canvas.items.find((i) => i.id === this.itemId);
+        if (item) {
+          targetCanvas = canvas;
+          break;
+        }
+      }
+    }
+
+    if (!item || !targetCanvas) {
       return;
     }
 
-    // Remove from target canvas
+    // Remove from current canvas (wherever it is)
     targetCanvas.items = targetCanvas.items.filter((i) => i.id !== this.itemId);
 
     // Update item's position and canvasId back to source
@@ -974,31 +991,367 @@ export class ToggleGridCommand implements Command {
   }
 }
 
+
 /**
- * SetCanvasBackgroundCommand - Change canvas background color
+ * BatchAddCommand - Add multiple items in a single batch operation
  *
- * Stores old and new background colors
+ * **Performance benefit**: 1 undo/redo command for N items instead of N commands.
+ * Reduces undo stack size and provides atomic undo/redo for batch operations.
+ *
+ * **Use cases**:
+ * - Stress test (add 100+ items at once)
+ * - Template application (add multiple pre-configured items)
+ * - Undo batch delete operation
+ * - Import from file (restore multiple items)
+ *
+ * **Undo behavior**:
+ * - Deletes all items in a single batch operation
+ * - Single state update, single re-render
+ *
+ * **Redo behavior**:
+ * - Re-adds all items with original IDs and properties
+ * - Maintains z-index and positioning
+ * - Single state update, single re-render
  */
-export class SetCanvasBackgroundCommand implements Command {
-  constructor(
-    private canvasId: string,
-    private oldColor: string,
-    private newColor: string
-  ) {}
+export class BatchAddCommand implements Command {
+  private itemsData: GridItem[];
+
+  constructor(itemIds: string[]) {
+    // Store full item data for redo (deep clone to prevent mutations)
+    this.itemsData = itemIds.map((id) => {
+      const item = Object.values(gridState.canvases)
+        .flatMap((canvas) => canvas.items)
+        .find((i) => i.id === id);
+      return item ? JSON.parse(JSON.stringify(item)) : null;
+    }).filter(Boolean) as GridItem[];
+  }
 
   undo(): void {
-    const canvas = gridState.canvases[this.canvasId];
+    // Delete all items in one batch
+    const itemIds = this.itemsData.map((item) => item.id);
+    deleteItemsBatch(itemIds);
+  }
+
+  redo(): void {
+    // Re-add all items (addItemsBatch will generate new IDs, so we need custom logic)
+    const updatedCanvases = { ...gridState.canvases };
+
+    for (const itemData of this.itemsData) {
+      const canvas = updatedCanvases[itemData.canvasId];
+      if (canvas) {
+        // Check if item already exists (prevent duplicates)
+        const exists = canvas.items.some((i) => i.id === itemData.id);
+        if (!exists) {
+          canvas.items.push(itemData);
+        }
+      }
+    }
+
+    gridState.canvases = updatedCanvases;
+  }
+}
+
+/**
+ * BatchDeleteCommand - Delete multiple items in a single batch operation
+ *
+ * **Performance benefit**: 1 undo/redo command for N items instead of N commands.
+ *
+ * **Use cases**:
+ * - Clear canvas (delete all items)
+ * - Delete selection group
+ * - Undo batch add operation
+ * - Bulk cleanup operations
+ *
+ * **Undo behavior**:
+ * - Re-adds all items with original properties and positions
+ * - Maintains z-index and canvas placement
+ * - Single state update, single re-render
+ *
+ * **Redo behavior**:
+ * - Deletes all items in a single batch operation
+ * - Single state update, single re-render
+ */
+export class BatchDeleteCommand implements Command {
+  private itemsData: GridItem[];
+
+  constructor(itemIds: string[]) {
+    // Store full item data for undo (deep clone to prevent mutations)
+    this.itemsData = itemIds.map((id) => {
+      const item = Object.values(gridState.canvases)
+        .flatMap((canvas) => canvas.items)
+        .find((i) => i.id === id);
+      return item ? JSON.parse(JSON.stringify(item)) : null;
+    }).filter(Boolean) as GridItem[];
+  }
+
+  undo(): void {
+    // Re-add all items (same logic as BatchAddCommand.redo)
+    const updatedCanvases = { ...gridState.canvases };
+
+    for (const itemData of this.itemsData) {
+      const canvas = updatedCanvases[itemData.canvasId];
+      if (canvas) {
+        // Check if item already exists (prevent duplicates)
+        const exists = canvas.items.some((i) => i.id === itemData.id);
+        if (!exists) {
+          canvas.items.push(itemData);
+        }
+      }
+    }
+
+    gridState.canvases = updatedCanvases;
+  }
+
+  redo(): void {
+    // Delete all items in one batch
+    const itemIds = this.itemsData.map((item) => item.id);
+    deleteItemsBatch(itemIds);
+  }
+}
+
+/**
+ * BatchUpdateConfigCommand - Update multiple item configs in a single batch
+ *
+ * **Performance benefit**: 1 undo/redo command for N config updates instead of N commands.
+ *
+ * **Use cases**:
+ * - Theme changes (update colors for all headers)
+ * - Bulk property changes (set all text sizes to 16px)
+ * - Template application (apply preset configs)
+ * - Undo/redo bulk config changes
+ *
+ * **Undo behavior**:
+ * - Restores all old configs in a single batch operation
+ * - Single state update, single re-render
+ *
+ * **Redo behavior**:
+ * - Applies all new configs in a single batch operation
+ * - Single state update, single re-render
+ */
+export class BatchUpdateConfigCommand implements Command {
+  private updates: Array<{
+    itemId: string;
+    canvasId: string;
+    oldItem: GridItem;
+    newItem: GridItem;
+  }>;
+
+  constructor(
+    updates: Array<{
+      itemId: string;
+      canvasId: string;
+      updates: Partial<GridItem>;
+    }>
+  ) {
+    // Store old and new state for each item (deep clone to prevent mutations)
+    this.updates = updates.map(({ itemId, canvasId, updates: itemUpdates }) => {
+      const canvas = gridState.canvases[canvasId];
+      const item = canvas?.items.find((i) => i.id === itemId);
+
+      if (!item) {
+        return null;
+      }
+
+      return {
+        itemId,
+        canvasId,
+        oldItem: JSON.parse(JSON.stringify(item)),
+        newItem: JSON.parse(JSON.stringify({ ...item, ...itemUpdates })),
+      };
+    }).filter(Boolean) as Array<{
+      itemId: string;
+      canvasId: string;
+      oldItem: GridItem;
+      newItem: GridItem;
+    }>;
+  }
+
+  undo(): void {
+    // Restore old configs
+    const batchUpdates = this.updates.map(({ itemId, canvasId, oldItem }) => ({
+      itemId,
+      canvasId,
+      updates: oldItem,
+    }));
+    updateItemsBatch(batchUpdates);
+  }
+
+  redo(): void {
+    // Apply new configs
+    const batchUpdates = this.updates.map(({ itemId, canvasId, newItem }) => ({
+      itemId,
+      canvasId,
+      updates: newItem,
+    }));
+    updateItemsBatch(batchUpdates);
+  }
+}
+
+/**
+ * AddCanvasCommand
+ * =================
+ *
+ * Undoable command for adding a canvas to the grid.
+ *
+ * **Pattern**: Host app owns canvas metadata, library manages item placement
+ *
+ * **Library responsibility** (what this command does):
+ * - Create canvas in gridState.canvases with empty items array
+ * - Initialize zIndexCounter for item stacking
+ * - Track operation in undo/redo
+ *
+ * **Host app responsibility** (what this command does NOT do):
+ * - Store canvas title, backgroundColor, or other metadata
+ * - Host app maintains its own canvas metadata separately
+ * - Host app listens to canvasAdded event to sync its state
+ *
+ * **Integration pattern**:
+ * ```typescript
+ * // Host app maintains canvas metadata
+ * const canvasMetadata = {
+ *   'section-1': { title: 'Hero Section', backgroundColor: '#f0f4f8' }
+ * };
+ *
+ * // Create canvas in library (just placement state)
+ * const cmd = new AddCanvasCommand('section-1');
+ * pushCommand(cmd); // Add to undo/redo stack
+ * cmd.redo(); // Creates canvas with items: [], zIndexCounter: 1
+ *
+ * // Host app listens to event and syncs its own state
+ * api.on('canvasAdded', (event) => {
+ *   // Host app can now add its own metadata
+ * });
+ * ```
+ *
+ * **Why this separation**:
+ * - Library focuses on layout (items, positions, z-index)
+ * - Host app owns presentation (styling, titles, metadata)
+ * - Different apps can use library with different data models
+ *
+ * @module undo-redo-commands
+ */
+export class AddCanvasCommand implements Command {
+  description = 'Add Canvas';
+  private canvasId: string;
+
+  constructor(canvasId: string) {
+    this.canvasId = canvasId;
+  }
+
+  undo(): void {
+    console.log('🔙 AddCanvasCommand.undo() - removing canvas:', this.canvasId);
+
+    // Remove canvas from library state
+    delete gridState.canvases[this.canvasId];
+
+    // Trigger state change for reactivity
+    gridState.canvases = { ...gridState.canvases };
+
+    // Emit event so host app can sync its metadata
+    console.log('  📢 Emitting canvasRemoved event for:', this.canvasId);
+    eventManager.emit('canvasRemoved', { canvasId: this.canvasId });
+  }
+
+  redo(): void {
+    // Add canvas to library state (minimal - just item placement management)
+    gridState.canvases[this.canvasId] = {
+      zIndexCounter: 1,
+      items: [],
+    };
+
+    // Trigger state change for reactivity
+    gridState.canvases = { ...gridState.canvases };
+
+    // Emit event so host app can sync its metadata
+    eventManager.emit('canvasAdded', { canvasId: this.canvasId });
+  }
+}
+
+/**
+ * RemoveCanvasCommand
+ * ====================
+ *
+ * Undoable command for removing a canvas from the grid.
+ *
+ * **Critical**: Snapshots canvas items and zIndexCounter before removal
+ *
+ * **Library responsibility** (what this command does):
+ * - Snapshot canvas items array and zIndexCounter
+ * - Remove canvas from gridState.canvases
+ * - Restore canvas with all items on undo
+ *
+ * **Host app responsibility** (what this command does NOT do):
+ * - Store canvas title, backgroundColor, or metadata
+ * - Host app must listen to canvasRemoved event
+ * - Host app must manage its own metadata undo/redo separately
+ *
+ * **Integration pattern**:
+ * ```typescript
+ * // Host app listens to events and manages its own metadata
+ * api.on('canvasRemoved', (event) => {
+ *   // Host app removes its own metadata
+ *   delete canvasMetadata[event.canvasId];
+ * });
+ *
+ * api.on('canvasAdded', (event) => {
+ *   // On undo of remove, host app restores metadata
+ *   if (wasUndoOperation) {
+ *     canvasMetadata[event.canvasId] = savedMetadata;
+ *   }
+ * });
+ *
+ * // Remove canvas
+ * const cmd = new RemoveCanvasCommand('section-1');
+ * pushCommand(cmd);
+ * cmd.redo(); // Removes canvas from library
+ * ```
+ *
+ * **Edge case handling**:
+ * - Canvas doesn't exist: command becomes no-op
+ * - Canvas has items: all items removed with canvas
+ * - Undo restores items with original layouts and zIndex
+ *
+ * @module undo-redo-commands
+ */
+export class RemoveCanvasCommand implements Command {
+  description = 'Remove Canvas';
+  private canvasId: string;
+  private canvasSnapshot: {
+    zIndexCounter: number;
+    items: GridItem[];
+  } | null = null;
+
+  constructor(canvasId: string) {
+    this.canvasId = canvasId;
+
+    // Snapshot canvas state (deep clone to prevent mutations)
+    const canvas = gridState.canvases[canvasId];
     if (canvas) {
-      canvas.backgroundColor = this.oldColor;
+      this.canvasSnapshot = JSON.parse(JSON.stringify(canvas));
+    }
+  }
+
+  undo(): void {
+    // Restore canvas from snapshot (just layout state, no metadata)
+    if (this.canvasSnapshot) {
+      gridState.canvases[this.canvasId] = JSON.parse(JSON.stringify(this.canvasSnapshot));
+
+      // Trigger state change for reactivity
       gridState.canvases = { ...gridState.canvases };
+
+      // Emit event so host app can sync its metadata
+      eventManager.emit('canvasAdded', { canvasId: this.canvasId });
     }
   }
 
   redo(): void {
-    const canvas = gridState.canvases[this.canvasId];
-    if (canvas) {
-      canvas.backgroundColor = this.newColor;
-      gridState.canvases = { ...gridState.canvases };
-    }
+    // Remove canvas from library state
+    delete gridState.canvases[this.canvasId];
+
+    // Trigger state change for reactivity
+    gridState.canvases = { ...gridState.canvases };
+
+    // Emit event so host app can sync its metadata
+    eventManager.emit('canvasRemoved', { canvasId: this.canvasId });
   }
 }
