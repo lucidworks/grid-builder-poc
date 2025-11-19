@@ -544,6 +544,9 @@ export class ResizeHandler {
         top: canResizeHeight
       },
 
+      // Ignore resize from the drag handle header
+      ignoreFrom: '.grid-item-header',
+
       // No modifiers - we handle all constraints manually in handleResizeMove
       // This prevents fighting between interact.js modifiers and our RAF-batched updates
 
@@ -632,11 +635,20 @@ export class ResizeHandler {
    * **Critical Performance Path**: This runs ~200 times/sec during resize (mousemove),
    * but RAF batching limits actual DOM updates to ~60fps.
    *
+   * **Data Attribute Pattern + RAF Batching**:
+   * The implementation combines two strategies for smooth, accurate resizing:
+   * 1. **Data attributes**: Track cumulative deltas separately from DOM styles
+   * 2. **RAF batching**: Throttle DOM updates to 60fps max
+   *
    * **RAF Batching Pattern**:
    * ```
+   * // Update data attributes immediately (for next event)
+   * element.setAttribute('data-width', deltaWidth);
+   *
    * cancelAnimationFrame(oldId);  // Cancel previous pending frame
    * newId = requestAnimationFrame(() => {
-   *   // DOM updates execute once per browser paint
+   *   // DOM updates execute once per browser paint (~60fps)
+   *   element.style.width = newWidth + 'px';
    * });
    * ```
    *
@@ -712,29 +724,65 @@ export class ResizeHandler {
     const deltaWidth = (parseFloat(event.target.getAttribute('data-width')) || 0) + event.deltaRect.width;
     const deltaHeight = (parseFloat(event.target.getAttribute('data-height')) || 0) + event.deltaRect.height;
 
-    // Calculate new dimensions and position from base + deltas
-    const newWidth = this.startRect.width + deltaWidth;
-    const newHeight = this.startRect.height + deltaHeight;
-    const newX = this.startRect.x + deltaX;
-    const newY = this.startRect.y + deltaY;
-
-    console.log('🔵 RESIZE MOVE:', {
-      edges: event.edges,
-      deltas: { deltaX, deltaY, deltaWidth, deltaHeight },
-      startRect: { ...this.startRect },
-      calculated: { newX, newY, newWidth, newHeight },
-    });
-
-    // Apply styles directly - smooth free-form resizing
-    event.target.style.transform = `translate(${newX}px, ${newY}px)`;
-    event.target.style.width = newWidth + 'px';
-    event.target.style.height = newHeight + 'px';
-
-    // Update data attributes for next move event
+    // Update data attributes immediately for next move event
     event.target.setAttribute('data-x', deltaX.toString());
     event.target.setAttribute('data-y', deltaY.toString());
     event.target.setAttribute('data-width', deltaWidth.toString());
     event.target.setAttribute('data-height', deltaHeight.toString());
+
+    // Calculate new dimensions and position from base + deltas
+    let newWidth = this.startRect.width + deltaWidth;
+    let newHeight = this.startRect.height + deltaHeight;
+    let newX = this.startRect.x + deltaX;
+    let newY = this.startRect.y + deltaY;
+
+    // Apply min/max constraints DURING resize (not just at end)
+    // This prevents crossing boundaries while allowing resize in other directions
+    const originalWidth = newWidth;
+    const originalHeight = newHeight;
+
+    // Clamp width to min/max
+    newWidth = Math.max(this.minWidth, Math.min(this.maxWidth, newWidth));
+
+    // Clamp height to min/max
+    newHeight = Math.max(this.minHeight, Math.min(this.maxHeight, newHeight));
+
+    // If width was clamped and we're resizing from the left edge, adjust x position
+    // This keeps the right edge anchored while blocking further left expansion
+    if (originalWidth !== newWidth && event.edges.left) {
+      const widthDiff = originalWidth - newWidth;
+      newX += widthDiff;
+    }
+
+    // If height was clamped and we're resizing from the top edge, adjust y position
+    // This keeps the bottom edge anchored while blocking further upward expansion
+    if (originalHeight !== newHeight && event.edges.top) {
+      const heightDiff = originalHeight - newHeight;
+      newY += heightDiff;
+    }
+
+    // Cancel any pending RAF from previous move event
+    if (this.resizeRafId) {
+      cancelAnimationFrame(this.resizeRafId);
+    }
+
+    // Batch DOM updates with RAF (limits to ~60fps instead of ~200/sec)
+    this.resizeRafId = requestAnimationFrame(() => {
+      console.log('🔵 RESIZE MOVE (RAF):', {
+        edges: event.edges,
+        deltas: { deltaX, deltaY, deltaWidth, deltaHeight },
+        startRect: { ...this.startRect },
+        calculated: { newX, newY, newWidth, newHeight },
+      });
+
+      // Apply styles - smooth free-form resizing at 60fps max
+      event.target.style.transform = `translate(${newX}px, ${newY}px)`;
+      event.target.style.width = newWidth + 'px';
+      event.target.style.height = newHeight + 'px';
+
+      // Clear RAF ID after execution
+      this.resizeRafId = null;
+    });
   }
 
   /**
@@ -944,8 +992,24 @@ export class ResizeHandler {
 
     // Apply min/max size constraints AFTER grid snapping
     // This ensures the final size respects component constraints
+    // IMPORTANT: When clamping, adjust position if resizing from top/left edges
+    const originalWidth = newWidth;
+    const originalHeight = newHeight;
+
     newWidth = Math.max(this.minWidth, Math.min(this.maxWidth, newWidth));
     newHeight = Math.max(this.minHeight, Math.min(this.maxHeight, newHeight));
+
+    // If width was clamped and we're resizing from the left edge, adjust x position
+    if (originalWidth !== newWidth && event.edges.left) {
+      const widthDiff = originalWidth - newWidth;
+      newX += widthDiff;
+    }
+
+    // If height was clamped and we're resizing from the top edge, adjust y position
+    if (originalHeight !== newHeight && event.edges.top) {
+      const heightDiff = originalHeight - newHeight;
+      newY += heightDiff;
+    }
 
     console.log('  afterMinMaxClamp:', { newX, newY, newWidth, newHeight });
 
