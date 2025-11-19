@@ -5,6 +5,10 @@
 .vscode/
 .idea/
 
+# AI Assistant tools
+.serena/
+.playwright-mcp/
+
 # Node modules (if ever added)
 node_modules/
 
