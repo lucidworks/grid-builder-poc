@@ -10,7 +10,7 @@ export const config: Config = {
   globalStyle: 'src/global/global.scss',
   plugins: [sass()],
   // Exclude demo components from production builds
-  excludeSrc: buildDemo ? [] : ['**/blog-*/**', '**/demo-utils/**'],
+  excludeSrc: buildDemo ? [] : ['**/demo/**'],
   outputTargets: [
     // NPM distribution
     {
