@@ -545,4 +545,165 @@ export interface GridBuilderAPI {
    * ```
    */
   getCanvasElement(canvasId: string): HTMLElement | null;
+
+  // ======================
+  // Undo/Redo Operations
+  // ======================
+
+  /**
+   * Undo last operation
+   *
+   * **Use cases**:
+   * - Implement undo button
+   * - Keyboard shortcut (Ctrl+Z)
+   * - Programmatic undo
+   *
+   * **Undoable operations**:
+   * - Add/delete components
+   * - Move/resize components
+   * - Config changes
+   * - Add/remove canvases
+   *
+   * @example
+   * ```typescript
+   * // Undo button handler
+   * handleUndo() {
+   *   api.undo();
+   * }
+   * ```
+   */
+  undo(): void;
+
+  /**
+   * Redo last undone operation
+   *
+   * **Use cases**:
+   * - Implement redo button
+   * - Keyboard shortcut (Ctrl+Y)
+   * - Programmatic redo
+   *
+   * @example
+   * ```typescript
+   * // Redo button handler
+   * handleRedo() {
+   *   api.redo();
+   * }
+   * ```
+   */
+  redo(): void;
+
+  /**
+   * Check if undo is available
+   *
+   * **Use cases**:
+   * - Enable/disable undo button
+   * - Check before undo operation
+   *
+   * @returns true if undo stack has operations
+   *
+   * @example
+   * ```typescript
+   * // Enable/disable undo button
+   * <button disabled={!api.canUndo()} onClick={() => api.undo()}>
+   *   Undo
+   * </button>
+   * ```
+   */
+  canUndo(): boolean;
+
+  /**
+   * Check if redo is available
+   *
+   * **Use cases**:
+   * - Enable/disable redo button
+   * - Check before redo operation
+   *
+   * @returns true if redo stack has operations
+   *
+   * @example
+   * ```typescript
+   * // Enable/disable redo button
+   * <button disabled={!api.canRedo()} onClick={() => api.redo()}>
+   *   Redo
+   * </button>
+   * ```
+   */
+  canRedo(): boolean;
+
+  // ======================
+  // Canvas Management
+  // ======================
+
+  /**
+   * Add new canvas programmatically
+   *
+   * **Use cases**:
+   * - Dynamic canvas creation
+   * - Template loading
+   * - User adds section via UI
+   *
+   * **Library responsibility**:
+   * - Create canvas in gridState with empty items array
+   * - Initialize zIndexCounter
+   * - Track operation in undo/redo
+   *
+   * **Host app responsibility**:
+   * - Listen to 'canvasAdded' event
+   * - Add canvas metadata (title, backgroundColor, etc.)
+   *
+   * **Events triggered**: 'canvasAdded'
+   *
+   * @param canvasId - Unique canvas identifier
+   *
+   * @example
+   * ```typescript
+   * // Add new section
+   * api.addCanvas('hero-section-2');
+   *
+   * // Host app syncs metadata
+   * api.on('canvasAdded', (event) => {
+   *   canvasMetadata[event.canvasId] = {
+   *     title: 'New Section',
+   *     backgroundColor: '#f5f5f5'
+   *   };
+   * });
+   * ```
+   */
+  addCanvas(canvasId: string): void;
+
+  /**
+   * Remove canvas programmatically
+   *
+   * **Use cases**:
+   * - Delete section via UI
+   * - Template cleanup
+   * - Conditional canvas removal
+   *
+   * **Library responsibility**:
+   * - Snapshot canvas items and zIndexCounter
+   * - Remove canvas from gridState
+   * - Track operation in undo/redo (restores items on undo)
+   *
+   * **Host app responsibility**:
+   * - Listen to 'canvasRemoved' event
+   * - Remove canvas metadata
+   * - Clean up any dynamically injected headers/UI
+   *
+   * **Events triggered**: 'canvasRemoved'
+   *
+   * @param canvasId - Canvas to remove
+   *
+   * @example
+   * ```typescript
+   * // Remove section
+   * api.removeCanvas('hero-section-2');
+   *
+   * // Host app syncs metadata
+   * api.on('canvasRemoved', (event) => {
+   *   delete canvasMetadata[event.canvasId];
+   *   removeCanvasHeader(event.canvasId);
+   * });
+   * ```
+   */
+  removeCanvas(canvasId: string): void;
 }

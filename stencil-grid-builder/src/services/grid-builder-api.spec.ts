@@ -47,7 +47,7 @@ describe('GridBuilderAPI', () => {
 
         expect(canvas).toBeDefined();
         expect(canvas?.items).toEqual([]);
-        expect(canvas?.backgroundColor).toBe('#ffffff');
+        expect(canvas?.zIndexCounter).toBe(1);
       });
 
       it('should return null for non-existent canvas', () => {
@@ -356,23 +356,6 @@ describe('GridBuilderAPI', () => {
       });
     });
 
-    describe('setCanvasBackground', () => {
-      it('should update canvas background color', () => {
-        api.setCanvasBackground('canvas1', '#ff0000');
-
-        expect(gridState.canvases.canvas1.backgroundColor).toBe('#ff0000');
-      });
-
-      it('should dispatch canvasBackgroundChanged event', (done) => {
-        api.on('canvasBackgroundChanged', (event) => {
-          expect(event.canvasId).toBe('canvas1');
-          expect(event.color).toBe('#ff0000');
-          done();
-        });
-
-        api.setCanvasBackground('canvas1', '#ff0000');
-      });
-    });
   });
 
   describe('Undo/Redo Methods', () => {
@@ -483,10 +466,9 @@ describe('GridBuilderAPI', () => {
                 },
               ],
               zIndexCounter: 2,
-              backgroundColor: '#ff0000',
             },
-            canvas2: { items: [], zIndexCounter: 1, backgroundColor: '#ffffff' },
-            canvas3: { items: [], zIndexCounter: 1, backgroundColor: '#ffffff' },
+            canvas2: { items: [], zIndexCounter: 1 },
+            canvas3: { items: [], zIndexCounter: 1 },
           },
           selectedItemId: null,
           selectedCanvasId: null,
@@ -498,7 +480,7 @@ describe('GridBuilderAPI', () => {
 
         expect(gridState.canvases.canvas1.items).toHaveLength(1);
         expect(gridState.canvases.canvas1.items[0].id).toBe('imported-1');
-        expect(gridState.canvases.canvas1.backgroundColor).toBe('#ff0000');
+        expect(gridState.canvases.canvas1.zIndexCounter).toBe(2);
         expect(gridState.currentViewport).toBe('mobile');
         expect(gridState.showGrid).toBe(false);
       });
@@ -506,9 +488,9 @@ describe('GridBuilderAPI', () => {
       it('should dispatch stateChanged event', (done) => {
         const state = {
           canvases: {
-            canvas1: { items: [], zIndexCounter: 1, backgroundColor: '#ffffff' },
-            canvas2: { items: [], zIndexCounter: 1, backgroundColor: '#ffffff' },
-            canvas3: { items: [], zIndexCounter: 1, backgroundColor: '#ffffff' },
+            canvas1: { items: [], zIndexCounter: 1 },
+            canvas2: { items: [], zIndexCounter: 1 },
+            canvas3: { items: [], zIndexCounter: 1 },
           },
           selectedItemId: null,
           selectedCanvasId: null,
