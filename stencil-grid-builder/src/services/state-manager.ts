@@ -421,6 +421,44 @@ export interface GridItem {
  * };
  * ```
  */
+/**
+ * Canvas Interface
+ * ==================
+ *
+ * Minimal canvas structure focused purely on item placement management.
+ *
+ * **Library responsibilities** (what IS in this interface):
+ * - Item placement and layouts
+ * - Z-index management for stacking
+ *
+ * **Host app responsibilities** (what is NOT in this interface):
+ * - Canvas styling (backgroundColor, themes, etc.)
+ * - Canvas metadata (title, description, etc.)
+ * - Presentation concerns (how canvases look)
+ *
+ * **Why this separation**:
+ * - Different apps have different styling needs
+ * - Library focuses on layout, not presentation
+ * - Host app owns the complete data model
+ * - Enables library to be used in any context
+ *
+ * **Host app pattern**:
+ * ```typescript
+ * // Host app maintains its own canvas metadata
+ * const canvasMetadata = {
+ *   'canvas1': { title: 'Hero Section', backgroundColor: '#f0f4f8', ... },
+ *   'canvas2': { title: 'Footer', backgroundColor: '#e8f0f2', ... }
+ * };
+ *
+ * // Library only knows about item placement
+ * const gridState = {
+ *   canvases: {
+ *     'canvas1': { items: [...], zIndexCounter: 5 },
+ *     'canvas2': { items: [...], zIndexCounter: 3 }
+ *   }
+ * };
+ * ```
+ */
 export interface Canvas {
   /**
    * Array of grid items in this canvas
@@ -438,14 +476,6 @@ export interface Canvas {
    * **Never decreases**: Only increments to prevent conflicts
    */
   zIndexCounter: number;
-
-  /**
-   * Canvas background color (CSS color value)
-   *
-   * **Examples**: '#ffffff', '#f5f5f5', 'rgb(255, 255, 255)'
-   * **Applied to**: canvas-section component background
-   */
-  backgroundColor: string;
 }
 
 /**
@@ -536,17 +566,14 @@ const initialState: GridState = {
     canvas1: {
       items: [],
       zIndexCounter: 1,
-      backgroundColor: '#ffffff',
     },
     canvas2: {
       items: [],
       zIndexCounter: 1,
-      backgroundColor: '#f5f5f5',
     },
     canvas3: {
       items: [],
       zIndexCounter: 1,
-      backgroundColor: '#ffffff',
     },
   },
   selectedItemId: null,
@@ -1087,6 +1114,7 @@ export function addItemsBatch(items: Partial<GridItem>[]): string[] {
         mobile: { x: null, y: null, width: null, height: null, customized: false },
       },
       zIndex: canvas.zIndexCounter++,
+      config: itemData.config || {},
     };
 
     canvas.items.push(newItem);

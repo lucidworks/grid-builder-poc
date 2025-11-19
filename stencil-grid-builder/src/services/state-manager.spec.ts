@@ -9,6 +9,9 @@ import {
   reset,
   selectItem,
   updateItem,
+  addItemsBatch,
+  deleteItemsBatch,
+  updateItemsBatch,
 } from './state-manager';
 
 describe('state-manager', () => {
@@ -305,6 +308,274 @@ describe('state-manager', () => {
 
       expect(gridState.selectedItemId).toBeNull();
       expect(gridState.selectedCanvasId).toBeNull();
+    });
+  });
+
+  describe('Batch Operations', () => {
+    describe('addItemsBatch', () => {
+      it('should add multiple items with single state update', () => {
+        const items = [
+          {
+            canvasId: 'canvas1',
+            type: 'header',
+            name: 'Header',
+            layouts: {
+              desktop: { x: 0, y: 0, width: 20, height: 8 },
+              mobile: { x: null, y: null, width: null, height: null, customized: false },
+            },
+          },
+          {
+            canvasId: 'canvas1',
+            type: 'text',
+            name: 'Text',
+            layouts: {
+              desktop: { x: 0, y: 10, width: 20, height: 10 },
+              mobile: { x: null, y: null, width: null, height: null, customized: false },
+            },
+          },
+          {
+            canvasId: 'canvas2',
+            type: 'button',
+            name: 'Button',
+            layouts: {
+              desktop: { x: 5, y: 5, width: 10, height: 4 },
+              mobile: { x: null, y: null, width: null, height: null, customized: false },
+            },
+          },
+        ];
+
+        const itemIds = addItemsBatch(items);
+
+        expect(itemIds).toHaveLength(3);
+        expect(gridState.canvases.canvas1.items).toHaveLength(2);
+        expect(gridState.canvases.canvas2.items).toHaveLength(1);
+      });
+
+      it('should assign proper z-index to each item', () => {
+        const items = [
+          {
+            canvasId: 'canvas1',
+            type: 'header',
+            name: 'Header',
+          },
+          {
+            canvasId: 'canvas1',
+            type: 'text',
+            name: 'Text',
+          },
+        ];
+
+        const itemIds = addItemsBatch(items);
+        const item1 = gridState.canvases.canvas1.items.find((i) => i.id === itemIds[0]);
+        const item2 = gridState.canvases.canvas1.items.find((i) => i.id === itemIds[1]);
+
+        expect(item2!.zIndex).toBeGreaterThan(item1!.zIndex);
+      });
+
+      it('should apply default layouts if not provided', () => {
+        const items = [{ canvasId: 'canvas1', type: 'header', name: 'Header' }];
+        const itemIds = addItemsBatch(items);
+        const item = gridState.canvases.canvas1.items.find((i) => i.id === itemIds[0]);
+
+        expect(item!.layouts.desktop).toBeDefined();
+        expect(item!.layouts.mobile).toBeDefined();
+      });
+
+      it('should handle invalid canvas gracefully', () => {
+        const items = [{ canvasId: 'invalid-canvas', type: 'header', name: 'Header' }];
+
+        const itemIds = addItemsBatch(items);
+
+        expect(itemIds).toHaveLength(0); // No items added
+      });
+
+      it('should return array of created item IDs', () => {
+        const items = [
+          { canvasId: 'canvas1', type: 'header', name: 'Header' },
+          { canvasId: 'canvas1', type: 'text', name: 'Text' },
+        ];
+
+        const itemIds = addItemsBatch(items);
+
+        expect(itemIds).toHaveLength(2);
+        expect(itemIds[0]).toMatch(/^item-\d+$/);
+        expect(itemIds[1]).toMatch(/^item-\d+$/);
+      });
+    });
+
+    describe('deleteItemsBatch', () => {
+      let itemIds: string[];
+
+      beforeEach(() => {
+        // Add test items
+        const items = [
+          { canvasId: 'canvas1', type: 'header', name: 'Header' },
+          { canvasId: 'canvas1', type: 'text', name: 'Text' },
+          { canvasId: 'canvas2', type: 'button', name: 'Button' },
+        ];
+        itemIds = addItemsBatch(items);
+      });
+
+      it('should delete multiple items with single state update', () => {
+        expect(gridState.canvases.canvas1.items).toHaveLength(2);
+        expect(gridState.canvases.canvas2.items).toHaveLength(1);
+
+        deleteItemsBatch([itemIds[0], itemIds[1]]);
+
+        expect(gridState.canvases.canvas1.items).toHaveLength(0);
+        expect(gridState.canvases.canvas2.items).toHaveLength(1); // Unchanged
+      });
+
+      it('should handle missing IDs gracefully', () => {
+        expect(() => {
+          deleteItemsBatch(['nonexistent-id-1', 'nonexistent-id-2']);
+        }).not.toThrow();
+
+        expect(gridState.canvases.canvas1.items).toHaveLength(2); // Unchanged
+      });
+
+      it('should delete items from multiple canvases', () => {
+        deleteItemsBatch([itemIds[0], itemIds[2]]);
+
+        expect(gridState.canvases.canvas1.items).toHaveLength(1); // One deleted
+        expect(gridState.canvases.canvas2.items).toHaveLength(0); // One deleted
+      });
+
+      it('should handle empty array', () => {
+        expect(() => {
+          deleteItemsBatch([]);
+        }).not.toThrow();
+
+        expect(gridState.canvases.canvas1.items).toHaveLength(2);
+        expect(gridState.canvases.canvas2.items).toHaveLength(1);
+      });
+
+      it('should handle partial matches (some valid, some invalid IDs)', () => {
+        deleteItemsBatch([itemIds[0], 'invalid-id', itemIds[1]]);
+
+        expect(gridState.canvases.canvas1.items).toHaveLength(0); // Both valid ones deleted
+        expect(gridState.canvases.canvas2.items).toHaveLength(1); // Unchanged
+      });
+    });
+
+    describe('updateItemsBatch', () => {
+      let itemIds: string[];
+
+      beforeEach(() => {
+        // Add test items with configs
+        const items = [
+          {
+            canvasId: 'canvas1',
+            type: 'header',
+            name: 'Header',
+            config: { text: 'Old Header', color: 'blue' },
+          },
+          {
+            canvasId: 'canvas1',
+            type: 'text',
+            name: 'Text',
+            config: { content: 'Old Text', fontSize: 14 },
+          },
+        ];
+        itemIds = addItemsBatch(items);
+      });
+
+      it('should update multiple items with single state update', () => {
+        updateItemsBatch([
+          {
+            itemId: itemIds[0],
+            canvasId: 'canvas1',
+            updates: { config: { text: 'New Header' } },
+          },
+          {
+            itemId: itemIds[1],
+            canvasId: 'canvas1',
+            updates: { config: { content: 'New Text' } },
+          },
+        ]);
+
+        const item1 = gridState.canvases.canvas1.items.find((i) => i.id === itemIds[0]);
+        const item2 = gridState.canvases.canvas1.items.find((i) => i.id === itemIds[1]);
+
+        expect(item1!.config!.text).toBe('New Header');
+        expect(item2!.config!.content).toBe('New Text');
+      });
+
+      it('should update config when caller provides merged config', () => {
+        // Get current item to merge config (this is what the API does)
+        const currentItem = gridState.canvases.canvas1.items.find((i) => i.id === itemIds[0]);
+        const mergedConfig = { ...currentItem!.config, text: 'New Header' };
+
+        updateItemsBatch([
+          {
+            itemId: itemIds[0],
+            canvasId: 'canvas1',
+            updates: { config: mergedConfig },
+          },
+        ]);
+
+        const item = gridState.canvases.canvas1.items.find((i) => i.id === itemIds[0]);
+
+        // Text updated, color preserved (because we merged before calling updateItemsBatch)
+        expect(item!.config!.text).toBe('New Header');
+        expect(item!.config!.color).toBe('blue');
+      });
+
+      it('should handle invalid item IDs gracefully', () => {
+        expect(() => {
+          updateItemsBatch([
+            {
+              itemId: 'invalid-id',
+              canvasId: 'canvas1',
+              updates: { name: 'Updated' },
+            },
+          ]);
+        }).not.toThrow();
+
+        const item = gridState.canvases.canvas1.items.find((i) => i.id === itemIds[0]);
+        expect(item!.name).toBe('Header'); // Unchanged
+      });
+
+      it('should handle invalid canvas IDs gracefully', () => {
+        expect(() => {
+          updateItemsBatch([
+            {
+              itemId: itemIds[0],
+              canvasId: 'invalid-canvas',
+              updates: { name: 'Updated' },
+            },
+          ]);
+        }).not.toThrow();
+
+        const item = gridState.canvases.canvas1.items.find((i) => i.id === itemIds[0]);
+        expect(item!.name).toBe('Header'); // Unchanged
+      });
+
+      it('should update multiple properties at once', () => {
+        updateItemsBatch([
+          {
+            itemId: itemIds[0],
+            canvasId: 'canvas1',
+            updates: {
+              name: 'Updated Header',
+              config: { text: 'New Text' },
+            },
+          },
+        ]);
+
+        const item = gridState.canvases.canvas1.items.find((i) => i.id === itemIds[0]);
+
+        expect(item!.name).toBe('Updated Header');
+        expect(item!.config!.text).toBe('New Text');
+      });
+
+      it('should handle empty updates array', () => {
+        expect(() => {
+          updateItemsBatch([]);
+        }).not.toThrow();
+
+        expect(gridState.canvases.canvas1.items).toHaveLength(2);
+      });
     });
   });
 });
