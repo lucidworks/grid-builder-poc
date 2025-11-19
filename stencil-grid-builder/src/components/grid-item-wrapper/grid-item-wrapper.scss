@@ -10,25 +10,26 @@
   position: absolute;
   min-width: 100px;
   min-height: 80px;
-  padding: 20px 20px 20px 44px; /* Extra left padding for drag handle */
+  padding: 20px;
   border: 2px solid transparent;
   border-radius: 4px;
   background: white;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 10%);
+  box-sizing: border-box; /* Include padding and border in width/height */
   cursor: default;
   transition: border-color 0.2s, box-shadow 0.2s;
   will-change: transform; /* GPU acceleration hint */
 }
 
 .grid-item:hover {
-  border-color: #4a90e2;
+  border-color: #f59e0b;
 }
 
 .grid-item.selected {
   /* z-index handled via inline style to respect actual item.zIndex */
-  border: 3px solid #2563eb; /* Thicker border with darker blue */
-  padding: 19px 19px 19px 43px; /* Compensate for thicker border to prevent content shift */
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2), 0 4px 12px rgba(74, 144, 226, 0.4);
+  border: 3px solid #f59e0b; /* Thicker border with yellow/gold color */
+  padding: 19px; /* Compensate for thicker border to prevent content shift */
+  box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.2), 0 4px 12px rgba(245, 158, 11, 0.3);
   /* Add outer glow ring + shadow for clear visual distinction */
 }
 
@@ -41,26 +42,41 @@
   user-select: none;
 }
 
-/* Item Header */
+/* Item Header - tab on selection border that only shows when selected */
 .grid-item-header {
+  position: absolute;
+  top: -26px; /* Position above the border (adjust based on content height) */
+  left: 12px; /* Offset from left edge */
+  z-index: 100; /* Well above resize handles (z-index: 10) */
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin: -20px -20px 12px -44px;
-  padding: 10px 16px 10px 50px;
-  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-  border-bottom: 1px solid #dee2e6;
-  border-radius: 4px 4px 0 0;
-  color: #495057;
-  font-size: 13px;
+  gap: 6px;
+  padding: 4px 10px;
+  background: #f59e0b; /* Yellow/gold to match selection */
+  border: 2px solid #f59e0b;
+  border-bottom: none; /* No bottom border to connect with component border */
+  border-radius: 4px 4px 0 0; /* Rounded top corners only */
+  color: white;
+  font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.3px;
-  text-transform: uppercase;
+  opacity: 0; /* Visual hiding only */
+  transition: opacity 0.2s;
+  cursor: move !important; /* Indicate draggability - force override */
+  user-select: none; /* Prevent text selection while dragging */
+  pointer-events: auto; /* Always interactive for interact.js */
 }
 
+.grid-item.selected .grid-item-header,
+.grid-item:hover .grid-item-header {
+  opacity: 1;
+}
+
+/* Adjust for thicker border when selected */
 .grid-item.selected .grid-item-header {
-  margin: -19px -19px 12px -43px; /* Compensate for adjusted padding */
-  padding: 10px 16px 10px 49px; /* Compensate for adjusted padding */
+  top: -27px; /* Adjust for 3px border instead of 2px */
+  border: 3px solid #f59e0b;
+  border-bottom: none;
 }
 
 /* Item Content */
@@ -88,7 +104,7 @@
 /* Item Controls */
 .grid-item-controls {
   position: absolute;
-  top: 8px;
+  top: -16px; /* Float above the component */
   right: 8px;
   z-index: 10; /* Ensure controls appear above item content */
   display: flex;
@@ -103,8 +119,8 @@
 }
 
 .grid-item.selected .grid-item-controls {
-  top: 7px; /* Compensate for thicker border */
-  right: 7px; /* Compensate for thicker border */
+  top: -16px; /* Keep floating above even with thicker border */
+  right: 8px;
 }
 
 .grid-item-control-btn {
@@ -143,60 +159,27 @@
   background: #c00;
 }
 
-/* Drag Handle */
+/* Drag Handle - Hidden, drag functionality moved to header */
 .drag-handle {
-  position: absolute;
-  top: 8px;
-  left: 8px;
-  z-index: 10; /* Ensure handle appears above item content */
-  display: flex;
-  width: 28px;
-  height: 28px;
-  align-items: center;
-  justify-content: center;
-  border: 1px solid rgba(74, 144, 226, 30%);
-  border-radius: 4px;
-  background: rgba(74, 144, 226, 10%);
-  cursor: move;
-  opacity: 0.7;
-  transition: all 0.2s;
+  display: none;
 }
 
-.drag-handle::before {
-  color: #4a90e2;
-  content: '⋮⋮';
-  font-size: 14px;
-  font-weight: bold;
-  letter-spacing: -2px;
-}
-
-.drag-handle:hover {
-  background: rgba(74, 144, 226, 25%);
-  transform: scale(1.1);
-}
-
-.grid-item:hover .drag-handle {
-  background: rgba(74, 144, 226, 15%);
-  opacity: 1;
-}
-
-.grid-item.selected .drag-handle {
-  top: 7px; /* Compensate for thicker border */
-  left: 7px; /* Compensate for thicker border */
-}
-
-/* Resize Handles */
+/* Resize Handles - Yellow/gold circular corners and pill-shaped sides */
 .resize-handle {
   position: absolute;
   z-index: 10; /* Ensure handles appear above item content */
-  width: 10px;
-  height: 10px;
+  width: 14px;
+  height: 14px;
   border: 2px solid white;
   border-radius: 50%;
-  background: #4a90e2;
-  box-shadow: 0 0 3px rgba(0, 0, 0, 30%);
+  background: #f59e0b; /* Yellow/gold color to match selection */
+  box-shadow: 0 0 4px rgba(0, 0, 0, 40%);
   opacity: 0;
-  transition: opacity 0.2s;
+  transition: opacity 0.2s, transform 0.2s;
+}
+
+.resize-handle:hover {
+  transform: scale(1.2);
 }
 
 .grid-item.selected .resize-handle,
@@ -205,53 +188,65 @@
 }
 
 .resize-handle.nw {
-  top: -5px;
-  left: -5px;
+  top: -7px;
+  left: -7px;
   cursor: nw-resize;
 }
 
 .resize-handle.ne {
-  top: -5px;
-  right: -5px;
+  top: -7px;
+  right: -7px;
   cursor: ne-resize;
 }
 
 .resize-handle.sw {
-  bottom: -5px;
-  left: -5px;
+  bottom: -7px;
+  left: -7px;
   cursor: sw-resize;
 }
 
 .resize-handle.se {
-  right: -5px;
-  bottom: -5px;
+  right: -7px;
+  bottom: -7px;
   cursor: se-resize;
 }
 
 .resize-handle.n {
-  top: -5px;
+  top: -7px;
   left: 50%;
+  width: 30px;
+  height: 6px;
+  border-radius: 3px; /* Fully rounded pill ends (half of height) */
   cursor: n-resize;
   transform: translateX(-50%);
 }
 
 .resize-handle.s {
-  bottom: -5px;
+  bottom: -7px;
   left: 50%;
+  width: 30px;
+  height: 6px;
+  border-radius: 3px; /* Fully rounded pill ends (half of height) */
   cursor: s-resize;
   transform: translateX(-50%);
 }
 
 .resize-handle.e {
   top: 50%;
-  right: -5px;
+  right: -7px;
+  width: 6px;
+  height: 30px;
+  border-radius: 3px; /* Fully rounded pill ends (half of width) */
   cursor: e-resize;
   transform: translateY(-50%);
 }
 
 .resize-handle.w {
   top: 50%;
-  left: -5px;
+  left: -7px;
+  width: 6px;
+  height: 30px;
+  border-radius: 3px; /* Fully rounded pill ends (half of width) */
   cursor: w-resize;
   transform: translateY(-50%);
 }
@@ -260,25 +255,25 @@
 .grid-item.selected .resize-handle.nw,
 .grid-item.selected .resize-handle.n,
 .grid-item.selected .resize-handle.ne {
-  top: -6px; /* -5px - 1px for thicker border */
+  top: -8px; /* -7px - 1px for thicker border */
 }
 
 .grid-item.selected .resize-handle.sw,
 .grid-item.selected .resize-handle.s,
 .grid-item.selected .resize-handle.se {
-  bottom: -6px; /* -5px - 1px for thicker border */
+  bottom: -8px; /* -7px - 1px for thicker border */
 }
 
 .grid-item.selected .resize-handle.nw,
 .grid-item.selected .resize-handle.w,
 .grid-item.selected .resize-handle.sw {
-  left: -6px; /* -5px - 1px for thicker border */
+  left: -8px; /* -7px - 1px for thicker border */
 }
 
 .grid-item.selected .resize-handle.ne,
 .grid-item.selected .resize-handle.e,
 .grid-item.selected .resize-handle.se {
-  right: -6px; /* -5px - 1px for thicker border */
+  right: -8px; /* -7px - 1px for thicker border */
 }
 
 /* Hide resize handles when dimension is disabled (min == max) */
