@@ -382,17 +382,19 @@ export class GridItemWrapper {
     const widthPixels = gridToPixelsX(actualLayout.width, this.item.canvasId, this.config);
     const heightPixels = gridToPixelsY(actualLayout.height);
 
+    // Get component definition for icon, name, and selection color
+    const definition = this.componentRegistry?.get(this.item.type);
+    const icon = definition?.icon || '�';
+    const displayName = this.item.name || definition?.name || this.item.type;
+    const selectionColor = definition?.selectionColor || '#f59e0b'; // Default yellow/gold
+
     const itemStyle = {
       transform: `translate(${xPixels}px, ${yPixels}px)`,
       width: `${widthPixels}px`,
       height: `${heightPixels}px`,
       zIndex: this.item.zIndex.toString(),
+      '--selection-color': selectionColor,
     };
-
-    // Get component definition for icon and name
-    const definition = this.componentRegistry?.get(this.item.type);
-    const icon = definition?.icon || '�';
-    const displayName = this.item.name || definition?.name || this.item.type;
 
     // Generate unique content slot ID for custom wrapper
     const contentSlotId = `${this.item.id}-content`;

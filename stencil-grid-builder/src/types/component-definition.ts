@@ -190,6 +190,26 @@ export interface ComponentDefinition {
   };
 
   /**
+   * Custom selection color for this component type
+   *
+   * **Optional**: If not specified, uses default yellow/gold (#f59e0b)
+   * **Usage**: Visual differentiation of component types
+   * **Applied to**:
+   * - Selection border
+   * - Drag handle header background
+   * - Resize handles
+   *
+   * **Recommended colors**:
+   * - Headers: '#3b82f6' (blue)
+   * - Text: '#10b981' (green)
+   * - Images: '#8b5cf6' (purple)
+   * - Buttons: '#ef4444' (red)
+   *
+   * @example '#3b82f6'
+   */
+  selectionColor?: string;
+
+  /**
    * Render function - returns StencilJS component or HTMLElement
    *
    * **Called by**: grid-item-wrapper component

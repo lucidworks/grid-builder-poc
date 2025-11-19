@@ -19,17 +19,22 @@
   cursor: default;
   transition: border-color 0.2s, box-shadow 0.2s;
   will-change: transform; /* GPU acceleration hint */
+
+  /* Default selection color (can be overridden per component type) */
+  --selection-color: #f59e0b;
 }
 
 .grid-item:hover {
-  border-color: #f59e0b;
+  border-color: var(--selection-color);
 }
 
 .grid-item.selected {
   /* z-index handled via inline style to respect actual item.zIndex */
-  border: 3px solid #f59e0b; /* Thicker border with yellow/gold color */
+  border: 3px solid var(--selection-color);
   padding: 19px; /* Compensate for thicker border to prevent content shift */
-  box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.2), 0 4px 12px rgba(245, 158, 11, 0.3);
+  box-shadow:
+    0 0 0 3px color-mix(in srgb, var(--selection-color) 20%, transparent),
+    0 4px 12px color-mix(in srgb, var(--selection-color) 30%, transparent);
   /* Add outer glow ring + shadow for clear visual distinction */
 }
 
@@ -52,8 +57,8 @@
   align-items: center;
   gap: 6px;
   padding: 4px 10px;
-  background: #f59e0b; /* Yellow/gold to match selection */
-  border: 2px solid #f59e0b;
+  background: var(--selection-color);
+  border: 2px solid var(--selection-color);
   border-bottom: none; /* No bottom border to connect with component border */
   border-radius: 4px 4px 0 0; /* Rounded top corners only */
   color: white;
@@ -75,7 +80,7 @@
 /* Adjust for thicker border when selected */
 .grid-item.selected .grid-item-header {
   top: -27px; /* Adjust for 3px border instead of 2px */
-  border: 3px solid #f59e0b;
+  border: 3px solid var(--selection-color);
   border-bottom: none;
 }
 
@@ -164,7 +169,7 @@
   display: none;
 }
 
-/* Resize Handles - Yellow/gold circular corners and pill-shaped sides */
+/* Resize Handles - Circular corners and pill-shaped sides */
 .resize-handle {
   position: absolute;
   z-index: 10; /* Ensure handles appear above item content */
@@ -172,7 +177,7 @@
   height: 14px;
   border: 2px solid white;
   border-radius: 50%;
-  background: #f59e0b; /* Yellow/gold color to match selection */
+  background: var(--selection-color);
   box-shadow: 0 0 4px rgba(0, 0, 0, 40%);
   opacity: 0;
   transition: opacity 0.2s, transform 0.2s;
