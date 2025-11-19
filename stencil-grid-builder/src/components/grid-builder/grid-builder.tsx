@@ -55,9 +55,11 @@ import { UIComponentOverrides } from '../../types/ui-overrides';
 import { GridBuilderAPI } from '../../types/api';
 
 // Service imports
-import { gridState, GridState, generateItemId, deleteItemsBatch } from '../../services/state-manager';
+import { gridState, GridState, generateItemId, deleteItemsBatch, addItemsBatch, updateItemsBatch } from '../../services/state-manager';
 import { virtualRenderer } from '../../services/virtual-renderer';
 import { eventManager } from '../../services/event-manager';
+import { BatchAddCommand, BatchDeleteCommand, BatchUpdateConfigCommand, AddCanvasCommand, RemoveCanvasCommand } from '../../services/undo-redo-commands';
+import { undoRedo } from '../../services/undo-redo';
 
 // Utility imports
 import { pixelsToGridX, pixelsToGridY } from '../../utils/grid-calculations';
@@ -244,6 +246,42 @@ export class GridBuilder {
    * ```
    */
   @Prop() initialState?: Partial<GridState>;
+
+  /**
+   * Canvas metadata storage (host app responsibility)
+   *
+   * **Optional prop**: Store canvas-level presentation metadata
+   * **Purpose**: Host app owns canvas metadata (titles, colors, settings)
+   *
+   * **Separation of concerns**:
+   * - Library owns placement state (items, layouts, zIndex)
+   * - Host app owns presentation state (colors, titles, custom metadata)
+   *
+   * **Structure**: Record<canvasId, any>
+   *
+   * **Example**:
+   * ```typescript
+   * const canvasMetadata = {
+   *   'hero-section': {
+   *     title: 'Hero Section',
+   *     backgroundColor: '#f0f4f8',
+   *     customSettings: { ... }
+   *   },
+   *   'articles-grid': {
+   *     title: 'Articles Grid',
+   *     backgroundColor: '#ffffff'
+   *   }
+   * };
+   * <grid-builder canvasMetadata={canvasMetadata} ... />
+   * ```
+   *
+   * **Use with canvas-click events**:
+   * - Library fires canvas-click event when canvas background clicked
+   * - Host app shows canvas settings panel
+   * - Host app updates canvasMetadata state
+   * - Library passes metadata to canvas-section via props
+   */
+  @Prop() canvasMetadata?: Record<string, any>;
 
   /**
    * Component registry (internal state)
@@ -628,96 +666,84 @@ export class GridBuilder {
       // ======================
 
       addComponentsBatch: (components: Array<{ canvasId: string; type: string; position: { x: number; y: number; width: number; height: number }; config?: Record<string, any> }>) => {
-        const createdIds: string[] = [];
-        const createdItems: Array<{ item: any; canvasId: string }> = [];
+        // Convert API format to state-manager format
+        const partialItems = components.map(({ canvasId, type, position, config }) => ({
+          canvasId,
+          type,
+          name: type,
+          layouts: {
+            desktop: { ...position },
+            mobile: { x: 0, y: 0, width: 50, height: position.height, customized: false },
+          },
+          config: config || {},
+        }));
 
-        components.forEach(({ canvasId, type, position, config }) => {
-          const canvas = gridState.canvases[canvasId];
-          if (!canvas) {
-            console.error(`Canvas not found: ${canvasId}`);
-            return;
-          }
+        // Use state-manager batch operation (single state update)
+        const itemIds = addItemsBatch(partialItems);
 
-          // Create new item
-          const newItem = {
-            id: generateItemId(),
-            canvasId,
-            name: type,
-            type,
-            zIndex: ++canvas.zIndexCounter,
-            layouts: {
-              desktop: { ...position },
-              mobile: { x: 0, y: 0, width: 50, height: position.height, customized: false },
-            },
-            config: config || {},
-          };
-
-          // Add to canvas
-          canvas.items.push(newItem);
-          createdIds.push(newItem.id);
-          createdItems.push({ item: newItem, canvasId });
-        });
-
-        // Single state update
-        gridState.canvases = { ...gridState.canvases };
+        // Add to undo/redo history
+        undoRedo.push(new BatchAddCommand(itemIds));
 
         // Emit batch event
+        const createdItems = itemIds.map(id => {
+          const item = this.api?.getItem(id);
+          return item ? { item, canvasId: item.canvasId } : null;
+        }).filter(Boolean);
         eventManager.emit('componentsBatchAdded', { items: createdItems });
 
-        return createdIds;
+        return itemIds;
       },
 
       deleteComponentsBatch: (itemIds: string[]) => {
-        const deletedItems: Array<{ itemId: string; canvasId: string }> = [];
+        // Store deleted items for event
+        const deletedItems = itemIds.map(itemId => {
+          const item = this.api?.getItem(itemId);
+          return item ? { itemId, canvasId: item.canvasId } : null;
+        }).filter(Boolean);
 
-        itemIds.forEach((itemId) => {
-          for (const canvasId in gridState.canvases) {
-            const canvas = gridState.canvases[canvasId];
-            const itemIndex = canvas.items.findIndex((i) => i.id === itemId);
-            if (itemIndex !== -1) {
-              canvas.items.splice(itemIndex, 1);
-              deletedItems.push({ itemId, canvasId });
+        // Add to undo/redo history BEFORE deletion (need state for undo)
+        undoRedo.push(new BatchDeleteCommand(itemIds));
 
-              // Deselect if deleted
-              if (gridState.selectedItemId === itemId) {
-                gridState.selectedItemId = null;
-                gridState.selectedCanvasId = null;
-              }
-              break;
-            }
-          }
-        });
+        // Use state-manager batch operation (single state update)
+        deleteItemsBatch(itemIds);
 
-        // Single state update
-        gridState.canvases = { ...gridState.canvases };
+        // Clear selection if any deleted item was selected
+        if (gridState.selectedItemId && itemIds.includes(gridState.selectedItemId)) {
+          gridState.selectedItemId = null;
+          gridState.selectedCanvasId = null;
+        }
 
         // Emit batch event
         eventManager.emit('componentsBatchDeleted', { items: deletedItems });
       },
 
       updateConfigsBatch: (updates: Array<{ itemId: string; config: Record<string, any> }>) => {
-        const updatedItems: Array<{ itemId: string; canvasId: string; config: Record<string, any> }> = [];
-
-        updates.forEach(({ itemId, config }) => {
-          for (const canvasId in gridState.canvases) {
-            const canvas = gridState.canvases[canvasId];
-            const itemIndex = canvas.items.findIndex((i) => i.id === itemId);
-            if (itemIndex !== -1) {
-              // Merge config
-              canvas.items[itemIndex] = {
-                ...canvas.items[itemIndex],
-                config: { ...canvas.items[itemIndex].config, ...config },
-              };
-              updatedItems.push({ itemId, canvasId, config });
-              break;
-            }
+        // Convert to state-manager format (need canvasId)
+        const batchUpdates = updates.map(({ itemId, config }) => {
+          const item = this.api?.getItem(itemId);
+          if (!item) {
+            console.warn(`Item ${itemId} not found for config update`);
+            return null;
           }
-        });
+          return {
+            itemId,
+            canvasId: item.canvasId,
+            updates: { config: { ...item.config, ...config } },
+          };
+        }).filter(Boolean) as Array<{ itemId: string; canvasId: string; updates: Partial<any> }>;
 
-        // Single state update
-        gridState.canvases = { ...gridState.canvases };
+        // Add to undo/redo history
+        undoRedo.push(new BatchUpdateConfigCommand(batchUpdates));
+
+        // Use state-manager batch operation (single state update)
+        updateItemsBatch(batchUpdates);
 
         // Emit batch event
+        const updatedItems = batchUpdates.map(({ itemId, canvasId, updates }) => ({
+          itemId,
+          canvasId,
+          config: updates.config,
+        }));
         eventManager.emit('configsBatchChanged', { items: updatedItems });
       },
 
@@ -727,6 +753,44 @@ export class GridBuilder {
 
       getCanvasElement: (canvasId: string) => {
         return document.getElementById(canvasId);
+      },
+
+      // ======================
+      // Undo/Redo Operations
+      // ======================
+
+      undo: () => {
+        undoRedo.undo();
+      },
+
+      redo: () => {
+        undoRedo.redo();
+      },
+
+      canUndo: () => {
+        return undoRedo.canUndo();
+      },
+
+      canRedo: () => {
+        return undoRedo.canRedo();
+      },
+
+      // ======================
+      // Canvas Management
+      // ======================
+
+      addCanvas: (canvasId: string) => {
+        // Create and execute command
+        const command = new AddCanvasCommand(canvasId);
+        undoRedo.push(command);
+        command.redo();
+      },
+
+      removeCanvas: (canvasId: string) => {
+        // Create and execute command
+        const command = new RemoveCanvasCommand(canvasId);
+        undoRedo.push(command);
+        command.redo();
       },
     };
   }
@@ -814,6 +878,7 @@ export class GridBuilder {
                   canvasId={canvasId}
                   config={this.config}
                   componentRegistry={this.componentRegistry}
+                  backgroundColor={this.canvasMetadata?.[canvasId]?.backgroundColor}
                 />
               ))}
             </div>

@@ -165,4 +165,105 @@ describe('Plugin System - Standalone', () => {
       expect(canvas?.items.length).toBe(1);
     });
   });
+
+  describe('Plugin Batch Operations', () => {
+    it('should allow plugins to use addItemsBatch', () => {
+      const plugin = new MockLoggerPlugin();
+      const api = new GridBuilderAPI();
+
+      plugin.init(api);
+
+      const itemIds = plugin.api?.addItemsBatch([
+        { canvasId: 'canvas1', type: 'header', x: 0, y: 0, width: 10, height: 6 },
+        { canvasId: 'canvas1', type: 'text', x: 0, y: 10, width: 10, height: 6 },
+      ]);
+
+      expect(itemIds).toBeDefined();
+      expect(itemIds?.length).toBe(2);
+
+      const canvas = api.getCanvas('canvas1');
+      expect(canvas?.items.length).toBe(2);
+    });
+
+    it('should allow plugins to use deleteItemsBatch', () => {
+      const plugin = new MockLoggerPlugin();
+      const api = new GridBuilderAPI();
+
+      plugin.init(api);
+
+      const itemIds = plugin.api?.addItemsBatch([
+        { canvasId: 'canvas1', type: 'header', x: 0, y: 0, width: 10, height: 6 },
+        { canvasId: 'canvas1', type: 'text', x: 0, y: 10, width: 10, height: 6 },
+      ]);
+
+      plugin.api?.deleteItemsBatch(itemIds || []);
+
+      const canvas = api.getCanvas('canvas1');
+      expect(canvas?.items.length).toBe(0);
+    });
+
+    it('should allow plugins to use updateConfigsBatch', () => {
+      const plugin = new MockLoggerPlugin();
+      const api = new GridBuilderAPI();
+
+      plugin.init(api);
+
+      const itemIds = plugin.api?.addItemsBatch([
+        { canvasId: 'canvas1', type: 'header', x: 0, y: 0, width: 10, height: 6, config: { text: 'Old' } },
+      ]);
+
+      plugin.api?.updateConfigsBatch([
+        { itemId: itemIds![0], config: { text: 'New' } },
+      ]);
+
+      const canvas = api.getCanvas('canvas1');
+      const item = canvas?.items.find((i) => i.id === itemIds![0]);
+      expect(item?.config?.text).toBe('New');
+    });
+
+    it('should receive batch events from batch operations', () => {
+      const plugin = new MockLoggerPlugin();
+      const api = new GridBuilderAPI();
+
+      plugin.init(api);
+
+      // Subscribe to batch events
+      const batchEvents: any[] = [];
+      plugin.api?.on('itemsBatchAdded', (event) => {
+        batchEvents.push({ type: 'batchAdded', data: event });
+      });
+
+      plugin.api?.addItemsBatch([
+        { canvasId: 'canvas1', type: 'header', x: 0, y: 0, width: 10, height: 6 },
+        { canvasId: 'canvas1', type: 'text', x: 0, y: 10, width: 10, height: 6 },
+      ]);
+
+      expect(batchEvents.length).toBe(1);
+      expect(batchEvents[0].type).toBe('batchAdded');
+    });
+
+    it('should allow batch operations with undo/redo', () => {
+      const plugin = new MockLoggerPlugin();
+      const api = new GridBuilderAPI();
+
+      plugin.init(api);
+
+      plugin.api?.addItemsBatch([
+        { canvasId: 'canvas1', type: 'header', x: 0, y: 0, width: 10, height: 6 },
+        { canvasId: 'canvas1', type: 'text', x: 0, y: 10, width: 10, height: 6 },
+      ]);
+
+      expect(api.canUndo()).toBe(true);
+
+      // Undo batch add
+      api.undo();
+      const canvas1 = api.getCanvas('canvas1');
+      expect(canvas1?.items.length).toBe(0);
+
+      // Redo batch add
+      api.redo();
+      const canvas2 = api.getCanvas('canvas1');
+      expect(canvas2?.items.length).toBe(2);
+    });
+  });
 });

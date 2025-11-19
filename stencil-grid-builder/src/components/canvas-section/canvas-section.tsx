@@ -118,11 +118,28 @@ export class CanvasSection {
   @Prop() componentRegistry?: Map<string, ComponentDefinition>;
 
   /**
+   * Background color for this canvas
+   *
+   * **Host app responsibility**: Pass canvas styling from host app
+   * **Library does NOT store**: backgroundColor is presentation concern
+   * **Optional**: Defaults to '#ffffff'
+   *
+   * @example
+   * ```tsx
+   * <canvas-section
+   *   canvasId="hero-section"
+   *   backgroundColor="#f0f4f8"
+   * />
+   * ```
+   */
+  @Prop() backgroundColor?: string;
+
+  /**
    * Canvas state (reactive)
    *
    * **Source**: gridState.canvases[canvasId]
    * **Updates**: componentWillLoad, componentWillUpdate, onChange subscription
-   * **Contains**: items array, zIndexCounter, backgroundColor
+   * **Contains**: items array, zIndexCounter (NO backgroundColor - that's a prop now)
    */
   @State() canvas: Canvas;
 
@@ -212,6 +229,7 @@ export class CanvasSection {
   componentDidLoad() {
     this.initializeDropzone();
     this.setupResizeObserver();
+    this.setupCanvasClickListener();
   }
 
   /**
@@ -231,6 +249,48 @@ export class CanvasSection {
       this.resizeObserver.disconnect();
     }
   }
+
+  /**
+   * Setup canvas click listener for background selection
+   *
+   * **Purpose**: Detect clicks on canvas background (not on grid items)
+   *
+   * **Event dispatch**:
+   * - Only fires when clicking empty canvas area
+   * - Does not fire when clicking grid items
+   * - Bubbles up to grid-builder for host app to handle
+   *
+   * **Custom event**:
+   * ```typescript
+   * new CustomEvent('canvas-click', {
+   *   detail: { canvasId },
+   *   bubbles: true,
+   *   composed: true
+   * })
+   * ```
+   *
+   * **Use case**: Host app can show canvas settings panel when canvas selected
+   */
+  private setupCanvasClickListener = () => {
+    if (!this.gridContainerRef) {
+      return;
+    }
+
+    this.gridContainerRef.addEventListener('click', (event: MouseEvent) => {
+      // Only fire if clicking directly on the grid container
+      // (not on a grid item or other child element)
+      if (event.target === this.gridContainerRef) {
+        const canvasClickEvent = new CustomEvent('canvas-click', {
+          detail: {
+            canvasId: this.canvasId,
+          },
+          bubbles: true,
+          composed: true,
+        });
+        this.gridContainerRef.dispatchEvent(canvasClickEvent);
+      }
+    });
+  };
 
   /**
    * Setup ResizeObserver for grid cache invalidation
@@ -428,7 +488,6 @@ export class CanvasSection {
    */
   render() {
     const showGrid = gridState.showGrid;
-    const backgroundColor = this.canvas?.backgroundColor || '#ffffff';
 
     return (
       <div class="canvas-section" data-canvas-id={this.canvasId}>
@@ -440,7 +499,7 @@ export class CanvasSection {
           id={this.canvasId}
           data-canvas-id={this.canvasId}
           style={{
-            backgroundColor,
+            backgroundColor: this.backgroundColor || '#ffffff',
           }}
           ref={(el) => (this.gridContainerRef = el)}
         >
