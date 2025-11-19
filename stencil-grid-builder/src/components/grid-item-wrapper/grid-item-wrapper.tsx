@@ -134,6 +134,11 @@ export class GridItemWrapper {
   private itemSnapshot: GridItem | null = null;
 
   /**
+   * Track whether item was dragged (to prevent click event on drag end)
+   */
+  private wasDragged: boolean = false;
+
+  /**
    * Component will load lifecycle hook
    */
   componentWillLoad() {
@@ -165,8 +170,20 @@ export class GridItemWrapper {
     // Get component definition for min/max size constraints
     const componentDefinition = this.componentRegistry?.get(this.item.type);
 
+    // Get the header element for drag handler
+    const headerElement = this.itemRef.querySelector('.grid-item-header') as HTMLElement;
+
     // Initialize drag and resize handlers
-    this.dragHandler = new DragHandler(this.itemRef, this.item, this.handleItemUpdate);
+    // Pass header element for drag (instead of whole item)
+    this.dragHandler = new DragHandler(
+      this.itemRef,
+      this.item,
+      this.handleItemUpdate,
+      headerElement,
+      () => {
+        this.wasDragged = true;
+      }
+    );
     this.resizeHandler = new ResizeHandler(this.itemRef, this.item, this.handleItemUpdate, componentDefinition);
 
     // Set up virtual rendering observer
@@ -574,6 +591,15 @@ export class GridItemWrapper {
    * Handle click event (selection and config panel)
    */
   private handleClick = (e: MouseEvent) => {
+    // Don't open config panel if item was just dragged
+    if (this.wasDragged) {
+      // Reset flag after a small delay to allow this click event to finish
+      setTimeout(() => {
+        this.wasDragged = false;
+      }, 10);
+      return;
+    }
+
     // Don't open config panel if clicking on drag handle, resize handle, or control buttons
     const target = e.target as HTMLElement;
     if (

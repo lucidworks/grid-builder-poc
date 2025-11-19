@@ -246,6 +246,15 @@ export class DragHandler {
   /** Canvas ID where drag started - for cross-canvas detection */
   private dragStartCanvasId: string = '';
 
+  /** Optional separate drag handle element */
+  private dragHandleElement?: HTMLElement;
+
+  /** Optional callback when drag movement occurs */
+  private onDragMove?: () => void;
+
+  /** Track if any drag movement occurred */
+  private hasMoved: boolean = false;
+
   /**
    * Create drag handler and initialize interact.js
    *
@@ -260,24 +269,37 @@ export class DragHandler {
    * @param element - DOM element to make draggable (grid-item-wrapper)
    * @param item - Grid item data for position/layout management
    * @param onUpdate - Callback invoked with updated item after drag ends
+   * @param dragHandleElement - Optional element to use as drag handle
+   * @param onDragMove - Optional callback when drag movement occurs
    * @example
    * ```typescript
    * // Typical usage in component
    * private dragHandler: DragHandler;
    *
    * componentDidLoad() {
+   *   const header = this.element.querySelector('.grid-item-header');
    *   this.dragHandler = new DragHandler(
    *     this.element,
    *     this.item,
-   *     (item) => this.handleItemUpdate(item)
+   *     (item) => this.handleItemUpdate(item),
+   *     header,
+   *     () => this.wasDragged = true
    *   );
    * }
    * ```
    */
-  constructor(element: HTMLElement, item: GridItem, onUpdate: (item: GridItem) => void) {
+  constructor(
+    element: HTMLElement,
+    item: GridItem,
+    onUpdate: (item: GridItem) => void,
+    dragHandleElement?: HTMLElement,
+    onDragMove?: () => void
+  ) {
     this.element = element;
     this.item = item;
     this.onUpdate = onUpdate;
+    this.dragHandleElement = dragHandleElement;
+    this.onDragMove = onDragMove;
 
     this.initialize();
   }
@@ -318,10 +340,17 @@ export class DragHandler {
    *
    * **Configuration choices**:
    *
-   * **allowFrom: '.drag-handle'**
-   * - Only allows drag from drag handle element
-   * - Prevents accidental drags when clicking buttons/inputs inside item
-   * - Improves UX by requiring intentional drag gesture
+   * **allowFrom: '.drag-handle, .border-drag-zone'**
+   * - Allows drag from drag handle OR the invisible border drag zones
+   * - Border zones are 6px wide overlays on the selection border (when selected)
+   * - Users can drag by clicking the yellow border, not just the drag handle
+   * - More intuitive UX - larger drag area
+   *
+   * **Why border-drag-zone approach**:
+   * - Prevents accidental drags when clicking content
+   * - Invisible zones only active when item is selected
+   * - Shows subtle hover feedback (10% opacity yellow tint)
+   * - Doesn't interfere with resize handles or interactive content
    *
    * **inertia: false**
    * - Disables momentum/physics after drag release
@@ -341,7 +370,7 @@ export class DragHandler {
    * ```typescript
    * // interact.js setup with event handlers
    * interact(element).draggable({
-   *   allowFrom: '.drag-handle',
+   *   allowFrom: '.drag-handle, .border-drag-zone',
    *   inertia: false,
    *   listeners: {
    *     start: handleDragStart,
@@ -358,15 +387,25 @@ export class DragHandler {
       return;
     }
 
-    this.interactInstance = interact(this.element).draggable({
-      allowFrom: '.drag-handle', // Only allow drag from drag handle
+    // If a separate drag handle element is provided, make it draggable
+    // Otherwise, use allowFrom on the main element
+    const dragElement = this.dragHandleElement || this.element;
+    const config: any = {
       inertia: false,
       listeners: {
         start: this.handleDragStart.bind(this),
         move: this.handleDragMove.bind(this),
         end: this.handleDragEnd.bind(this),
       },
-    });
+    };
+
+    // Only use allowFrom/ignoreFrom if dragging from main element
+    if (!this.dragHandleElement) {
+      config.allowFrom = '.grid-item-header';
+      config.ignoreFrom = '.resize-handle';
+    }
+
+    this.interactInstance = interact(dragElement).draggable(config);
   }
 
   /**
@@ -417,13 +456,19 @@ export class DragHandler {
       (window as any).perfMonitor.startOperation('drag');
     }
 
-    event.target.classList.add('dragging');
+    // Reset movement flag
+    this.hasMoved = false;
+
+    // Add dragging class to main element (not the header)
+    const elementToMark = this.dragHandleElement ? this.element : event.target;
+    elementToMark.classList.add('dragging');
 
     // Store the original canvas ID at drag start
     this.dragStartCanvasId = this.item.canvasId;
 
-    // Store the base position from transform
-    this.basePosition = getTransformPosition(event.target);
+    // Store the base position from transform of the main element
+    const elementToRead = this.dragHandleElement ? this.element : event.target;
+    this.basePosition = getTransformPosition(elementToRead);
 
     // Reset accumulation
     event.target.setAttribute('data-x', '0');
@@ -488,9 +533,19 @@ export class DragHandler {
     const x = (parseFloat(event.target.getAttribute('data-x')) || 0) + event.dx;
     const y = (parseFloat(event.target.getAttribute('data-y')) || 0) + event.dy;
 
+    // Mark that movement has occurred and notify parent immediately
+    if (!this.hasMoved && this.onDragMove) {
+      this.hasMoved = true;
+      this.onDragMove();
+    }
+
+    // If dragging from a separate handle, apply transform to main element
+    // Otherwise, apply to the event target
+    const elementToMove = this.dragHandleElement ? this.element : event.target;
+
     // Apply drag delta to base position
     // Direct DOM manipulation - no StencilJS re-render during drag
-    event.target.style.transform = `translate(${this.basePosition.x + x}px, ${this.basePosition.y + y}px)`;
+    elementToMove.style.transform = `translate(${this.basePosition.x + x}px, ${this.basePosition.y + y}px)`;
     event.target.setAttribute('data-x', x.toString());
     event.target.setAttribute('data-y', y.toString());
   }
@@ -608,13 +663,35 @@ export class DragHandler {
    * ```
    */
   private handleDragEnd(event: any): void {
-    event.target.classList.remove('dragging');
+    // Remove dragging class from main element
+    const elementToMark = this.dragHandleElement ? this.element : event.target;
+    elementToMark.classList.remove('dragging');
 
     const deltaX = parseFloat(event.target.getAttribute('data-x')) || 0;
     const deltaY = parseFloat(event.target.getAttribute('data-y')) || 0;
 
-    // Get the element's current position in viewport
-    const rect = event.target.getBoundingClientRect();
+    // If drag movement occurred, prevent click event from opening config panel
+    if (this.hasMoved) {
+      // Suppress click on the element that was dragged (event.target = drag handle)
+      // This prevents the click from bubbling up and opening the config panel
+      const draggedElement = event.target;
+      const suppressClick = (e: Event) => {
+        e.stopPropagation();
+        e.preventDefault();
+        // Remove this listener after handling one click
+        draggedElement.removeEventListener('click', suppressClick, true);
+      };
+      draggedElement.addEventListener('click', suppressClick, true);
+
+      // Fallback cleanup in case click never fires
+      setTimeout(() => {
+        draggedElement.removeEventListener('click', suppressClick, true);
+      }, 100);
+    }
+
+    // Get the element's current position in viewport (use main element if dragging from handle)
+    const elementForRect = this.dragHandleElement ? this.element : event.target;
+    const rect = elementForRect.getBoundingClientRect();
     const centerX = rect.left + rect.width / 2;
     const centerY = rect.top + rect.height / 2;
 
@@ -679,7 +756,6 @@ export class DragHandler {
     // If item extends below canvas bottom, check if we should snap it back
     if (itemBottom > canvasBottom) {
       // Calculate how much of the item is within vs outside the canvas
-      const itemTop = containerRect.top + newY;
       const overlapHeight = itemBottom - canvasBottom;
       const withinHeight = itemHeight - overlapHeight;
 
@@ -743,8 +819,9 @@ export class DragHandler {
       }
     }
 
-    // Apply final snapped position to DOM
-    event.target.style.transform = `translate(${newX}px, ${newY}px)`;
+    // Apply final snapped position to DOM (to main element if dragging from handle)
+    const elementToMove = this.dragHandleElement ? this.element : event.target;
+    elementToMove.style.transform = `translate(${newX}px, ${newY}px)`;
     event.target.setAttribute('data-x', '0');
     event.target.setAttribute('data-y', '0');
 
