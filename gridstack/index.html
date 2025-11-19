@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Grid Builder POC - Gridstack.js (Experimental)</title>
+
+  <!-- Gridstack.js CSS and JS -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/gridstack@12.3.3/dist/gridstack.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/gridstack@12.3.3/dist/gridstack-extra.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/gridstack@12.3.3/dist/gridstack-all.js"></script>
+
+  <script src="../shared/performance-monitor.js"></script>
+  <link rel="stylesheet" href="index.css">
+</head>
+<body>
+  <div class="app">
+    <!-- Component Palette -->
+    <div class="palette">
+      <h2>Components</h2>
+      <div class="palette-item" data-component-type="header">
+        📄 Header
+      </div>
+      <div class="palette-item" data-component-type="text">
+        📝 Text Block
+      </div>
+      <div class="palette-item" data-component-type="image">
+        🖼️ Image
+      </div>
+      <div class="palette-item" data-component-type="button">
+        🔘 Button
+      </div>
+      <div class="palette-item" data-component-type="video">
+        🎥 Video
+      </div>
+      <h2 style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #ddd;">Complex</h2>
+      <div class="palette-item" data-component-type="gallery">
+        🖼️ Image Gallery
+      </div>
+      <div class="palette-item" data-component-type="dashboard">
+        📊 Dashboard
+      </div>
+      <div class="palette-item" data-component-type="livedata">
+        📡 Live Data
+      </div>
+      <h2 style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #ddd;">Note</h2>
+      <div class="info-note" style="padding: 12px; background: #fff3cd; border: 1px solid #ffc107; border-radius: 4px; font-size: 12px; line-height: 1.5; color: #856404;">
+        <strong>Gridstack.js Limitations:</strong>
+        <ul style="margin: 8px 0 0 20px; padding: 0;">
+          <li>No desktop/mobile separate layouts</li>
+          <li>Responsive = column adjustments only</li>
+          <li>No built-in undo/redo</li>
+          <li>Single grid data model</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Main Canvas -->
+    <div class="canvas">
+      <div class="canvas-header">
+        <h1>Grid Builder POC - Gridstack.js</h1>
+        <p>Using Gridstack.js for grid management. This variant demonstrates what's available out-of-the-box from Gridstack vs custom implementation.</p>
+        <div class="controls">
+          <div class="viewport-toggle">
+            <button id="desktopView" class="viewport-btn active">🖥️ Desktop (12 cols)</button>
+            <button id="tabletView" class="viewport-btn">📱 Tablet (6 cols)</button>
+            <button id="mobileView" class="viewport-btn">📱 Mobile (1 col)</button>
+          </div>
+          <button id="exportState">Export State</button>
+          <button id="importState">Import State</button>
+          <button id="addSection">➕ Add Section</button>
+          <div style="display: inline-flex; align-items: center; gap: 6px; margin-left: 12px; padding: 6px 12px; background: #fff3cd; border: 1px solid #ffc107; border-radius: 4px;">
+            <span style="font-size: 12px; color: #856404; font-weight: 500;">Stress Test:</span>
+            <input type="number" id="stressTestCount" value="50" min="1" max="200" style="width: 60px; padding: 4px 8px; border: 1px solid #ddd; border-radius: 3px; font-size: 12px;">
+            <button id="addStressTest" style="padding: 4px 12px; background: #ffc107; color: #000; border: 1px solid #ffc107; border-radius: 3px; cursor: pointer; font-size: 12px; font-weight: 500;">Add Items</button>
+            <button id="clearAll" style="padding: 4px 12px; background: #dc3545; color: white; border: 1px solid #dc3545; border-radius: 3px; cursor: pointer; font-size: 12px; font-weight: 500;">Clear All</button>
+            <span id="itemCount" style="font-size: 11px; color: #666; margin-left: 4px;">0 items</span>
+          </div>
+          <div class="info-badge" style="display: inline-block; position: relative; padding: 6px 12px; background: #17a2b8; color: white; border-radius: 4px; font-size: 12px; font-weight: 600; margin-left: 12px; cursor: help;">
+            📦 Gridstack.js
+            <div class="tooltip" style="position: absolute; top: 100%; right: 0; margin-top: 8px; padding: 16px; background: white; border: 1px solid #ddd; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); min-width: 300px; display: none; z-index: 1000; color: #333;">
+              <div class="tooltip-section" style="margin-bottom: 12px;">
+                <div class="tooltip-title" style="font-weight: 700; margin-bottom: 8px; color: #17a2b8;">✅ Gridstack Provides:</div>
+                <ul class="tooltip-list" style="list-style: none; padding: 0; margin: 0; font-size: 11px; line-height: 1.6;">
+                  <li style="padding: 2px 0;">• Drag and drop mechanics</li>
+                  <li style="padding: 2px 0;">• Resize with handles</li>
+                  <li style="padding: 2px 0;">• Grid snapping</li>
+                  <li style="padding: 2px 0;">• Collision detection</li>
+                  <li style="padding: 2px 0;">• Save/load JSON state</li>
+                  <li style="padding: 2px 0;">• Responsive breakpoints</li>
+                </ul>
+              </div>
+              <div class="tooltip-section">
+                <div class="tooltip-title" style="font-weight: 700; margin-bottom: 8px; color: #dc3545;">❌ Not Included:</div>
+                <ul class="tooltip-list" style="list-style: none; padding: 0; margin: 0; font-size: 11px; line-height: 1.6;">
+                  <li style="padding: 2px 0;">• Desktop/mobile separate layouts</li>
+                  <li style="padding: 2px 0;">• Undo/redo system</li>
+                  <li style="padding: 2px 0;">• Component registry</li>
+                  <li style="padding: 2px 0;">• Virtual rendering</li>
+                  <li style="padding: 2px 0;">• Custom grid calculations</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+          <div class="version-switcher">
+            <span class="version-switcher-label">Version:</span>
+            <select id="versionSelect" onchange="window.location.href = this.value">
+              <option value="../left-top/">Left/Top</option>
+              <option value="../transform/">Transform 🧪</option>
+              <option value="../masonry/">Masonry 🧪</option>
+              <option value="../virtual/">Virtual 🧪</option>
+              <option value="../stencil/">StencilJS 🧪</option>
+              <option value="../gridstack/" selected>Gridstack 🧪</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="canvases-container">
+        <div class="canvas-item" data-canvas-id="canvas1">
+          <div class="canvas-item-header">
+            <h3>Section 1</h3>
+            <div class="canvas-controls">
+              <label>
+                <input type="color" class="canvas-bg-color" data-canvas="canvas1" value="#ffffff">
+              </label>
+              <button class="clear-canvas-btn" data-canvas="canvas1">Clear</button>
+              <button class="delete-section-btn" data-canvas="canvas1" title="Delete Section">🗑️</button>
+            </div>
+          </div>
+          <div class="grid-builder">
+            <div class="grid-stack" id="canvas1" data-canvas-id="canvas1">
+              <!-- Gridstack items will be added here -->
+            </div>
+          </div>
+        </div>
+
+        <div class="canvas-item" data-canvas-id="canvas2">
+          <div class="canvas-item-header">
+            <h3>Section 2</h3>
+            <div class="canvas-controls">
+              <label>
+                <input type="color" class="canvas-bg-color" data-canvas="canvas2" value="#f5f5f5">
+              </label>
+              <button class="clear-canvas-btn" data-canvas="canvas2">Clear</button>
+              <button class="delete-section-btn" data-canvas="canvas2" title="Delete Section">🗑️</button>
+            </div>
+          </div>
+          <div class="grid-builder">
+            <div class="grid-stack" id="canvas2" data-canvas-id="canvas2">
+              <!-- Gridstack items will be added here -->
+            </div>
+          </div>
+        </div>
+
+        <div class="canvas-item" data-canvas-id="canvas3">
+          <div class="canvas-item-header">
+            <h3>Section 3</h3>
+            <div class="canvas-controls">
+              <label>
+                <input type="color" class="canvas-bg-color" data-canvas="canvas3" value="#ffffff">
+              </label>
+              <button class="clear-canvas-btn" data-canvas="canvas3">Clear</button>
+              <button class="delete-section-btn" data-canvas="canvas3" title="Delete Section">🗑️</button>
+            </div>
+          </div>
+          <div class="grid-builder">
+            <div class="grid-stack" id="canvas3" data-canvas-id="canvas3">
+              <!-- Gridstack items will be added here -->
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="index.js"></script>
+  <script>
+    // Tooltip hover effects
+    document.querySelectorAll('.info-badge').forEach(badge => {
+      badge.addEventListener('mouseenter', () => {
+        const tooltip = badge.querySelector('.tooltip');
+        if (tooltip) tooltip.style.display = 'block';
+      });
+      badge.addEventListener('mouseleave', () => {
+        const tooltip = badge.querySelector('.tooltip');
+        if (tooltip) tooltip.style.display = 'none';
+      });
+    });
+  </script>
+</body>
+</html>
