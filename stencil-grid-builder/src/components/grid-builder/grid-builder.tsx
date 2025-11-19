@@ -63,6 +63,7 @@ import { undoRedo } from '../../services/undo-redo';
 
 // Utility imports
 import { pixelsToGridX, pixelsToGridY } from '../../utils/grid-calculations';
+import { applyBoundaryConstraints } from '../../utils/boundary-constraints';
 
 /**
  * GridBuilder Component
@@ -451,20 +452,33 @@ export class GridBuilder {
         return;
       }
 
-      const defaultSize = definition.defaultSize || { width: 10, height: 6 };
-
       // Convert pixel position to grid units
       const gridX = pixelsToGridX(x, canvasId);
       const gridY = pixelsToGridY(y);
 
-      console.log('  Converting to grid units:', { gridX, gridY, width: defaultSize.width, height: defaultSize.height });
+      console.log('  Converting to grid units (before constraints):', {
+        gridX,
+        gridY,
+        defaultWidth: definition.defaultSize.width,
+        defaultHeight: definition.defaultSize.height
+      });
 
-      // Use existing addComponent API method
+      // Apply boundary constraints (validate, adjust size, constrain position)
+      const constrained = applyBoundaryConstraints(definition, gridX, gridY);
+
+      if (!constrained) {
+        console.warn(`Cannot place component "${definition.name}" - minimum size exceeds canvas width`);
+        return;
+      }
+
+      console.log('  After boundary constraints:', constrained);
+
+      // Use existing addComponent API method with constrained values
       const newItem = this.api?.addComponent(canvasId, componentType, {
-        x: gridX,
-        y: gridY,
-        width: defaultSize.width,
-        height: defaultSize.height,
+        x: constrained.x,
+        y: constrained.y,
+        width: constrained.width,
+        height: constrained.height,
       });
 
       console.log('  Created item:', newItem);

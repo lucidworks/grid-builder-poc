@@ -134,6 +134,7 @@
 import { GridItem } from '../services/state-manager';
 import { domCache } from './dom-cache';
 import { getGridSizeHorizontal, getGridSizeVertical, pixelsToGridX, pixelsToGridY } from './grid-calculations';
+import { constrainPositionToCanvas, CANVAS_WIDTH_UNITS } from './boundary-constraints';
 
 /**
  * Extract current transform position from element's inline style
@@ -747,65 +748,37 @@ export class DragHandler {
     const itemWidth = parseFloat(event.target.style.width) || 0;
     const itemHeight = parseFloat(event.target.style.height) || 0;
 
-    // Canvas boundary snap-back logic
-    // Check if item would overlap canvas boundary after grid snapping
-    const containerRect = targetContainer.getBoundingClientRect();
-    const itemBottom = containerRect.top + newY + itemHeight;
-    const canvasBottom = containerRect.bottom;
+    // Convert to grid units for boundary checking
+    let gridX = pixelsToGridX(newX, targetCanvasId);
+    let gridY = pixelsToGridY(newY);
+    const gridWidth = pixelsToGridX(itemWidth, targetCanvasId);
+    const gridHeight = pixelsToGridY(itemHeight);
 
-    // If item extends below canvas bottom, check if we should snap it back
-    if (itemBottom > canvasBottom) {
-      // Calculate how much of the item is within vs outside the canvas
-      const overlapHeight = itemBottom - canvasBottom;
-      const withinHeight = itemHeight - overlapHeight;
+    // Apply boundary constraints to keep component fully within canvas
+    const constrained = constrainPositionToCanvas(
+      gridX,
+      gridY,
+      gridWidth,
+      gridHeight,
+      CANVAS_WIDTH_UNITS
+    );
 
-      // If more than 50% is within canvas, snap to bottom edge of canvas
-      if (withinHeight > itemHeight / 2) {
-        // Snap to bottom edge (position item so its bottom aligns with canvas bottom)
-        newY = targetContainer.clientHeight - itemHeight;
-        // Re-snap to grid
-        newY = Math.round(newY / gridSizeY) * gridSizeY;
-        // Ensure it doesn't go negative
-        newY = Math.max(0, newY);
-      } else {
-        // Less than 50% within - this shouldn't happen with proper constraints
-        // but clamp it to bottom anyway
-        newY = targetContainer.clientHeight - itemHeight;
-      }
-    }
+    // Convert back to pixels
+    const gridSizeXForConversion = getGridSizeHorizontal(targetCanvasId);
+    const gridSizeYForConversion = getGridSizeVertical();
+    newX = constrained.x * gridSizeXForConversion;
+    newY = constrained.y * gridSizeYForConversion;
 
-    // Similarly check top boundary (though less common)
-    if (newY < 0) {
-      const itemBottom = newY + itemHeight;
-      if (itemBottom > itemHeight / 2) {
-        // More than 50% is within canvas (below top edge), snap to top
-        newY = 0;
-      }
-    }
+    // Update grid coordinates for state
+    gridX = constrained.x;
+    gridY = constrained.y;
 
-    // Ensure item stays fully within target canvas bounds
-    newX = Math.max(0, Math.min(newX, targetContainer.clientWidth - itemWidth));
-    newY = Math.max(0, Math.min(newY, targetContainer.clientHeight - itemHeight));
-
-    // Snap to canvas edges if within threshold (20px)
-    const EDGE_SNAP_THRESHOLD = 20;
-    if (newX < EDGE_SNAP_THRESHOLD) {
-      newX = 0; // Snap to left edge
-    } else if (newX > targetContainer.clientWidth - itemWidth - EDGE_SNAP_THRESHOLD) {
-      newX = targetContainer.clientWidth - itemWidth; // Snap to right edge
-    }
-    if (newY < EDGE_SNAP_THRESHOLD) {
-      newY = 0; // Snap to top edge
-    } else if (newY > targetContainer.clientHeight - itemHeight - EDGE_SNAP_THRESHOLD) {
-      newY = targetContainer.clientHeight - itemHeight; // Snap to bottom edge
-    }
-
-    // Update item position in current viewport's layout (convert to grid units)
+    // Update item position in current viewport's layout (use constrained grid units)
     const currentViewport = (window as any).gridState?.currentViewport || 'desktop';
     const layout = this.item.layouts[currentViewport as 'desktop' | 'mobile'];
 
-    layout.x = pixelsToGridX(newX, targetCanvasId);
-    layout.y = pixelsToGridY(newY);
+    layout.x = gridX;
+    layout.y = gridY;
 
     // If in mobile view, mark as customized
     if (currentViewport === 'mobile') {
