@@ -30,6 +30,7 @@
         <button id="exportLayout" class="control-btn">📥 Export Layout</button>
         <button id="exportAppStudio" class="control-btn primary">🚀 Export for App Studio</button>
         <button id="clearCanvas" class="control-btn danger">🗑️ Clear All</button>
+        <a href="https://app.grapesjs.com/playground" target="_blank" class="control-btn" style="text-decoration: none; display: inline-block;">🎮 Studio SDK Playground</a>
         <div class="version-switcher">
           <span class="version-switcher-label">Version:</span>
           <select id="versionSelect" onchange="window.location.href = this.value">
@@ -47,12 +48,28 @@
     </div>
 
     <!-- GrapesJS Editor Container -->
-    <div id="gjs">
-      <!-- Initial content -->
-      <div class="welcome-message">
-        <h2>Welcome to GrapesJS Grid Builder</h2>
-        <p>Drag components from the left panel to start building your layout</p>
-        <p>This variant is compatible with app-studio-api render endpoint</p>
+    <div id="gjs-editor">
+      <!-- Blocks Panel (Component Palette) -->
+      <div id="blocks"></div>
+
+      <!-- Main Canvas -->
+      <div id="gjs">
+        <!-- Initial content -->
+        <div class="welcome-message">
+          <h2>Welcome to GrapesJS Grid Builder</h2>
+          <p>Drag components from the left panel to start building your layout</p>
+          <p>This variant is compatible with app-studio-api render endpoint</p>
+          <p style="margin-top: 20px; padding: 15px; background: #fff3cd; border: 1px solid #ffc107; border-radius: 4px; color: #856404;">
+            <strong>ℹ️ Note:</strong> This free version uses document-flow layout (components stack vertically).<br>
+            For absolute positioning and free-form layout, try the <strong>Studio SDK Playground</strong> (button above).
+          </p>
+        </div>
+      </div>
+
+      <!-- Right Sidebar -->
+      <div id="gjs-right-panel">
+        <div class="layers-container"></div>
+        <div class="styles-container"></div>
       </div>
     </div>
   </div>

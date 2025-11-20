@@ -158,10 +158,50 @@ body {
 }
 
 /* GrapesJS Editor Container */
+#gjs-editor {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+  position: relative;
+}
+
+/* Blocks Panel (Left Sidebar) */
+#blocks {
+  width: 250px;
+  background: #fff;
+  border-right: 1px solid #ddd;
+  overflow-y: auto;
+  flex-shrink: 0;
+}
+
+/* Main Canvas */
 #gjs {
   flex: 1;
   overflow: hidden;
   position: relative;
+}
+
+/* Right Sidebar */
+#gjs-right-panel {
+  width: 280px;
+  background: #f5f5f5;
+  border-left: 1px solid #ddd;
+  overflow-y: auto;
+  flex-shrink: 0;
+}
+
+.layers-container,
+.styles-container {
+  padding: 10px;
+}
+
+.layers-container {
+  border-bottom: 1px solid #ddd;
+  min-height: 300px;
+}
+
+.styles-container {
+  min-height: 400px;
 }
 
 /* Welcome Message */
@@ -255,4 +295,38 @@ body {
   color: #999;
   text-align: center;
   margin-top: 5px;
+}
+
+/* Blocks Styling */
+.gjs-block {
+  width: auto;
+  min-height: 50px;
+  padding: 10px;
+  margin: 5px;
+  background: #f5f5f5;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.gjs-block:hover {
+  background: #e8e8e8;
+  border-color: #4A90E2;
+}
+
+.gjs-block-label {
+  font-size: 13px;
+  font-weight: 500;
+  color: #333;
+}
+
+.gjs-block-category {
+  padding: 10px;
+  background: #f8f9fa;
+  border-bottom: 1px solid #ddd;
+  font-weight: 600;
+  font-size: 12px;
+  text-transform: uppercase;
+  color: #666;
 }
