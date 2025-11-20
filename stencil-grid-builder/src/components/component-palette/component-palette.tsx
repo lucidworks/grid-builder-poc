@@ -16,24 +16,35 @@
  * - Renders from ComponentDefinition[] prop
  * - Clean component list without hardcoded data
  * - Fully customizable via props
+ * - Chromeless mode for flexible embedding
  *
  * ## Component-Driven Design
  *
- * **Props-based rendering**:
+ * **Standard mode with header**:
  * ```typescript
  * <component-palette components={componentDefinitions} />
+ * ```
+ *
+ * **Chromeless mode (no header)**:
+ * ```typescript
+ * <component-palette
+ *   components={componentDefinitions}
+ *   showHeader={false}
+ * />
  * ```
  *
  * **Consumer provides**:
  * - Component types (via ComponentDefinition[])
  * - Icons, names, default sizes
  * - All visual content
+ * - Optional: Header visibility preference
  *
  * **Library provides**:
  * - Drag initiation infrastructure
  * - Visual drag clone
  * - Cursor-centered positioning
  * - interact.js integration
+ * - Flexible header display (chromeless mode)
  *
  * ## Drag Clone Strategy
  *
@@ -204,6 +215,38 @@ export class ComponentPalette {
   @Prop() config?: GridConfig;
 
   /**
+   * Show palette header (title)
+   *
+   * **Optional prop**: Controls whether the "Components" header is displayed
+   * **Default**: true (shows header for backward compatibility)
+   *
+   * **Use cases**:
+   * - `showHeader={true}` (default): Standard palette with "Components" title
+   * - `showHeader={false}`: Chromeless mode - just the component list
+   *
+   * **Chromeless mode benefits**:
+   * - Embed palette in custom layouts
+   * - Add your own headers/titles
+   * - Integrate into existing UI structures
+   * - More flexible component placement
+   *
+   * **Example - Chromeless with custom wrapper**:
+   * ```typescript
+   * <div class="my-custom-sidebar">
+   *   <h3 class="my-title">Available Components</h3>
+   *   <p class="my-description">Drag to add</p>
+   *   <component-palette
+   *     components={componentDefinitions}
+   *     showHeader={false}
+   *   />
+   * </div>
+   * ```
+   *
+   * @default true
+   */
+  @Prop() showHeader?: boolean = true;
+
+  /**
    * Component did load lifecycle hook
    *
    * **Called**: After first render (DOM available)
@@ -254,18 +297,23 @@ export class ComponentPalette {
    * - `key`: React-style key for list rendering
    */
   render() {
+    const paletteClasses = {
+      palette: true,
+      'palette-chromeless': !this.showHeader,
+    };
+
     if (!this.components || this.components.length === 0) {
       return (
-        <div class="palette">
-          <h2>Components</h2>
+        <div class={paletteClasses}>
+          {this.showHeader && <h2>Components</h2>}
           <p class="palette-empty">No components available</p>
         </div>
       );
     }
 
     return (
-      <div class="palette">
-        <h2>Components</h2>
+      <div class={paletteClasses}>
+        {this.showHeader && <h2>Components</h2>}
 
         {this.components.map((component) => (
           <div

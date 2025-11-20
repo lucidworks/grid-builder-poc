@@ -1,9 +1,16 @@
 blog-app {
   .blog-app-container {
-    width: 100%;
     min-height: 100vh;
     padding: 24px;
     background: #f8f9fa;
+    box-sizing: border-box; /* Ensure padding is included in width */
+
+    /* Hide canvas headers in preview mode */
+    &.preview-mode {
+      .canvas-header {
+        display: none;
+      }
+    }
 
     .app-header {
       display: flex;
@@ -36,6 +43,27 @@ blog-app {
         display: flex;
         align-items: center;
         gap: 12px;
+
+        .preview-toggle-btn {
+          padding: 8px 16px;
+          border: 1px solid #10b981;
+          border-radius: 6px;
+          background: white;
+          color: #10b981;
+          cursor: pointer;
+          font-size: 14px;
+          font-weight: 500;
+          transition: all 0.15s;
+
+          &:hover {
+            background: #10b981;
+            color: white;
+          }
+
+          &:active {
+            transform: translateY(1px);
+          }
+        }
 
         .metadata-undo-redo {
           display: flex;
@@ -96,8 +124,13 @@ blog-app {
       align-items: center;
       justify-content: flex-end;
       padding: 0;
-      margin: 0 0 8px 0;
+      margin: 0; /* No margin - flush with canvas */
       gap: 8px;
+
+      /* All canvas headers except the first overlay the canvas above */
+      &:not(:first-of-type) {
+        margin-top: var(--canvas-header-overlay-margin, -28px); /* Grid-relative overlay (default 1.4 grid units @ 20px) */
+      }
 
       .canvas-title {
         display: inline-flex;
@@ -124,33 +157,6 @@ blog-app {
         display: flex;
         align-items: center;
         gap: 6px;
-
-        .color-control {
-          display: flex;
-          align-items: center;
-          cursor: pointer;
-          gap: 6px;
-
-          .color-label {
-            display: none; // Hide label for cleaner look
-          }
-
-          input[type='color'] {
-            width: 28px;
-            height: 28px;
-            padding: 2px;
-            border: 2px solid #dee2e6;
-            border-radius: 4px;
-            cursor: pointer;
-            transition: all 0.15s;
-
-            &:hover {
-              border-color: #4a90e2;
-              box-shadow: 0 2px 6px rgba(74, 144, 226, 0.2);
-              transform: scale(1.1);
-            }
-          }
-        }
 
         .delete-canvas-btn {
           display: flex;
@@ -182,10 +188,245 @@ blog-app {
       }
     }
 
-    grid-builder {
-      display: block;
+    /* Demo Layout - Categorized Palettes + Grid Builder */
+    .demo-layout {
+      display: flex;
       width: 100%;
-      min-height: 600px;
+      gap: 0; /* No gap - sidebar has border-right */
+    }
+
+    /* Categorized Palette Sidebar */
+    .categorized-palette-sidebar {
+      width: 280px;
+      flex-shrink: 0; /* Don't shrink below 280px */
+      border-right: 1px solid #ddd;
+      background: white;
+      overflow-y: auto;
+      max-height: calc(100vh - 120px); /* Account for header */
+
+      .palette-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 20px 20px 16px;
+        border-bottom: 1px solid #f0f0f0;
+
+        .palette-title {
+          padding: 0;
+          margin: 0;
+          color: #333;
+          font-size: 18px;
+          font-weight: 600;
+        }
+
+        .sidebar-collapse-btn {
+          display: flex;
+          width: 28px;
+          height: 28px;
+          align-items: center;
+          justify-content: center;
+          padding: 0;
+          border: 1px solid #dee2e6;
+          border-radius: 4px;
+          background: white;
+          color: #495057;
+          cursor: pointer;
+          font-size: 14px;
+          transition: all 0.15s;
+
+          &:hover {
+            border-color: #4a90e2;
+            background: #f8f9fa;
+            color: #4a90e2;
+          }
+
+          &:active {
+            transform: scale(0.95);
+          }
+        }
+      }
+    }
+
+    /* Floating expand button (when sidebar collapsed) */
+    .sidebar-expand-btn {
+      position: fixed;
+      top: 200px;
+      left: 24px;
+      z-index: 1000;
+      display: flex;
+      width: 40px;
+      height: 40px;
+      align-items: center;
+      justify-content: center;
+      padding: 0;
+      border: 1px solid #4a90e2;
+      border-radius: 6px;
+      background: white;
+      box-shadow: 0 2px 8px rgba(74, 144, 226, 0.2);
+      color: #4a90e2;
+      cursor: pointer;
+      font-size: 16px;
+      transition: all 0.15s;
+
+      &:hover {
+        background: #4a90e2;
+        box-shadow: 0 4px 12px rgba(74, 144, 226, 0.3);
+        color: white;
+        transform: translateX(2px);
+      }
+
+      &:active {
+        transform: translateX(2px) scale(0.95);
+      }
+    }
+
+    /* Category Sections */
+    .palette-category {
+      border-bottom: 1px solid #f0f0f0;
+
+      .category-header {
+        display: flex;
+        align-items: center;
+        padding: 12px 20px;
+        background: #f8f9fa;
+        cursor: pointer;
+        transition: background 0.15s;
+        user-select: none;
+
+        &:hover {
+          background: #e9ecef;
+        }
+
+        .category-icon {
+          width: 16px;
+          color: #6c757d;
+          font-size: 12px;
+          font-weight: bold;
+        }
+
+        .category-name {
+          margin-left: 8px;
+          color: #495057;
+          font-size: 14px;
+          font-weight: 500;
+        }
+      }
+
+      /* Override palette default styles for chromeless mode */
+      component-palette {
+        .palette {
+          width: 100%;
+          padding: 12px 20px;
+          border: none;
+          background: white;
+        }
+
+        .palette-item {
+          margin-bottom: 8px;
+          font-size: 13px;
+        }
+      }
+    }
+
+    /* Grid Builder Area */
+    .grid-builder-area {
+      flex: 1; /* Take remaining space */
+      min-width: 0; /* Allow flex shrinking - critical for preventing overflow */
+      overflow-x: auto; /* Allow scrolling if content is too wide */
+
+      /* Hide grid-builder's default palette */
+      grid-builder {
+        display: block;
+        width: 100%;
+        min-height: 600px;
+        box-sizing: border-box;
+
+        /* Hide the built-in palette since we're using custom categorized ones */
+        .palette-area {
+          display: none;
+        }
+
+        /* Ensure main area uses available width */
+        .main-area {
+          width: 100%;
+          box-sizing: border-box;
+        }
+
+        /* Ensure canvas area constrains width */
+        .canvas-area {
+          width: 100%;
+          min-width: 0; /* Allow shrinking */
+          overflow-x: hidden; /* Prevent horizontal scroll */
+          box-sizing: border-box;
+        }
+
+        /* Ensure canvases fit within container */
+        .canvases-container {
+          width: 100%;
+          max-width: 100%;
+          box-sizing: border-box;
+        }
+
+        /* Ensure individual canvas sections fit */
+        canvas-section {
+          display: block;
+          width: 100%;
+          max-width: 100%;
+          box-sizing: border-box;
+
+          /* Ensure grid container inside canvas-section takes full width */
+          .grid-container {
+            width: 100%;
+            box-sizing: border-box;
+          }
+        }
+      }
+
+      /* Grid Viewer - same sizing constraints as grid-builder */
+      grid-viewer {
+        display: block;
+        width: 100%;
+        min-height: 600px;
+        box-sizing: border-box;
+
+        /* Override grid-viewer's height: 100% to prevent layout issues */
+        .grid-viewer-container {
+          height: auto;
+          min-height: 600px;
+          width: 100%;
+          box-sizing: border-box;
+        }
+
+        /* Ensure canvas area uses full width */
+        .canvas-area {
+          width: 100%;
+          min-width: 0;
+          overflow-x: hidden;
+          box-sizing: border-box;
+          height: auto;
+        }
+
+        /* Ensure canvases fit within container */
+        .canvases-container {
+          width: 100%;
+          max-width: 100%;
+          box-sizing: border-box;
+        }
+
+        /* Ensure individual canvas sections fit */
+        canvas-section-viewer {
+          display: block;
+          width: 100%;
+          max-width: 100%;
+          box-sizing: border-box;
+
+          /* Ensure grid container inside canvas-section-viewer takes full width */
+          .grid-container {
+            width: 100%;
+            box-sizing: border-box;
+          }
+        }
+      }
     }
   }
 }

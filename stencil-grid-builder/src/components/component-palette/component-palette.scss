@@ -20,6 +20,15 @@
   font-size: 18px;
 }
 
+/* Chromeless Mode - for embedding with custom structure */
+.palette-chromeless {
+  /* Remove default padding/border if you want minimal styling */
+  /* Consumers can override these via their own CSS if needed */
+
+  /* Remove top padding when there's no header */
+  padding-top: 10px;
+}
+
 .palette-empty {
   color: #999;
   font-size: 13px;
