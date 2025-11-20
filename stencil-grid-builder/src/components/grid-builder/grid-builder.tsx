@@ -335,6 +335,36 @@ export class GridBuilder {
   @Prop() onBeforeDelete?: DeletionHook;
 
   /**
+   * Custom API exposure configuration
+   *
+   * **Optional prop**: Control where and how the Grid Builder API is exposed
+   * **Default**: `{ target: window, key: 'gridBuilderAPI' }`
+   * **Purpose**: Allows multiple grid-builder instances and flexible API access patterns
+   *
+   * **Options**:
+   * 1. **Custom key on window** (multiple instances):
+   * ```typescript
+   * <grid-builder api-ref={{ key: 'gridAPI1' }}></grid-builder>
+   * <grid-builder api-ref={{ key: 'gridAPI2' }}></grid-builder>
+   * // Access: window.gridAPI1, window.gridAPI2
+   * ```
+   *
+   * 2. **Custom storage object**:
+   * ```typescript
+   * const myStore = {};
+   * <grid-builder api-ref={{ target: myStore, key: 'api' }}></grid-builder>
+   * // Access: myStore.api
+   * ```
+   *
+   * 3. **Disable automatic exposure** (use ref instead):
+   * ```typescript
+   * <grid-builder api-ref={null}></grid-builder>
+   * // Access via ref: <grid-builder ref={el => this.api = el?.api}></grid-builder>
+   * ```
+   */
+  @Prop() apiRef?: { target?: any; key?: string } | null = { target: undefined, key: 'gridBuilderAPI' };
+
+  /**
    * Component registry (internal state)
    *
    * **Purpose**: Map component type → definition for lookup
@@ -412,10 +442,13 @@ export class GridBuilder {
       detail: event.detail,
     });
 
-    const { itemId } = event.detail;
+    const { itemId, canvasId } = event.detail;
     if (itemId) {
       console.log('  ✅ Deleting item:', itemId);
       deleteItemsBatch([itemId]);
+
+      // Emit componentDeleted event to notify config panels and other listeners
+      eventManager.emit('componentDeleted', { itemId, canvasId });
     }
   }
 
@@ -463,7 +496,12 @@ export class GridBuilder {
 
     // Create GridBuilderAPI instance
     this.api = this.createAPI();
-    (window as any).gridBuilderAPI = this.api;
+
+    // Expose API based on apiRef configuration
+    if (this.apiRef && this.apiRef.key) {
+      const target = this.apiRef.target || window;
+      target[this.apiRef.key] = this.api;
+    }
 
     // Initialize plugins
     if (this.plugins && this.plugins.length > 0) {
@@ -602,7 +640,12 @@ export class GridBuilder {
 
     // Clear global references
     delete (window as any).virtualRenderer;
-    delete (window as any).gridBuilderAPI;
+
+    // Clear API from storage location if it was set
+    if (this.apiRef && this.apiRef.key) {
+      const target = this.apiRef.target || window;
+      delete target[this.apiRef.key];
+    }
   }
 
   /**
