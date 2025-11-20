@@ -125,12 +125,29 @@ describe('grid-calculations', () => {
   });
 
   describe('getGridSizeVertical', () => {
-    it('should return fixed 20px grid size', () => {
+    it('should return default 20px grid size when no config provided', () => {
       expect(getGridSizeVertical()).toBe(20);
     });
 
-    it('should always return same value', () => {
-      expect(getGridSizeVertical()).toBe(getGridSizeVertical());
+    it('should use config.verticalGridSize when provided', () => {
+      const config = { verticalGridSize: 25 };
+      expect(getGridSizeVertical(config)).toBe(25);
+    });
+
+    it('should return default when config provided but verticalGridSize is undefined', () => {
+      const config = {}; // Empty config object
+      expect(getGridSizeVertical(config)).toBe(20);
+    });
+
+    it('should handle different custom vertical grid sizes', () => {
+      expect(getGridSizeVertical({ verticalGridSize: 10 })).toBe(10);
+      expect(getGridSizeVertical({ verticalGridSize: 30 })).toBe(30);
+      expect(getGridSizeVertical({ verticalGridSize: 15 })).toBe(15);
+    });
+
+    it('should always return same value for same config', () => {
+      const config = { verticalGridSize: 25 };
+      expect(getGridSizeVertical(config)).toBe(getGridSizeVertical(config));
     });
   });
 
