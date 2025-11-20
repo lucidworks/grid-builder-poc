@@ -11,7 +11,6 @@ import {
   constrainSizeToCanvas,
   constrainPositionToCanvas,
   applyBoundaryConstraints,
-  CANVAS_WIDTH_UNITS,
 } from './boundary-constraints';
 import { ComponentDefinition } from '../types/component-definition';
 
