@@ -30,7 +30,8 @@ export const config: Config = {
       type: 'www',
       serviceWorker: null,
       copy: [
-        { src: 'demo' } // Copy demo folder to www
+        { src: 'demo' }, // Copy demo folder to www/demo
+        { src: 'demo/index.html', dest: 'index.html' } // Also copy index.html to www root
       ]
     },
   ],
