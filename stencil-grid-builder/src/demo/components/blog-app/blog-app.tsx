@@ -371,11 +371,6 @@ export class BlogApp {
     this.setupGridBuilderIntegration();
   }
 
-  componentDidUpdate() {
-    // Setup API integration once it becomes available
-    this.setupGridBuilderIntegration();
-  }
-
   private setupGridBuilderIntegration() {
     // Only initialize once, and only when API is available
     if (this.apiInitialized || !this.api) {
@@ -466,6 +461,9 @@ export class BlogApp {
   }
 
   componentDidUpdate() {
+    // Setup API integration once it becomes available (after grid-builder loads)
+    this.setupGridBuilderIntegration();
+
     // Update canvas styles whenever metadata changes
     this.updateCanvasStyles();
     // Inject canvas headers
