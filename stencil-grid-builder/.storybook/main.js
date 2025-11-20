@@ -26,6 +26,20 @@ module.exports = {
       include: path.resolve(__dirname, '../'),
     });
 
+    // Add Babel loader for JSX support in story files
+    config.module.rules.push({
+      test: /\.js$/,
+      include: path.resolve(__dirname, '../src'),
+      use: {
+        loader: 'babel-loader',
+        options: {
+          presets: [
+            '@babel/preset-react',
+          ],
+        },
+      },
+    });
+
     config.resolve.modules = [
       ...(config.resolve.modules || []),
       path.resolve(__dirname, '../src'),
