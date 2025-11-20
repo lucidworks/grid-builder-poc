@@ -1,0 +1,223 @@
+section-editor-panel {
+  .section-editor-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+    animation: fadeIn 0.2s ease-out;
+  }
+
+  .section-editor-panel {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    width: 90%;
+    max-width: 400px;
+    animation: slideUp 0.2s ease-out;
+  }
+
+  .panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 24px;
+    border-bottom: 1px solid #e9ecef;
+
+    .panel-title {
+      font-size: 18px;
+      font-weight: 600;
+      color: #212529;
+      margin: 0;
+    }
+
+    .close-btn {
+      width: 32px;
+      height: 32px;
+      padding: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
+      font-weight: 300;
+      line-height: 1;
+      color: #6c757d;
+      background: transparent;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: all 0.15s;
+
+      &:hover {
+        background: #f8f9fa;
+        color: #212529;
+      }
+
+      &:active {
+        transform: scale(0.95);
+      }
+    }
+  }
+
+  .panel-body {
+    padding: 24px;
+
+    .form-group {
+      margin-bottom: 20px;
+
+      &:last-child {
+        margin-bottom: 0;
+      }
+
+      label {
+        display: block;
+        font-size: 14px;
+        font-weight: 500;
+        color: #495057;
+        margin-bottom: 8px;
+      }
+
+      .section-title-input {
+        width: 100%;
+        padding: 10px 12px;
+        font-size: 14px;
+        color: #212529;
+        background: white;
+        border: 1px solid #dee2e6;
+        border-radius: 6px;
+        transition: all 0.15s;
+        box-sizing: border-box;
+
+        &:focus {
+          outline: none;
+          border-color: #4a90e2;
+          box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.1);
+        }
+
+        &::placeholder {
+          color: #adb5bd;
+        }
+      }
+
+      .color-picker-wrapper {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+
+        .section-color-input {
+          width: 60px;
+          height: 40px;
+          padding: 4px;
+          border: 1px solid #dee2e6;
+          border-radius: 6px;
+          cursor: pointer;
+          transition: all 0.15s;
+
+          &:hover {
+            border-color: #4a90e2;
+            box-shadow: 0 2px 6px rgba(74, 144, 226, 0.2);
+          }
+
+          &:focus {
+            outline: none;
+            border-color: #4a90e2;
+            box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.1);
+          }
+        }
+
+        .color-hex-input {
+          flex: 1;
+          padding: 10px 12px;
+          font-size: 14px;
+          font-family: 'Courier New', monospace;
+          color: #212529;
+          background: white;
+          border: 1px solid #dee2e6;
+          border-radius: 6px;
+          transition: all 0.15s;
+
+          &:focus {
+            outline: none;
+            border-color: #4a90e2;
+            box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.1);
+          }
+
+          &::placeholder {
+            color: #adb5bd;
+          }
+        }
+      }
+    }
+  }
+
+  .panel-footer {
+    display: flex;
+    gap: 12px;
+    padding: 20px 24px;
+    border-top: 1px solid #e9ecef;
+    justify-content: flex-end;
+
+    button {
+      padding: 10px 20px;
+      font-size: 14px;
+      font-weight: 500;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.15s;
+
+      &:active {
+        transform: translateY(1px);
+      }
+    }
+
+    .cancel-btn {
+      color: #495057;
+      background: #e9ecef;
+      border: 1px solid #dee2e6;
+
+      &:hover {
+        background: #dee2e6;
+        border-color: #adb5bd;
+      }
+    }
+
+    .save-btn {
+      color: white;
+      background: #4a90e2;
+
+      &:hover {
+        background: #357abd;
+      }
+
+      &:active {
+        background: #2a5f8f;
+      }
+    }
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  @keyframes slideUp {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+}
