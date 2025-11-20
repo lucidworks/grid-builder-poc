@@ -55,7 +55,6 @@ Pre-populate canvases with components:
 ```
 demo/
 ├── index.html                      # Entry point for demo app
-├── demo.js                         # Initialization script
 ├── component-definitions.tsx       # Component registry (★ START HERE)
 ├── README.md                       # This file
 └── components/
@@ -68,6 +67,8 @@ demo/
     ├── confirmation-modal/         # Example: Deletion confirmation
     └── section-editor-panel/       # Example: Custom canvas settings UI
 ```
+
+**Note**: No initialization script is needed. Stencil's lazy-loading system automatically loads and initializes components when they're used in the HTML.
 
 ## Quick Start Guide
 
