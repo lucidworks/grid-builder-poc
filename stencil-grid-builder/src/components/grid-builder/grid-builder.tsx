@@ -521,9 +521,26 @@ export class GridBuilder {
     this.api = this.createAPI();
 
     // Expose API based on apiRef configuration
+    console.log('🔧 grid-builder exposing API', {
+      hasApiRef: !!this.apiRef,
+      apiRefKey: this.apiRef?.key,
+      hasTarget: !!this.apiRef?.target,
+      targetType: typeof this.apiRef?.target,
+      apiCreated: !!this.api,
+    });
+
     if (this.apiRef && this.apiRef.key) {
       const target = this.apiRef.target || window;
+      console.log('  📤 Setting API on target', {
+        key: this.apiRef.key,
+        isWindow: target === window,
+        targetKeys: Object.keys(target).slice(0, 10), // Show first 10 keys
+      });
       target[this.apiRef.key] = this.api;
+      console.log('  ✅ API set on target -', {
+        key: this.apiRef.key,
+        apiNowExists: !!target[this.apiRef.key],
+      });
     }
 
     // Initialize plugins

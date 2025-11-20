@@ -1,6 +1,6 @@
 import { Component, h, State } from '@stencil/core';
 import { blogComponentDefinitions, contentComponents, interactiveComponents } from '../../component-definitions';
-import { GridBuilderAPI } from '../../../services/grid-builder-api';
+import { GridBuilderAPI } from '../../../types/api';
 import { SectionEditorData } from '../section-editor-panel/section-editor-panel';
 import { ConfirmationModalData } from '../confirmation-modal/confirmation-modal';
 import { DeletionHookContext } from '../../../types/deletion-hook';
@@ -208,7 +208,11 @@ import { domCache } from '../../../utils/dom-cache';
   shadow: false,
 })
 export class BlogApp {
-  private api!: GridBuilderAPI;
+  /**
+   * Grid Builder API instance (accessed from window.gridBuilderAPI)
+   * Must be @State to trigger re-render when API becomes available
+   */
+  @State() private api!: GridBuilderAPI;
   private sectionCounter = 1;
 
   /**
@@ -381,11 +385,22 @@ export class BlogApp {
   }
 
   private setupGridBuilderIntegration() {
+    console.log('🔧 blog-app setupGridBuilderIntegration called', {
+      apiInitialized: this.apiInitialized,
+      hasApi: !!this.api,
+      apiType: typeof this.api,
+    });
+
     // Only initialize once, and only when API is available
     if (this.apiInitialized || !this.api) {
+      console.log('  ⏭️ Skipping setup -', {
+        alreadyInitialized: this.apiInitialized,
+        noApi: !this.api,
+      });
       return;
     }
 
+    console.log('  ✅ Proceeding with API setup');
     this.apiInitialized = true;
 
     // Inject canvas headers after initial render
@@ -470,6 +485,12 @@ export class BlogApp {
   }
 
   componentDidUpdate() {
+    // Get API from window if not already set
+    if (!this.api && (window as any).gridBuilderAPI) {
+      console.log('🔧 blog-app componentDidUpdate - API now available on window');
+      this.api = (window as any).gridBuilderAPI;
+    }
+
     // Setup API integration once it becomes available (after grid-builder loads)
     this.setupGridBuilderIntegration();
 
@@ -1066,7 +1087,6 @@ export class BlogApp {
                 canvasMetadata={this.canvasMetadata}
                 onBeforeDelete={this.handleBeforeDelete}
                 showConfigPanel={false}
-                api-ref={{ target: this, key: 'api' }}
               />
             )}
           </div>
@@ -1087,8 +1107,8 @@ export class BlogApp {
           onCancel={this.handleCancelDelete}
         />
 
-        {/* Custom Config Panel (demo-specific) - Pass API as prop */}
-        <custom-config-panel api={this.api} />
+        {/* Custom Config Panel (demo-specific) - Uses window.gridBuilderAPI */}
+        <custom-config-panel />
       </div>
     );
   }

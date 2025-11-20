@@ -18,9 +18,9 @@
  * - This allows multiple grid-builder instances without window pollution
  */
 
-import { Component, h, State, Prop } from '@stencil/core';
+import { Component, h, State, Prop, Watch } from '@stencil/core';
 import { blogComponentDefinitions } from '../../component-definitions';
-import { GridBuilderAPI } from '../../../services/grid-builder-api';
+import { GridBuilderAPI } from '../../../types/api';
 
 @Component({
   tag: 'custom-config-panel',
@@ -29,13 +29,13 @@ import { GridBuilderAPI } from '../../../services/grid-builder-api';
 })
 export class CustomConfigPanel {
   /**
-   * Grid Builder API (passed from parent blog-app component)
+   * Grid Builder API (accessed from window.gridBuilderAPI or passed as prop)
    *
-   * **Source**: Parent component (blog-app) receives API via api-ref={{ target: this, key: 'api' }}
-   * **Purpose**: Access grid state and methods without window pollution
+   * **Source**: window.gridBuilderAPI (set by grid-builder component)
+   * **Purpose**: Access grid state and methods
    * **Required**: Component won't work without valid API reference
    */
-  @Prop() api!: GridBuilderAPI;
+  @Prop() api?: GridBuilderAPI;
 
   /**
    * Panel open/closed state
@@ -99,6 +99,14 @@ export class CustomConfigPanel {
   };
 
   /**
+   * Get API (from prop or window)
+   */
+  private getAPI(): GridBuilderAPI | null {
+    // Use prop if provided, otherwise try window
+    return this.api || (window as any).gridBuilderAPI || null;
+  }
+
+  /**
    * Ensure event subscription is set up (lazy initialization)
    */
   private ensureEventSubscription() {
@@ -106,18 +114,43 @@ export class CustomConfigPanel {
       return;
     }
 
-    if (!this.api) {
+    const api = this.getAPI();
+    if (!api) {
       return; // API not ready yet, will try again later
     }
 
     // Subscribe to itemRemoved events via API
-    this.api.on('itemRemoved', this.handleItemRemoved);
+    api.on('itemRemoved', this.handleItemRemoved);
     this.eventsSubscribed = true;
     console.log('  ✅ Custom panel: Subscribed to itemRemoved event');
   }
 
+  /**
+   * Watch for API prop changes
+   */
+  @Watch('api')
+  handleApiChange(newApi: GridBuilderAPI, oldApi: GridBuilderAPI) {
+    console.log('🎨 custom-config-panel API prop changed', {
+      hadOldApi: !!oldApi,
+      hasNewApi: !!newApi,
+      newApiType: typeof newApi,
+    });
+
+    // When API becomes available, ensure event subscription
+    if (newApi && !this.eventsSubscribed) {
+      this.ensureEventSubscription();
+    }
+  }
+
   componentDidLoad() {
     console.log('🎨 custom-config-panel componentDidLoad - setting up component registry');
+    const api = this.getAPI();
+    console.log('  🔧 API status:', {
+      apiExists: !!api,
+      apiType: typeof api,
+      fromProp: !!this.api,
+      fromWindow: !!(window as any).gridBuilderAPI,
+    });
 
     // Build component registry from blog component definitions
     // This doesn't depend on the API being available
@@ -139,8 +172,9 @@ export class CustomConfigPanel {
     console.log('🎨 custom-config-panel disconnectedCallback - cleaning up');
 
     // Unsubscribe from itemRemoved events
-    if (this.api && this.eventsSubscribed) {
-      this.api.off('itemRemoved', this.handleItemRemoved);
+    const api = this.getAPI();
+    if (api && this.eventsSubscribed) {
+      api.off('itemRemoved', this.handleItemRemoved);
       this.eventsSubscribed = false;
     }
 
@@ -162,9 +196,10 @@ export class CustomConfigPanel {
     this.selectedCanvasId = canvasId;
 
     // Get item from API
-    console.log('  🔧 API exists:', !!this.api);
+    const api = this.getAPI();
+    console.log('  🔧 API exists:', !!api);
 
-    const item = this.api?.getItem(canvasId, itemId);
+    const item = api?.getItem(itemId);
     console.log('  🔧 Item retrieved:', !!item, item);
 
     if (!item) {
@@ -198,12 +233,13 @@ export class CustomConfigPanel {
    */
   private closePanel = () => {
     // Revert changes on cancel by restoring original state
-    if (this.selectedItemId && this.selectedCanvasId && this.originalState && this.api) {
+    const api = this.getAPI();
+    if (this.selectedItemId && this.selectedCanvasId && this.originalState && api) {
       // Revert config changes
-      this.api.updateItem(this.selectedCanvasId, this.selectedItemId, { config: this.originalState.config });
+      api.updateConfig(this.selectedItemId, this.originalState.config);
 
       // Revert name changes
-      const state = this.api.getState();
+      const state = api.getState();
       for (const canvasId in state.canvases) {
         const canvas = state.canvases[canvasId];
         const itemIndex = canvas.items.findIndex(i => i.id === this.selectedItemId);
@@ -248,9 +284,10 @@ export class CustomConfigPanel {
     this.componentName = value;
 
     // Update the item name (live preview)
-    if (this.selectedItemId && this.api) {
+    const api = this.getAPI();
+    if (this.selectedItemId && api) {
       // Get the full state to access canvases
-      const state = this.api.getState();
+      const state = api.getState();
 
       // Find and update the item across all canvases
       for (const canvasId in state.canvases) {
@@ -278,8 +315,9 @@ export class CustomConfigPanel {
     this.componentConfig = { ...this.componentConfig, [fieldName]: value };
 
     // Apply changes immediately (live preview) via API
-    if (this.selectedItemId && this.selectedCanvasId && this.api) {
-      this.api.updateItem(this.selectedCanvasId, this.selectedItemId, { config: this.componentConfig });
+    const api = this.getAPI();
+    if (this.selectedItemId && api) {
+      api.updateConfig(this.selectedItemId, this.componentConfig);
     }
   };
 
@@ -289,7 +327,8 @@ export class CustomConfigPanel {
     }
 
     // Get item from API
-    const item = this.api?.getItem(this.selectedCanvasId, this.selectedItemId);
+    const api = this.getAPI();
+    const item = api?.getItem(this.selectedItemId);
     if (!item) {
       return null;
     }
