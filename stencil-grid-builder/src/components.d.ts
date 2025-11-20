@@ -9,7 +9,7 @@ import { GridConfig } from "./types/grid-config";
 import { ComponentDefinition } from "./types/component-definition";
 import { GridItem, GridState, ViewerState } from "./services/state-manager";
 import { ConfirmationModalData } from "./demo/components/confirmation-modal/confirmation-modal";
-import { GridBuilderAPI } from "./services/grid-builder-api";
+import { GridBuilderAPI } from "./types/api";
 import { GridBuilderTheme } from "./types/theme";
 import { GridBuilderPlugin } from "./types/plugin";
 import { UIComponentOverrides } from "./types/ui-overrides";
@@ -20,7 +20,7 @@ export { GridConfig } from "./types/grid-config";
 export { ComponentDefinition } from "./types/component-definition";
 export { GridItem, GridState, ViewerState } from "./services/state-manager";
 export { ConfirmationModalData } from "./demo/components/confirmation-modal/confirmation-modal";
-export { GridBuilderAPI } from "./services/grid-builder-api";
+export { GridBuilderAPI } from "./types/api";
 export { GridBuilderTheme } from "./types/theme";
 export { GridBuilderPlugin } from "./types/plugin";
 export { UIComponentOverrides } from "./types/ui-overrides";
@@ -434,9 +434,9 @@ export namespace Components {
     }
     interface CustomConfigPanel {
         /**
-          * Grid Builder API (passed from parent blog-app component)  **Source**: Parent component (blog-app) receives API via api-ref={{ target: this, key: 'api' }} **Purpose**: Access grid state and methods without window pollution **Required**: Component won't work without valid API reference
+          * Grid Builder API (accessed from window.gridBuilderAPI or passed as prop)  **Source**: window.gridBuilderAPI (set by grid-builder component) **Purpose**: Access grid state and methods **Required**: Component won't work without valid API reference
          */
-        "api": GridBuilderAPI;
+        "api"?: GridBuilderAPI;
     }
     /**
      * Custom Drag Clone Component
@@ -1608,9 +1608,9 @@ declare namespace LocalJSX {
     }
     interface CustomConfigPanel {
         /**
-          * Grid Builder API (passed from parent blog-app component)  **Source**: Parent component (blog-app) receives API via api-ref={{ target: this, key: 'api' }} **Purpose**: Access grid state and methods without window pollution **Required**: Component won't work without valid API reference
+          * Grid Builder API (accessed from window.gridBuilderAPI or passed as prop)  **Source**: window.gridBuilderAPI (set by grid-builder component) **Purpose**: Access grid state and methods **Required**: Component won't work without valid API reference
          */
-        "api": GridBuilderAPI;
+        "api"?: GridBuilderAPI;
     }
     /**
      * Custom Drag Clone Component
