@@ -135,6 +135,15 @@ export class CanvasSection {
   @Prop() backgroundColor?: string;
 
   /**
+   * Deletion hook (from parent grid-builder)
+   *
+   * **Source**: grid-builder component (from onBeforeDelete prop)
+   * **Purpose**: Pass through to grid-item-wrapper for deletion interception
+   * **Optional**: If not provided, components delete immediately
+   */
+  @Prop() onBeforeDelete?: (context: any) => boolean | Promise<boolean>;
+
+  /**
    * Canvas state (reactive)
    *
    * **Source**: gridState.canvases[canvasId]
@@ -511,6 +520,7 @@ export class CanvasSection {
               renderVersion={this.renderVersion}
               config={this.config}
               componentRegistry={this.componentRegistry}
+              onBeforeDelete={this.onBeforeDelete}
             />
           ))}
         </div>

@@ -53,6 +53,7 @@ import { GridBuilderTheme } from '../../types/theme';
 import { GridBuilderPlugin } from '../../types/plugin';
 import { UIComponentOverrides } from '../../types/ui-overrides';
 import { GridBuilderAPI } from '../../types/api';
+import { DeletionHook } from '../../types/deletion-hook';
 
 // Service imports
 import { gridState, GridState, generateItemId, deleteItemsBatch, addItemsBatch, updateItemsBatch } from '../../services/state-manager';
@@ -283,6 +284,54 @@ export class GridBuilder {
    * - Library passes metadata to canvas-section via props
    */
   @Prop() canvasMetadata?: Record<string, any>;
+
+  /**
+   * Hook called before deleting a component
+   *
+   * **Optional prop**: Intercept deletion requests for custom workflows
+   * **Purpose**: Allow host app to show confirmation, make API calls, etc.
+   *
+   * **Hook behavior**:
+   * - Return `true` to proceed with deletion
+   * - Return `false` to cancel the deletion
+   * - Return a Promise for async operations (modals, API calls)
+   *
+   * **Example - Confirmation modal**:
+   * ```typescript
+   * const onBeforeDelete = async (context) => {
+   *   const confirmed = await showConfirmModal(
+   *     `Delete ${context.item.name}?`,
+   *     'This action cannot be undone.'
+   *   );
+   *   return confirmed;
+   * };
+   * <grid-builder onBeforeDelete={onBeforeDelete} ... />
+   * ```
+   *
+   * **Example - API call + confirmation**:
+   * ```typescript
+   * const onBeforeDelete = async (context) => {
+   *   // Show loading modal
+   *   const modal = showLoadingModal('Deleting...');
+   *
+   *   try {
+   *     // Make API call
+   *     await fetch(`/api/components/${context.itemId}`, {
+   *       method: 'DELETE'
+   *     });
+   *     modal.close();
+   *     return true; // Proceed with deletion
+   *   } catch (error) {
+   *     modal.close();
+   *     showErrorModal('Failed to delete component');
+   *     return false; // Cancel deletion
+   *   }
+   * };
+   * ```
+   *
+   * **Default behavior**: If not provided, components delete immediately
+   */
+  @Prop() onBeforeDelete?: DeletionHook;
 
   /**
    * Component registry (internal state)
@@ -893,6 +942,7 @@ export class GridBuilder {
                   config={this.config}
                   componentRegistry={this.componentRegistry}
                   backgroundColor={this.canvasMetadata?.[canvasId]?.backgroundColor}
+                  onBeforeDelete={this.onBeforeDelete}
                 />
               ))}
             </div>
