@@ -13,9 +13,9 @@
  */
 
 import { h } from '@stencil/core';
-import { GridBuilder } from './grid-builder';
-import { reset as resetState } from '../../services/state-manager';
-import { clearHistory } from '../../services/undo-redo';
+import { GridBuilder } from '../grid-builder';
+import { reset as resetState } from '../../../services/state-manager';
+import { clearHistory } from '../../../services/undo-redo';
 
 // Mock component definitions for tests
 const mockComponentDefinitions = [
