@@ -7,16 +7,22 @@
 import { HTMLStencilElement, JSXBase } from "@stencil/core/internal";
 import { GridConfig } from "./types/grid-config";
 import { ComponentDefinition } from "./types/component-definition";
+import { ConfirmationModalData } from "./demo/components/confirmation-modal/confirmation-modal";
 import { GridBuilderTheme } from "./types/theme";
 import { GridBuilderPlugin } from "./types/plugin";
 import { UIComponentOverrides } from "./types/ui-overrides";
 import { GridItem, GridState } from "./services/state-manager";
+import { DeletionHook } from "./types/deletion-hook";
+import { SectionEditorData } from "./demo/components/section-editor-panel/section-editor-panel";
 export { GridConfig } from "./types/grid-config";
 export { ComponentDefinition } from "./types/component-definition";
+export { ConfirmationModalData } from "./demo/components/confirmation-modal/confirmation-modal";
 export { GridBuilderTheme } from "./types/theme";
 export { GridBuilderPlugin } from "./types/plugin";
 export { UIComponentOverrides } from "./types/ui-overrides";
 export { GridItem, GridState } from "./services/state-manager";
+export { DeletionHook } from "./types/deletion-hook";
+export { SectionEditorData } from "./demo/components/section-editor-panel/section-editor-panel";
 export namespace Components {
     interface BlogApp {
     }
@@ -72,6 +78,10 @@ export namespace Components {
           * Grid configuration options  **Optional**: Customizes grid system behavior **Passed from**: grid-builder component **Used for**: Grid size calculations, constraints
          */
         "config"?: GridConfig;
+        /**
+          * Deletion hook (from parent grid-builder)  **Source**: grid-builder component (from onBeforeDelete prop) **Purpose**: Pass through to grid-item-wrapper for deletion interception **Optional**: If not provided, components delete immediately
+         */
+        "onBeforeDelete"?: (context: any) => boolean | Promise<boolean>;
     }
     /**
      * ComponentPalette Component
@@ -103,6 +113,16 @@ export namespace Components {
           * Component registry (from parent grid-builder)  **Source**: grid-builder component **Purpose**: Look up component definitions for config forms
          */
         "componentRegistry"?: Map<string, ComponentDefinition>;
+    }
+    interface ConfirmationModal {
+        /**
+          * @default null
+         */
+        "data": ConfirmationModalData | null;
+        /**
+          * @default false
+         */
+        "isOpen": boolean;
     }
     /**
      * Custom Drag Clone Component
@@ -180,6 +200,10 @@ export namespace Components {
          */
         "initialState"?: Partial<GridState>;
         /**
+          * Hook called before deleting a component  **Optional prop**: Intercept deletion requests for custom workflows **Purpose**: Allow host app to show confirmation, make API calls, etc.  **Hook behavior**: - Return `true` to proceed with deletion - Return `false` to cancel the deletion - Return a Promise for async operations (modals, API calls)  **Example - Confirmation modal**: ```typescript const onBeforeDelete = async (context) => {   const confirmed = await showConfirmModal(     `Delete ${context.item.name}?`,     'This action cannot be undone.'   );   return confirmed; }; <grid-builder onBeforeDelete={onBeforeDelete} ... /> ```  **Example - API call + confirmation**: ```typescript const onBeforeDelete = async (context) => {   // Show loading modal   const modal = showLoadingModal('Deleting...');    try {     // Make API call     await fetch(`/api/components/${context.itemId}`, {       method: 'DELETE'     });     modal.close();     return true; // Proceed with deletion   } catch (error) {     modal.close();     showErrorModal('Failed to delete component');     return false; // Cancel deletion   } }; ```  **Default behavior**: If not provided, components delete immediately
+         */
+        "onBeforeDelete"?: DeletionHook;
+        /**
           * Plugin instances for extending functionality  **Optional prop**: Array of GridBuilderPlugin instances **Purpose**: Add custom features, analytics, integrations  **Plugin lifecycle**: 1. Library calls plugin.init(api) on componentDidLoad 2. Plugin subscribes to events, adds UI, etc. 3. Library calls plugin.destroy() on disconnectedCallback  **Example**: ```typescript class AnalyticsPlugin implements GridBuilderPlugin {   name = 'analytics';    init(api: GridBuilderAPI) {     api.on('componentAdded', (e) => {       analytics.track('Component Added', { type: e.item.type });     });   }    destroy() {     // Cleanup   } }  const plugins = [new AnalyticsPlugin()]; ```
          */
         "plugins"?: GridBuilderPlugin[];
@@ -214,14 +238,36 @@ export namespace Components {
          */
         "item": GridItem;
         /**
+          * Deletion hook (from parent grid-builder)  **Source**: grid-builder component (from onBeforeDelete prop) **Purpose**: Allow host app to intercept deletion requests  **Hook behavior**: - Called before deleting a component - Receives context with item data - Returns true/false or Promise<boolean> - If false, deletion is cancelled - If true, deletion proceeds  **Default**: If not provided, components delete immediately
+         */
+        "onBeforeDelete"?: (context: any) => boolean | Promise<boolean>;
+        /**
           * Render version (force re-render trigger)  **Source**: Parent canvas-section (incremented on resize) **Purpose**: Force grid calculation refresh when container resizes
          */
         "renderVersion"?: number;
+    }
+    interface SectionEditorPanel {
+        /**
+          * @default false
+         */
+        "isOpen": boolean;
+        /**
+          * @default null
+         */
+        "sectionData": SectionEditorData | null;
     }
 }
 export interface BlogButtonCustomEvent<T> extends CustomEvent<T> {
     detail: T;
     target: HTMLBlogButtonElement;
+}
+export interface ConfirmationModalCustomEvent<T> extends CustomEvent<T> {
+    detail: T;
+    target: HTMLConfirmationModalElement;
+}
+export interface SectionEditorPanelCustomEvent<T> extends CustomEvent<T> {
+    detail: T;
+    target: HTMLSectionEditorPanelElement;
 }
 declare global {
     interface HTMLBlogAppElement extends Components.BlogApp, HTMLStencilElement {
@@ -300,6 +346,24 @@ declare global {
         prototype: HTMLConfigPanelElement;
         new (): HTMLConfigPanelElement;
     };
+    interface HTMLConfirmationModalElementEventMap {
+        "confirm": void;
+        "cancel": void;
+    }
+    interface HTMLConfirmationModalElement extends Components.ConfirmationModal, HTMLStencilElement {
+        addEventListener<K extends keyof HTMLConfirmationModalElementEventMap>(type: K, listener: (this: HTMLConfirmationModalElement, ev: ConfirmationModalCustomEvent<HTMLConfirmationModalElementEventMap[K]>) => any, options?: boolean | AddEventListenerOptions): void;
+        addEventListener<K extends keyof DocumentEventMap>(type: K, listener: (this: Document, ev: DocumentEventMap[K]) => any, options?: boolean | AddEventListenerOptions): void;
+        addEventListener<K extends keyof HTMLElementEventMap>(type: K, listener: (this: HTMLElement, ev: HTMLElementEventMap[K]) => any, options?: boolean | AddEventListenerOptions): void;
+        addEventListener(type: string, listener: EventListenerOrEventListenerObject, options?: boolean | AddEventListenerOptions): void;
+        removeEventListener<K extends keyof HTMLConfirmationModalElementEventMap>(type: K, listener: (this: HTMLConfirmationModalElement, ev: ConfirmationModalCustomEvent<HTMLConfirmationModalElementEventMap[K]>) => any, options?: boolean | EventListenerOptions): void;
+        removeEventListener<K extends keyof DocumentEventMap>(type: K, listener: (this: Document, ev: DocumentEventMap[K]) => any, options?: boolean | EventListenerOptions): void;
+        removeEventListener<K extends keyof HTMLElementEventMap>(type: K, listener: (this: HTMLElement, ev: HTMLElementEventMap[K]) => any, options?: boolean | EventListenerOptions): void;
+        removeEventListener(type: string, listener: EventListenerOrEventListenerObject, options?: boolean | EventListenerOptions): void;
+    }
+    var HTMLConfirmationModalElement: {
+        prototype: HTMLConfirmationModalElement;
+        new (): HTMLConfirmationModalElement;
+    };
     /**
      * Custom Drag Clone Component
      * ============================
@@ -354,6 +418,24 @@ declare global {
         prototype: HTMLGridItemWrapperElement;
         new (): HTMLGridItemWrapperElement;
     };
+    interface HTMLSectionEditorPanelElementEventMap {
+        "closePanel": void;
+        "updateSection": { canvasId: string; title: string; backgroundColor: string };
+    }
+    interface HTMLSectionEditorPanelElement extends Components.SectionEditorPanel, HTMLStencilElement {
+        addEventListener<K extends keyof HTMLSectionEditorPanelElementEventMap>(type: K, listener: (this: HTMLSectionEditorPanelElement, ev: SectionEditorPanelCustomEvent<HTMLSectionEditorPanelElementEventMap[K]>) => any, options?: boolean | AddEventListenerOptions): void;
+        addEventListener<K extends keyof DocumentEventMap>(type: K, listener: (this: Document, ev: DocumentEventMap[K]) => any, options?: boolean | AddEventListenerOptions): void;
+        addEventListener<K extends keyof HTMLElementEventMap>(type: K, listener: (this: HTMLElement, ev: HTMLElementEventMap[K]) => any, options?: boolean | AddEventListenerOptions): void;
+        addEventListener(type: string, listener: EventListenerOrEventListenerObject, options?: boolean | AddEventListenerOptions): void;
+        removeEventListener<K extends keyof HTMLSectionEditorPanelElementEventMap>(type: K, listener: (this: HTMLSectionEditorPanelElement, ev: SectionEditorPanelCustomEvent<HTMLSectionEditorPanelElementEventMap[K]>) => any, options?: boolean | EventListenerOptions): void;
+        removeEventListener<K extends keyof DocumentEventMap>(type: K, listener: (this: Document, ev: DocumentEventMap[K]) => any, options?: boolean | EventListenerOptions): void;
+        removeEventListener<K extends keyof HTMLElementEventMap>(type: K, listener: (this: HTMLElement, ev: HTMLElementEventMap[K]) => any, options?: boolean | EventListenerOptions): void;
+        removeEventListener(type: string, listener: EventListenerOrEventListenerObject, options?: boolean | EventListenerOptions): void;
+    }
+    var HTMLSectionEditorPanelElement: {
+        prototype: HTMLSectionEditorPanelElement;
+        new (): HTMLSectionEditorPanelElement;
+    };
     interface HTMLElementTagNameMap {
         "blog-app": HTMLBlogAppElement;
         "blog-article": HTMLBlogArticleElement;
@@ -362,10 +444,12 @@ declare global {
         "canvas-section": HTMLCanvasSectionElement;
         "component-palette": HTMLComponentPaletteElement;
         "config-panel": HTMLConfigPanelElement;
+        "confirmation-modal": HTMLConfirmationModalElement;
         "custom-drag-clone": HTMLCustomDragCloneElement;
         "custom-palette-item": HTMLCustomPaletteItemElement;
         "grid-builder": HTMLGridBuilderElement;
         "grid-item-wrapper": HTMLGridItemWrapperElement;
+        "section-editor-panel": HTMLSectionEditorPanelElement;
     }
 }
 declare namespace LocalJSX {
@@ -424,6 +508,10 @@ declare namespace LocalJSX {
           * Grid configuration options  **Optional**: Customizes grid system behavior **Passed from**: grid-builder component **Used for**: Grid size calculations, constraints
          */
         "config"?: GridConfig;
+        /**
+          * Deletion hook (from parent grid-builder)  **Source**: grid-builder component (from onBeforeDelete prop) **Purpose**: Pass through to grid-item-wrapper for deletion interception **Optional**: If not provided, components delete immediately
+         */
+        "onBeforeDelete"?: (context: any) => boolean | Promise<boolean>;
     }
     /**
      * ComponentPalette Component
@@ -455,6 +543,18 @@ declare namespace LocalJSX {
           * Component registry (from parent grid-builder)  **Source**: grid-builder component **Purpose**: Look up component definitions for config forms
          */
         "componentRegistry"?: Map<string, ComponentDefinition>;
+    }
+    interface ConfirmationModal {
+        /**
+          * @default null
+         */
+        "data"?: ConfirmationModalData | null;
+        /**
+          * @default false
+         */
+        "isOpen"?: boolean;
+        "onCancel"?: (event: ConfirmationModalCustomEvent<void>) => void;
+        "onConfirm"?: (event: ConfirmationModalCustomEvent<void>) => void;
     }
     /**
      * Custom Drag Clone Component
@@ -532,6 +632,10 @@ declare namespace LocalJSX {
          */
         "initialState"?: Partial<GridState>;
         /**
+          * Hook called before deleting a component  **Optional prop**: Intercept deletion requests for custom workflows **Purpose**: Allow host app to show confirmation, make API calls, etc.  **Hook behavior**: - Return `true` to proceed with deletion - Return `false` to cancel the deletion - Return a Promise for async operations (modals, API calls)  **Example - Confirmation modal**: ```typescript const onBeforeDelete = async (context) => {   const confirmed = await showConfirmModal(     `Delete ${context.item.name}?`,     'This action cannot be undone.'   );   return confirmed; }; <grid-builder onBeforeDelete={onBeforeDelete} ... /> ```  **Example - API call + confirmation**: ```typescript const onBeforeDelete = async (context) => {   // Show loading modal   const modal = showLoadingModal('Deleting...');    try {     // Make API call     await fetch(`/api/components/${context.itemId}`, {       method: 'DELETE'     });     modal.close();     return true; // Proceed with deletion   } catch (error) {     modal.close();     showErrorModal('Failed to delete component');     return false; // Cancel deletion   } }; ```  **Default behavior**: If not provided, components delete immediately
+         */
+        "onBeforeDelete"?: DeletionHook;
+        /**
           * Plugin instances for extending functionality  **Optional prop**: Array of GridBuilderPlugin instances **Purpose**: Add custom features, analytics, integrations  **Plugin lifecycle**: 1. Library calls plugin.init(api) on componentDidLoad 2. Plugin subscribes to events, adds UI, etc. 3. Library calls plugin.destroy() on disconnectedCallback  **Example**: ```typescript class AnalyticsPlugin implements GridBuilderPlugin {   name = 'analytics';    init(api: GridBuilderAPI) {     api.on('componentAdded', (e) => {       analytics.track('Component Added', { type: e.item.type });     });   }    destroy() {     // Cleanup   } }  const plugins = [new AnalyticsPlugin()]; ```
          */
         "plugins"?: GridBuilderPlugin[];
@@ -566,9 +670,25 @@ declare namespace LocalJSX {
          */
         "item": GridItem;
         /**
+          * Deletion hook (from parent grid-builder)  **Source**: grid-builder component (from onBeforeDelete prop) **Purpose**: Allow host app to intercept deletion requests  **Hook behavior**: - Called before deleting a component - Receives context with item data - Returns true/false or Promise<boolean> - If false, deletion is cancelled - If true, deletion proceeds  **Default**: If not provided, components delete immediately
+         */
+        "onBeforeDelete"?: (context: any) => boolean | Promise<boolean>;
+        /**
           * Render version (force re-render trigger)  **Source**: Parent canvas-section (incremented on resize) **Purpose**: Force grid calculation refresh when container resizes
          */
         "renderVersion"?: number;
+    }
+    interface SectionEditorPanel {
+        /**
+          * @default false
+         */
+        "isOpen"?: boolean;
+        "onClosePanel"?: (event: SectionEditorPanelCustomEvent<void>) => void;
+        "onUpdateSection"?: (event: SectionEditorPanelCustomEvent<{ canvasId: string; title: string; backgroundColor: string }>) => void;
+        /**
+          * @default null
+         */
+        "sectionData"?: SectionEditorData | null;
     }
     interface IntrinsicElements {
         "blog-app": BlogApp;
@@ -578,10 +698,12 @@ declare namespace LocalJSX {
         "canvas-section": CanvasSection;
         "component-palette": ComponentPalette;
         "config-panel": ConfigPanel;
+        "confirmation-modal": ConfirmationModal;
         "custom-drag-clone": CustomDragClone;
         "custom-palette-item": CustomPaletteItem;
         "grid-builder": GridBuilder;
         "grid-item-wrapper": GridItemWrapper;
+        "section-editor-panel": SectionEditorPanel;
     }
 }
 export { LocalJSX as JSX };
@@ -618,6 +740,7 @@ declare module "@stencil/core" {
              * **Shadow DOM**: Disabled (for consistency with other components)
              */
             "config-panel": LocalJSX.ConfigPanel & JSXBase.HTMLAttributes<HTMLConfigPanelElement>;
+            "confirmation-modal": LocalJSX.ConfirmationModal & JSXBase.HTMLAttributes<HTMLConfirmationModalElement>;
             /**
              * Custom Drag Clone Component
              * ============================
@@ -652,6 +775,7 @@ declare module "@stencil/core" {
              * **Dynamic rendering**: Uses ComponentDefinition.render() from registry
              */
             "grid-item-wrapper": LocalJSX.GridItemWrapper & JSXBase.HTMLAttributes<HTMLGridItemWrapperElement>;
+            "section-editor-panel": LocalJSX.SectionEditorPanel & JSXBase.HTMLAttributes<HTMLSectionEditorPanelElement>;
         }
     }
 }
