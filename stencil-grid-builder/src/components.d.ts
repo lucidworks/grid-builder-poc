@@ -58,10 +58,48 @@ export namespace Components {
      * 6. **Event System** (canvas-click, custom events)
      * - Listen to library events for state synchronization
      * - React to user interactions (canvas clicks, etc.)
+     * 7. **Multiple Palettes Pattern** (Demonstrated in this demo)
+     * - Multiple `<component-palette>` instances with different components
+     * - Categorized/grouped components (Content, Interactive, etc.)
+     * - Collapsible category sections
+     * - All palettes drag to the same canvases
      * Architecture Pattern:
      * --------------------
      * - Library: Manages component placement, drag/drop, resize, undo/redo
      * - Host App: Manages canvas metadata, custom UI (headers, modals), business logic
+     * ## Multiple Palettes Pattern (Featured in this Demo)
+     * **Why use multiple palettes:**
+     * - Better component organization (group by category, purpose, or feature)
+     * - Collapsible sections save screen space
+     * - Easier to find components in large libraries
+     * - Matches common UI patterns (like the example mockup)
+     * **How it works:**
+     * 1. Create categorized component arrays:
+     * ```typescript
+     * const contentComponents = [header, article, ...];
+     * const interactiveComponents = [button, link, ...];
+     * ```
+     * 2. Render multiple `<component-palette>` instances:
+     * ```typescript
+     * <component-palette components={contentComponents} showHeader={false} />
+     * <component-palette components={interactiveComponents} showHeader={false} />
+     * ```
+     * 3. All palettes work with the same canvases:
+     * - Each palette initializes its own drag handlers
+     * - All drag to the same `<canvas-section>` dropzones
+     * - Component type (not palette source) determines behavior
+     * - grid-builder registers ALL components for rendering
+     * **Key Points:**
+     * - Pass all components to grid-builder (for type registration)
+     * - Use chromeless mode (`showHeader={false}`) for custom headers
+     * - Each palette manages its own drag/drop independently
+     * - Canvases accept drops from any palette
+     * - No coordination needed between palettes
+     * **Implementation in this demo:**
+     * - Content category: Headers, Articles (text-based components)
+     * - Interactive category: Buttons, CTAs (action components)
+     * - Collapsible sections with expand/collapse state
+     * - Clean categorized UI matching modern design patterns
      */
     interface BlogApp {
     }
@@ -109,6 +147,11 @@ export namespace Components {
           * Canvas ID for state management  **Format**: 'canvas1', 'canvas2', etc. **Purpose**: Key for accessing canvas data in gridState.canvases **Required**: Component won't render without valid canvasId
          */
         "canvasId": string;
+        /**
+          * Canvas title (from canvasMetadata)  **Optional**: Display title for this section **Renders as**: Rotated tab on right side, outside section bounds **Builder mode only**: Title tabs visible in builder, not viewer **Source**: Passed from grid-builder via canvasMetadata[canvasId].title
+          * @example ```tsx <canvas-section   canvasId="hero-section"   canvasTitle="Hero Section" /> ```
+         */
+        "canvasTitle"?: string;
         /**
           * Component registry (from parent grid-builder)  **Source**: grid-builder component (built from components prop) **Structure**: Map<type, ComponentDefinition> **Purpose**: Pass to grid-item-wrapper for dynamic rendering
          */
@@ -221,6 +264,11 @@ export namespace Components {
           * Grid configuration options  **Optional prop**: Customizes grid system behavior **Passed from**: grid-builder component **Used for**: Drag clone sizing (gridToPixelsX/Y calculations)
          */
         "config"?: GridConfig;
+        /**
+          * Show palette header (title)  **Optional prop**: Controls whether the "Components" header is displayed **Default**: true (shows header for backward compatibility)  **Use cases**: - `showHeader={true}` (default): Standard palette with "Components" title - `showHeader={false}`: Chromeless mode - just the component list  **Chromeless mode benefits**: - Embed palette in custom layouts - Add your own headers/titles - Integrate into existing UI structures - More flexible component placement  **Example - Chromeless with custom wrapper**: ```typescript <div class="my-custom-sidebar">   <h3 class="my-title">Available Components</h3>   <p class="my-description">Drag to add</p>   <component-palette     components={componentDefinitions}     showHeader={false}   /> </div> ```
+          * @default true
+         */
+        "showHeader"?: boolean;
     }
     /**
      * ConfigPanel Component
@@ -562,10 +610,48 @@ declare global {
      * 6. **Event System** (canvas-click, custom events)
      * - Listen to library events for state synchronization
      * - React to user interactions (canvas clicks, etc.)
+     * 7. **Multiple Palettes Pattern** (Demonstrated in this demo)
+     * - Multiple `<component-palette>` instances with different components
+     * - Categorized/grouped components (Content, Interactive, etc.)
+     * - Collapsible category sections
+     * - All palettes drag to the same canvases
      * Architecture Pattern:
      * --------------------
      * - Library: Manages component placement, drag/drop, resize, undo/redo
      * - Host App: Manages canvas metadata, custom UI (headers, modals), business logic
+     * ## Multiple Palettes Pattern (Featured in this Demo)
+     * **Why use multiple palettes:**
+     * - Better component organization (group by category, purpose, or feature)
+     * - Collapsible sections save screen space
+     * - Easier to find components in large libraries
+     * - Matches common UI patterns (like the example mockup)
+     * **How it works:**
+     * 1. Create categorized component arrays:
+     * ```typescript
+     * const contentComponents = [header, article, ...];
+     * const interactiveComponents = [button, link, ...];
+     * ```
+     * 2. Render multiple `<component-palette>` instances:
+     * ```typescript
+     * <component-palette components={contentComponents} showHeader={false} />
+     * <component-palette components={interactiveComponents} showHeader={false} />
+     * ```
+     * 3. All palettes work with the same canvases:
+     * - Each palette initializes its own drag handlers
+     * - All drag to the same `<canvas-section>` dropzones
+     * - Component type (not palette source) determines behavior
+     * - grid-builder registers ALL components for rendering
+     * **Key Points:**
+     * - Pass all components to grid-builder (for type registration)
+     * - Use chromeless mode (`showHeader={false}`) for custom headers
+     * - Each palette manages its own drag/drop independently
+     * - Canvases accept drops from any palette
+     * - No coordination needed between palettes
+     * **Implementation in this demo:**
+     * - Content category: Headers, Articles (text-based components)
+     * - Interactive category: Buttons, CTAs (action components)
+     * - Collapsible sections with expand/collapse state
+     * - Clean categorized UI matching modern design patterns
      */
     interface HTMLBlogAppElement extends Components.BlogApp, HTMLStencilElement {
     }
@@ -851,6 +937,7 @@ declare global {
     interface HTMLSectionEditorPanelElementEventMap {
         "closePanel": void;
         "updateSection": { canvasId: string; title: string; backgroundColor: string };
+        "previewColorChange": { canvasId: string; backgroundColor: string };
     }
     /**
      * Section Editor Panel Component
@@ -947,10 +1034,48 @@ declare namespace LocalJSX {
      * 6. **Event System** (canvas-click, custom events)
      * - Listen to library events for state synchronization
      * - React to user interactions (canvas clicks, etc.)
+     * 7. **Multiple Palettes Pattern** (Demonstrated in this demo)
+     * - Multiple `<component-palette>` instances with different components
+     * - Categorized/grouped components (Content, Interactive, etc.)
+     * - Collapsible category sections
+     * - All palettes drag to the same canvases
      * Architecture Pattern:
      * --------------------
      * - Library: Manages component placement, drag/drop, resize, undo/redo
      * - Host App: Manages canvas metadata, custom UI (headers, modals), business logic
+     * ## Multiple Palettes Pattern (Featured in this Demo)
+     * **Why use multiple palettes:**
+     * - Better component organization (group by category, purpose, or feature)
+     * - Collapsible sections save screen space
+     * - Easier to find components in large libraries
+     * - Matches common UI patterns (like the example mockup)
+     * **How it works:**
+     * 1. Create categorized component arrays:
+     * ```typescript
+     * const contentComponents = [header, article, ...];
+     * const interactiveComponents = [button, link, ...];
+     * ```
+     * 2. Render multiple `<component-palette>` instances:
+     * ```typescript
+     * <component-palette components={contentComponents} showHeader={false} />
+     * <component-palette components={interactiveComponents} showHeader={false} />
+     * ```
+     * 3. All palettes work with the same canvases:
+     * - Each palette initializes its own drag handlers
+     * - All drag to the same `<canvas-section>` dropzones
+     * - Component type (not palette source) determines behavior
+     * - grid-builder registers ALL components for rendering
+     * **Key Points:**
+     * - Pass all components to grid-builder (for type registration)
+     * - Use chromeless mode (`showHeader={false}`) for custom headers
+     * - Each palette manages its own drag/drop independently
+     * - Canvases accept drops from any palette
+     * - No coordination needed between palettes
+     * **Implementation in this demo:**
+     * - Content category: Headers, Articles (text-based components)
+     * - Interactive category: Buttons, CTAs (action components)
+     * - Collapsible sections with expand/collapse state
+     * - Clean categorized UI matching modern design patterns
      */
     interface BlogApp {
     }
@@ -999,6 +1124,11 @@ declare namespace LocalJSX {
           * Canvas ID for state management  **Format**: 'canvas1', 'canvas2', etc. **Purpose**: Key for accessing canvas data in gridState.canvases **Required**: Component won't render without valid canvasId
          */
         "canvasId": string;
+        /**
+          * Canvas title (from canvasMetadata)  **Optional**: Display title for this section **Renders as**: Rotated tab on right side, outside section bounds **Builder mode only**: Title tabs visible in builder, not viewer **Source**: Passed from grid-builder via canvasMetadata[canvasId].title
+          * @example ```tsx <canvas-section   canvasId="hero-section"   canvasTitle="Hero Section" /> ```
+         */
+        "canvasTitle"?: string;
         /**
           * Component registry (from parent grid-builder)  **Source**: grid-builder component (built from components prop) **Structure**: Map<type, ComponentDefinition> **Purpose**: Pass to grid-item-wrapper for dynamic rendering
          */
@@ -1111,6 +1241,11 @@ declare namespace LocalJSX {
           * Grid configuration options  **Optional prop**: Customizes grid system behavior **Passed from**: grid-builder component **Used for**: Drag clone sizing (gridToPixelsX/Y calculations)
          */
         "config"?: GridConfig;
+        /**
+          * Show palette header (title)  **Optional prop**: Controls whether the "Components" header is displayed **Default**: true (shows header for backward compatibility)  **Use cases**: - `showHeader={true}` (default): Standard palette with "Components" title - `showHeader={false}`: Chromeless mode - just the component list  **Chromeless mode benefits**: - Embed palette in custom layouts - Add your own headers/titles - Integrate into existing UI structures - More flexible component placement  **Example - Chromeless with custom wrapper**: ```typescript <div class="my-custom-sidebar">   <h3 class="my-title">Available Components</h3>   <p class="my-description">Drag to add</p>   <component-palette     components={componentDefinitions}     showHeader={false}   /> </div> ```
+          * @default true
+         */
+        "showHeader"?: boolean;
     }
     /**
      * ConfigPanel Component
@@ -1408,6 +1543,10 @@ declare namespace LocalJSX {
          */
         "onClosePanel"?: (event: SectionEditorPanelCustomEvent<void>) => void;
         /**
+          * Event: Preview color change Fired when user changes color picker (live preview) Parent temporarily updates canvas background
+         */
+        "onPreviewColorChange"?: (event: SectionEditorPanelCustomEvent<{ canvasId: string; backgroundColor: string }>) => void;
+        /**
           * Event: Update section Fired when user clicks Save with edited values Parent updates canvasMetadata state in response
          */
         "onUpdateSection"?: (event: SectionEditorPanelCustomEvent<{ canvasId: string; title: string; backgroundColor: string }>) => void;
@@ -1471,10 +1610,48 @@ declare module "@stencil/core" {
              * 6. **Event System** (canvas-click, custom events)
              * - Listen to library events for state synchronization
              * - React to user interactions (canvas clicks, etc.)
+             * 7. **Multiple Palettes Pattern** (Demonstrated in this demo)
+             * - Multiple `<component-palette>` instances with different components
+             * - Categorized/grouped components (Content, Interactive, etc.)
+             * - Collapsible category sections
+             * - All palettes drag to the same canvases
              * Architecture Pattern:
              * --------------------
              * - Library: Manages component placement, drag/drop, resize, undo/redo
              * - Host App: Manages canvas metadata, custom UI (headers, modals), business logic
+             * ## Multiple Palettes Pattern (Featured in this Demo)
+             * **Why use multiple palettes:**
+             * - Better component organization (group by category, purpose, or feature)
+             * - Collapsible sections save screen space
+             * - Easier to find components in large libraries
+             * - Matches common UI patterns (like the example mockup)
+             * **How it works:**
+             * 1. Create categorized component arrays:
+             * ```typescript
+             * const contentComponents = [header, article, ...];
+             * const interactiveComponents = [button, link, ...];
+             * ```
+             * 2. Render multiple `<component-palette>` instances:
+             * ```typescript
+             * <component-palette components={contentComponents} showHeader={false} />
+             * <component-palette components={interactiveComponents} showHeader={false} />
+             * ```
+             * 3. All palettes work with the same canvases:
+             * - Each palette initializes its own drag handlers
+             * - All drag to the same `<canvas-section>` dropzones
+             * - Component type (not palette source) determines behavior
+             * - grid-builder registers ALL components for rendering
+             * **Key Points:**
+             * - Pass all components to grid-builder (for type registration)
+             * - Use chromeless mode (`showHeader={false}`) for custom headers
+             * - Each palette manages its own drag/drop independently
+             * - Canvases accept drops from any palette
+             * - No coordination needed between palettes
+             * **Implementation in this demo:**
+             * - Content category: Headers, Articles (text-based components)
+             * - Interactive category: Buttons, CTAs (action components)
+             * - Collapsible sections with expand/collapse state
+             * - Clean categorized UI matching modern design patterns
              */
             "blog-app": LocalJSX.BlogApp & JSXBase.HTMLAttributes<HTMLBlogAppElement>;
             "blog-article": LocalJSX.BlogArticle & JSXBase.HTMLAttributes<HTMLBlogArticleElement>;

@@ -52,10 +52,11 @@ Why This Approach:
 
 ## Events
 
-| Event           | Description                                                                                                          | Type                                                                         |
-| --------------- | -------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------- |
-| `closePanel`    | Event: Close panel Fired when user clicks Cancel, Save, or overlay                                                   | `CustomEvent<void>`                                                          |
-| `updateSection` | Event: Update section Fired when user clicks Save with edited values Parent updates canvasMetadata state in response | `CustomEvent<{ canvasId: string; title: string; backgroundColor: string; }>` |
+| Event                | Description                                                                                                                  | Type                                                                         |
+| -------------------- | ---------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------- |
+| `closePanel`         | Event: Close panel Fired when user clicks Cancel, Save, or overlay                                                           | `CustomEvent<void>`                                                          |
+| `previewColorChange` | Event: Preview color change Fired when user changes color picker (live preview) Parent temporarily updates canvas background | `CustomEvent<{ canvasId: string; backgroundColor: string; }>`                |
+| `updateSection`      | Event: Update section Fired when user clicks Save with edited values Parent updates canvasMetadata state in response         | `CustomEvent<{ canvasId: string; title: string; backgroundColor: string; }>` |
 
 
 ## Dependencies

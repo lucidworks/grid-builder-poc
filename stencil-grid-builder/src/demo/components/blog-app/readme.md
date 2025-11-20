@@ -17,6 +17,8 @@ using the
 
 ### Depends on
 
+- [component-palette](../../../components/component-palette)
+- [grid-viewer](../../../components/grid-viewer)
 - [grid-builder](../../../components/grid-builder)
 - [section-editor-panel](../section-editor-panel)
 - [confirmation-modal](../confirmation-modal)
@@ -27,12 +29,16 @@ using the
 ### Graph
 ```mermaid
 graph TD;
+  blog-app --> component-palette
+  blog-app --> grid-viewer
   blog-app --> grid-builder
   blog-app --> section-editor-panel
   blog-app --> confirmation-modal
   blog-app --> blog-header
   blog-app --> blog-article
   blog-app --> blog-button
+  grid-viewer --> canvas-section-viewer
+  canvas-section-viewer --> grid-item-wrapper
   grid-builder --> component-palette
   grid-builder --> canvas-section
   grid-builder --> config-panel
