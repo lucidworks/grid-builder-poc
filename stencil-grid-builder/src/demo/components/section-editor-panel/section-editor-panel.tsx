@@ -81,17 +81,32 @@ export class SectionEditorPanel {
   @Event() updateSection: EventEmitter<{ canvasId: string; title: string; backgroundColor: string }>;
 
   /**
+   * Event: Preview color change
+   * Fired when user changes color picker (live preview)
+   * Parent temporarily updates canvas background
+   */
+  @Event() previewColorChange: EventEmitter<{ canvasId: string; backgroundColor: string }>;
+
+  /**
    * Internal editing state
    * These track user's changes before saving
    */
   @State() editedTitle: string = '';
   @State() editedColor: string = '';
 
+  /**
+   * Original color when modal opened
+   * Used to revert on cancel
+   */
+  private originalColor: string = '';
+
   @Watch('sectionData')
   handleSectionDataChange(newData: SectionEditorData | null) {
     if (newData) {
       this.editedTitle = newData.title;
       this.editedColor = newData.backgroundColor;
+      // Store original color for revert on cancel
+      this.originalColor = newData.backgroundColor;
     }
   }
 
@@ -99,10 +114,19 @@ export class SectionEditorPanel {
     if (this.sectionData) {
       this.editedTitle = this.sectionData.title;
       this.editedColor = this.sectionData.backgroundColor;
+      // Store original color for revert on cancel
+      this.originalColor = this.sectionData.backgroundColor;
     }
   }
 
   private handleClose = () => {
+    // Revert to original color on cancel
+    if (this.sectionData) {
+      this.previewColorChange.emit({
+        canvasId: this.sectionData.canvasId,
+        backgroundColor: this.originalColor,
+      });
+    }
     this.closePanel.emit();
   };
 
@@ -123,6 +147,14 @@ export class SectionEditorPanel {
 
   private handleColorInput = (e: Event) => {
     this.editedColor = (e.target as HTMLInputElement).value;
+
+    // Emit preview event for live color update
+    if (this.sectionData) {
+      this.previewColorChange.emit({
+        canvasId: this.sectionData.canvasId,
+        backgroundColor: this.editedColor,
+      });
+    }
   };
 
   render() {

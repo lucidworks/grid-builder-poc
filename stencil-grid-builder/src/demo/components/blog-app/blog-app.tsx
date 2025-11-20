@@ -1,9 +1,11 @@
 import { Component, h, State } from '@stencil/core';
-import { blogComponentDefinitions } from '../../component-definitions';
+import { blogComponentDefinitions, contentComponents, interactiveComponents } from '../../component-definitions';
 import { GridBuilderAPI } from '../../../services/grid-builder-api';
 import { SectionEditorData } from '../section-editor-panel/section-editor-panel';
 import { ConfirmationModalData } from '../confirmation-modal/confirmation-modal';
 import { DeletionHookContext } from '../../../types/deletion-hook';
+import { getGridSizeVertical, clearGridSizeCache } from '../../../utils/grid-calculations';
+import { domCache } from '../../../utils/dom-cache';
 
 /**
  * Blog App Demo - Host Application for grid-builder Library
@@ -45,10 +47,56 @@ import { DeletionHookContext } from '../../../types/deletion-hook';
  *    - Listen to library events for state synchronization
  *    - React to user interactions (canvas clicks, etc.)
  *
+ * 7. **Multiple Palettes Pattern** (Demonstrated in this demo)
+ *    - Multiple `<component-palette>` instances with different components
+ *    - Categorized/grouped components (Content, Interactive, etc.)
+ *    - Collapsible category sections
+ *    - All palettes drag to the same canvases
+ *
  * Architecture Pattern:
  * --------------------
  * - Library: Manages component placement, drag/drop, resize, undo/redo
  * - Host App: Manages canvas metadata, custom UI (headers, modals), business logic
+ *
+ * ## Multiple Palettes Pattern (Featured in this Demo)
+ *
+ * **Why use multiple palettes:**
+ * - Better component organization (group by category, purpose, or feature)
+ * - Collapsible sections save screen space
+ * - Easier to find components in large libraries
+ * - Matches common UI patterns (like the example mockup)
+ *
+ * **How it works:**
+ * 1. Create categorized component arrays:
+ *    ```typescript
+ *    const contentComponents = [header, article, ...];
+ *    const interactiveComponents = [button, link, ...];
+ *    ```
+ *
+ * 2. Render multiple `<component-palette>` instances:
+ *    ```typescript
+ *    <component-palette components={contentComponents} showHeader={false} />
+ *    <component-palette components={interactiveComponents} showHeader={false} />
+ *    ```
+ *
+ * 3. All palettes work with the same canvases:
+ *    - Each palette initializes its own drag handlers
+ *    - All drag to the same `<canvas-section>` dropzones
+ *    - Component type (not palette source) determines behavior
+ *    - grid-builder registers ALL components for rendering
+ *
+ * **Key Points:**
+ * - Pass all components to grid-builder (for type registration)
+ * - Use chromeless mode (`showHeader={false}`) for custom headers
+ * - Each palette manages its own drag/drop independently
+ * - Canvases accept drops from any palette
+ * - No coordination needed between palettes
+ *
+ * **Implementation in this demo:**
+ * - Content category: Headers, Articles (text-based components)
+ * - Interactive category: Buttons, CTAs (action components)
+ * - Collapsible sections with expand/collapse state
+ * - Clean categorized UI matching modern design patterns
  */
 
 @Component({
@@ -129,6 +177,41 @@ export class BlogApp {
   @State() isConfirmModalOpen: boolean = false;
   @State() confirmModalData: ConfirmationModalData | null = null;
   private deleteResolve: ((value: boolean) => void) | null = null;
+
+  /**
+   * Categorized Palette State
+   * --------------------------
+   *
+   * Demonstrates multiple palette pattern:
+   * - Each category has its own expanded/collapsed state
+   * - Multiple palettes render independently
+   * - All palettes drag to the same canvases
+   * - Enables better component organization
+   */
+  @State() categoryStates: Record<string, boolean> = {
+    content: true, // Content category expanded by default
+    interactive: true, // Interactive category expanded by default
+  };
+
+  /**
+   * View Mode State
+   * ----------------
+   *
+   * Toggle between edit mode (grid builder) and preview mode (viewer).
+   * - Edit mode: Shows grid, palette, resize handles, config panel
+   * - Preview mode: Shows only the final rendered components
+   */
+  @State() isPreviewMode: boolean = false;
+
+  /**
+   * Sidebar Collapsed State
+   * ------------------------
+   *
+   * Toggle component palette sidebar visibility.
+   * - Collapsed: Hides sidebar, gives more space to canvas
+   * - Expanded: Shows sidebar with components (default)
+   */
+  @State() isSidebarCollapsed: boolean = false;
 
   componentWillLoad() {
     // Grid-builder components are built alongside the demo
@@ -313,14 +396,10 @@ export class BlogApp {
       // Check if header already exists
       let header = canvasSection.previousElementSibling as HTMLElement;
       if (header && header.classList.contains('canvas-header')) {
-        // Update existing header - just update text content and color value
+        // Update existing header - just update text content
         const titleEl = header.querySelector('.canvas-title') as HTMLElement;
         if (titleEl) {
           titleEl.textContent = this.canvasMetadata[canvasId]?.title || canvasId;
-        }
-        const colorInput = header.querySelector('input[type="color"]') as HTMLInputElement;
-        if (colorInput) {
-          colorInput.value = this.canvasMetadata[canvasId]?.backgroundColor || '#f5f5f5';
         }
       } else {
         // Create new header
@@ -347,21 +426,6 @@ export class BlogApp {
     });
     actions.appendChild(title);
 
-    // Color picker (no label, just the input)
-    const colorControl = document.createElement('label');
-    colorControl.className = 'color-control';
-    colorControl.title = 'Change background color';
-
-    const colorInput = document.createElement('input');
-    colorInput.type = 'color';
-    colorInput.value = this.canvasMetadata[canvasId]?.backgroundColor || '#f5f5f5';
-    colorInput.addEventListener('input', (e) => {
-      this.handleColorChange(canvasId, (e.target as HTMLInputElement).value);
-    });
-
-    colorControl.appendChild(colorInput);
-    actions.appendChild(colorControl);
-
     // Add delete button for custom sections (icon only)
     if (!['hero-section', 'articles-grid', 'footer-section'].includes(canvasId)) {
       const deleteBtn = document.createElement('button');
@@ -377,17 +441,6 @@ export class BlogApp {
     header.appendChild(actions);
 
     return header;
-  };
-
-  private handleColorChange = (canvasId: string, color: string) => {
-    // Update color immediately (no undo for color changes for now)
-    this.canvasMetadata = {
-      ...this.canvasMetadata,
-      [canvasId]: {
-        ...this.canvasMetadata[canvasId],
-        backgroundColor: color,
-      },
-    };
   };
 
   private handleOpenSectionEditor = (canvasId: string) => {
@@ -416,6 +469,23 @@ export class BlogApp {
         backgroundColor,
       },
     };
+  };
+
+  /**
+   * Preview Color Change Handler
+   * ------------------------------
+   *
+   * Handles live preview of background color changes.
+   * Updates canvas background immediately without saving to metadata.
+   * This allows real-time preview while editing, with revert on cancel.
+   */
+  private handlePreviewColorChange = (event: CustomEvent<{ canvasId: string; backgroundColor: string }>) => {
+    const { canvasId, backgroundColor } = event.detail;
+    // Directly update canvas background color (don't update metadata yet)
+    const canvas = document.querySelector(`[data-canvas-id="${canvasId}"] .grid-container`) as HTMLElement;
+    if (canvas) {
+      canvas.style.backgroundColor = backgroundColor;
+    }
   };
 
   /**
@@ -551,6 +621,54 @@ export class BlogApp {
     // Header will also be removed in the canvasRemoved event listener
   };
 
+  /**
+   * Toggle Category Collapse/Expand
+   * --------------------------------
+   *
+   * Demonstrates state management for collapsible categories.
+   * Each category (content, interactive) can be independently toggled.
+   */
+  private toggleCategory = (category: string) => {
+    this.categoryStates = {
+      ...this.categoryStates,
+      [category]: !this.categoryStates[category],
+    };
+  };
+
+  /**
+   * Toggle Preview Mode
+   * -------------------
+   *
+   * Switches between edit mode and preview mode:
+   * - Edit mode: Shows palette, grid, resize handles, editing UI
+   * - Preview mode: Shows only rendered components (final output)
+   *
+   * Also clears both grid size cache and DOM cache to ensure fresh calculations when switching.
+   */
+  private togglePreviewMode = () => {
+    this.isPreviewMode = !this.isPreviewMode;
+
+    // Clear both caches to force fresh calculations
+    // Grid size cache: Clears cached grid unit sizes
+    // DOM cache: Clears cached canvas element references (prevents stale DOM references)
+    clearGridSizeCache();
+    domCache.clear();
+
+    // This ensures items render at correct positions when switching modes
+  };
+
+  /**
+   * Toggle Sidebar Collapsed
+   * -------------------------
+   *
+   * Collapses/expands the component palette sidebar:
+   * - Collapsed: Hides sidebar, gives more canvas space
+   * - Expanded: Shows sidebar with categorized components
+   */
+  private toggleSidebarCollapsed = () => {
+    this.isSidebarCollapsed = !this.isSidebarCollapsed;
+  };
+
   @State() initialState = {
     canvases: {
       'hero-section': {
@@ -680,8 +798,17 @@ export class BlogApp {
   };
 
   render() {
+    // Calculate canvas header overlay margin from grid size (1.4 grid units)
+    const verticalGridSize = getGridSizeVertical();
+    const canvasHeaderOverlayMargin = -(verticalGridSize * 1.4);
+
     return (
-      <div class="blog-app-container">
+      <div
+        class={`blog-app-container ${this.isPreviewMode ? 'preview-mode' : ''}`}
+        style={{
+          '--canvas-header-overlay-margin': `${canvasHeaderOverlayMargin}px`,
+        } as any}
+      >
         <div class="app-header">
           <div class="app-header-content">
             <h1 class="app-title">Blog Layout Builder Demo</h1>
@@ -690,42 +817,131 @@ export class BlogApp {
             </p>
           </div>
           <div class="global-controls">
-            <div class="metadata-undo-redo">
-              <button
-                class="undo-btn"
-                onClick={() => this.api?.undo()}
-                disabled={!this.api || !this.api.canUndo()}
-                title="Undo (components and sections)"
-              >
-                ↶ Undo
-              </button>
-              <button
-                class="redo-btn"
-                onClick={() => this.api?.redo()}
-                disabled={!this.api || !this.api.canRedo()}
-                title="Redo (components and sections)"
-              >
-                ↷ Redo
-              </button>
-            </div>
-            <button class="add-section-btn" onClick={this.handleAddSection}>
-              ➕ Add Section
+            <button
+              class="preview-toggle-btn"
+              onClick={this.togglePreviewMode}
+              title={this.isPreviewMode ? 'Switch to Edit Mode' : 'Switch to Preview Mode'}
+            >
+              {this.isPreviewMode ? '✏️ Edit Mode' : '👁️ Preview'}
             </button>
+            {!this.isPreviewMode && (
+              <div class="metadata-undo-redo">
+                <button
+                  class="undo-btn"
+                  onClick={() => this.api?.undo()}
+                  disabled={!this.api || !this.api.canUndo()}
+                  title="Undo (components and sections)"
+                >
+                  ↶ Undo
+                </button>
+                <button
+                  class="redo-btn"
+                  onClick={() => this.api?.redo()}
+                  disabled={!this.api || !this.api.canRedo()}
+                  title="Redo (components and sections)"
+                >
+                  ↷ Redo
+                </button>
+              </div>
+            )}
+            {!this.isPreviewMode && (
+              <button class="add-section-btn" onClick={this.handleAddSection}>
+                ➕ Add Section
+              </button>
+            )}
           </div>
         </div>
 
-        <grid-builder
-          components={blogComponentDefinitions}
-          initialState={this.initialState}
-          canvasMetadata={this.canvasMetadata}
-          onBeforeDelete={this.handleBeforeDelete}
-        />
+        {/* Main content area with categorized palettes */}
+        <div class="demo-layout">
+          {/* Categorized Component Palettes - Hidden in preview mode */}
+          {!this.isPreviewMode && !this.isSidebarCollapsed && (
+            <div class="categorized-palette-sidebar">
+              <div class="palette-header">
+                <h2 class="palette-title">Components</h2>
+                <button
+                  class="sidebar-collapse-btn"
+                  onClick={this.toggleSidebarCollapsed}
+                  title="Collapse sidebar"
+                >
+                  ◀
+                </button>
+              </div>
+
+              {/* Content Category */}
+              <div class="palette-category">
+                <div
+                  class="category-header"
+                  onClick={() => this.toggleCategory('content')}
+                >
+                  <span class="category-icon">{this.categoryStates.content ? '▼' : '▶'}</span>
+                  <span class="category-name">Content</span>
+                </div>
+                {this.categoryStates.content && (
+                  <component-palette
+                    components={contentComponents}
+                    showHeader={false}
+                  />
+                )}
+              </div>
+
+              {/* Interactive Category */}
+              <div class="palette-category">
+                <div
+                  class="category-header"
+                  onClick={() => this.toggleCategory('interactive')}
+                >
+                  <span class="category-icon">{this.categoryStates.interactive ? '▼' : '▶'}</span>
+                  <span class="category-name">Interactive</span>
+                </div>
+                {this.categoryStates.interactive && (
+                  <component-palette
+                    components={interactiveComponents}
+                    showHeader={false}
+                  />
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Floating expand button when sidebar is collapsed */}
+          {!this.isPreviewMode && this.isSidebarCollapsed && (
+            <button
+              class="sidebar-expand-btn"
+              onClick={this.toggleSidebarCollapsed}
+              title="Expand sidebar"
+            >
+              ▶
+            </button>
+          )}
+
+          {/* Grid Builder / Viewer - all components for registration */}
+          <div class="grid-builder-area">
+            {this.isPreviewMode ? (
+              <grid-viewer
+                key="viewer"
+                components={blogComponentDefinitions}
+                initialState={this.api?.getState()}
+                canvasMetadata={this.canvasMetadata}
+              />
+            ) : (
+              <grid-builder
+                key="builder"
+                components={blogComponentDefinitions}
+                initialState={this.initialState}
+                canvasMetadata={this.canvasMetadata}
+                onBeforeDelete={this.handleBeforeDelete}
+              />
+            )}
+          </div>
+        </div>
 
         <section-editor-panel
           isOpen={this.isPanelOpen}
           sectionData={this.editingSection}
           onClosePanel={this.handleClosePanel}
           onUpdateSection={this.handleUpdateSection}
+          onPreviewColorChange={this.handlePreviewColorChange}
         />
 
         <confirmation-modal
