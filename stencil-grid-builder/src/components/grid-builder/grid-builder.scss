@@ -46,7 +46,10 @@
 }
 
 .canvases-container {
+  display: flex;
+  flex-direction: column;
   min-height: 100%;
+  gap: 0; /* No gaps between canvas sections */
 }
 
 .config-area {

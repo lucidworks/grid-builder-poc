@@ -70,7 +70,7 @@ import interact from 'interactjs';
 
 // Internal imports
 import { Canvas, GridItem, gridState, onChange } from '../../services/state-manager';
-import { clearGridSizeCache, gridToPixelsX, gridToPixelsY } from '../../utils/grid-calculations';
+import { clearGridSizeCache, gridToPixelsX, gridToPixelsY, getGridSizeVertical } from '../../utils/grid-calculations';
 import { GridConfig } from '../../types/grid-config';
 import { ComponentDefinition } from '../../types/component-definition';
 
@@ -133,6 +133,24 @@ export class CanvasSection {
    * ```
    */
   @Prop() backgroundColor?: string;
+
+  /**
+   * Canvas title (from canvasMetadata)
+   *
+   * **Optional**: Display title for this section
+   * **Renders as**: Rotated tab on right side, outside section bounds
+   * **Builder mode only**: Title tabs visible in builder, not viewer
+   * **Source**: Passed from grid-builder via canvasMetadata[canvasId].title
+   *
+   * @example
+   * ```tsx
+   * <canvas-section
+   *   canvasId="hero-section"
+   *   canvasTitle="Hero Section"
+   * />
+   * ```
+   */
+  @Prop() canvasTitle?: string;
 
   /**
    * Deletion hook (from parent grid-builder)
@@ -497,6 +515,7 @@ export class CanvasSection {
    */
   render() {
     const showGrid = gridState.showGrid;
+    const verticalGridSize = getGridSizeVertical(this.config);
 
     return (
       <div class="canvas-section" data-canvas-id={this.canvasId}>
@@ -509,6 +528,7 @@ export class CanvasSection {
           data-canvas-id={this.canvasId}
           style={{
             backgroundColor: this.backgroundColor || '#ffffff',
+            backgroundSize: `2% ${verticalGridSize}px`,
           }}
           ref={(el) => (this.gridContainerRef = el)}
         >

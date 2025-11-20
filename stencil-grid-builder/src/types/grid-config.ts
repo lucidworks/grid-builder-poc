@@ -56,6 +56,27 @@ export interface GridConfig {
   gridSizePercent?: number;
 
   /**
+   * Vertical grid size in pixels
+   *
+   * **Default**: 20px
+   * **Purpose**: Fixed vertical spacing for grid rows
+   * **Used for**: Y-axis positioning, height calculations, grid background
+   *
+   * **Typical values**:
+   * - 15: Compact vertical spacing
+   * - 20: Standard vertical spacing ✅ Recommended
+   * - 25: Spacious vertical spacing
+   * - 30: Very spacious vertical spacing
+   *
+   * **Impact**:
+   * - Smaller value = more granular vertical positioning
+   * - Larger value = less granular, larger minimum heights
+   *
+   * @default 20
+   */
+  verticalGridSize?: number;
+
+  /**
    * Minimum grid size in pixels
    *
    * **Default**: 10px

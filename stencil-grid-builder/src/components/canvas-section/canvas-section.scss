@@ -5,11 +5,13 @@
  * Styles for canvas-section component providing grid background and container.
  */
 
-/* Canvas Section Container */
+/* Canvas Section Container - Flush sections with title tab on right */
 .canvas-section {
   position: relative;
   display: flex;
   width: 100%;
+  margin: 0; /* Flush sections - no gaps */
+  padding: 0; /* Flush sections - no gaps */
   flex-direction: column;
 }
 
@@ -20,7 +22,7 @@
   min-height: 400px;
   background-image: linear-gradient(rgba(0, 0, 0, 5%) 1px, transparent 1px),
     linear-gradient(90deg, rgba(0, 0, 0, 5%) 1px, transparent 1px);
-  background-size: 2% 20px;
+  /* background-size set dynamically via inline style (config-based) */
   transition: background-color 0.2s;
 }
 

@@ -198,24 +198,26 @@ export function getGridSizeHorizontal(
 }
 
 /**
- * Get the vertical grid size (constant)
+ * Get the vertical grid size
  *
- * **Why fixed**:
- * Unlike horizontal grid, vertical uses fixed 20px sizing because:
+ * **Configurable vertical grid**:
+ * Unlike horizontal grid, vertical uses fixed sizing (default 20px) because:
  * - Vertical scrolling is infinite (no container height limit)
  * - Provides predictable, consistent heights across all viewports
  * - Simplifies calculations (no container dependency)
  * - Better UX for vertical spacing
  *
- * @returns Fixed vertical grid size (20px)
+ * @param config Optional GridConfig with verticalGridSize
+ * @returns Vertical grid size in pixels (config.verticalGridSize || 20)
  *
  * @example
  * ```typescript
- * const vSize = getGridSizeVertical(); // → 20 (always)
+ * const vSize = getGridSizeVertical(); // → 20 (default)
+ * const vSize2 = getGridSizeVertical({ verticalGridSize: 25 }); // → 25
  * ```
  */
-export function getGridSizeVertical(): number {
-  return GRID_SIZE_VERTICAL;
+export function getGridSizeVertical(config?: GridConfig): number {
+  return config?.verticalGridSize ?? GRID_SIZE_VERTICAL;
 }
 
 /**
@@ -260,23 +262,24 @@ export function gridToPixelsX(gridUnits: number, canvasId: string, config?: Grid
  * - Converting item `height` from grid units to CSS height
  * - Calculating vertical spacing
  *
- * **Why no canvas ID**:
- * Vertical grid is fixed (20px), so no container-specific calculation needed
+ * **Configurable vertical grid**:
+ * Uses config.verticalGridSize (default 20px) for calculation
  *
  * @param gridUnits - Number of grid units
- * @returns Pixel value (gridUnits * 20)
+ * @param config - Optional GridConfig with verticalGridSize
+ * @returns Pixel value (gridUnits * verticalGridSize)
  *
  * @example
  * ```typescript
- * // Item at grid position y=5
+ * // Item at grid position y=5 (default 20px)
  * const topPx = gridToPixelsY(5); // → 100px
  *
- * // Item with grid height=8
- * const heightPx = gridToPixelsY(8); // → 160px
+ * // Item with grid height=8 (custom 25px)
+ * const heightPx = gridToPixelsY(8, { verticalGridSize: 25 }); // → 200px
  * ```
  */
-export function gridToPixelsY(gridUnits: number): number {
-  return gridUnits * GRID_SIZE_VERTICAL;
+export function gridToPixelsY(gridUnits: number, config?: GridConfig): number {
+  return gridUnits * getGridSizeVertical(config);
 }
 
 /**
@@ -328,17 +331,18 @@ export function pixelsToGridX(pixels: number, canvasId: string, config?: GridCon
  * Implements automatic grid snapping via `Math.round()`
  *
  * @param pixels - Pixel value to convert
+ * @param config - Optional GridConfig with verticalGridSize
  * @returns Number of grid units (rounded)
  *
  * @example
  * ```typescript
- * // Mouse at 127px vertically
+ * // Mouse at 127px vertically (default 20px grid)
  * const gridY = pixelsToGridY(127); // → 6 (rounded from 6.35)
  *
- * // Element height 165px
- * const gridHeight = pixelsToGridY(165); // → 8 (rounded from 8.25)
+ * // Element height 165px (custom 25px grid)
+ * const gridHeight = pixelsToGridY(165, { verticalGridSize: 25 }); // → 7 (rounded from 6.6)
  * ```
  */
-export function pixelsToGridY(pixels: number): number {
-  return Math.round(pixels / GRID_SIZE_VERTICAL);
+export function pixelsToGridY(pixels: number, config?: GridConfig): number {
+  return Math.round(pixels / getGridSizeVertical(config));
 }

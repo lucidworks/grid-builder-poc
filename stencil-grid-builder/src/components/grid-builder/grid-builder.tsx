@@ -1069,6 +1069,7 @@ export class GridBuilder {
                   config={this.config}
                   componentRegistry={this.componentRegistry}
                   backgroundColor={this.canvasMetadata?.[canvasId]?.backgroundColor}
+                  canvasTitle={this.canvasMetadata?.[canvasId]?.title}
                   onBeforeDelete={this.onBeforeDelete}
                 />
               ))}

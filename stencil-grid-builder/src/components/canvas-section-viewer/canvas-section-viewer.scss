@@ -10,6 +10,7 @@
  * **Excluded**:
  * - ❌ Grid background lines (cleaner output for viewing)
  * - ❌ Dropzone hover states (no drag-and-drop)
+ * - ❌ Section title tabs (only in builder mode)
  *
  * **Included**:
  * - ✅ Canvas container layout
@@ -23,11 +24,14 @@
  * Canvas Section Wrapper
  *
  * **Layout**: Block container for canvas
- * **Purpose**: Outer wrapper for styling and spacing
+ * **Purpose**: Outer wrapper for styling
+ * **Flush sections**: No margin/padding between sections
  */
 .canvas-section-viewer {
   display: block;
   width: 100%;
+  margin: 0; /* Flush sections - no gaps */
+  padding: 0; /* Flush sections - no gaps */
 }
 
 /**
