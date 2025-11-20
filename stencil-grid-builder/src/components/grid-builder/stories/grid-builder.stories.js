@@ -7,17 +7,18 @@ export default {
 
 // Simple component definitions using JSX
 // This demonstrates the recommended approach for Stencil applications
+// Sizes are optimized for Storybook's smaller viewport
 const simpleComponents = [
   {
     type: 'header',
     name: 'Header',
     icon: '📄',
-    defaultSize: { width: 50, height: 6 },
-    minSize: { width: 20, height: 3 },
+    defaultSize: { width: 30, height: 4 },
+    minSize: { width: 15, height: 3 },
     // Render function using JSX - typical Stencil pattern
     render: ({ config }) => (
-      <div style={{ padding: '20px', background: '#f0f0f0', borderRadius: '4px', height: '100%' }}>
-        <h2 style={{ margin: '0' }}>{config?.title || 'Header Component'}</h2>
+      <div style={{ padding: '12px', background: '#f0f0f0', borderRadius: '4px', height: '100%' }}>
+        <h3 style={{ margin: '0', fontSize: '16px' }}>{config?.title || 'Header'}</h3>
       </div>
     ),
   },
@@ -25,12 +26,12 @@ const simpleComponents = [
     type: 'text',
     name: 'Text Block',
     icon: '📝',
-    defaultSize: { width: 25, height: 10 },
-    minSize: { width: 10, height: 5 },
+    defaultSize: { width: 20, height: 6 },
+    minSize: { width: 10, height: 4 },
     // JSX syntax is clean and readable
     render: ({ config }) => (
-      <div style={{ padding: '15px', background: '#fff', border: '1px solid #ddd', borderRadius: '4px', height: '100%' }}>
-        <p style={{ margin: '0' }}>{config?.text || 'Lorem ipsum dolor sit amet, consectetur adipiscing elit.'}</p>
+      <div style={{ padding: '10px', background: '#fff', border: '1px solid #ddd', borderRadius: '4px', height: '100%' }}>
+        <p style={{ margin: '0', fontSize: '13px', lineHeight: '1.4' }}>{config?.text || 'Sample text content.'}</p>
       </div>
     ),
   },
@@ -38,19 +39,19 @@ const simpleComponents = [
     type: 'button',
     name: 'Button',
     icon: '🔘',
-    defaultSize: { width: 15, height: 5 },
-    minSize: { width: 10, height: 3 },
+    defaultSize: { width: 12, height: 4 },
+    minSize: { width: 8, height: 3 },
     // JSX works for any HTML element
     render: ({ config }) => (
       <button
         style={{
-          padding: '12px 24px',
+          padding: '8px 16px',
           background: '#007bff',
           color: 'white',
           border: 'none',
           borderRadius: '4px',
           cursor: 'pointer',
-          fontSize: '16px',
+          fontSize: '14px',
           width: '100%',
           height: '100%',
         }}
@@ -119,7 +120,7 @@ export const WithInitialState = () => {
             name: 'Header',
             canvasId: 'canvas-1',
             layouts: {
-              desktop: { x: 0, y: 0, width: 50, height: 6 },
+              desktop: { x: 0, y: 0, width: 30, height: 4 },
               mobile: { x: null, y: null, width: null, height: null, customized: false },
             },
             config: { title: 'Welcome!' },
@@ -131,7 +132,7 @@ export const WithInitialState = () => {
             name: 'Text Block',
             canvasId: 'canvas-1',
             layouts: {
-              desktop: { x: 0, y: 7, width: 25, height: 10 },
+              desktop: { x: 0, y: 5, width: 20, height: 6 },
               mobile: { x: null, y: null, width: null, height: null, customized: false },
             },
             config: { text: 'This is a pre-populated text block.' },
@@ -143,7 +144,7 @@ export const WithInitialState = () => {
             name: 'Button',
             canvasId: 'canvas-1',
             layouts: {
-              desktop: { x: 26, y: 7, width: 15, height: 5 },
+              desktop: { x: 21, y: 5, width: 12, height: 4 },
               mobile: { x: null, y: null, width: null, height: null, customized: false },
             },
             config: { label: 'Get Started' },
