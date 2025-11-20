@@ -1,0 +1,49 @@
+/**
+ * Canvas Section Viewer Styles
+ * ==============================
+ *
+ * Simplified styling for rendering-only canvas viewer.
+ * Based on canvas-section styles but without editing features.
+ *
+ * ## Key Differences from canvas-section.scss
+ *
+ * **Excluded**:
+ * - ❌ Grid background lines (cleaner output for viewing)
+ * - ❌ Dropzone hover states (no drag-and-drop)
+ *
+ * **Included**:
+ * - ✅ Canvas container layout
+ * - ✅ Background color support
+ * - ✅ Responsive sizing
+ *
+ * @module canvas-section-viewer-styles
+ */
+
+/**
+ * Canvas Section Wrapper
+ *
+ * **Layout**: Block container for canvas
+ * **Purpose**: Outer wrapper for styling and spacing
+ */
+.canvas-section-viewer {
+  display: block;
+  width: 100%;
+}
+
+/**
+ * Grid Container
+ *
+ * **Layout**: Relative positioning for absolute-positioned items
+ * **Size**: Full width, auto height based on content
+ * **Background**: Solid color (no grid pattern)
+ *
+ * **No grid lines**: Viewer focuses on clean output
+ */
+.canvas-section-viewer .grid-container {
+  position: relative;
+  width: 100%;
+  min-height: 400px; // Minimum height for empty canvases
+  background-color: #ffffff; // Default, overridden by inline style
+  background-image: none !important; // Force no grid lines in viewer
+  overflow: visible; // Allow items to render beyond bounds if needed
+}
