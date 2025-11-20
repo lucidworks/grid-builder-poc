@@ -24,6 +24,43 @@ export { GridItem, GridState } from "./services/state-manager";
 export { DeletionHook } from "./types/deletion-hook";
 export { SectionEditorData } from "./demo/components/section-editor-panel/section-editor-panel";
 export namespace Components {
+    /**
+     * Blog App Demo - Host Application for grid-builder Library
+     * ==========================================================
+     * This component demonstrates how to build a complete page builder application
+     * using the
+     * @lucidworks /stencil-grid-builder library.
+     * Key Library Features Demonstrated:
+     * ----------------------------------
+     * 1. **Component Registry** (components prop)
+     * - Pass array of ComponentDefinition objects to grid-builder
+     * - Library uses these to render palette and components
+     * - See: blogComponentDefinitions in component-definitions.tsx
+     * 2. **Initial State** (initialState prop)
+     * - Pre-populate canvases with components
+     * - Define layouts for desktop and mobile viewports
+     * - Library manages state updates via internal store
+     * 3. **Canvas Metadata** (canvasMetadata prop)
+     * - Host app owns presentation metadata (titles, colors, settings)
+     * - Library owns placement state (items, layouts, zIndex)
+     * - Separation of concerns pattern
+     * 4. **Deletion Hook** (onBeforeDelete prop)
+     * - Intercept component deletion requests
+     * - Show confirmation modals before deletion
+     * - Make API calls or run custom validation
+     * - Return Promise<boolean> to approve/cancel deletion
+     * 5. **Grid Builder API** (window.gridBuilderAPI)
+     * - Programmatic control of grid state
+     * - Methods: addCanvas, removeCanvas, undo, redo, etc.
+     * - Event system: canvasAdded, canvasRemoved, etc.
+     * 6. **Event System** (canvas-click, custom events)
+     * - Listen to library events for state synchronization
+     * - React to user interactions (canvas clicks, etc.)
+     * Architecture Pattern:
+     * --------------------
+     * - Library: Manages component placement, drag/drop, resize, undo/redo
+     * - Host App: Manages canvas metadata, custom UI (headers, modals), business logic
+     */
     interface BlogApp {
     }
     interface BlogArticle {
@@ -114,12 +151,66 @@ export namespace Components {
          */
         "componentRegistry"?: Map<string, ComponentDefinition>;
     }
+    /**
+     * Confirmation Modal Component
+     * =============================
+     * Demo Component - NOT Part of Library
+     * This component demonstrates how to implement the grid-builder library's
+     * deletion hook system with a custom confirmation modal.
+     * Library Feature Being Demonstrated:
+     * -----------------------------------
+     * This modal is used with the library's **onBeforeDelete hook** system.
+     * How It Works:
+     * -------------
+     * 1. Library calls onBeforeDelete hook when user deletes component
+     * 2. Hook returns a Promise that doesn't resolve immediately
+     * 3. Host app shows this modal (or any modal library)
+     * 4. User clicks "Delete" or "Cancel"
+     * 5. Modal fires confirm/cancel event
+     * 6. Host app resolves Promise with true/false
+     * 7. Library proceeds with or cancels deletion
+     * Code Flow Example:
+     * ------------------
+     * ```typescript
+     * // In parent component (blog-app.tsx):
+     * private handleBeforeDelete = (context: DeletionHookContext): Promise<boolean> => {
+     *   return new Promise((resolve) => {
+     *     this.deleteResolve = resolve;
+     *     this.isConfirmModalOpen = true;  // Show this modal
+     *   });
+     * };
+     * private handleConfirmDelete = () => {
+     *   this.deleteResolve(true);   // Tell library to proceed
+     * };
+     * private handleCancelDelete = () => {
+     *   this.deleteResolve(false);  // Tell library to cancel
+     * };
+     * ```
+     * Why This Pattern:
+     * -----------------
+     * - **Library agnostic**: Library doesn't provide modal UI
+     * - **Flexibility**: Use any modal library (Material, Bootstrap, Ant Design, etc.)
+     * - **Customization**: Full control over modal appearance and behavior
+     * - **Async support**: Can make API calls before resolving
+     * Alternative Implementations:
+     * ---------------------------
+     * You could replace this component with:
+     * - Material Design modal
+     * - Bootstrap modal
+     * - Ant Design modal
+     * - Native browser confirm() (not recommended)
+     * - Custom modal from your design system
+     * The library doesn't care what modal you use - it just waits for the
+     * Promise to resolve with true/false.
+     */
     interface ConfirmationModal {
         /**
+          * Modal content (title and message) Passed from parent when showing confirmation
           * @default null
          */
         "data": ConfirmationModalData | null;
         /**
+          * Modal open/closed state Controlled by parent component (blog-app)
           * @default false
          */
         "isOpen": boolean;
@@ -246,12 +337,44 @@ export namespace Components {
          */
         "renderVersion"?: number;
     }
+    /**
+     * Section Editor Panel Component
+     * ===============================
+     * Demo Component - NOT Part of Library
+     * This component demonstrates how to build custom UI for editing canvas metadata
+     * in applications using the grid-builder library.
+     * Purpose:
+     * --------
+     * Shows how to create a side panel for editing section/canvas settings.
+     * This is completely custom to your application - the library doesn't provide this.
+     * Library Relationship:
+     * ---------------------
+     * - Library owns: Component placement, layouts, zIndex (grid state)
+     * - Host app owns: Canvas metadata (titles, colors, settings) - THIS COMPONENT
+     * - Metadata flows: App → Library via canvasMetadata prop
+     * Pattern Demonstrated:
+     * ---------------------
+     * 1. User clicks section header (demo UI)
+     * 2. App opens this panel (demo component)
+     * 3. User edits title/color
+     * 4. App updates canvasMetadata state
+     * 5. Library receives updated metadata via prop
+     * 6. Library passes backgroundColor to canvas-section
+     * Why This Approach:
+     * ------------------
+     * - Library stays focused on grid logic
+     * - Host app controls all presentation/metadata UI
+     * - You can use any UI framework (Material, Bootstrap, etc.)
+     * - Complete flexibility over settings panel design
+     */
     interface SectionEditorPanel {
         /**
+          * Panel open/closed state Controlled by parent component (blog-app)
           * @default false
          */
         "isOpen": boolean;
         /**
+          * Section data being edited Passed from parent when user clicks section header
           * @default null
          */
         "sectionData": SectionEditorData | null;
@@ -270,6 +393,43 @@ export interface SectionEditorPanelCustomEvent<T> extends CustomEvent<T> {
     target: HTMLSectionEditorPanelElement;
 }
 declare global {
+    /**
+     * Blog App Demo - Host Application for grid-builder Library
+     * ==========================================================
+     * This component demonstrates how to build a complete page builder application
+     * using the
+     * @lucidworks /stencil-grid-builder library.
+     * Key Library Features Demonstrated:
+     * ----------------------------------
+     * 1. **Component Registry** (components prop)
+     * - Pass array of ComponentDefinition objects to grid-builder
+     * - Library uses these to render palette and components
+     * - See: blogComponentDefinitions in component-definitions.tsx
+     * 2. **Initial State** (initialState prop)
+     * - Pre-populate canvases with components
+     * - Define layouts for desktop and mobile viewports
+     * - Library manages state updates via internal store
+     * 3. **Canvas Metadata** (canvasMetadata prop)
+     * - Host app owns presentation metadata (titles, colors, settings)
+     * - Library owns placement state (items, layouts, zIndex)
+     * - Separation of concerns pattern
+     * 4. **Deletion Hook** (onBeforeDelete prop)
+     * - Intercept component deletion requests
+     * - Show confirmation modals before deletion
+     * - Make API calls or run custom validation
+     * - Return Promise<boolean> to approve/cancel deletion
+     * 5. **Grid Builder API** (window.gridBuilderAPI)
+     * - Programmatic control of grid state
+     * - Methods: addCanvas, removeCanvas, undo, redo, etc.
+     * - Event system: canvasAdded, canvasRemoved, etc.
+     * 6. **Event System** (canvas-click, custom events)
+     * - Listen to library events for state synchronization
+     * - React to user interactions (canvas clicks, etc.)
+     * Architecture Pattern:
+     * --------------------
+     * - Library: Manages component placement, drag/drop, resize, undo/redo
+     * - Host App: Manages canvas metadata, custom UI (headers, modals), business logic
+     */
     interface HTMLBlogAppElement extends Components.BlogApp, HTMLStencilElement {
     }
     var HTMLBlogAppElement: {
@@ -350,6 +510,58 @@ declare global {
         "confirm": void;
         "cancel": void;
     }
+    /**
+     * Confirmation Modal Component
+     * =============================
+     * Demo Component - NOT Part of Library
+     * This component demonstrates how to implement the grid-builder library's
+     * deletion hook system with a custom confirmation modal.
+     * Library Feature Being Demonstrated:
+     * -----------------------------------
+     * This modal is used with the library's **onBeforeDelete hook** system.
+     * How It Works:
+     * -------------
+     * 1. Library calls onBeforeDelete hook when user deletes component
+     * 2. Hook returns a Promise that doesn't resolve immediately
+     * 3. Host app shows this modal (or any modal library)
+     * 4. User clicks "Delete" or "Cancel"
+     * 5. Modal fires confirm/cancel event
+     * 6. Host app resolves Promise with true/false
+     * 7. Library proceeds with or cancels deletion
+     * Code Flow Example:
+     * ------------------
+     * ```typescript
+     * // In parent component (blog-app.tsx):
+     * private handleBeforeDelete = (context: DeletionHookContext): Promise<boolean> => {
+     *   return new Promise((resolve) => {
+     *     this.deleteResolve = resolve;
+     *     this.isConfirmModalOpen = true;  // Show this modal
+     *   });
+     * };
+     * private handleConfirmDelete = () => {
+     *   this.deleteResolve(true);   // Tell library to proceed
+     * };
+     * private handleCancelDelete = () => {
+     *   this.deleteResolve(false);  // Tell library to cancel
+     * };
+     * ```
+     * Why This Pattern:
+     * -----------------
+     * - **Library agnostic**: Library doesn't provide modal UI
+     * - **Flexibility**: Use any modal library (Material, Bootstrap, Ant Design, etc.)
+     * - **Customization**: Full control over modal appearance and behavior
+     * - **Async support**: Can make API calls before resolving
+     * Alternative Implementations:
+     * ---------------------------
+     * You could replace this component with:
+     * - Material Design modal
+     * - Bootstrap modal
+     * - Ant Design modal
+     * - Native browser confirm() (not recommended)
+     * - Custom modal from your design system
+     * The library doesn't care what modal you use - it just waits for the
+     * Promise to resolve with true/false.
+     */
     interface HTMLConfirmationModalElement extends Components.ConfirmationModal, HTMLStencilElement {
         addEventListener<K extends keyof HTMLConfirmationModalElementEventMap>(type: K, listener: (this: HTMLConfirmationModalElement, ev: ConfirmationModalCustomEvent<HTMLConfirmationModalElementEventMap[K]>) => any, options?: boolean | AddEventListenerOptions): void;
         addEventListener<K extends keyof DocumentEventMap>(type: K, listener: (this: Document, ev: DocumentEventMap[K]) => any, options?: boolean | AddEventListenerOptions): void;
@@ -422,6 +634,36 @@ declare global {
         "closePanel": void;
         "updateSection": { canvasId: string; title: string; backgroundColor: string };
     }
+    /**
+     * Section Editor Panel Component
+     * ===============================
+     * Demo Component - NOT Part of Library
+     * This component demonstrates how to build custom UI for editing canvas metadata
+     * in applications using the grid-builder library.
+     * Purpose:
+     * --------
+     * Shows how to create a side panel for editing section/canvas settings.
+     * This is completely custom to your application - the library doesn't provide this.
+     * Library Relationship:
+     * ---------------------
+     * - Library owns: Component placement, layouts, zIndex (grid state)
+     * - Host app owns: Canvas metadata (titles, colors, settings) - THIS COMPONENT
+     * - Metadata flows: App → Library via canvasMetadata prop
+     * Pattern Demonstrated:
+     * ---------------------
+     * 1. User clicks section header (demo UI)
+     * 2. App opens this panel (demo component)
+     * 3. User edits title/color
+     * 4. App updates canvasMetadata state
+     * 5. Library receives updated metadata via prop
+     * 6. Library passes backgroundColor to canvas-section
+     * Why This Approach:
+     * ------------------
+     * - Library stays focused on grid logic
+     * - Host app controls all presentation/metadata UI
+     * - You can use any UI framework (Material, Bootstrap, etc.)
+     * - Complete flexibility over settings panel design
+     */
     interface HTMLSectionEditorPanelElement extends Components.SectionEditorPanel, HTMLStencilElement {
         addEventListener<K extends keyof HTMLSectionEditorPanelElementEventMap>(type: K, listener: (this: HTMLSectionEditorPanelElement, ev: SectionEditorPanelCustomEvent<HTMLSectionEditorPanelElementEventMap[K]>) => any, options?: boolean | AddEventListenerOptions): void;
         addEventListener<K extends keyof DocumentEventMap>(type: K, listener: (this: Document, ev: DocumentEventMap[K]) => any, options?: boolean | AddEventListenerOptions): void;
@@ -453,6 +695,43 @@ declare global {
     }
 }
 declare namespace LocalJSX {
+    /**
+     * Blog App Demo - Host Application for grid-builder Library
+     * ==========================================================
+     * This component demonstrates how to build a complete page builder application
+     * using the
+     * @lucidworks /stencil-grid-builder library.
+     * Key Library Features Demonstrated:
+     * ----------------------------------
+     * 1. **Component Registry** (components prop)
+     * - Pass array of ComponentDefinition objects to grid-builder
+     * - Library uses these to render palette and components
+     * - See: blogComponentDefinitions in component-definitions.tsx
+     * 2. **Initial State** (initialState prop)
+     * - Pre-populate canvases with components
+     * - Define layouts for desktop and mobile viewports
+     * - Library manages state updates via internal store
+     * 3. **Canvas Metadata** (canvasMetadata prop)
+     * - Host app owns presentation metadata (titles, colors, settings)
+     * - Library owns placement state (items, layouts, zIndex)
+     * - Separation of concerns pattern
+     * 4. **Deletion Hook** (onBeforeDelete prop)
+     * - Intercept component deletion requests
+     * - Show confirmation modals before deletion
+     * - Make API calls or run custom validation
+     * - Return Promise<boolean> to approve/cancel deletion
+     * 5. **Grid Builder API** (window.gridBuilderAPI)
+     * - Programmatic control of grid state
+     * - Methods: addCanvas, removeCanvas, undo, redo, etc.
+     * - Event system: canvasAdded, canvasRemoved, etc.
+     * 6. **Event System** (canvas-click, custom events)
+     * - Listen to library events for state synchronization
+     * - React to user interactions (canvas clicks, etc.)
+     * Architecture Pattern:
+     * --------------------
+     * - Library: Manages component placement, drag/drop, resize, undo/redo
+     * - Host App: Manages canvas metadata, custom UI (headers, modals), business logic
+     */
     interface BlogApp {
     }
     interface BlogArticle {
@@ -544,16 +823,76 @@ declare namespace LocalJSX {
          */
         "componentRegistry"?: Map<string, ComponentDefinition>;
     }
+    /**
+     * Confirmation Modal Component
+     * =============================
+     * Demo Component - NOT Part of Library
+     * This component demonstrates how to implement the grid-builder library's
+     * deletion hook system with a custom confirmation modal.
+     * Library Feature Being Demonstrated:
+     * -----------------------------------
+     * This modal is used with the library's **onBeforeDelete hook** system.
+     * How It Works:
+     * -------------
+     * 1. Library calls onBeforeDelete hook when user deletes component
+     * 2. Hook returns a Promise that doesn't resolve immediately
+     * 3. Host app shows this modal (or any modal library)
+     * 4. User clicks "Delete" or "Cancel"
+     * 5. Modal fires confirm/cancel event
+     * 6. Host app resolves Promise with true/false
+     * 7. Library proceeds with or cancels deletion
+     * Code Flow Example:
+     * ------------------
+     * ```typescript
+     * // In parent component (blog-app.tsx):
+     * private handleBeforeDelete = (context: DeletionHookContext): Promise<boolean> => {
+     *   return new Promise((resolve) => {
+     *     this.deleteResolve = resolve;
+     *     this.isConfirmModalOpen = true;  // Show this modal
+     *   });
+     * };
+     * private handleConfirmDelete = () => {
+     *   this.deleteResolve(true);   // Tell library to proceed
+     * };
+     * private handleCancelDelete = () => {
+     *   this.deleteResolve(false);  // Tell library to cancel
+     * };
+     * ```
+     * Why This Pattern:
+     * -----------------
+     * - **Library agnostic**: Library doesn't provide modal UI
+     * - **Flexibility**: Use any modal library (Material, Bootstrap, Ant Design, etc.)
+     * - **Customization**: Full control over modal appearance and behavior
+     * - **Async support**: Can make API calls before resolving
+     * Alternative Implementations:
+     * ---------------------------
+     * You could replace this component with:
+     * - Material Design modal
+     * - Bootstrap modal
+     * - Ant Design modal
+     * - Native browser confirm() (not recommended)
+     * - Custom modal from your design system
+     * The library doesn't care what modal you use - it just waits for the
+     * Promise to resolve with true/false.
+     */
     interface ConfirmationModal {
         /**
+          * Modal content (title and message) Passed from parent when showing confirmation
           * @default null
          */
         "data"?: ConfirmationModalData | null;
         /**
+          * Modal open/closed state Controlled by parent component (blog-app)
           * @default false
          */
         "isOpen"?: boolean;
+        /**
+          * Event: User cancelled deletion Parent resolves deletion hook Promise with `false`
+         */
         "onCancel"?: (event: ConfirmationModalCustomEvent<void>) => void;
+        /**
+          * Event: User confirmed deletion Parent resolves deletion hook Promise with `true`
+         */
         "onConfirm"?: (event: ConfirmationModalCustomEvent<void>) => void;
     }
     /**
@@ -678,14 +1017,52 @@ declare namespace LocalJSX {
          */
         "renderVersion"?: number;
     }
+    /**
+     * Section Editor Panel Component
+     * ===============================
+     * Demo Component - NOT Part of Library
+     * This component demonstrates how to build custom UI for editing canvas metadata
+     * in applications using the grid-builder library.
+     * Purpose:
+     * --------
+     * Shows how to create a side panel for editing section/canvas settings.
+     * This is completely custom to your application - the library doesn't provide this.
+     * Library Relationship:
+     * ---------------------
+     * - Library owns: Component placement, layouts, zIndex (grid state)
+     * - Host app owns: Canvas metadata (titles, colors, settings) - THIS COMPONENT
+     * - Metadata flows: App → Library via canvasMetadata prop
+     * Pattern Demonstrated:
+     * ---------------------
+     * 1. User clicks section header (demo UI)
+     * 2. App opens this panel (demo component)
+     * 3. User edits title/color
+     * 4. App updates canvasMetadata state
+     * 5. Library receives updated metadata via prop
+     * 6. Library passes backgroundColor to canvas-section
+     * Why This Approach:
+     * ------------------
+     * - Library stays focused on grid logic
+     * - Host app controls all presentation/metadata UI
+     * - You can use any UI framework (Material, Bootstrap, etc.)
+     * - Complete flexibility over settings panel design
+     */
     interface SectionEditorPanel {
         /**
+          * Panel open/closed state Controlled by parent component (blog-app)
           * @default false
          */
         "isOpen"?: boolean;
+        /**
+          * Event: Close panel Fired when user clicks Cancel, Save, or overlay
+         */
         "onClosePanel"?: (event: SectionEditorPanelCustomEvent<void>) => void;
+        /**
+          * Event: Update section Fired when user clicks Save with edited values Parent updates canvasMetadata state in response
+         */
         "onUpdateSection"?: (event: SectionEditorPanelCustomEvent<{ canvasId: string; title: string; backgroundColor: string }>) => void;
         /**
+          * Section data being edited Passed from parent when user clicks section header
           * @default null
          */
         "sectionData"?: SectionEditorData | null;
@@ -710,6 +1087,43 @@ export { LocalJSX as JSX };
 declare module "@stencil/core" {
     export namespace JSX {
         interface IntrinsicElements {
+            /**
+             * Blog App Demo - Host Application for grid-builder Library
+             * ==========================================================
+             * This component demonstrates how to build a complete page builder application
+             * using the
+             * @lucidworks /stencil-grid-builder library.
+             * Key Library Features Demonstrated:
+             * ----------------------------------
+             * 1. **Component Registry** (components prop)
+             * - Pass array of ComponentDefinition objects to grid-builder
+             * - Library uses these to render palette and components
+             * - See: blogComponentDefinitions in component-definitions.tsx
+             * 2. **Initial State** (initialState prop)
+             * - Pre-populate canvases with components
+             * - Define layouts for desktop and mobile viewports
+             * - Library manages state updates via internal store
+             * 3. **Canvas Metadata** (canvasMetadata prop)
+             * - Host app owns presentation metadata (titles, colors, settings)
+             * - Library owns placement state (items, layouts, zIndex)
+             * - Separation of concerns pattern
+             * 4. **Deletion Hook** (onBeforeDelete prop)
+             * - Intercept component deletion requests
+             * - Show confirmation modals before deletion
+             * - Make API calls or run custom validation
+             * - Return Promise<boolean> to approve/cancel deletion
+             * 5. **Grid Builder API** (window.gridBuilderAPI)
+             * - Programmatic control of grid state
+             * - Methods: addCanvas, removeCanvas, undo, redo, etc.
+             * - Event system: canvasAdded, canvasRemoved, etc.
+             * 6. **Event System** (canvas-click, custom events)
+             * - Listen to library events for state synchronization
+             * - React to user interactions (canvas clicks, etc.)
+             * Architecture Pattern:
+             * --------------------
+             * - Library: Manages component placement, drag/drop, resize, undo/redo
+             * - Host App: Manages canvas metadata, custom UI (headers, modals), business logic
+             */
             "blog-app": LocalJSX.BlogApp & JSXBase.HTMLAttributes<HTMLBlogAppElement>;
             "blog-article": LocalJSX.BlogArticle & JSXBase.HTMLAttributes<HTMLBlogArticleElement>;
             "blog-button": LocalJSX.BlogButton & JSXBase.HTMLAttributes<HTMLBlogButtonElement>;
@@ -740,6 +1154,58 @@ declare module "@stencil/core" {
              * **Shadow DOM**: Disabled (for consistency with other components)
              */
             "config-panel": LocalJSX.ConfigPanel & JSXBase.HTMLAttributes<HTMLConfigPanelElement>;
+            /**
+             * Confirmation Modal Component
+             * =============================
+             * Demo Component - NOT Part of Library
+             * This component demonstrates how to implement the grid-builder library's
+             * deletion hook system with a custom confirmation modal.
+             * Library Feature Being Demonstrated:
+             * -----------------------------------
+             * This modal is used with the library's **onBeforeDelete hook** system.
+             * How It Works:
+             * -------------
+             * 1. Library calls onBeforeDelete hook when user deletes component
+             * 2. Hook returns a Promise that doesn't resolve immediately
+             * 3. Host app shows this modal (or any modal library)
+             * 4. User clicks "Delete" or "Cancel"
+             * 5. Modal fires confirm/cancel event
+             * 6. Host app resolves Promise with true/false
+             * 7. Library proceeds with or cancels deletion
+             * Code Flow Example:
+             * ------------------
+             * ```typescript
+             * // In parent component (blog-app.tsx):
+             * private handleBeforeDelete = (context: DeletionHookContext): Promise<boolean> => {
+             *   return new Promise((resolve) => {
+             *     this.deleteResolve = resolve;
+             *     this.isConfirmModalOpen = true;  // Show this modal
+             *   });
+             * };
+             * private handleConfirmDelete = () => {
+             *   this.deleteResolve(true);   // Tell library to proceed
+             * };
+             * private handleCancelDelete = () => {
+             *   this.deleteResolve(false);  // Tell library to cancel
+             * };
+             * ```
+             * Why This Pattern:
+             * -----------------
+             * - **Library agnostic**: Library doesn't provide modal UI
+             * - **Flexibility**: Use any modal library (Material, Bootstrap, Ant Design, etc.)
+             * - **Customization**: Full control over modal appearance and behavior
+             * - **Async support**: Can make API calls before resolving
+             * Alternative Implementations:
+             * ---------------------------
+             * You could replace this component with:
+             * - Material Design modal
+             * - Bootstrap modal
+             * - Ant Design modal
+             * - Native browser confirm() (not recommended)
+             * - Custom modal from your design system
+             * The library doesn't care what modal you use - it just waits for the
+             * Promise to resolve with true/false.
+             */
             "confirmation-modal": LocalJSX.ConfirmationModal & JSXBase.HTMLAttributes<HTMLConfirmationModalElement>;
             /**
              * Custom Drag Clone Component
@@ -775,6 +1241,36 @@ declare module "@stencil/core" {
              * **Dynamic rendering**: Uses ComponentDefinition.render() from registry
              */
             "grid-item-wrapper": LocalJSX.GridItemWrapper & JSXBase.HTMLAttributes<HTMLGridItemWrapperElement>;
+            /**
+             * Section Editor Panel Component
+             * ===============================
+             * Demo Component - NOT Part of Library
+             * This component demonstrates how to build custom UI for editing canvas metadata
+             * in applications using the grid-builder library.
+             * Purpose:
+             * --------
+             * Shows how to create a side panel for editing section/canvas settings.
+             * This is completely custom to your application - the library doesn't provide this.
+             * Library Relationship:
+             * ---------------------
+             * - Library owns: Component placement, layouts, zIndex (grid state)
+             * - Host app owns: Canvas metadata (titles, colors, settings) - THIS COMPONENT
+             * - Metadata flows: App → Library via canvasMetadata prop
+             * Pattern Demonstrated:
+             * ---------------------
+             * 1. User clicks section header (demo UI)
+             * 2. App opens this panel (demo component)
+             * 3. User edits title/color
+             * 4. App updates canvasMetadata state
+             * 5. Library receives updated metadata via prop
+             * 6. Library passes backgroundColor to canvas-section
+             * Why This Approach:
+             * ------------------
+             * - Library stays focused on grid logic
+             * - Host app controls all presentation/metadata UI
+             * - You can use any UI framework (Material, Bootstrap, etc.)
+             * - Complete flexibility over settings panel design
+             */
             "section-editor-panel": LocalJSX.SectionEditorPanel & JSXBase.HTMLAttributes<HTMLSectionEditorPanelElement>;
         }
     }

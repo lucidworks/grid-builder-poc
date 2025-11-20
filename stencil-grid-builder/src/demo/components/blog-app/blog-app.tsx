@@ -5,19 +5,82 @@ import { SectionEditorData } from '../section-editor-panel/section-editor-panel'
 import { ConfirmationModalData } from '../confirmation-modal/confirmation-modal';
 import { DeletionHookContext } from '../../../types/deletion-hook';
 
+/**
+ * Blog App Demo - Host Application for grid-builder Library
+ * ==========================================================
+ *
+ * This component demonstrates how to build a complete page builder application
+ * using the @lucidworks/stencil-grid-builder library.
+ *
+ * Key Library Features Demonstrated:
+ * ----------------------------------
+ *
+ * 1. **Component Registry** (components prop)
+ *    - Pass array of ComponentDefinition objects to grid-builder
+ *    - Library uses these to render palette and components
+ *    - See: blogComponentDefinitions in component-definitions.tsx
+ *
+ * 2. **Initial State** (initialState prop)
+ *    - Pre-populate canvases with components
+ *    - Define layouts for desktop and mobile viewports
+ *    - Library manages state updates via internal store
+ *
+ * 3. **Canvas Metadata** (canvasMetadata prop)
+ *    - Host app owns presentation metadata (titles, colors, settings)
+ *    - Library owns placement state (items, layouts, zIndex)
+ *    - Separation of concerns pattern
+ *
+ * 4. **Deletion Hook** (onBeforeDelete prop)
+ *    - Intercept component deletion requests
+ *    - Show confirmation modals before deletion
+ *    - Make API calls or run custom validation
+ *    - Return Promise<boolean> to approve/cancel deletion
+ *
+ * 5. **Grid Builder API** (window.gridBuilderAPI)
+ *    - Programmatic control of grid state
+ *    - Methods: addCanvas, removeCanvas, undo, redo, etc.
+ *    - Event system: canvasAdded, canvasRemoved, etc.
+ *
+ * 6. **Event System** (canvas-click, custom events)
+ *    - Listen to library events for state synchronization
+ *    - React to user interactions (canvas clicks, etc.)
+ *
+ * Architecture Pattern:
+ * --------------------
+ * - Library: Manages component placement, drag/drop, resize, undo/redo
+ * - Host App: Manages canvas metadata, custom UI (headers, modals), business logic
+ */
+
 @Component({
   tag: 'blog-app',
   styleUrl: 'blog-app.scss',
   shadow: false,
 })
-
 export class BlogApp {
   private api!: GridBuilderAPI;
   private sectionCounter = 1;
 
-  // Host app owns canvas metadata (presentation concerns)
-  // Note: Undo/redo for canvas add/remove is handled by the library
-  // Color changes are immediate (no undo for now)
+  /**
+   * Canvas Metadata State
+   * ---------------------
+   *
+   * Library Feature: canvasMetadata prop (optional)
+   *
+   * Purpose:
+   * - Host app owns presentation metadata (titles, colors, custom settings)
+   * - Library owns placement state (items, layouts, zIndex)
+   * - This separation allows library to focus on grid logic
+   *
+   * Pattern:
+   * - Library fires canvasAdded/canvasRemoved events
+   * - Host app syncs metadata when canvases are added/removed
+   * - Host app passes metadata to library via canvasMetadata prop
+   * - Library passes backgroundColor to canvas-section components
+   *
+   * Note on Undo/Redo:
+   * - Canvas add/remove operations support undo/redo (handled by library)
+   * - Color changes are immediate (no undo for now - could be added)
+   */
   @State() canvasMetadata: Record<string, { title: string; backgroundColor: string }> = {
     'hero-section': {
       title: 'Hero Section',
@@ -33,11 +96,36 @@ export class BlogApp {
     },
   };
 
-  // Section editor panel state
+  /**
+   * Section Editor Panel State
+   * ---------------------------
+   *
+   * Demo-specific state for section editing UI.
+   * This is NOT part of the library - it's custom host app UI.
+   */
   @State() isPanelOpen: boolean = false;
   @State() editingSection: SectionEditorData | null = null;
 
-  // Confirmation modal state
+  /**
+   * Confirmation Modal State
+   * -------------------------
+   *
+   * Library Feature: Deletion Hook System
+   *
+   * This state demonstrates how to use the library's onBeforeDelete hook
+   * to show a confirmation modal before component deletion.
+   *
+   * Pattern:
+   * 1. Library calls onBeforeDelete with deletion context
+   * 2. Host app returns Promise<boolean>
+   * 3. Host app shows modal and stores Promise resolve function
+   * 4. User confirms/cancels modal
+   * 5. Host app calls resolve(true/false)
+   * 6. Library proceeds with or cancels deletion
+   *
+   * Note: The modal component itself is NOT part of the library.
+   * This allows you to use any modal library (Material, Bootstrap, etc.)
+   */
   @State() isConfirmModalOpen: boolean = false;
   @State() confirmModalData: ConfirmationModalData | null = null;
   private deleteResolve: ((value: boolean) => void) | null = null;
@@ -47,8 +135,43 @@ export class BlogApp {
     this.updateCanvasStyles();
   }
 
+  /**
+   * Component Lifecycle: componentDidLoad
+   * --------------------------------------
+   *
+   * Library Feature: Grid Builder API (window.gridBuilderAPI)
+   *
+   * The library exposes a programmatic API on window.gridBuilderAPI that provides:
+   * - State management methods: addCanvas, removeCanvas, undo, redo, etc.
+   * - Query methods: getState, canUndo, canRedo
+   * - Event system: on, off for subscribing to state changes
+   *
+   * This lifecycle hook demonstrates:
+   * 1. Accessing the Grid Builder API
+   * 2. Listening to library events (canvasAdded, canvasRemoved)
+   * 3. Synchronizing host app state with library state
+   */
   componentDidLoad() {
-    // Get the API from the global window object (set by grid-builder)
+    /**
+     * Get Grid Builder API
+     * --------------------
+     *
+     * Library Feature: Programmatic API
+     *
+     * The library exposes an API on the global window object.
+     * This API is set by the grid-builder component during its componentDidLoad lifecycle.
+     *
+     * Available API methods:
+     * - addCanvas(canvasId: string): Add a new canvas
+     * - removeCanvas(canvasId: string): Remove a canvas
+     * - undo(): Undo last action
+     * - redo(): Redo last undone action
+     * - canUndo(): Check if undo is available
+     * - canRedo(): Check if redo is available
+     * - getState(): Get current grid state
+     * - on(event, handler): Subscribe to events
+     * - off(event, handler): Unsubscribe from events
+     */
     this.api = (window as any).gridBuilderAPI;
 
     if (!this.api) {
@@ -56,12 +179,26 @@ export class BlogApp {
       return;
     }
 
-    // Inject headers after initial render
+    // Inject canvas headers after initial render
+    // This is demo-specific UI (not part of library)
     setTimeout(() => {
       this.injectCanvasHeaders();
     }, 100);
 
-    // Listen for canvas-click events (when user clicks canvas background)
+    /**
+     * Listen to canvas-click Events
+     * ------------------------------
+     *
+     * Library Feature: Custom Events
+     *
+     * The library fires custom events when users interact with the grid:
+     * - canvas-click: When user clicks canvas background
+     * - component-added: When component is added to grid
+     * - component-removed: When component is removed from grid
+     * - etc.
+     *
+     * These events allow host apps to respond to user interactions.
+     */
     const gridBuilder = document.querySelector('grid-builder');
     if (gridBuilder) {
       gridBuilder.addEventListener('canvas-click', ((event: CustomEvent) => {
@@ -72,9 +209,25 @@ export class BlogApp {
       }) as EventListener);
     }
 
-    // Listen to library's canvas events to sync metadata
-    // When library adds/removes canvases (including via undo/redo),
-    // we sync the metadata accordingly
+    /**
+     * Subscribe to Library Events
+     * ----------------------------
+     *
+     * Library Feature: Event System (GridBuilderAPI.on)
+     *
+     * The API provides an event system for state change notifications:
+     * - canvasAdded: Fired when canvas is added (including via undo/redo)
+     * - canvasRemoved: Fired when canvas is removed (including via undo/redo)
+     * - stateChanged: Fired on any state change
+     *
+     * This allows host apps to sync their metadata with library state.
+     *
+     * Pattern:
+     * - Library manages placement state (items, layouts, zIndex)
+     * - Library fires events when canvases are added/removed
+     * - Host app adds/removes metadata in response to events
+     * - This keeps host app metadata in sync with library state
+     */
     this.api.on('canvasAdded', (event) => {
       const { canvasId } = event;
       // Add metadata for new canvas if it doesn't exist
@@ -95,12 +248,13 @@ export class BlogApp {
       console.log('🗑️ canvasRemoved event received:', canvasId);
 
       // Remove metadata when canvas is removed
+      // This keeps metadata in sync with library state
       const updated = { ...this.canvasMetadata };
       delete updated[canvasId];
       this.canvasMetadata = updated;
       console.log('  ✅ Metadata removed for:', canvasId);
 
-      // Remove injected header
+      // Remove injected header (demo-specific UI)
       this.removeCanvasHeader(canvasId);
       console.log('  ✅ Header removal attempted for:', canvasId);
     });
@@ -265,41 +419,101 @@ export class BlogApp {
   };
 
   /**
-   * Deletion hook - called before component deletion
-   * Shows confirmation modal and returns Promise<boolean>
+   * Deletion Hook Handler
+   * ----------------------
+   *
+   * Library Feature: onBeforeDelete Hook (grid-builder prop)
+   *
+   * This is the most important demonstration in this demo. It shows how to use
+   * the library's deletion hook system to implement custom deletion workflows.
+   *
+   * What the Library Provides:
+   * - onBeforeDelete prop on grid-builder component
+   * - Hook receives DeletionHookContext with item data
+   * - Hook returns boolean or Promise<boolean>
+   * - Library waits for hook approval before deleting
+   * - If hook returns false, deletion is cancelled
+   * - If hook returns true, deletion proceeds
+   *
+   * What the Host App Provides:
+   * - This hook handler function
+   * - Confirmation modal component (any modal library works)
+   * - Custom deletion logic (API calls, validation, etc.)
+   *
+   * How It Works:
+   * 1. User clicks delete button on component
+   * 2. Library calls this hook with deletion context
+   * 3. Hook returns a Promise (doesn't resolve immediately)
+   * 4. Hook shows confirmation modal
+   * 5. User confirms or cancels
+   * 6. Hook resolves Promise with true/false
+   * 7. Library proceeds with or cancels deletion
+   *
+   * Why This Pattern:
+   * - Keeps modal UI out of library (use any modal you want)
+   * - Supports async operations (API calls, confirmations)
+   * - Gives host app full control over deletion workflow
+   * - Backward compatible (no hook = immediate deletion)
+   *
+   * Example Use Cases:
+   * - Confirmation modals (this demo)
+   * - API calls before deletion
+   * - Permission checks
+   * - Validation logic
+   * - Analytics tracking
    */
   private handleBeforeDelete = (context: DeletionHookContext): Promise<boolean> => {
     return new Promise((resolve) => {
-      // Store resolve function to call from modal handlers
+      // Store the Promise resolve function
+      // We'll call this from the modal confirm/cancel handlers
       this.deleteResolve = resolve;
 
-      // Get component type name for better message
+      // Extract component info from deletion context
+      // Context provides: item (GridItem), canvasId, itemId
       const componentType = context.item.type;
       const componentName = context.item.name || componentType;
 
-      // Show confirmation modal
+      // Show confirmation modal with component info
+      // This is demo-specific - you can use any modal library
       this.confirmModalData = {
         title: 'Delete Component?',
         message: `Are you sure you want to delete "${componentName}"? This action cannot be undone.`,
       };
       this.isConfirmModalOpen = true;
+
+      // Promise won't resolve until user confirms/cancels
+      // The library will wait for this Promise before proceeding
     });
   };
 
+  /**
+   * Confirm Deletion Handler
+   * -------------------------
+   *
+   * Called when user clicks "Delete" button in confirmation modal.
+   * Resolves the deletion hook Promise with `true` to proceed with deletion.
+   */
   private handleConfirmDelete = () => {
     this.isConfirmModalOpen = false;
     this.confirmModalData = null;
     if (this.deleteResolve) {
-      this.deleteResolve(true); // Proceed with deletion
+      this.deleteResolve(true); // Tell library to proceed with deletion
       this.deleteResolve = null;
     }
   };
 
+  /**
+   * Cancel Deletion Handler
+   * ------------------------
+   *
+   * Called when user clicks "Cancel" button in confirmation modal.
+   * Resolves the deletion hook Promise with `false` to cancel deletion.
+   */
   private handleCancelDelete = () => {
     this.isConfirmModalOpen = false;
     this.confirmModalData = null;
     if (this.deleteResolve) {
-      this.deleteResolve(false); // Cancel deletion
+      this.deleteResolve(false); // Tell library to cancel deletion
       this.deleteResolve = null;
     }
   };
