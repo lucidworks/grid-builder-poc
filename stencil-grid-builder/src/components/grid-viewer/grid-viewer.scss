@@ -1,0 +1,82 @@
+/**
+ * Grid Viewer Styles
+ * ===================
+ *
+ * Simplified styling for rendering-only grid viewer.
+ * Based on grid-builder styles but without editing UI (palette, config panel).
+ *
+ * ## Key Differences from grid-builder.scss
+ *
+ * **Excluded**:
+ * - ❌ Palette area styles (no component palette)
+ * - ❌ Config panel styles (no configuration editing)
+ * - ❌ Selection styles (no item selection)
+ * - ❌ Resize handle styles (no resizing)
+ *
+ * **Included**:
+ * - ✅ Canvas area layout
+ * - ✅ Responsive container
+ * - ✅ Theme variables
+ *
+ * @module grid-viewer-styles
+ */
+
+/**
+ * CSS Custom Properties (Theme Variables)
+ *
+ * **Default theme**: Bootstrap-inspired blue
+ * **Overridable**: Via theme prop
+ */
+:host {
+  // Color scheme
+  --grid-viewer-primary-color: #007bff;
+  --grid-viewer-canvas-bg: #ffffff;
+  --grid-viewer-font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+
+  // Layout
+  display: block;
+  width: 100%;
+  height: 100%;
+  font-family: var(--grid-viewer-font-family);
+}
+
+/**
+ * Main Container
+ *
+ * **Layout**: Full width/height for embedding
+ * **Simplified**: No grid layout (only canvas area)
+ */
+.grid-viewer-container {
+  width: 100%;
+  height: 100%;
+  background: var(--grid-viewer-canvas-bg);
+  overflow: auto;
+}
+
+/**
+ * Canvas Area
+ *
+ * **Layout**: Full width/height (no palette or config panel)
+ * **Scrolling**: Vertical scroll for multiple canvases
+ */
+.canvas-area {
+  width: 100%;
+  height: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+/**
+ * Canvases Container
+ *
+ * **Layout**: Vertical stack of canvas sections
+ * **Spacing**: Gap between canvases
+ */
+.canvases-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0; // No gap - canvases stack seamlessly
+  width: 100%;
+  min-height: 100%;
+}

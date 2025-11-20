@@ -7,21 +7,23 @@
 import { HTMLStencilElement, JSXBase } from "@stencil/core/internal";
 import { GridConfig } from "./types/grid-config";
 import { ComponentDefinition } from "./types/component-definition";
+import { GridItem, GridState, ViewerState } from "./services/state-manager";
 import { ConfirmationModalData } from "./demo/components/confirmation-modal/confirmation-modal";
 import { GridBuilderTheme } from "./types/theme";
 import { GridBuilderPlugin } from "./types/plugin";
 import { UIComponentOverrides } from "./types/ui-overrides";
-import { GridItem, GridState } from "./services/state-manager";
 import { DeletionHook } from "./types/deletion-hook";
+import { GridExport } from "./types/grid-export";
 import { SectionEditorData } from "./demo/components/section-editor-panel/section-editor-panel";
 export { GridConfig } from "./types/grid-config";
 export { ComponentDefinition } from "./types/component-definition";
+export { GridItem, GridState, ViewerState } from "./services/state-manager";
 export { ConfirmationModalData } from "./demo/components/confirmation-modal/confirmation-modal";
 export { GridBuilderTheme } from "./types/theme";
 export { GridBuilderPlugin } from "./types/plugin";
 export { UIComponentOverrides } from "./types/ui-overrides";
-export { GridItem, GridState } from "./services/state-manager";
 export { DeletionHook } from "./types/deletion-hook";
+export { GridExport } from "./types/grid-export";
 export { SectionEditorData } from "./demo/components/section-editor-panel/section-editor-panel";
 export namespace Components {
     /**
@@ -119,6 +121,40 @@ export namespace Components {
           * Deletion hook (from parent grid-builder)  **Source**: grid-builder component (from onBeforeDelete prop) **Purpose**: Pass through to grid-item-wrapper for deletion interception **Optional**: If not provided, components delete immediately
          */
         "onBeforeDelete"?: (context: any) => boolean | Promise<boolean>;
+    }
+    /**
+     * CanvasSectionViewer Component
+     * ==============================
+     * Rendering-only canvas component for grid-viewer.
+     * **Tag**: `<canvas-section-viewer>`
+     * **Shadow DOM**: Disabled (consistent with canvas-section)
+     * **Reactivity**: Props-based (no global state subscription)
+     */
+    interface CanvasSectionViewer {
+        /**
+          * Background color for this canvas  **Optional**: Canvas background color **Default**: '#ffffff'
+         */
+        "backgroundColor"?: string;
+        /**
+          * Canvas ID for identification  **Format**: 'canvas1', 'hero-section', etc. **Purpose**: Element ID and data attribute
+         */
+        "canvasId": string;
+        /**
+          * Component registry (from parent grid-viewer)  **Source**: grid-viewer component **Structure**: Map<type, ComponentDefinition> **Purpose**: Pass to grid-item-wrapper for dynamic rendering
+         */
+        "componentRegistry"?: Map<string, ComponentDefinition>;
+        /**
+          * Grid configuration options  **Optional**: Customizes grid system behavior **Passed from**: grid-viewer component
+         */
+        "config"?: GridConfig;
+        /**
+          * Current viewport mode  **Required**: 'desktop' | 'mobile' **Source**: Passed from grid-viewer component  **Purpose**: Determines which layout to render for each item
+         */
+        "currentViewport": 'desktop' | 'mobile';
+        /**
+          * Items to render in this canvas  **Required**: Array of GridItem objects **Source**: Passed from grid-viewer component  **Unlike canvas-section**: Items passed via props, not from global state
+         */
+        "items": GridItem[];
     }
     /**
      * ComponentPalette Component
@@ -335,6 +371,11 @@ export namespace Components {
          */
         "config"?: GridConfig;
         /**
+          * Export current state to JSON-serializable format  **Purpose**: Export grid layout for saving or transferring to viewer app  **Use Cases**: - Save layout to database/localStorage - Transfer layout to viewer app via API - Create layout templates/presets - Backup/restore functionality  **Example - Save to API**: ```typescript const builder = document.querySelector('grid-builder'); const exportData = await builder.exportState(); await fetch('/api/layouts', {   method: 'POST',   headers: { 'Content-Type': 'application/json' },   body: JSON.stringify(exportData) }); ```  **Example - Save to localStorage**: ```typescript const exportData = await builder.exportState(); localStorage.setItem('grid-layout', JSON.stringify(exportData)); ```
+          * @returns Promise<GridExport> - JSON-serializable export object
+         */
+        "exportState": () => Promise<GridExport>;
+        /**
           * Initial state to restore  **Optional prop**: Restore saved layout **Purpose**: Load previously saved grid state  **State structure**: Same as gridState (canvases, viewport, etc.)  **Example**: ```typescript const savedState = JSON.parse(localStorage.getItem('grid-state')); <grid-builder initialState={savedState} ... /> ```
          */
         "initialState"?: Partial<GridState>;
@@ -365,6 +406,10 @@ export namespace Components {
      */
     interface GridItemWrapper {
         /**
+          * All items in the canvas (for viewer mode auto-layout)  **Purpose**: Calculate mobile auto-layout positions **Source**: grid-viewer → canvas-section-viewer → grid-item-wrapper **Used by**: render() to calculate stacked positions in mobile viewport  **Note**: When in builder mode (viewerMode=false), this is ignored and gridState.canvases is used instead. When in viewer mode (viewerMode=true), this prop is required for mobile auto-layout.
+         */
+        "canvasItems"?: GridItem[];
+        /**
           * Component registry (from parent grid-builder)  **Source**: grid-builder component (built from components prop) **Structure**: Map<type, ComponentDefinition> **Purpose**: Look up component definitions for dynamic rendering  **Note**: This is passed as a workaround since StencilJS doesn't have good support for context/provide-inject patterns. In a production app, consider using a global registry or context provider.
          */
         "componentRegistry"?: Map<string, ComponentDefinition>;
@@ -372,6 +417,10 @@ export namespace Components {
           * Grid configuration options  **Optional**: Customizes grid system behavior **Passed from**: grid-builder → canvas-section → grid-item-wrapper **Used for**: Grid size calculations with constraints
          */
         "config"?: GridConfig;
+        /**
+          * Current viewport (for viewer mode)  **Purpose**: Determine which layout to render (desktop or mobile) **Source**: grid-viewer → canvas-section-viewer → grid-item-wrapper **Used by**: render() to select appropriate layout  **Note**: When in builder mode (viewerMode=false), this is ignored and gridState.currentViewport is used instead. When in viewer mode (viewerMode=true), this prop is required.
+         */
+        "currentViewport"?: 'desktop' | 'mobile';
         /**
           * Grid item data (position, size, type, etc.)  **Source**: Parent canvas-section component **Contains**: id, canvasId, type, name, layouts (desktop/mobile), zIndex, config
          */
@@ -384,6 +433,46 @@ export namespace Components {
           * Render version (force re-render trigger)  **Source**: Parent canvas-section (incremented on resize) **Purpose**: Force grid calculation refresh when container resizes
          */
         "renderVersion"?: number;
+        /**
+          * Viewer mode flag  **Purpose**: Disable editing features for rendering-only mode **Default**: false (editing enabled)  **When true**: - ❌ No drag-and-drop handlers - ❌ No resize handles - ❌ No item header (drag handle) - ❌ No delete button - ❌ No selection state - ✅ Only renders component content  **Use case**: grid-viewer component for display-only mode
+          * @default false
+         */
+        "viewerMode"?: boolean;
+    }
+    /**
+     * GridViewer Component
+     * ====================
+     * Rendering-only grid component for displaying layouts created in grid-builder.
+     * **Tag**: `<grid-viewer>`
+     * **Shadow DOM**: Disabled (consistent with grid-builder)
+     * **Reactivity**: Uses local store for viewer state
+     * **Key differences from grid-builder**:
+     * - No interact.js dependency (80% bundle size reduction)
+     * - No palette, config panel, or editing UI
+     * - Simplified state (no selection, no z-index tracking)
+     * - Rendering-only canvas sections
+     */
+    interface GridViewer {
+        /**
+          * Canvas metadata storage (host app responsibility)  **Optional prop**: Store canvas-level presentation metadata **Purpose**: Host app owns canvas metadata (titles, colors, settings)  **Structure**: Record<canvasId, any>  **Example**: ```typescript const canvasMetadata = {   'hero-section': {     backgroundColor: '#f0f4f8',     customSettings: { ... }   } }; ```
+         */
+        "canvasMetadata"?: Record<string, any>;
+        /**
+          * Component definitions registry  **Required prop**: Array of ComponentDefinition objects **Purpose**: Defines how to render each component type  **Must match builder definitions**: Same component types as used in builder  **Example**: ```typescript const components = [   {     type: 'header',     name: 'Header',     icon: '📄',     render: ({ itemId, config }) => (       <my-header itemId={itemId} config={config} />     )   } ]; ```
+         */
+        "components": ComponentDefinition[];
+        /**
+          * Grid configuration options  **Optional prop**: Grid system configuration **Default**: Standard 2% grid with 10px-50px constraints  **Should match builder config**: Use same config as builder for consistent rendering
+         */
+        "config"?: GridConfig;
+        /**
+          * Initial state to display  **Optional prop**: Layout data to render **Accepts**: ViewerState or GridExport (both compatible)  **From builder export**: ```typescript const exportData = await builder.exportState(); viewer.initialState = exportData; // Type-safe! ```  **From API**: ```typescript const layout = await fetch('/api/layouts/123').then(r => r.json()); viewer.initialState = layout; ```
+         */
+        "initialState"?: Partial<ViewerState> | GridExport;
+        /**
+          * Visual theme customization  **Optional prop**: Customizes colors, fonts, and styling **Default**: Bootstrap-inspired blue theme
+         */
+        "theme"?: GridBuilderTheme;
     }
     /**
      * Section Editor Panel Component
@@ -526,6 +615,20 @@ declare global {
     var HTMLCanvasSectionElement: {
         prototype: HTMLCanvasSectionElement;
         new (): HTMLCanvasSectionElement;
+    };
+    /**
+     * CanvasSectionViewer Component
+     * ==============================
+     * Rendering-only canvas component for grid-viewer.
+     * **Tag**: `<canvas-section-viewer>`
+     * **Shadow DOM**: Disabled (consistent with canvas-section)
+     * **Reactivity**: Props-based (no global state subscription)
+     */
+    interface HTMLCanvasSectionViewerElement extends Components.CanvasSectionViewer, HTMLStencilElement {
+    }
+    var HTMLCanvasSectionViewerElement: {
+        prototype: HTMLCanvasSectionViewerElement;
+        new (): HTMLCanvasSectionViewerElement;
     };
     /**
      * ComponentPalette Component
@@ -726,6 +829,25 @@ declare global {
         prototype: HTMLGridItemWrapperElement;
         new (): HTMLGridItemWrapperElement;
     };
+    /**
+     * GridViewer Component
+     * ====================
+     * Rendering-only grid component for displaying layouts created in grid-builder.
+     * **Tag**: `<grid-viewer>`
+     * **Shadow DOM**: Disabled (consistent with grid-builder)
+     * **Reactivity**: Uses local store for viewer state
+     * **Key differences from grid-builder**:
+     * - No interact.js dependency (80% bundle size reduction)
+     * - No palette, config panel, or editing UI
+     * - Simplified state (no selection, no z-index tracking)
+     * - Rendering-only canvas sections
+     */
+    interface HTMLGridViewerElement extends Components.GridViewer, HTMLStencilElement {
+    }
+    var HTMLGridViewerElement: {
+        prototype: HTMLGridViewerElement;
+        new (): HTMLGridViewerElement;
+    };
     interface HTMLSectionEditorPanelElementEventMap {
         "closePanel": void;
         "updateSection": { canvasId: string; title: string; backgroundColor: string };
@@ -780,6 +902,7 @@ declare global {
         "blog-button": HTMLBlogButtonElement;
         "blog-header": HTMLBlogHeaderElement;
         "canvas-section": HTMLCanvasSectionElement;
+        "canvas-section-viewer": HTMLCanvasSectionViewerElement;
         "component-palette": HTMLComponentPaletteElement;
         "config-panel": HTMLConfigPanelElement;
         "confirmation-modal": HTMLConfirmationModalElement;
@@ -787,6 +910,7 @@ declare global {
         "custom-palette-item": HTMLCustomPaletteItemElement;
         "grid-builder": HTMLGridBuilderElement;
         "grid-item-wrapper": HTMLGridItemWrapperElement;
+        "grid-viewer": HTMLGridViewerElement;
         "section-editor-panel": HTMLSectionEditorPanelElement;
     }
 }
@@ -887,6 +1011,40 @@ declare namespace LocalJSX {
           * Deletion hook (from parent grid-builder)  **Source**: grid-builder component (from onBeforeDelete prop) **Purpose**: Pass through to grid-item-wrapper for deletion interception **Optional**: If not provided, components delete immediately
          */
         "onBeforeDelete"?: (context: any) => boolean | Promise<boolean>;
+    }
+    /**
+     * CanvasSectionViewer Component
+     * ==============================
+     * Rendering-only canvas component for grid-viewer.
+     * **Tag**: `<canvas-section-viewer>`
+     * **Shadow DOM**: Disabled (consistent with canvas-section)
+     * **Reactivity**: Props-based (no global state subscription)
+     */
+    interface CanvasSectionViewer {
+        /**
+          * Background color for this canvas  **Optional**: Canvas background color **Default**: '#ffffff'
+         */
+        "backgroundColor"?: string;
+        /**
+          * Canvas ID for identification  **Format**: 'canvas1', 'hero-section', etc. **Purpose**: Element ID and data attribute
+         */
+        "canvasId": string;
+        /**
+          * Component registry (from parent grid-viewer)  **Source**: grid-viewer component **Structure**: Map<type, ComponentDefinition> **Purpose**: Pass to grid-item-wrapper for dynamic rendering
+         */
+        "componentRegistry"?: Map<string, ComponentDefinition>;
+        /**
+          * Grid configuration options  **Optional**: Customizes grid system behavior **Passed from**: grid-viewer component
+         */
+        "config"?: GridConfig;
+        /**
+          * Current viewport mode  **Required**: 'desktop' | 'mobile' **Source**: Passed from grid-viewer component  **Purpose**: Determines which layout to render for each item
+         */
+        "currentViewport": 'desktop' | 'mobile';
+        /**
+          * Items to render in this canvas  **Required**: Array of GridItem objects **Source**: Passed from grid-viewer component  **Unlike canvas-section**: Items passed via props, not from global state
+         */
+        "items": GridItem[];
     }
     /**
      * ComponentPalette Component
@@ -1141,6 +1299,10 @@ declare namespace LocalJSX {
      */
     interface GridItemWrapper {
         /**
+          * All items in the canvas (for viewer mode auto-layout)  **Purpose**: Calculate mobile auto-layout positions **Source**: grid-viewer → canvas-section-viewer → grid-item-wrapper **Used by**: render() to calculate stacked positions in mobile viewport  **Note**: When in builder mode (viewerMode=false), this is ignored and gridState.canvases is used instead. When in viewer mode (viewerMode=true), this prop is required for mobile auto-layout.
+         */
+        "canvasItems"?: GridItem[];
+        /**
           * Component registry (from parent grid-builder)  **Source**: grid-builder component (built from components prop) **Structure**: Map<type, ComponentDefinition> **Purpose**: Look up component definitions for dynamic rendering  **Note**: This is passed as a workaround since StencilJS doesn't have good support for context/provide-inject patterns. In a production app, consider using a global registry or context provider.
          */
         "componentRegistry"?: Map<string, ComponentDefinition>;
@@ -1148,6 +1310,10 @@ declare namespace LocalJSX {
           * Grid configuration options  **Optional**: Customizes grid system behavior **Passed from**: grid-builder → canvas-section → grid-item-wrapper **Used for**: Grid size calculations with constraints
          */
         "config"?: GridConfig;
+        /**
+          * Current viewport (for viewer mode)  **Purpose**: Determine which layout to render (desktop or mobile) **Source**: grid-viewer → canvas-section-viewer → grid-item-wrapper **Used by**: render() to select appropriate layout  **Note**: When in builder mode (viewerMode=false), this is ignored and gridState.currentViewport is used instead. When in viewer mode (viewerMode=true), this prop is required.
+         */
+        "currentViewport"?: 'desktop' | 'mobile';
         /**
           * Grid item data (position, size, type, etc.)  **Source**: Parent canvas-section component **Contains**: id, canvasId, type, name, layouts (desktop/mobile), zIndex, config
          */
@@ -1160,6 +1326,46 @@ declare namespace LocalJSX {
           * Render version (force re-render trigger)  **Source**: Parent canvas-section (incremented on resize) **Purpose**: Force grid calculation refresh when container resizes
          */
         "renderVersion"?: number;
+        /**
+          * Viewer mode flag  **Purpose**: Disable editing features for rendering-only mode **Default**: false (editing enabled)  **When true**: - ❌ No drag-and-drop handlers - ❌ No resize handles - ❌ No item header (drag handle) - ❌ No delete button - ❌ No selection state - ✅ Only renders component content  **Use case**: grid-viewer component for display-only mode
+          * @default false
+         */
+        "viewerMode"?: boolean;
+    }
+    /**
+     * GridViewer Component
+     * ====================
+     * Rendering-only grid component for displaying layouts created in grid-builder.
+     * **Tag**: `<grid-viewer>`
+     * **Shadow DOM**: Disabled (consistent with grid-builder)
+     * **Reactivity**: Uses local store for viewer state
+     * **Key differences from grid-builder**:
+     * - No interact.js dependency (80% bundle size reduction)
+     * - No palette, config panel, or editing UI
+     * - Simplified state (no selection, no z-index tracking)
+     * - Rendering-only canvas sections
+     */
+    interface GridViewer {
+        /**
+          * Canvas metadata storage (host app responsibility)  **Optional prop**: Store canvas-level presentation metadata **Purpose**: Host app owns canvas metadata (titles, colors, settings)  **Structure**: Record<canvasId, any>  **Example**: ```typescript const canvasMetadata = {   'hero-section': {     backgroundColor: '#f0f4f8',     customSettings: { ... }   } }; ```
+         */
+        "canvasMetadata"?: Record<string, any>;
+        /**
+          * Component definitions registry  **Required prop**: Array of ComponentDefinition objects **Purpose**: Defines how to render each component type  **Must match builder definitions**: Same component types as used in builder  **Example**: ```typescript const components = [   {     type: 'header',     name: 'Header',     icon: '📄',     render: ({ itemId, config }) => (       <my-header itemId={itemId} config={config} />     )   } ]; ```
+         */
+        "components": ComponentDefinition[];
+        /**
+          * Grid configuration options  **Optional prop**: Grid system configuration **Default**: Standard 2% grid with 10px-50px constraints  **Should match builder config**: Use same config as builder for consistent rendering
+         */
+        "config"?: GridConfig;
+        /**
+          * Initial state to display  **Optional prop**: Layout data to render **Accepts**: ViewerState or GridExport (both compatible)  **From builder export**: ```typescript const exportData = await builder.exportState(); viewer.initialState = exportData; // Type-safe! ```  **From API**: ```typescript const layout = await fetch('/api/layouts/123').then(r => r.json()); viewer.initialState = layout; ```
+         */
+        "initialState"?: Partial<ViewerState> | GridExport;
+        /**
+          * Visual theme customization  **Optional prop**: Customizes colors, fonts, and styling **Default**: Bootstrap-inspired blue theme
+         */
+        "theme"?: GridBuilderTheme;
     }
     /**
      * Section Editor Panel Component
@@ -1217,6 +1423,7 @@ declare namespace LocalJSX {
         "blog-button": BlogButton;
         "blog-header": BlogHeader;
         "canvas-section": CanvasSection;
+        "canvas-section-viewer": CanvasSectionViewer;
         "component-palette": ComponentPalette;
         "config-panel": ConfigPanel;
         "confirmation-modal": ConfirmationModal;
@@ -1224,6 +1431,7 @@ declare namespace LocalJSX {
         "custom-palette-item": CustomPaletteItem;
         "grid-builder": GridBuilder;
         "grid-item-wrapper": GridItemWrapper;
+        "grid-viewer": GridViewer;
         "section-editor-panel": SectionEditorPanel;
     }
 }
@@ -1281,6 +1489,15 @@ declare module "@stencil/core" {
              * **Reactivity**: Listens to gridState changes via StencilJS store
              */
             "canvas-section": LocalJSX.CanvasSection & JSXBase.HTMLAttributes<HTMLCanvasSectionElement>;
+            /**
+             * CanvasSectionViewer Component
+             * ==============================
+             * Rendering-only canvas component for grid-viewer.
+             * **Tag**: `<canvas-section-viewer>`
+             * **Shadow DOM**: Disabled (consistent with canvas-section)
+             * **Reactivity**: Props-based (no global state subscription)
+             */
+            "canvas-section-viewer": LocalJSX.CanvasSectionViewer & JSXBase.HTMLAttributes<HTMLCanvasSectionViewerElement>;
             /**
              * ComponentPalette Component
              * ===========================
@@ -1433,6 +1650,20 @@ declare module "@stencil/core" {
              * **Dynamic rendering**: Uses ComponentDefinition.render() from registry
              */
             "grid-item-wrapper": LocalJSX.GridItemWrapper & JSXBase.HTMLAttributes<HTMLGridItemWrapperElement>;
+            /**
+             * GridViewer Component
+             * ====================
+             * Rendering-only grid component for displaying layouts created in grid-builder.
+             * **Tag**: `<grid-viewer>`
+             * **Shadow DOM**: Disabled (consistent with grid-builder)
+             * **Reactivity**: Uses local store for viewer state
+             * **Key differences from grid-builder**:
+             * - No interact.js dependency (80% bundle size reduction)
+             * - No palette, config panel, or editing UI
+             * - Simplified state (no selection, no z-index tracking)
+             * - Rendering-only canvas sections
+             */
+            "grid-viewer": LocalJSX.GridViewer & JSXBase.HTMLAttributes<HTMLGridViewerElement>;
             /**
              * Section Editor Panel Component
              * ===============================
