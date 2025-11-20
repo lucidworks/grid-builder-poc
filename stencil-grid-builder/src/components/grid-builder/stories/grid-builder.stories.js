@@ -1,14 +1,13 @@
 import { html } from 'lit-html';
 import { h } from '@stencil/core';
-import { ComponentDefinition } from '../../../types/component-definition';
 
 export default {
   title: 'Components/Grid Builder',
 };
 
-// Simple component definitions using JSX/TSX
+// Simple component definitions using JSX
 // This demonstrates the recommended approach for Stencil applications
-const simpleComponents: ComponentDefinition[] = [
+const simpleComponents = [
   {
     type: 'header',
     name: 'Header',
@@ -154,7 +153,7 @@ export const WithInitialState = () => {
         zIndexCounter: 4,
       },
     },
-  } as any; // Type assertion for initial state partial
+  };
 
   return html`
     <div style="width: 100%; height: 600px;">
