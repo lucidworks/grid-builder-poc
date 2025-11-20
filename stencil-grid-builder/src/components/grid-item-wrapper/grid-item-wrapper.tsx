@@ -232,6 +232,12 @@ export class GridItemWrapper {
    * Component did load lifecycle hook
    */
   componentDidLoad() {
+    // Set up virtual rendering observer (both builder and viewer modes)
+    // Virtual rendering improves performance for long pages with many components
+    virtualRenderer.observe(this.itemRef, this.item.id, (isVisible) => {
+      this.isVisible = isVisible;
+    });
+
     // Skip drag/resize handlers in viewer mode
     if (!this.viewerMode) {
       // Get component definition for min/max size constraints
@@ -252,14 +258,6 @@ export class GridItemWrapper {
         }
       );
       this.resizeHandler = new ResizeHandler(this.itemRef, this.item, this.handleItemUpdate, componentDefinition);
-
-      // Set up virtual rendering observer (only in builder mode)
-      virtualRenderer.observe(this.itemRef, this.item.id, (isVisible) => {
-        this.isVisible = isVisible;
-      });
-    } else {
-      // Viewer mode: render all components immediately (no virtual rendering)
-      this.isVisible = true;
     }
   }
 
@@ -692,13 +690,21 @@ export class GridItemWrapper {
    * Handle click event (selection and config panel)
    */
   private handleClick = (e: MouseEvent) => {
+    console.log('🖱️ grid-item-wrapper handleClick called', {
+      itemId: this.item.id,
+      viewerMode: this.viewerMode,
+      wasDragged: this.wasDragged,
+    });
+
     // Skip click handling in viewer mode
     if (this.viewerMode) {
+      console.log('  ⏭️ Skipping - viewer mode');
       return;
     }
 
     // Don't open config panel if item was just dragged
     if (this.wasDragged) {
+      console.log('  ⏭️ Skipping - was dragged');
       // Reset flag after a small delay to allow this click event to finish
       setTimeout(() => {
         this.wasDragged = false;
@@ -716,8 +722,11 @@ export class GridItemWrapper {
       target.classList.contains('grid-item-delete') ||
       target.classList.contains('grid-item-control-btn')
     ) {
+      console.log('  ⏭️ Skipping - clicked on control element');
       return;
     }
+
+    console.log('  ✅ Proceeding with click handling');
 
     // Set selection state immediately
     gridState.selectedItemId = this.item.id;
@@ -730,12 +739,18 @@ export class GridItemWrapper {
     });
 
     // Dispatch event to open config panel
+    console.log('  📤 Dispatching item-click event', {
+      itemId: this.item.id,
+      canvasId: this.item.canvasId,
+      hasItemRef: !!this.itemRef,
+    });
     const event = new CustomEvent('item-click', {
       detail: { itemId: this.item.id, canvasId: this.item.canvasId },
       bubbles: true,
       composed: true,
     });
     this.itemRef.dispatchEvent(event);
+    console.log('  ✅ item-click event dispatched');
   };
 
   /**
