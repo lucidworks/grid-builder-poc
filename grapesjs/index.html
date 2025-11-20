@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Grid Builder POC - GrapesJS (Experimental)</title>
+
+  <!-- GrapesJS CSS -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/grapesjs@0.21.10/dist/css/grapes.min.css">
+
+  <!-- GrapesJS JS -->
+  <script src="https://cdn.jsdelivr.net/npm/grapesjs@0.21.10/dist/grapes.min.js"></script>
+
+  <script src="../shared/performance-monitor.js"></script>
+  <link rel="stylesheet" href="index.css">
+</head>
+<body>
+  <div class="app">
+    <!-- Top Controls Bar -->
+    <div class="controls-bar">
+      <div class="controls-left">
+        <h1>Grid Builder POC - GrapesJS</h1>
+        <p>Visual editor with app-studio-api compatibility</p>
+      </div>
+      <div class="controls-right">
+        <div class="viewport-toggle">
+          <button id="desktopView" class="viewport-btn active">🖥️ Desktop</button>
+          <button id="mobileView" class="viewport-btn">📱 Mobile</button>
+        </div>
+        <button id="exportLayout" class="control-btn">📥 Export Layout</button>
+        <button id="exportAppStudio" class="control-btn primary">🚀 Export for App Studio</button>
+        <button id="clearCanvas" class="control-btn danger">🗑️ Clear All</button>
+        <div class="version-switcher">
+          <span class="version-switcher-label">Version:</span>
+          <select id="versionSelect" onchange="window.location.href = this.value">
+            <option value="../left-top/">Left/Top</option>
+            <option value="../transform/">Transform 🧪</option>
+            <option value="../masonry/">Masonry 🧪</option>
+            <option value="../virtual/">Virtual 🧪</option>
+            <option value="../stencil/">StencilJS 🧪</option>
+            <option value="../gridstack/">Gridstack 🧪</option>
+            <option value="../moveable/">Moveable 🧪</option>
+            <option value="../grapesjs/" selected>GrapesJS 🧪</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- GrapesJS Editor Container -->
+    <div id="gjs">
+      <!-- Initial content -->
+      <div class="welcome-message">
+        <h2>Welcome to GrapesJS Grid Builder</h2>
+        <p>Drag components from the left panel to start building your layout</p>
+        <p>This variant is compatible with app-studio-api render endpoint</p>
+      </div>
+    </div>
+  </div>
+
+  <script src="index.js"></script>
+</body>
+</html>
