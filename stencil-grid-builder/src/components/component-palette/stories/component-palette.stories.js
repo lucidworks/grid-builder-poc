@@ -1,3 +1,5 @@
+import { html } from 'lit-html';
+
 export default {
   title: 'Components/Component Palette',
 };
@@ -31,22 +33,18 @@ const sampleComponents = [
 ];
 
 export const BasicPalette = () => {
-  const container = document.createElement('div');
-  container.style.padding = '20px';
-  container.style.height = '500px';
+  // Create element and set props
+  const paletteEl = document.createElement('component-palette');
+  paletteEl.components = sampleComponents;
 
-  const palette = document.createElement('component-palette');
-  palette.components = sampleComponents;
-
-  container.appendChild(palette);
-  return container;
+  return html`
+    <div style="padding: 20px; height: 500px;">
+      ${paletteEl}
+    </div>
+  `;
 };
 
 export const WithCustomComponents = () => {
-  const container = document.createElement('div');
-  container.style.padding = '20px';
-  container.style.height = '500px';
-
   const customComponents = [
     {
       type: 'hero',
@@ -71,9 +69,12 @@ export const WithCustomComponents = () => {
     },
   ];
 
-  const palette = document.createElement('component-palette');
-  palette.components = customComponents;
+  const paletteEl = document.createElement('component-palette');
+  paletteEl.components = customComponents;
 
-  container.appendChild(palette);
-  return container;
+  return html`
+    <div style="padding: 20px; height: 500px;">
+      ${paletteEl}
+    </div>
+  `;
 };

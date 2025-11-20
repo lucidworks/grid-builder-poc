@@ -1,10 +1,11 @@
 const path = require('path');
 
 module.exports = {
+  staticDirs: ['../dist'],
+
   previewHead: (head) => (`
     ${head}
     <script type="module" src="grid-builder/grid-builder.esm.js"></script>
-    <script nomodule="" src="grid-builder.js"></script>
     <link rel="stylesheet" href="grid-builder/grid-builder.css">
   `),
 
