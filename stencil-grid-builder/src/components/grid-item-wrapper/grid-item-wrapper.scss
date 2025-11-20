@@ -11,7 +11,7 @@
   min-width: 100px;
   min-height: 80px;
   box-sizing: border-box; /* Include padding and border in width/height */
-  padding: 0; /* No padding - components render flush to grid boundaries */
+  padding: 20px;
   border: 2px solid transparent;
   border-radius: 0; /* No border radius - components control their own borders */
   background: transparent; /* No background - components render flush with their own backgrounds */
@@ -34,7 +34,7 @@
 }
 
 .grid-item.selected {
-  padding: 0; /* No padding - components render flush */
+  padding: 19px; /* Compensate for thicker border to prevent content shift */
   /* z-index handled via inline style to respect actual item.zIndex */
   border: 3px solid var(--selection-color);
   box-shadow:
@@ -45,7 +45,7 @@
 
 /* Disable selection styles in viewer mode */
 .grid-item[data-viewer-mode="true"].selected {
-  padding: 0; /* No padding */
+  padding: 20px; /* Reset to default padding */
   border: 2px solid transparent;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 10%);
 }
