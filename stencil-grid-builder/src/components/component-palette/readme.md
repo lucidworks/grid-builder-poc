@@ -16,6 +16,40 @@ Library component providing draggable component palette UI.
 **Shadow DOM**: Disabled (for consistency with other components)
 **Reactivity**: Re-renders when components prop changes
 
+## Usage Patterns
+
+**Pattern 1: Default (inside grid-builder)**
+```typescript
+// Palette automatically rendered by grid-builder
+<grid-builder components={componentDefinitions} />
+```
+
+**Pattern 2: Independent placement**
+```typescript
+// Place palette anywhere in your app
+<div class="my-layout">
+  <aside class="sidebar">
+    <component-palette
+      components={componentDefinitions}
+      config={gridConfig}
+    />
+  </aside>
+  <main>
+    <grid-builder
+      components={componentDefinitions}
+      config={gridConfig}
+      uiOverrides={{
+        ComponentPalette: () => null  // Hide default palette
+      }}
+    />
+  </main>
+</div>
+```
+
+**Pattern 3: Custom wrapper component**
+```typescript
+// Wrap in your own component for styling
+
 ## Properties
 
 | Property                  | Attribute | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           | Type                    | Default     |

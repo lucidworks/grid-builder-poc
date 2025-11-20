@@ -105,6 +105,61 @@ import { gridToPixelsX, gridToPixelsY } from '../../utils/grid-calculations';
  * **Tag**: `<component-palette>`
  * **Shadow DOM**: Disabled (for consistency with other components)
  * **Reactivity**: Re-renders when components prop changes
+ *
+ * ## Usage Patterns
+ *
+ * **Pattern 1: Default (inside grid-builder)**
+ * ```typescript
+ * // Palette automatically rendered by grid-builder
+ * <grid-builder components={componentDefinitions} />
+ * ```
+ *
+ * **Pattern 2: Independent placement**
+ * ```typescript
+ * // Place palette anywhere in your app
+ * <div class="my-layout">
+ *   <aside class="sidebar">
+ *     <component-palette
+ *       components={componentDefinitions}
+ *       config={gridConfig}
+ *     />
+ *   </aside>
+ *   <main>
+ *     <grid-builder
+ *       components={componentDefinitions}
+ *       config={gridConfig}
+ *       uiOverrides={{
+ *         ComponentPalette: () => null  // Hide default palette
+ *       }}
+ *     />
+ *   </main>
+ * </div>
+ * ```
+ *
+ * **Pattern 3: Custom wrapper component**
+ * ```typescript
+ * // Wrap in your own component for styling
+ * @Component({ tag: 'my-palette-sidebar' })
+ * export class MyPaletteSidebar {
+ *   @Prop() components: ComponentDefinition[];
+ *
+ *   render() {
+ *     return (
+ *       <div class="custom-sidebar">
+ *         <h3>Components</h3>
+ *         <component-palette components={this.components} />
+ *       </div>
+ *     );
+ *   }
+ * }
+ * ```
+ *
+ * ## Key Features
+ *
+ * - **Self-contained**: Works independently of grid-builder
+ * - **Drag/drop ready**: Uses interact.js for drag functionality
+ * - **Flexible placement**: Can be rendered anywhere in DOM
+ * - **Works across boundaries**: Drag from palette to any canvas-section
  */
 @Component({
   tag: 'component-palette',
