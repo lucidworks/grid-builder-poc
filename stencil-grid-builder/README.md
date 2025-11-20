@@ -31,6 +31,8 @@ Render grid layouts without any editing functionality for production display.
 - ↩️ **Undo/Redo**: Full command pattern implementation with 50-action history
 - 🔌 **Event-Driven**: Rich event system for state changes and user interactions
 - 🎛️ **Component Palette**: Drag components from palette to canvas
+- 🎨 **Multiple Palettes**: Support multiple component palettes on the same page for flexible organization
+- 📑 **Multi-Section Layouts**: Multiple canvases on the same page, each with independent backgrounds and properties
 - ⚙️ **Configuration Panel**: Edit component properties in real-time
 - 📏 **Resize Handles**: Click and drag to resize components
 - 🗑️ **Delete Controls**: Remove components with confirmation
