@@ -12,9 +12,15 @@ const simpleComponents = [
     icon: '📄',
     defaultSize: { width: 50, height: 6 },
     minSize: { width: 20, height: 3 },
-    render: ({ config }) => `<div style="padding: 20px; background: #f0f0f0; border-radius: 4px;">
-      <h2 style="margin: 0;">${config?.title || 'Header Component'}</h2>
-    </div>`,
+    render: ({ config }) => {
+      const container = document.createElement('div');
+      container.style.cssText = 'padding: 20px; background: #f0f0f0; border-radius: 4px; height: 100%;';
+      const heading = document.createElement('h2');
+      heading.style.margin = '0';
+      heading.textContent = config?.title || 'Header Component';
+      container.appendChild(heading);
+      return container;
+    },
   },
   {
     type: 'text',
@@ -22,9 +28,15 @@ const simpleComponents = [
     icon: '📝',
     defaultSize: { width: 25, height: 10 },
     minSize: { width: 10, height: 5 },
-    render: ({ config }) => `<div style="padding: 15px; background: #fff; border: 1px solid #ddd; border-radius: 4px;">
-      <p style="margin: 0;">${config?.text || 'Lorem ipsum dolor sit amet, consectetur adipiscing elit.'}</p>
-    </div>`,
+    render: ({ config }) => {
+      const container = document.createElement('div');
+      container.style.cssText = 'padding: 15px; background: #fff; border: 1px solid #ddd; border-radius: 4px; height: 100%;';
+      const paragraph = document.createElement('p');
+      paragraph.style.margin = '0';
+      paragraph.textContent = config?.text || 'Lorem ipsum dolor sit amet, consectetur adipiscing elit.';
+      container.appendChild(paragraph);
+      return container;
+    },
   },
   {
     type: 'button',
@@ -32,17 +44,22 @@ const simpleComponents = [
     icon: '🔘',
     defaultSize: { width: 15, height: 5 },
     minSize: { width: 10, height: 3 },
-    render: ({ config }) => `<button style="
-      padding: 12px 24px;
-      background: #007bff;
-      color: white;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-      font-size: 16px;
-      width: 100%;
-      height: 100%;
-    ">${config?.label || 'Click Me'}</button>`,
+    render: ({ config }) => {
+      const button = document.createElement('button');
+      button.style.cssText = `
+        padding: 12px 24px;
+        background: #007bff;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 16px;
+        width: 100%;
+        height: 100%;
+      `;
+      button.textContent = config?.label || 'Click Me';
+      return button;
+    },
   },
 ];
 
