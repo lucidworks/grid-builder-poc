@@ -1,0 +1,332 @@
+/**
+ * Custom Config Panel Styles
+ * ===========================
+ *
+ * Custom styling for the blog demo config panel.
+ * Demonstrates how to match the panel UI to your app's branding.
+ */
+
+.custom-config-panel {
+  position: fixed;
+  right: 0;
+  bottom: 0;
+  width: 400px;
+  max-width: 90vw;
+  max-height: 80vh;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 12px 0 0 0;
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.15);
+  display: flex;
+  flex-direction: column;
+  z-index: 1000;
+  transform: translateY(100%);
+  transition: transform 0.3s ease-in-out;
+  overflow: hidden;
+
+  &.panel-open {
+    transform: translateY(0);
+  }
+}
+
+.custom-panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 24px;
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+
+  .header-content {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: #ffffff;
+
+    .component-icon {
+      font-size: 24px;
+      line-height: 1;
+    }
+
+    h2 {
+      margin: 0;
+      font-size: 20px;
+      font-weight: 600;
+      color: #ffffff;
+    }
+  }
+
+  .close-btn {
+    background: rgba(255, 255, 255, 0.2);
+    border: none;
+    color: #ffffff;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    transition: all 0.2s ease;
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.3);
+      transform: scale(1.1);
+    }
+
+    &:active {
+      transform: scale(0.95);
+    }
+  }
+}
+
+.custom-panel-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 24px;
+  background: #ffffff;
+
+  .config-section {
+    margin-bottom: 24px;
+
+    &:last-child {
+      margin-bottom: 0;
+    }
+
+    .section-label {
+      display: block;
+      font-size: 14px;
+      font-weight: 600;
+      color: #374151;
+      margin-bottom: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    &.info-section {
+      background: #f9fafb;
+      border-radius: 8px;
+      padding: 16px;
+
+      .info-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 8px 0;
+        border-bottom: 1px solid #e5e7eb;
+
+        &:last-child {
+          border-bottom: none;
+          padding-bottom: 0;
+        }
+
+        &:first-child {
+          padding-top: 0;
+        }
+
+        .info-label {
+          font-size: 13px;
+          font-weight: 500;
+          color: #6b7280;
+        }
+
+        .info-value {
+          font-size: 13px;
+          color: #1f2937;
+          font-family: 'Monaco', 'Menlo', monospace;
+          background: #ffffff;
+          padding: 4px 8px;
+          border-radius: 4px;
+        }
+      }
+    }
+  }
+
+  .config-field {
+    margin-bottom: 16px;
+
+    &:last-child {
+      margin-bottom: 0;
+    }
+
+    .field-label {
+      display: block;
+      font-size: 13px;
+      font-weight: 500;
+      color: #4b5563;
+      margin-bottom: 6px;
+    }
+  }
+
+  .text-input {
+    width: 100%;
+    padding: 10px 12px;
+    border: 2px solid #e5e7eb;
+    border-radius: 6px;
+    font-size: 14px;
+    color: #1f2937;
+    transition: all 0.2s ease;
+
+    &:focus {
+      outline: none;
+      border-color: #667eea;
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+
+    &:disabled {
+      background: #f9fafb;
+      color: #9ca3af;
+      cursor: not-allowed;
+    }
+
+    &::placeholder {
+      color: #9ca3af;
+    }
+  }
+
+  .select-input {
+    width: 100%;
+    padding: 10px 12px;
+    border: 2px solid #e5e7eb;
+    border-radius: 6px;
+    font-size: 14px;
+    color: #1f2937;
+    background: #ffffff;
+    cursor: pointer;
+    transition: all 0.2s ease;
+
+    &:focus {
+      outline: none;
+      border-color: #667eea;
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+  }
+
+  .checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    user-select: none;
+
+    input[type='checkbox'] {
+      width: 18px;
+      height: 18px;
+      cursor: pointer;
+      accent-color: #667eea;
+    }
+
+    .checkbox-text {
+      font-size: 14px;
+      color: #4b5563;
+    }
+  }
+
+  .color-input-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+
+    .color-input {
+      width: 60px;
+      height: 40px;
+      border: 2px solid #e5e7eb;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+
+      &:hover {
+        border-color: #667eea;
+      }
+    }
+
+    .color-value {
+      font-size: 13px;
+      font-family: 'Monaco', 'Menlo', monospace;
+      color: #6b7280;
+      background: #f9fafb;
+      padding: 8px 12px;
+      border-radius: 4px;
+    }
+  }
+
+  .no-config-message {
+    text-align: center;
+    color: #9ca3af;
+    font-size: 14px;
+    padding: 24px;
+    margin: 0;
+  }
+
+  .field-error {
+    color: #ef4444;
+    font-size: 13px;
+    margin: 0;
+    padding: 8px;
+    background: #fef2f2;
+    border-radius: 4px;
+  }
+}
+
+.custom-panel-footer {
+  display: flex;
+  gap: 12px;
+  padding: 20px 24px;
+  background: #f9fafb;
+  border-top: 1px solid #e5e7eb;
+
+  .btn {
+    flex: 1;
+    padding: 12px 20px;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+
+    &:active {
+      transform: translateY(1px);
+    }
+
+    &.btn-secondary {
+      background: #ffffff;
+      color: #6b7280;
+      border: 2px solid #e5e7eb;
+
+      &:hover {
+        background: #f9fafb;
+        border-color: #d1d5db;
+      }
+    }
+
+    &.btn-primary {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: #ffffff;
+      box-shadow: 0 4px 6px rgba(102, 126, 234, 0.3);
+
+      &:hover {
+        box-shadow: 0 6px 12px rgba(102, 126, 234, 0.4);
+        transform: translateY(-2px);
+      }
+
+      &:active {
+        transform: translateY(0);
+        box-shadow: 0 2px 4px rgba(102, 126, 234, 0.3);
+      }
+    }
+  }
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+  .custom-config-panel {
+    width: 100%;
+    max-width: 100vw;
+    max-height: 70vh;
+    border-radius: 12px 12px 0 0;
+  }
+}

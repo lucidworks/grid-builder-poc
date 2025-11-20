@@ -1,7 +1,6 @@
 dist/
 www/
 loader/
-demo/
 node_modules/
 .vscode/
 .DS_Store
