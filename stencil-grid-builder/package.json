@@ -1,7 +1,7 @@
 {
   "name": "@lucidworks/stencil-grid-builder",
   "version": "1.0.0",
-  "description": "StencilJS library for building drag-and-drop page/layout builders",
+  "description": "StencilJS library with grid-builder (full editing, 150KB) and grid-viewer (display-only, 30KB) components for responsive grid layouts",
   "main": "dist/index.cjs.js",
   "module": "dist/index.js",
   "types": "dist/types/index.d.ts",
