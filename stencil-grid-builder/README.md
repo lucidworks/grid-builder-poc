@@ -428,6 +428,47 @@ Grid-viewer automatically switches between desktop and mobile layouts based on *
 - **≥ 768px**: Desktop layout (uses `layouts.desktop` positioning)
 - **< 768px**: Mobile layout (vertically stacks full-width components)
 
+#### 5. Multiple Grid Instances on Same Page
+
+You can use multiple `grid-builder` or `grid-viewer` instances on the same page. The library uses `window.gridBuilderAPI` as the default global reference, which works fine for single instances.
+
+**For multiple instances**, use different API keys on the window object:
+
+```html
+<!-- First grid builder -->
+<grid-builder
+  id="grid1"
+  api-ref='{ "key": "gridBuilderAPI1" }'>
+</grid-builder>
+
+<!-- Second grid builder -->
+<grid-builder
+  id="grid2"
+  api-ref='{ "key": "gridBuilderAPI2" }'>
+</grid-builder>
+
+<script>
+  // Access each API independently
+  const api1 = window.gridBuilderAPI1;
+  const api2 = window.gridBuilderAPI2;
+
+  // Each API controls its own grid
+  api1.on('componentAdded', (e) => {
+    console.log('Grid 1 - component added:', e);
+  });
+
+  api2.on('componentAdded', (e) => {
+    console.log('Grid 2 - component added:', e);
+  });
+</script>
+```
+
+**Important Notes**:
+- If you only have **one grid instance** per page, you don't need to configure `api-ref` - the default `window.gridBuilderAPI` works perfectly
+- The `api-ref` prop only supports setting a custom `key` on the `window` object
+- Passing custom `target` objects (like `this`) through Stencil/JSX props is not supported due to JSX serialization limitations
+- For namespace isolation, use unique key names like `window.myApp.gridAPI1` by setting `api-ref='{ "key": "myApp.gridAPI1" }'`
+
 #### grid-viewer Props
 
 | Prop | Type | Required | Description |
