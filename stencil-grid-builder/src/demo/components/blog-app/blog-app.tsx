@@ -307,6 +307,15 @@ export class BlogApp {
   @State() isPreviewMode: boolean = false;
 
   /**
+   * Current Grid State (for viewer mode)
+   * -------------------------------------
+   *
+   * Stores the current grid state when switching to preview mode.
+   * This ensures the viewer has the latest state from the builder.
+   */
+  @State() currentGridState: any = null;
+
+  /**
    * Sidebar Collapsed State
    * ------------------------
    *
@@ -766,6 +775,11 @@ export class BlogApp {
    * Also clears both grid size cache and DOM cache to ensure fresh calculations when switching.
    */
   private togglePreviewMode = () => {
+    // Capture current state from API before switching to preview mode
+    if (!this.isPreviewMode && this.api) {
+      this.currentGridState = this.api.getState();
+    }
+
     this.isPreviewMode = !this.isPreviewMode;
 
     // Clear both caches to force fresh calculations
@@ -1041,7 +1055,7 @@ export class BlogApp {
               <grid-viewer
                 key="viewer"
                 components={blogComponentDefinitions}
-                initialState={this.api?.getState()}
+                initialState={this.currentGridState || this.initialState}
                 canvasMetadata={this.canvasMetadata}
               />
             ) : (
