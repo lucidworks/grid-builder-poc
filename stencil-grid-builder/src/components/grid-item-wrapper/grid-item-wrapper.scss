@@ -13,9 +13,9 @@
   box-sizing: border-box; /* Include padding and border in width/height */
   padding: 0; /* No padding - components render flush to grid boundaries */
   border: 2px solid transparent;
-  border-radius: 4px;
-  background: white;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 10%);
+  border-radius: 0; /* No border radius - components control their own borders */
+  background: transparent; /* No background - components render flush with their own backgrounds */
+  box-shadow: none; /* No shadow - components control their own shadows */
   cursor: default;
   transition: border-color 0.2s, box-shadow 0.2s;
   will-change: transform; /* GPU acceleration hint */
