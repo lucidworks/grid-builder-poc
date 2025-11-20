@@ -112,6 +112,50 @@ export class GridItemWrapper {
   @Prop() onBeforeDelete?: (context: any) => boolean | Promise<boolean>;
 
   /**
+   * Viewer mode flag
+   *
+   * **Purpose**: Disable editing features for rendering-only mode
+   * **Default**: false (editing enabled)
+   *
+   * **When true**:
+   * - ❌ No drag-and-drop handlers
+   * - ❌ No resize handles
+   * - ❌ No item header (drag handle)
+   * - ❌ No delete button
+   * - ❌ No selection state
+   * - ✅ Only renders component content
+   *
+   * **Use case**: grid-viewer component for display-only mode
+   */
+  @Prop() viewerMode?: boolean = false;
+
+  /**
+   * Current viewport (for viewer mode)
+   *
+   * **Purpose**: Determine which layout to render (desktop or mobile)
+   * **Source**: grid-viewer → canvas-section-viewer → grid-item-wrapper
+   * **Used by**: render() to select appropriate layout
+   *
+   * **Note**: When in builder mode (viewerMode=false), this is ignored
+   * and gridState.currentViewport is used instead. When in viewer mode
+   * (viewerMode=true), this prop is required.
+   */
+  @Prop() currentViewport?: 'desktop' | 'mobile';
+
+  /**
+   * All items in the canvas (for viewer mode auto-layout)
+   *
+   * **Purpose**: Calculate mobile auto-layout positions
+   * **Source**: grid-viewer → canvas-section-viewer → grid-item-wrapper
+   * **Used by**: render() to calculate stacked positions in mobile viewport
+   *
+   * **Note**: When in builder mode (viewerMode=false), this is ignored
+   * and gridState.canvases is used instead. When in viewer mode
+   * (viewerMode=true), this prop is required for mobile auto-layout.
+   */
+  @Prop() canvasItems?: GridItem[];
+
+  /**
    * Selection state (reactive)
    *
    * **Managed by**: updateComponentState()
@@ -124,9 +168,13 @@ export class GridItemWrapper {
    * Visibility state (virtual rendering)
    *
    * **Managed by**: IntersectionObserver callback
-   * **Initial value**: false (item not visible)
-   * **Becomes true**: When scrolled into viewport
+   * **Initial value**: false (don't render content yet)
+   * **Triggered by**: Observer callback or manual check for initially-visible items
    * **Controls**: Whether component content renders or placeholder shows
+   *
+   * **Note**: Virtual renderer checks if element is initially in viewport
+   * and triggers callback immediately to prevent "Loading..." on visible items.
+   * Off-screen items stay false until scrolled into view (virtual rendering).
    */
   @State() isVisible: boolean = false;
 
@@ -184,29 +232,35 @@ export class GridItemWrapper {
    * Component did load lifecycle hook
    */
   componentDidLoad() {
-    // Get component definition for min/max size constraints
-    const componentDefinition = this.componentRegistry?.get(this.item.type);
+    // Skip drag/resize handlers in viewer mode
+    if (!this.viewerMode) {
+      // Get component definition for min/max size constraints
+      const componentDefinition = this.componentRegistry?.get(this.item.type);
 
-    // Get the header element for drag handler
-    const headerElement = this.itemRef.querySelector('.grid-item-header') as HTMLElement;
+      // Get the header element for drag handler
+      const headerElement = this.itemRef.querySelector('.grid-item-header') as HTMLElement;
 
-    // Initialize drag and resize handlers
-    // Pass header element for drag (instead of whole item)
-    this.dragHandler = new DragHandler(
-      this.itemRef,
-      this.item,
-      this.handleItemUpdate,
-      headerElement,
-      () => {
-        this.wasDragged = true;
-      }
-    );
-    this.resizeHandler = new ResizeHandler(this.itemRef, this.item, this.handleItemUpdate, componentDefinition);
+      // Initialize drag and resize handlers
+      // Pass header element for drag (instead of whole item)
+      this.dragHandler = new DragHandler(
+        this.itemRef,
+        this.item,
+        this.handleItemUpdate,
+        headerElement,
+        () => {
+          this.wasDragged = true;
+        }
+      );
+      this.resizeHandler = new ResizeHandler(this.itemRef, this.item, this.handleItemUpdate, componentDefinition);
 
-    // Set up virtual rendering observer
-    virtualRenderer.observe(this.itemRef, this.item.id, (isVisible) => {
-      this.isVisible = isVisible;
-    });
+      // Set up virtual rendering observer (only in builder mode)
+      virtualRenderer.observe(this.itemRef, this.item.id, (isVisible) => {
+        this.isVisible = isVisible;
+      });
+    } else {
+      // Viewer mode: render all components immediately (no virtual rendering)
+      this.isVisible = true;
+    }
   }
 
   /**
@@ -327,7 +381,7 @@ export class GridItemWrapper {
     // If render returns a DOM element (HTMLElement), wrap it in a div for Stencil
     // This handles cases where consumer uses document.createElement()
     if (rendered instanceof HTMLElement) {
-      return <div ref={(el) => el && el.appendChild(rendered)} />;
+      return <div ref={(el) => el && !el.hasChildNodes() && el.appendChild(rendered)} />;
     }
 
     // Otherwise return the vNode directly (JSX)
@@ -358,21 +412,30 @@ export class GridItemWrapper {
    * - Call definition.render() for content
    */
   render() {
-    const currentViewport = gridState.currentViewport;
+    // Use prop-based viewport in viewer mode, global state in builder mode
+    const currentViewport = this.viewerMode
+      ? (this.currentViewport || 'desktop')
+      : gridState.currentViewport;
+
     const layout = this.item.layouts[currentViewport];
 
     // For mobile viewport, calculate auto-layout if not customized
     let actualLayout = layout;
     if (currentViewport === 'mobile' && !this.item.layouts.mobile.customized) {
       // Auto-layout for mobile: stack components vertically at full width
-      const canvas = gridState.canvases[this.item.canvasId];
-      const itemIndex = canvas?.items.findIndex((i) => i.id === this.item.id) ?? 0;
+
+      // Use prop-based items in viewer mode, global state in builder mode
+      const canvasItems = this.viewerMode
+        ? (this.canvasItems || [])
+        : (gridState.canvases[this.item.canvasId]?.items || []);
+
+      const itemIndex = canvasItems.findIndex((i) => i.id === this.item.id) ?? 0;
 
       // Calculate Y position by summing heights of all previous items
       let yPosition = 0;
-      if (canvas && itemIndex > 0) {
+      if (itemIndex > 0) {
         for (let i = 0; i < itemIndex; i++) {
-          const prevItem = canvas.items[i];
+          const prevItem = canvasItems[i];
           yPosition += prevItem.layouts.desktop.height || 6;
         }
       }
@@ -385,8 +448,8 @@ export class GridItemWrapper {
       };
     }
 
-    // Compute selection directly from gridState
-    const isSelected = gridState.selectedItemId === this.item.id;
+    // Compute selection directly from gridState (only in editing mode)
+    const isSelected = !this.viewerMode && gridState.selectedItemId === this.item.id;
 
     const itemClasses = {
       'grid-item': true,
@@ -433,6 +496,7 @@ export class GridItemWrapper {
           id={this.item.id}
           data-canvas-id={this.item.canvasId}
           data-component-name={displayName}
+          data-viewer-mode={this.viewerMode ? 'true' : 'false'}
           style={itemStyle}
           onClick={(e) => this.handleClick(e)}
           ref={(el) => {
@@ -477,39 +541,49 @@ export class GridItemWrapper {
         id={this.item.id}
         data-canvas-id={this.item.canvasId}
         data-component-name={displayName}
+        data-viewer-mode={this.viewerMode ? 'true' : 'false'}
         style={itemStyle}
         onClick={(e) => this.handleClick(e)}
         ref={(el) => (this.itemRef = el)}
       >
-        {/* Drag Handle */}
-        <div class="drag-handle" />
+        {/* Editing UI (hidden in viewer mode) */}
+        {!this.viewerMode && (
+          [
+            /* Drag Handle */
+            <div class="drag-handle" key="drag-handle" />,
 
-        {/* Item Header */}
-        <div class="grid-item-header">
-          {icon} {displayName}
-        </div>
+            /* Item Header */
+            <div class="grid-item-header" key="header">
+              {icon} {displayName}
+            </div>,
 
-        {/* Item Content */}
+            /* Item Controls */
+            <div class="grid-item-controls" key="controls">
+              <button class="grid-item-delete" onClick={() => this.handleDelete()}>
+                ×
+              </button>
+            </div>
+          ]
+        )}
+
+        {/* Item Content (always rendered) */}
         <div class="grid-item-content" id={contentSlotId}>
           {this.renderComponent()}
         </div>
 
-        {/* Item Controls */}
-        <div class="grid-item-controls">
-          <button class="grid-item-delete" onClick={() => this.handleDelete()}>
-            ×
-          </button>
-        </div>
-
-        {/* Resize Handles (8 points) */}
-        <div class="resize-handle nw" />
-        <div class="resize-handle ne" />
-        <div class="resize-handle sw" />
-        <div class="resize-handle se" />
-        <div class="resize-handle n" />
-        <div class="resize-handle s" />
-        <div class="resize-handle e" />
-        <div class="resize-handle w" />
+        {/* Resize Handles (hidden in viewer mode) */}
+        {!this.viewerMode && (
+          [
+            <div class="resize-handle nw" key="resize-nw" />,
+            <div class="resize-handle ne" key="resize-ne" />,
+            <div class="resize-handle sw" key="resize-sw" />,
+            <div class="resize-handle se" key="resize-se" />,
+            <div class="resize-handle n" key="resize-n" />,
+            <div class="resize-handle s" key="resize-s" />,
+            <div class="resize-handle e" key="resize-e" />,
+            <div class="resize-handle w" key="resize-w" />
+          ]
+        )}
       </div>
     );
   }
@@ -604,6 +678,11 @@ export class GridItemWrapper {
    * Handle click event (selection and config panel)
    */
   private handleClick = (e: MouseEvent) => {
+    // Skip click handling in viewer mode
+    if (this.viewerMode) {
+      return;
+    }
+
     // Don't open config panel if item was just dragged
     if (this.wasDragged) {
       // Reset flag after a small delay to allow this click event to finish

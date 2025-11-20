@@ -481,7 +481,7 @@ export class VirtualRendererService {
       },
       {
         rootMargin: '200px', // Start loading 200px before entering viewport
-        threshold: 0.01, // Trigger when even 1% is visible
+        threshold: [0, 0.01], // Fire at 0% (just entered) AND 0.01% (already visible)
       }
     );
   }

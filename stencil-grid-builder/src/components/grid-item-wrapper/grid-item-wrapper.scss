@@ -28,6 +28,11 @@
   border-color: var(--selection-color);
 }
 
+/* Disable hover styles in viewer mode */
+.grid-item[data-viewer-mode="true"]:hover {
+  border-color: transparent;
+}
+
 .grid-item.selected {
   padding: 19px; /* Compensate for thicker border to prevent content shift */
   /* z-index handled via inline style to respect actual item.zIndex */
@@ -36,6 +41,13 @@
     0 0 0 3px color-mix(in srgb, var(--selection-color) 20%, transparent),
     0 4px 12px color-mix(in srgb, var(--selection-color) 30%, transparent);
   /* Add outer glow ring + shadow for clear visual distinction */
+}
+
+/* Disable selection styles in viewer mode */
+.grid-item[data-viewer-mode="true"].selected {
+  padding: 20px; /* Reset to default padding */
+  border: 2px solid transparent;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 10%);
 }
 
 .grid-item.dragging {
