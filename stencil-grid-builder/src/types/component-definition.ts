@@ -310,6 +310,27 @@ export interface ComponentDefinition {
    * **Live preview**: Component renders using `config` while editing,
    * so user sees changes in real-time before saving.
    *
+   * **Auto-close on deletion**: Built-in config panels automatically close
+   * when the associated component is deleted. Custom panels should listen
+   * to the `componentDeleted` event via the EventManager to implement the
+   * same behavior:
+   * ```typescript
+   * // In your custom config panel component
+   * componentDidLoad() {
+   *   eventManager.on('componentDeleted', this.handleComponentDeleted);
+   * }
+   *
+   * private handleComponentDeleted = (event: { itemId: string }) => {
+   *   if (this.selectedItemId === event.itemId) {
+   *     this.closePanel();
+   *   }
+   * };
+   *
+   * disconnectedCallback() {
+   *   eventManager.off('componentDeleted', this.handleComponentDeleted);
+   * }
+   * ```
+   *
    * @param props - Config state and callbacks
    * @returns Custom config panel UI
    *

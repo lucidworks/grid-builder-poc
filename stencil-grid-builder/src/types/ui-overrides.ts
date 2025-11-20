@@ -500,6 +500,26 @@ export interface UIComponentOverrides {
    * **Receives**: ConfigPanelProps
    * **Must call**: onChange, onSave, onCancel appropriately
    *
+   * **Auto-close on deletion**: Custom config panels should listen
+   * to the `componentDeleted` event via the EventManager and close
+   * themselves when the associated component is deleted:
+   * ```typescript
+   * // In your custom config panel component
+   * componentDidLoad() {
+   *   eventManager.on('componentDeleted', this.handleComponentDeleted);
+   * }
+   *
+   * private handleComponentDeleted = (event: { itemId: string }) => {
+   *   if (this.selectedItemId === event.itemId) {
+   *     this.closePanel();
+   *   }
+   * };
+   *
+   * disconnectedCallback() {
+   *   eventManager.off('componentDeleted', this.handleComponentDeleted);
+   * }
+   * ```
+   *
    * **Default**: Auto-generated form from configSchema or component's renderConfigPanel
    */
   ConfigPanel?: (props: ConfigPanelProps) => any;

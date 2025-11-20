@@ -117,12 +117,21 @@ import { domCache } from '../../../utils/dom-cache';
  * - Control the user experience and workflow
  *
  * **How it works:**
- * 1. Hide the library's default config panel:
- *    ```scss
- *    config-panel {
- *      display: none !important;
- *    }
+ * 1. Disable the library's default config panel using the showConfigPanel prop:
+ *    ```typescript
+ *    <grid-builder
+ *      components={components}
+ *      showConfigPanel={false}  // Hide default config panel
+ *      ...
+ *    />
  *    ```
+
+
+
+
+
+
+
  *
  * 2. Access the Grid Builder API:
  *    ```typescript
@@ -1049,8 +1058,8 @@ export class BlogApp {
           onCancel={this.handleCancelDelete}
         />
 
-        {/* Custom Config Panel (demo-specific) */}
-        <custom-config-panel />
+        {/* Custom Config Panel (demo-specific) - Pass API as prop */}
+        <custom-config-panel api={this.api} />
       </div>
     );
   }

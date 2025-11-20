@@ -26,11 +26,13 @@
 ### Used by
 
  - [blog-app](../blog-app)
+ - [custom-config-panel](../custom-config-panel)
 
 ### Graph
 ```mermaid
 graph TD;
   blog-app --> blog-button
+  custom-config-panel --> blog-button
   style blog-button fill:#f9f,stroke:#333,stroke-width:4px
 ```
 

@@ -22,6 +22,7 @@ using the
 - [grid-builder](../../../components/grid-builder)
 - [section-editor-panel](../section-editor-panel)
 - [confirmation-modal](../confirmation-modal)
+- [custom-config-panel](../custom-config-panel)
 - [blog-header](../blog-header)
 - [blog-article](../blog-article)
 - [blog-button](../blog-button)
@@ -34,6 +35,7 @@ graph TD;
   blog-app --> grid-builder
   blog-app --> section-editor-panel
   blog-app --> confirmation-modal
+  blog-app --> custom-config-panel
   blog-app --> blog-header
   blog-app --> blog-article
   blog-app --> blog-button
@@ -43,6 +45,9 @@ graph TD;
   grid-builder --> canvas-section
   grid-builder --> config-panel
   canvas-section --> grid-item-wrapper
+  custom-config-panel --> blog-header
+  custom-config-panel --> blog-article
+  custom-config-panel --> blog-button
   style blog-app fill:#f9f,stroke:#333,stroke-width:4px
 ```
 

@@ -9,6 +9,7 @@ import { GridConfig } from "./types/grid-config";
 import { ComponentDefinition } from "./types/component-definition";
 import { GridItem, GridState, ViewerState } from "./services/state-manager";
 import { ConfirmationModalData } from "./demo/components/confirmation-modal/confirmation-modal";
+import { GridBuilderAPI } from "./services/grid-builder-api";
 import { GridBuilderTheme } from "./types/theme";
 import { GridBuilderPlugin } from "./types/plugin";
 import { UIComponentOverrides } from "./types/ui-overrides";
@@ -19,6 +20,7 @@ export { GridConfig } from "./types/grid-config";
 export { ComponentDefinition } from "./types/component-definition";
 export { GridItem, GridState, ViewerState } from "./services/state-manager";
 export { ConfirmationModalData } from "./demo/components/confirmation-modal/confirmation-modal";
+export { GridBuilderAPI } from "./services/grid-builder-api";
 export { GridBuilderTheme } from "./types/theme";
 export { GridBuilderPlugin } from "./types/plugin";
 export { UIComponentOverrides } from "./types/ui-overrides";
@@ -51,10 +53,12 @@ export namespace Components {
      * - Show confirmation modals before deletion
      * - Make API calls or run custom validation
      * - Return Promise<boolean> to approve/cancel deletion
-     * 5. **Grid Builder API** (window.gridBuilderAPI)
+     * 5. **Grid Builder API** (configurable storage via api-ref prop)
      * - Programmatic control of grid state
      * - Methods: addCanvas, removeCanvas, undo, redo, etc.
      * - Event system: canvasAdded, canvasRemoved, etc.
+     * - **Demo uses custom storage**: api-ref={{ target: this, key: 'api' }}
+     * - API stored on component instance (this.api) instead of window
      * 6. **Event System** (canvas-click, custom events)
      * - Listen to library events for state synchronization
      * - React to user interactions (canvas clicks, etc.)
@@ -63,6 +67,13 @@ export namespace Components {
      * - Categorized/grouped components (Content, Interactive, etc.)
      * - Collapsible category sections
      * - All palettes drag to the same canvases
+     * 8. **Custom Config Panel** (Demonstrated with custom-config-panel component)
+     * - Replace library's default config panel with custom UI
+     * - Access grid state via API (this.api in this demo)
+     * - Implement live preview for real-time updates
+     * - Support cancel/revert functionality
+     * - Subscribe to componentDeleted events for auto-close
+     * - See: src/demo/components/custom-config-panel/
      * Architecture Pattern:
      * --------------------
      * - Library: Manages component placement, drag/drop, resize, undo/redo
@@ -100,6 +111,80 @@ export namespace Components {
      * - Interactive category: Buttons, CTAs (action components)
      * - Collapsible sections with expand/collapse state
      * - Clean categorized UI matching modern design patterns
+     * ## Custom Config Panel Pattern (Featured in this Demo)
+     * **Why use a custom config panel:**
+     * - Match your application's design system and branding
+     * - Add custom validation or business logic
+     * - Integrate with other parts of your application
+     * - Control the user experience and workflow
+     * **How it works:**
+     * 1. Disable the library's default config panel using the showConfigPanel prop:
+     * ```typescript
+     * <grid-builder
+     * components={components}
+     * showConfigPanel={false}  // Hide default config panel
+     * ...
+     * />
+     * ```
+     * 2. Access the Grid Builder API:
+     * ```typescript
+     * const api = (window as any).gridBuilderAPI;
+     * ```
+     * 3. Listen for item-click events:
+     * ```typescript
+     * document.addEventListener('item-click', (event: CustomEvent) => {
+     * const { itemId, canvasId } = event.detail;
+     * // Open your custom panel
+     * });
+     * ```
+     * 4. Implement live preview by directly updating state:
+     * ```typescript
+     * const state = api.getState();
+     * const canvas = state.canvases[canvasId];
+     * canvas.items[itemIndex] = {
+     * ...canvas.items[itemIndex],
+     * name: newValue
+     * };
+     * // Trigger reactivity
+     * state.canvases = { ...state.canvases };
+     * ```
+     * 5. Implement cancel/revert by storing original state:
+     * ```typescript
+     * // On panel open, store original values
+     * this.originalState = {
+     * name: item.name,
+     * config: { ...item.config }
+     * };
+     * // On cancel, restore original values
+     * api.updateConfig(itemId, this.originalState.config);
+     * // Restore name using same pattern as live preview
+     * ```
+     * 6. Subscribe to componentDeleted for auto-close:
+     * ```typescript
+     * api.on('componentDeleted', (event) => {
+     * if (event.itemId === this.selectedItemId) {
+     * this.closePanel();
+     * }
+     * });
+     * ```
+     * **Key Library APIs Used:**
+     * - `window.gridBuilderAPI` - Global API instance
+     * - `api.getState()` - Get current grid state for direct manipulation
+     * - `api.getItem(itemId)` - Find item across all canvases
+     * - `api.updateConfig(itemId, config)` - Update item configuration
+     * - `api.on(event, handler)` - Subscribe to library events
+     * - `api.off(event, handler)` - Unsubscribe from library events
+     * **Event-driven Integration:**
+     * - `item-click` - Fired when user clicks a component (use document.addEventListener)
+     * - `componentDeleted` - Fired when a component is deleted (use api.on)
+     * - Manual event listeners required for custom events on document
+     * **Implementation in this demo:**
+     * - See `custom-config-panel.tsx` for complete implementation
+     * - Purple gradient styling matching blog theme
+     * - Live preview for component name and config fields
+     * - Cancel button reverts all changes
+     * - Save button persists changes
+     * - Auto-closes when selected component is deleted
      */
     interface BlogApp {
     }
@@ -347,6 +432,12 @@ export namespace Components {
          */
         "isOpen": boolean;
     }
+    interface CustomConfigPanel {
+        /**
+          * Grid Builder API (passed from parent blog-app component)  **Source**: Parent component (blog-app) receives API via api-ref={{ target: this, key: 'api' }} **Purpose**: Access grid state and methods without window pollution **Required**: Component won't work without valid API reference
+         */
+        "api": GridBuilderAPI;
+    }
     /**
      * Custom Drag Clone Component
      * ============================
@@ -407,6 +498,11 @@ export namespace Components {
      */
     interface GridBuilder {
         /**
+          * Custom API exposure configuration  **Optional prop**: Control where and how the Grid Builder API is exposed **Default**: `{ target: window, key: 'gridBuilderAPI' }` **Purpose**: Allows multiple grid-builder instances and flexible API access patterns  **Options**: 1. **Custom key on window** (multiple instances): ```typescript <grid-builder api-ref={{ key: 'gridAPI1' }}></grid-builder> <grid-builder api-ref={{ key: 'gridAPI2' }}></grid-builder> // Access: window.gridAPI1, window.gridAPI2 ```  2. **Custom storage object**: ```typescript const myStore = {}; <grid-builder api-ref={{ target: myStore, key: 'api' }}></grid-builder> // Access: myStore.api ```  3. **Disable automatic exposure** (use ref instead): ```typescript <grid-builder api-ref={null}></grid-builder> // Access via ref: <grid-builder ref={el => this.api = el?.api}></grid-builder> ```
+          * @default { target: undefined, key: 'gridBuilderAPI' }
+         */
+        "apiRef"?: { target?: any; key?: string } | null;
+        /**
           * Canvas metadata storage (host app responsibility)  **Optional prop**: Store canvas-level presentation metadata **Purpose**: Host app owns canvas metadata (titles, colors, settings)  **Separation of concerns**: - Library owns placement state (items, layouts, zIndex) - Host app owns presentation state (colors, titles, custom metadata)  **Structure**: Record<canvasId, any>  **Example**: ```typescript const canvasMetadata = {   'hero-section': {     title: 'Hero Section',     backgroundColor: '#f0f4f8',     customSettings: { ... }   },   'articles-grid': {     title: 'Articles Grid',     backgroundColor: '#ffffff'   } }; <grid-builder canvasMetadata={canvasMetadata} ... /> ```  **Use with canvas-click events**: - Library fires canvas-click event when canvas background clicked - Host app shows canvas settings panel - Host app updates canvasMetadata state - Library passes metadata to canvas-section via props
          */
         "canvasMetadata"?: Record<string, any>;
@@ -435,6 +531,11 @@ export namespace Components {
           * Plugin instances for extending functionality  **Optional prop**: Array of GridBuilderPlugin instances **Purpose**: Add custom features, analytics, integrations  **Plugin lifecycle**: 1. Library calls plugin.init(api) on componentDidLoad 2. Plugin subscribes to events, adds UI, etc. 3. Library calls plugin.destroy() on disconnectedCallback  **Example**: ```typescript class AnalyticsPlugin implements GridBuilderPlugin {   name = 'analytics';    init(api: GridBuilderAPI) {     api.on('componentAdded', (e) => {       analytics.track('Component Added', { type: e.item.type });     });   }    destroy() {     // Cleanup   } }  const plugins = [new AnalyticsPlugin()]; ```
          */
         "plugins"?: GridBuilderPlugin[];
+        /**
+          * Show the default configuration panel  **Optional prop**: Controls whether the default config panel is rendered **Default**: true (show the config panel) **Purpose**: Allow host apps to use custom config panels instead  **Example - Custom config panel**: ```typescript // Hide default config panel to use custom one <grid-builder showConfigPanel={false} ... />  // Then implement your own config panel that listens to item-click events: document.addEventListener('item-click', (event) => {   const { itemId, canvasId } = event.detail;   // Show your custom config panel }); ```  **See**: custom-config-panel component in demo for full example
+          * @default true
+         */
+        "showConfigPanel": boolean;
         /**
           * Visual theme customization  **Optional prop**: Customizes colors, fonts, and styling **Default**: Bootstrap-inspired blue theme  **Theme options**: - primaryColor: Accent color (default: '#007bff') - paletteBackground: Palette sidebar color (default: '#f5f5f5') - canvasBackground: Canvas background (default: '#ffffff') - gridLineColor: Grid line color (default: 'rgba(0,0,0,0.1)') - selectionColor: Selection outline (default: '#007bff') - resizeHandleColor: Resize handle color (default: '#007bff') - fontFamily: UI font (default: system font stack) - customProperties: CSS variables for advanced theming  **Example**: ```typescript const theme = {   primaryColor: '#ff6b6b',        // Brand red   paletteBackground: '#fff5f5',   // Light red   customProperties: {     '--text-color': '#ffffff',     '--border-radius': '8px'   } }; ```
          */
@@ -603,10 +704,12 @@ declare global {
      * - Show confirmation modals before deletion
      * - Make API calls or run custom validation
      * - Return Promise<boolean> to approve/cancel deletion
-     * 5. **Grid Builder API** (window.gridBuilderAPI)
+     * 5. **Grid Builder API** (configurable storage via api-ref prop)
      * - Programmatic control of grid state
      * - Methods: addCanvas, removeCanvas, undo, redo, etc.
      * - Event system: canvasAdded, canvasRemoved, etc.
+     * - **Demo uses custom storage**: api-ref={{ target: this, key: 'api' }}
+     * - API stored on component instance (this.api) instead of window
      * 6. **Event System** (canvas-click, custom events)
      * - Listen to library events for state synchronization
      * - React to user interactions (canvas clicks, etc.)
@@ -615,6 +718,13 @@ declare global {
      * - Categorized/grouped components (Content, Interactive, etc.)
      * - Collapsible category sections
      * - All palettes drag to the same canvases
+     * 8. **Custom Config Panel** (Demonstrated with custom-config-panel component)
+     * - Replace library's default config panel with custom UI
+     * - Access grid state via API (this.api in this demo)
+     * - Implement live preview for real-time updates
+     * - Support cancel/revert functionality
+     * - Subscribe to componentDeleted events for auto-close
+     * - See: src/demo/components/custom-config-panel/
      * Architecture Pattern:
      * --------------------
      * - Library: Manages component placement, drag/drop, resize, undo/redo
@@ -652,6 +762,80 @@ declare global {
      * - Interactive category: Buttons, CTAs (action components)
      * - Collapsible sections with expand/collapse state
      * - Clean categorized UI matching modern design patterns
+     * ## Custom Config Panel Pattern (Featured in this Demo)
+     * **Why use a custom config panel:**
+     * - Match your application's design system and branding
+     * - Add custom validation or business logic
+     * - Integrate with other parts of your application
+     * - Control the user experience and workflow
+     * **How it works:**
+     * 1. Disable the library's default config panel using the showConfigPanel prop:
+     * ```typescript
+     * <grid-builder
+     * components={components}
+     * showConfigPanel={false}  // Hide default config panel
+     * ...
+     * />
+     * ```
+     * 2. Access the Grid Builder API:
+     * ```typescript
+     * const api = (window as any).gridBuilderAPI;
+     * ```
+     * 3. Listen for item-click events:
+     * ```typescript
+     * document.addEventListener('item-click', (event: CustomEvent) => {
+     * const { itemId, canvasId } = event.detail;
+     * // Open your custom panel
+     * });
+     * ```
+     * 4. Implement live preview by directly updating state:
+     * ```typescript
+     * const state = api.getState();
+     * const canvas = state.canvases[canvasId];
+     * canvas.items[itemIndex] = {
+     * ...canvas.items[itemIndex],
+     * name: newValue
+     * };
+     * // Trigger reactivity
+     * state.canvases = { ...state.canvases };
+     * ```
+     * 5. Implement cancel/revert by storing original state:
+     * ```typescript
+     * // On panel open, store original values
+     * this.originalState = {
+     * name: item.name,
+     * config: { ...item.config }
+     * };
+     * // On cancel, restore original values
+     * api.updateConfig(itemId, this.originalState.config);
+     * // Restore name using same pattern as live preview
+     * ```
+     * 6. Subscribe to componentDeleted for auto-close:
+     * ```typescript
+     * api.on('componentDeleted', (event) => {
+     * if (event.itemId === this.selectedItemId) {
+     * this.closePanel();
+     * }
+     * });
+     * ```
+     * **Key Library APIs Used:**
+     * - `window.gridBuilderAPI` - Global API instance
+     * - `api.getState()` - Get current grid state for direct manipulation
+     * - `api.getItem(itemId)` - Find item across all canvases
+     * - `api.updateConfig(itemId, config)` - Update item configuration
+     * - `api.on(event, handler)` - Subscribe to library events
+     * - `api.off(event, handler)` - Unsubscribe from library events
+     * **Event-driven Integration:**
+     * - `item-click` - Fired when user clicks a component (use document.addEventListener)
+     * - `componentDeleted` - Fired when a component is deleted (use api.on)
+     * - Manual event listeners required for custom events on document
+     * **Implementation in this demo:**
+     * - See `custom-config-panel.tsx` for complete implementation
+     * - Purple gradient styling matching blog theme
+     * - Live preview for component name and config fields
+     * - Cancel button reverts all changes
+     * - Save button persists changes
+     * - Auto-closes when selected component is deleted
      */
     interface HTMLBlogAppElement extends Components.BlogApp, HTMLStencilElement {
     }
@@ -861,6 +1045,12 @@ declare global {
         prototype: HTMLConfirmationModalElement;
         new (): HTMLConfirmationModalElement;
     };
+    interface HTMLCustomConfigPanelElement extends Components.CustomConfigPanel, HTMLStencilElement {
+    }
+    var HTMLCustomConfigPanelElement: {
+        prototype: HTMLCustomConfigPanelElement;
+        new (): HTMLCustomConfigPanelElement;
+    };
     /**
      * Custom Drag Clone Component
      * ============================
@@ -993,6 +1183,7 @@ declare global {
         "component-palette": HTMLComponentPaletteElement;
         "config-panel": HTMLConfigPanelElement;
         "confirmation-modal": HTMLConfirmationModalElement;
+        "custom-config-panel": HTMLCustomConfigPanelElement;
         "custom-drag-clone": HTMLCustomDragCloneElement;
         "custom-palette-item": HTMLCustomPaletteItemElement;
         "grid-builder": HTMLGridBuilderElement;
@@ -1027,10 +1218,12 @@ declare namespace LocalJSX {
      * - Show confirmation modals before deletion
      * - Make API calls or run custom validation
      * - Return Promise<boolean> to approve/cancel deletion
-     * 5. **Grid Builder API** (window.gridBuilderAPI)
+     * 5. **Grid Builder API** (configurable storage via api-ref prop)
      * - Programmatic control of grid state
      * - Methods: addCanvas, removeCanvas, undo, redo, etc.
      * - Event system: canvasAdded, canvasRemoved, etc.
+     * - **Demo uses custom storage**: api-ref={{ target: this, key: 'api' }}
+     * - API stored on component instance (this.api) instead of window
      * 6. **Event System** (canvas-click, custom events)
      * - Listen to library events for state synchronization
      * - React to user interactions (canvas clicks, etc.)
@@ -1039,6 +1232,13 @@ declare namespace LocalJSX {
      * - Categorized/grouped components (Content, Interactive, etc.)
      * - Collapsible category sections
      * - All palettes drag to the same canvases
+     * 8. **Custom Config Panel** (Demonstrated with custom-config-panel component)
+     * - Replace library's default config panel with custom UI
+     * - Access grid state via API (this.api in this demo)
+     * - Implement live preview for real-time updates
+     * - Support cancel/revert functionality
+     * - Subscribe to componentDeleted events for auto-close
+     * - See: src/demo/components/custom-config-panel/
      * Architecture Pattern:
      * --------------------
      * - Library: Manages component placement, drag/drop, resize, undo/redo
@@ -1076,6 +1276,80 @@ declare namespace LocalJSX {
      * - Interactive category: Buttons, CTAs (action components)
      * - Collapsible sections with expand/collapse state
      * - Clean categorized UI matching modern design patterns
+     * ## Custom Config Panel Pattern (Featured in this Demo)
+     * **Why use a custom config panel:**
+     * - Match your application's design system and branding
+     * - Add custom validation or business logic
+     * - Integrate with other parts of your application
+     * - Control the user experience and workflow
+     * **How it works:**
+     * 1. Disable the library's default config panel using the showConfigPanel prop:
+     * ```typescript
+     * <grid-builder
+     * components={components}
+     * showConfigPanel={false}  // Hide default config panel
+     * ...
+     * />
+     * ```
+     * 2. Access the Grid Builder API:
+     * ```typescript
+     * const api = (window as any).gridBuilderAPI;
+     * ```
+     * 3. Listen for item-click events:
+     * ```typescript
+     * document.addEventListener('item-click', (event: CustomEvent) => {
+     * const { itemId, canvasId } = event.detail;
+     * // Open your custom panel
+     * });
+     * ```
+     * 4. Implement live preview by directly updating state:
+     * ```typescript
+     * const state = api.getState();
+     * const canvas = state.canvases[canvasId];
+     * canvas.items[itemIndex] = {
+     * ...canvas.items[itemIndex],
+     * name: newValue
+     * };
+     * // Trigger reactivity
+     * state.canvases = { ...state.canvases };
+     * ```
+     * 5. Implement cancel/revert by storing original state:
+     * ```typescript
+     * // On panel open, store original values
+     * this.originalState = {
+     * name: item.name,
+     * config: { ...item.config }
+     * };
+     * // On cancel, restore original values
+     * api.updateConfig(itemId, this.originalState.config);
+     * // Restore name using same pattern as live preview
+     * ```
+     * 6. Subscribe to componentDeleted for auto-close:
+     * ```typescript
+     * api.on('componentDeleted', (event) => {
+     * if (event.itemId === this.selectedItemId) {
+     * this.closePanel();
+     * }
+     * });
+     * ```
+     * **Key Library APIs Used:**
+     * - `window.gridBuilderAPI` - Global API instance
+     * - `api.getState()` - Get current grid state for direct manipulation
+     * - `api.getItem(itemId)` - Find item across all canvases
+     * - `api.updateConfig(itemId, config)` - Update item configuration
+     * - `api.on(event, handler)` - Subscribe to library events
+     * - `api.off(event, handler)` - Unsubscribe from library events
+     * **Event-driven Integration:**
+     * - `item-click` - Fired when user clicks a component (use document.addEventListener)
+     * - `componentDeleted` - Fired when a component is deleted (use api.on)
+     * - Manual event listeners required for custom events on document
+     * **Implementation in this demo:**
+     * - See `custom-config-panel.tsx` for complete implementation
+     * - Purple gradient styling matching blog theme
+     * - Live preview for component name and config fields
+     * - Cancel button reverts all changes
+     * - Save button persists changes
+     * - Auto-closes when selected component is deleted
      */
     interface BlogApp {
     }
@@ -1332,6 +1606,12 @@ declare namespace LocalJSX {
          */
         "onConfirm"?: (event: ConfirmationModalCustomEvent<void>) => void;
     }
+    interface CustomConfigPanel {
+        /**
+          * Grid Builder API (passed from parent blog-app component)  **Source**: Parent component (blog-app) receives API via api-ref={{ target: this, key: 'api' }} **Purpose**: Access grid state and methods without window pollution **Required**: Component won't work without valid API reference
+         */
+        "api": GridBuilderAPI;
+    }
     /**
      * Custom Drag Clone Component
      * ============================
@@ -1392,6 +1672,11 @@ declare namespace LocalJSX {
      */
     interface GridBuilder {
         /**
+          * Custom API exposure configuration  **Optional prop**: Control where and how the Grid Builder API is exposed **Default**: `{ target: window, key: 'gridBuilderAPI' }` **Purpose**: Allows multiple grid-builder instances and flexible API access patterns  **Options**: 1. **Custom key on window** (multiple instances): ```typescript <grid-builder api-ref={{ key: 'gridAPI1' }}></grid-builder> <grid-builder api-ref={{ key: 'gridAPI2' }}></grid-builder> // Access: window.gridAPI1, window.gridAPI2 ```  2. **Custom storage object**: ```typescript const myStore = {}; <grid-builder api-ref={{ target: myStore, key: 'api' }}></grid-builder> // Access: myStore.api ```  3. **Disable automatic exposure** (use ref instead): ```typescript <grid-builder api-ref={null}></grid-builder> // Access via ref: <grid-builder ref={el => this.api = el?.api}></grid-builder> ```
+          * @default { target: undefined, key: 'gridBuilderAPI' }
+         */
+        "apiRef"?: { target?: any; key?: string } | null;
+        /**
           * Canvas metadata storage (host app responsibility)  **Optional prop**: Store canvas-level presentation metadata **Purpose**: Host app owns canvas metadata (titles, colors, settings)  **Separation of concerns**: - Library owns placement state (items, layouts, zIndex) - Host app owns presentation state (colors, titles, custom metadata)  **Structure**: Record<canvasId, any>  **Example**: ```typescript const canvasMetadata = {   'hero-section': {     title: 'Hero Section',     backgroundColor: '#f0f4f8',     customSettings: { ... }   },   'articles-grid': {     title: 'Articles Grid',     backgroundColor: '#ffffff'   } }; <grid-builder canvasMetadata={canvasMetadata} ... /> ```  **Use with canvas-click events**: - Library fires canvas-click event when canvas background clicked - Host app shows canvas settings panel - Host app updates canvasMetadata state - Library passes metadata to canvas-section via props
          */
         "canvasMetadata"?: Record<string, any>;
@@ -1415,6 +1700,11 @@ declare namespace LocalJSX {
           * Plugin instances for extending functionality  **Optional prop**: Array of GridBuilderPlugin instances **Purpose**: Add custom features, analytics, integrations  **Plugin lifecycle**: 1. Library calls plugin.init(api) on componentDidLoad 2. Plugin subscribes to events, adds UI, etc. 3. Library calls plugin.destroy() on disconnectedCallback  **Example**: ```typescript class AnalyticsPlugin implements GridBuilderPlugin {   name = 'analytics';    init(api: GridBuilderAPI) {     api.on('componentAdded', (e) => {       analytics.track('Component Added', { type: e.item.type });     });   }    destroy() {     // Cleanup   } }  const plugins = [new AnalyticsPlugin()]; ```
          */
         "plugins"?: GridBuilderPlugin[];
+        /**
+          * Show the default configuration panel  **Optional prop**: Controls whether the default config panel is rendered **Default**: true (show the config panel) **Purpose**: Allow host apps to use custom config panels instead  **Example - Custom config panel**: ```typescript // Hide default config panel to use custom one <grid-builder showConfigPanel={false} ... />  // Then implement your own config panel that listens to item-click events: document.addEventListener('item-click', (event) => {   const { itemId, canvasId } = event.detail;   // Show your custom config panel }); ```  **See**: custom-config-panel component in demo for full example
+          * @default true
+         */
+        "showConfigPanel"?: boolean;
         /**
           * Visual theme customization  **Optional prop**: Customizes colors, fonts, and styling **Default**: Bootstrap-inspired blue theme  **Theme options**: - primaryColor: Accent color (default: '#007bff') - paletteBackground: Palette sidebar color (default: '#f5f5f5') - canvasBackground: Canvas background (default: '#ffffff') - gridLineColor: Grid line color (default: 'rgba(0,0,0,0.1)') - selectionColor: Selection outline (default: '#007bff') - resizeHandleColor: Resize handle color (default: '#007bff') - fontFamily: UI font (default: system font stack) - customProperties: CSS variables for advanced theming  **Example**: ```typescript const theme = {   primaryColor: '#ff6b6b',        // Brand red   paletteBackground: '#fff5f5',   // Light red   customProperties: {     '--text-color': '#ffffff',     '--border-radius': '8px'   } }; ```
          */
@@ -1566,6 +1856,7 @@ declare namespace LocalJSX {
         "component-palette": ComponentPalette;
         "config-panel": ConfigPanel;
         "confirmation-modal": ConfirmationModal;
+        "custom-config-panel": CustomConfigPanel;
         "custom-drag-clone": CustomDragClone;
         "custom-palette-item": CustomPaletteItem;
         "grid-builder": GridBuilder;
@@ -1603,10 +1894,12 @@ declare module "@stencil/core" {
              * - Show confirmation modals before deletion
              * - Make API calls or run custom validation
              * - Return Promise<boolean> to approve/cancel deletion
-             * 5. **Grid Builder API** (window.gridBuilderAPI)
+             * 5. **Grid Builder API** (configurable storage via api-ref prop)
              * - Programmatic control of grid state
              * - Methods: addCanvas, removeCanvas, undo, redo, etc.
              * - Event system: canvasAdded, canvasRemoved, etc.
+             * - **Demo uses custom storage**: api-ref={{ target: this, key: 'api' }}
+             * - API stored on component instance (this.api) instead of window
              * 6. **Event System** (canvas-click, custom events)
              * - Listen to library events for state synchronization
              * - React to user interactions (canvas clicks, etc.)
@@ -1615,6 +1908,13 @@ declare module "@stencil/core" {
              * - Categorized/grouped components (Content, Interactive, etc.)
              * - Collapsible category sections
              * - All palettes drag to the same canvases
+             * 8. **Custom Config Panel** (Demonstrated with custom-config-panel component)
+             * - Replace library's default config panel with custom UI
+             * - Access grid state via API (this.api in this demo)
+             * - Implement live preview for real-time updates
+             * - Support cancel/revert functionality
+             * - Subscribe to componentDeleted events for auto-close
+             * - See: src/demo/components/custom-config-panel/
              * Architecture Pattern:
              * --------------------
              * - Library: Manages component placement, drag/drop, resize, undo/redo
@@ -1652,6 +1952,80 @@ declare module "@stencil/core" {
              * - Interactive category: Buttons, CTAs (action components)
              * - Collapsible sections with expand/collapse state
              * - Clean categorized UI matching modern design patterns
+             * ## Custom Config Panel Pattern (Featured in this Demo)
+             * **Why use a custom config panel:**
+             * - Match your application's design system and branding
+             * - Add custom validation or business logic
+             * - Integrate with other parts of your application
+             * - Control the user experience and workflow
+             * **How it works:**
+             * 1. Disable the library's default config panel using the showConfigPanel prop:
+             * ```typescript
+             * <grid-builder
+             * components={components}
+             * showConfigPanel={false}  // Hide default config panel
+             * ...
+             * />
+             * ```
+             * 2. Access the Grid Builder API:
+             * ```typescript
+             * const api = (window as any).gridBuilderAPI;
+             * ```
+             * 3. Listen for item-click events:
+             * ```typescript
+             * document.addEventListener('item-click', (event: CustomEvent) => {
+             * const { itemId, canvasId } = event.detail;
+             * // Open your custom panel
+             * });
+             * ```
+             * 4. Implement live preview by directly updating state:
+             * ```typescript
+             * const state = api.getState();
+             * const canvas = state.canvases[canvasId];
+             * canvas.items[itemIndex] = {
+             * ...canvas.items[itemIndex],
+             * name: newValue
+             * };
+             * // Trigger reactivity
+             * state.canvases = { ...state.canvases };
+             * ```
+             * 5. Implement cancel/revert by storing original state:
+             * ```typescript
+             * // On panel open, store original values
+             * this.originalState = {
+             * name: item.name,
+             * config: { ...item.config }
+             * };
+             * // On cancel, restore original values
+             * api.updateConfig(itemId, this.originalState.config);
+             * // Restore name using same pattern as live preview
+             * ```
+             * 6. Subscribe to componentDeleted for auto-close:
+             * ```typescript
+             * api.on('componentDeleted', (event) => {
+             * if (event.itemId === this.selectedItemId) {
+             * this.closePanel();
+             * }
+             * });
+             * ```
+             * **Key Library APIs Used:**
+             * - `window.gridBuilderAPI` - Global API instance
+             * - `api.getState()` - Get current grid state for direct manipulation
+             * - `api.getItem(itemId)` - Find item across all canvases
+             * - `api.updateConfig(itemId, config)` - Update item configuration
+             * - `api.on(event, handler)` - Subscribe to library events
+             * - `api.off(event, handler)` - Unsubscribe from library events
+             * **Event-driven Integration:**
+             * - `item-click` - Fired when user clicks a component (use document.addEventListener)
+             * - `componentDeleted` - Fired when a component is deleted (use api.on)
+             * - Manual event listeners required for custom events on document
+             * **Implementation in this demo:**
+             * - See `custom-config-panel.tsx` for complete implementation
+             * - Purple gradient styling matching blog theme
+             * - Live preview for component name and config fields
+             * - Cancel button reverts all changes
+             * - Save button persists changes
+             * - Auto-closes when selected component is deleted
              */
             "blog-app": LocalJSX.BlogApp & JSXBase.HTMLAttributes<HTMLBlogAppElement>;
             "blog-article": LocalJSX.BlogArticle & JSXBase.HTMLAttributes<HTMLBlogArticleElement>;
@@ -1793,6 +2167,7 @@ declare module "@stencil/core" {
              * Promise to resolve with true/false.
              */
             "confirmation-modal": LocalJSX.ConfirmationModal & JSXBase.HTMLAttributes<HTMLConfirmationModalElement>;
+            "custom-config-panel": LocalJSX.CustomConfigPanel & JSXBase.HTMLAttributes<HTMLCustomConfigPanelElement>;
             /**
              * Custom Drag Clone Component
              * ============================

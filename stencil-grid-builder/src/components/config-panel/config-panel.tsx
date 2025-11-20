@@ -28,6 +28,7 @@
 import { Component, h, Listen, Prop, State } from '@stencil/core';
 
 // Internal imports
+import { eventManager } from '../../services/event-manager';
 import { gridState } from '../../services/state-manager';
 import { ComponentDefinition, ConfigField } from '../../types/component-definition';
 
@@ -89,12 +90,49 @@ export class ConfigPanel {
   } | null = null;
 
   /**
+   * Callback for componentDeleted event (stored for unsubscribe)
+   */
+  private handleComponentDeleted = (event: { itemId: string; canvasId: string }) => {
+    console.log('🔔 config-panel received componentDeleted event', {
+      eventItemId: event.itemId,
+      selectedItemId: this.selectedItemId,
+      isOpen: this.isOpen,
+      shouldClose: this.isOpen && this.selectedItemId && event.itemId === this.selectedItemId,
+    });
+
+    // Close panel if the deleted item is the currently selected one
+    if (this.isOpen && this.selectedItemId && event.itemId === this.selectedItemId) {
+      console.log('  ✅ Closing panel because selected item was deleted');
+      this.closePanel();
+    } else {
+      console.log('  ℹ️ Not closing panel - different item or panel already closed');
+    }
+  };
+
+  /**
    * Listen for item-click events to open panel
    */
   @Listen('item-click', { target: 'document' })
   handleItemClick(event: CustomEvent) {
     const { itemId, canvasId } = event.detail;
     this.openPanel(itemId, canvasId);
+  }
+
+  /**
+   * Component lifecycle: Subscribe to componentDeleted event
+   */
+  componentDidLoad() {
+    console.log('📋 config-panel componentDidLoad - subscribing to componentDeleted event');
+    // Subscribe to componentDeleted events to auto-close panel when selected item is deleted
+    eventManager.on('componentDeleted', this.handleComponentDeleted);
+    console.log('  ✅ Subscribed to componentDeleted event');
+  }
+
+  /**
+   * Component lifecycle: Cleanup event subscriptions
+   */
+  disconnectedCallback() {
+    eventManager.off('componentDeleted', this.handleComponentDeleted);
   }
 
   /**
