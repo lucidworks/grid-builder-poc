@@ -362,6 +362,20 @@ export class BlogApp {
      * - off(event, handler): Unsubscribe from events
      */
 
+    // Wait for API to be set by grid-builder component
+    // This is necessary because parent's componentDidLoad may fire before child's
+    if (!this.api) {
+      console.log('Waiting for GridBuilderAPI to be set by grid-builder component...');
+      setTimeout(() => {
+        this.setupGridBuilderIntegration();
+      }, 50);
+      return;
+    }
+
+    this.setupGridBuilderIntegration();
+  }
+
+  private setupGridBuilderIntegration() {
     if (!this.api) {
       console.error('GridBuilderAPI not set. Make sure grid-builder component loaded first.');
       return;
