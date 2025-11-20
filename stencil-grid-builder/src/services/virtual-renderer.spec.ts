@@ -50,7 +50,7 @@ describe('virtual-renderer', () => {
     it('should initialize IntersectionObserver with correct options', () => {
       expect(mockOptions).toEqual({
         rootMargin: '200px',
-        threshold: 0.01,
+        threshold: [0, 0.01],
       });
     });
   });
@@ -283,7 +283,7 @@ describe('virtual-renderer', () => {
 
     it('should trigger at 1% visibility threshold', () => {
       const options = mockOptions;
-      expect(options.threshold).toBe(0.01);
+      expect(options.threshold).toEqual([0, 0.01]);
     });
 
     it('should support lazy loading pattern', () => {

@@ -12,6 +12,17 @@
  * The GridBuilderAPI itself is tested in grid-builder-api.spec.ts.
  */
 
+// Mock ResizeObserver BEFORE importing GridBuilder
+const mockObserve = jest.fn();
+const mockUnobserve = jest.fn();
+const mockDisconnect = jest.fn();
+
+(global as any).ResizeObserver = jest.fn(() => ({
+  observe: mockObserve,
+  unobserve: mockUnobserve,
+  disconnect: mockDisconnect,
+}));
+
 import { h } from '@stencil/core';
 import { GridBuilder } from '../grid-builder';
 import { reset as resetState } from '../../../services/state-manager';
@@ -41,6 +52,8 @@ describe('grid-builder', () => {
   beforeEach(() => {
     resetState();
     clearHistory();
+    // Clear mock calls
+    jest.clearAllMocks();
   });
 
   describe('Component Instantiation', () => {

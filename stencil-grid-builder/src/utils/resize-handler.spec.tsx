@@ -178,13 +178,13 @@ describe('ResizeHandler', () => {
 
       const handler = new ResizeHandler(mockElement, mockItem, onUpdate, definition);
 
-      // Verify interact.modifiers.restrictSize was called with converted pixel values
+      // Verify resizable was called (modifiers removed - constraints handled manually in handleResizeMove)
       const interactInstance = (window as any).interact(mockElement);
       expect(interactInstance.resizable).toHaveBeenCalled();
 
       const resizeConfig = interactInstance.resizable.mock.calls[0][0];
-      expect(resizeConfig.modifiers).toBeDefined();
-      expect(resizeConfig.modifiers.length).toBeGreaterThan(0);
+      expect(resizeConfig.edges).toBeDefined();
+      expect(resizeConfig.listeners).toBeDefined();
 
       handler.destroy();
     });
@@ -241,9 +241,10 @@ describe('ResizeHandler', () => {
       const interactInstance = (window as any).interact(mockElement);
       expect(interactInstance.resizable).toHaveBeenCalled();
 
-      // Should use defaults: 100px min width, 80px min height, no max
+      // Modifiers removed - constraints handled manually in handleResizeMove
       const resizeConfig = interactInstance.resizable.mock.calls[0][0];
-      expect(resizeConfig.modifiers).toBeDefined();
+      expect(resizeConfig.edges).toBeDefined();
+      expect(resizeConfig.listeners).toBeDefined();
 
       handler.destroy();
     });
@@ -254,9 +255,10 @@ describe('ResizeHandler', () => {
       const interactInstance = (window as any).interact(mockElement);
       expect(interactInstance.resizable).toHaveBeenCalled();
 
-      // Should use defaults: 100px min width, 80px min height, no max
+      // Modifiers removed - constraints handled manually in handleResizeMove
       const resizeConfig = interactInstance.resizable.mock.calls[0][0];
-      expect(resizeConfig.modifiers).toBeDefined();
+      expect(resizeConfig.edges).toBeDefined();
+      expect(resizeConfig.listeners).toBeDefined();
 
       handler.destroy();
     });
@@ -432,8 +434,9 @@ describe('ResizeHandler', () => {
       const interactInstance = (window as any).interact(mockElement);
       const resizeConfig = interactInstance.resizable.mock.calls[0][0];
 
-      expect(resizeConfig.modifiers).toBeDefined();
-      expect(resizeConfig.modifiers.length).toBeGreaterThan(0);
+      // Modifiers removed - grid snapping handled manually in handleResizeEnd
+      expect(resizeConfig.edges).toBeDefined();
+      expect(resizeConfig.listeners).toBeDefined();
 
       handler.destroy();
     });
