@@ -43,7 +43,7 @@
  * @module grid-builder
  */
 
-import { Component, Element, h, Host, Listen, Prop, State, Watch } from '@stencil/core';
+import { Component, Element, h, Host, Listen, Method, Prop, State, Watch } from '@stencil/core';
 import interact from 'interactjs';
 
 // Type imports
@@ -54,6 +54,7 @@ import { GridBuilderPlugin } from '../../types/plugin';
 import { UIComponentOverrides } from '../../types/ui-overrides';
 import { GridBuilderAPI } from '../../types/api';
 import { DeletionHook } from '../../types/deletion-hook';
+import { GridExport } from '../../types/grid-export';
 
 // Service imports
 import { gridState, GridState, generateItemId, deleteItemsBatch, addItemsBatch, updateItemsBatch } from '../../services/state-manager';
@@ -958,6 +959,72 @@ export class GridBuilder {
 
     this.viewportResizeObserver.observe(this.hostElement);
   };
+
+  /**
+   * Export current state to JSON-serializable format
+   *
+   * **Purpose**: Export grid layout for saving or transferring to viewer app
+   *
+   * **Use Cases**:
+   * - Save layout to database/localStorage
+   * - Transfer layout to viewer app via API
+   * - Create layout templates/presets
+   * - Backup/restore functionality
+   *
+   * **Example - Save to API**:
+   * ```typescript
+   * const builder = document.querySelector('grid-builder');
+   * const exportData = await builder.exportState();
+   * await fetch('/api/layouts', {
+   *   method: 'POST',
+   *   headers: { 'Content-Type': 'application/json' },
+   *   body: JSON.stringify(exportData)
+   * });
+   * ```
+   *
+   * **Example - Save to localStorage**:
+   * ```typescript
+   * const exportData = await builder.exportState();
+   * localStorage.setItem('grid-layout', JSON.stringify(exportData));
+   * ```
+   *
+   * @returns Promise<GridExport> - JSON-serializable export object
+   */
+  @Method()
+  async exportState(): Promise<GridExport> {
+    // Build export data from current gridState
+    const exportData: GridExport = {
+      version: '1.0.0',
+      canvases: {},
+      viewport: gridState.currentViewport,
+      metadata: {
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      },
+    };
+
+    // Export each canvas with its items
+    for (const canvasId in gridState.canvases) {
+      const canvas = gridState.canvases[canvasId];
+
+      exportData.canvases[canvasId] = {
+        items: canvas.items.map(item => ({
+          id: item.id,
+          canvasId: item.canvasId,
+          type: item.type,
+          name: item.name,
+          layouts: {
+            desktop: { ...item.layouts.desktop },
+            mobile: { ...item.layouts.mobile },
+          },
+          zIndex: item.zIndex,
+          config: { ...item.config }, // Deep copy to avoid mutations
+        })),
+      };
+    }
+
+    return exportData;
+  }
 
   /**
    * Reference to host element

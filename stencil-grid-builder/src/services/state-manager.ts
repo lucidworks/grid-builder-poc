@@ -556,6 +556,180 @@ export interface GridState {
 }
 
 /**
+ * Viewer-Only State Interfaces
+ * ==============================
+ *
+ * Minimal state types for grid-viewer component (rendering-only mode).
+ * These are subsets of the full editing state, excluding editing-specific properties.
+ *
+ * ## Separation of Concerns
+ *
+ * **Builder App** (grid-builder):
+ * - Full GridState with selection, z-index tracking, etc.
+ * - Includes interact.js for drag-and-drop (~45KB)
+ * - Bundle size: ~150KB
+ *
+ * **Viewer App** (grid-viewer):
+ * - Minimal ViewerState without editing features
+ * - No interact.js dependency
+ * - Bundle size: ~30KB (80% reduction)
+ *
+ * ## Export/Import Workflow
+ *
+ * ```typescript
+ * // Builder App → Export layout
+ * const builder = document.querySelector('grid-builder');
+ * const exportData = await builder.exportState();
+ * await fetch('/api/layouts', {
+ *   method: 'POST',
+ *   body: JSON.stringify(exportData)
+ * });
+ *
+ * // Viewer App → Import layout
+ * const layout = await fetch('/api/layouts/123').then(r => r.json());
+ * const viewer = document.querySelector('grid-viewer');
+ * viewer.initialState = layout;
+ * ```
+ *
+ * ## What's Excluded from Viewer
+ *
+ * **Canvas.zIndexCounter** - Editing-only state:
+ * - Tracks next z-index for new items
+ * - Not needed in viewer (items already have zIndex)
+ * - Viewer reads item.zIndex directly
+ *
+ * **GridState.selectedItemId/selectedCanvasId** - Editing-only state:
+ * - Tracks which item is selected for editing
+ * - Not needed in viewer (no selection UI)
+ * - Viewer only renders, never selects
+ *
+ * **GridState.showGrid** - Editing-only state:
+ * - Visual aid for aligning items during editing
+ * - Not needed in viewer (no editing)
+ * - Viewer renders clean output without grid lines
+ *
+ * ## Type Compatibility
+ *
+ * ViewerState is intentionally compatible with GridExport format:
+ * ```typescript
+ * // GridExport can be used as ViewerState
+ * const exportData: GridExport = await builder.exportState();
+ * viewer.initialState = exportData; // Type-safe!
+ * ```
+ */
+
+/**
+ * Viewer Canvas Interface
+ * ========================
+ *
+ * Minimal canvas structure for viewer mode (rendering-only).
+ * Excludes editing-specific properties like zIndexCounter.
+ *
+ * **Differences from Canvas**:
+ * - ✅ items: Array of ViewerItem (same as GridItem)
+ * - ❌ zIndexCounter: Not needed (items already have zIndex)
+ *
+ * **Use in viewer**:
+ * ```typescript
+ * const canvas: ViewerCanvas = {
+ *   items: [
+ *     { id: 'item-1', type: 'header', zIndex: 1, ... },
+ *     { id: 'item-2', type: 'text', zIndex: 2, ... }
+ *   ]
+ * };
+ *
+ * // Render items in z-index order
+ * const sortedItems = canvas.items.sort((a, b) => a.zIndex - b.zIndex);
+ * ```
+ */
+export interface ViewerCanvas {
+  /** Grid items in this canvas (rendering-only, no editing state) */
+  items: GridItem[]; // Reuse GridItem - it's already clean and serializable
+}
+
+/**
+ * Viewer State Interface
+ * =======================
+ *
+ * Minimal state structure for grid-viewer component (rendering-only mode).
+ * Subset of GridState excluding all editing-specific properties.
+ *
+ * **Differences from GridState**:
+ * - ✅ canvases: Record<string, ViewerCanvas>
+ * - ✅ currentViewport: 'desktop' | 'mobile'
+ * - ❌ selectedItemId: Not needed (no selection in viewer)
+ * - ❌ selectedCanvasId: Not needed (no selection in viewer)
+ * - ❌ showGrid: Not needed (no grid lines in viewer)
+ *
+ * **Why minimal state**:
+ * - Smaller bundle size (no editing logic)
+ * - Simpler component tree (no interact.js)
+ * - Faster initialization (no drag/drop setup)
+ * - Clean separation of concerns
+ *
+ * **Use in viewer**:
+ * ```typescript
+ * // Initialize viewer from exported layout
+ * const viewerState: ViewerState = {
+ *   canvases: {
+ *     'hero-section': {
+ *       items: [
+ *         {
+ *           id: 'header-1',
+ *           canvasId: 'hero-section',
+ *           type: 'header',
+ *           name: 'Hero Header',
+ *           layouts: {
+ *             desktop: { x: 0, y: 0, width: 50, height: 6 },
+ *             mobile: { x: null, y: null, width: null, height: null, customized: false }
+ *           },
+ *           zIndex: 1,
+ *           config: { title: 'Welcome!' }
+ *         }
+ *       ]
+ *     }
+ *   },
+ *   currentViewport: 'desktop'
+ * };
+ * ```
+ *
+ * **Type-safe import from GridExport**:
+ * ```typescript
+ * import { GridExport } from '../types/grid-export';
+ *
+ * function convertExportToViewerState(exportData: GridExport): ViewerState {
+ *   return {
+ *     canvases: exportData.canvases,
+ *     currentViewport: exportData.viewport
+ *   };
+ * }
+ * ```
+ */
+export interface ViewerState {
+  /**
+   * Record of all canvas instances keyed by canvas ID
+   *
+   * **Structure**: `{ 'canvas1': ViewerCanvas, 'canvas2': ViewerCanvas, ... }`
+   * **Rendering**: Each canvas section renders its items in z-index order
+   * **Responsive**: Switches between desktop/mobile layouts based on currentViewport
+   */
+  canvases: Record<string, ViewerCanvas>;
+
+  /**
+   * Current viewport mode (desktop or mobile)
+   *
+   * **Affects**:
+   * - Which layout is rendered (item.layouts.desktop vs item.layouts.mobile)
+   * - Responsive layout calculations
+   * - Canvas width and item positioning
+   *
+   * **Auto-switching**: Can use ResizeObserver for container-based switching
+   * **Manual override**: Can be set via props or API
+   */
+  currentViewport: 'desktop' | 'mobile';
+}
+
+/**
  * Initial State (empty canvases for library)
  *
  * Library starts with empty canvases by default.

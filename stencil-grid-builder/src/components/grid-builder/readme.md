@@ -30,6 +30,44 @@ Main library component providing complete grid builder functionality.
 | `uiOverrides`             | --        | Custom UI component overrides  **Optional prop**: Replace default UI components **Purpose**: Fully customize visual appearance  **Overridable components**: - ConfigPanel: Configuration panel UI - ComponentPalette: Component palette sidebar - Toolbar: Top toolbar with controls  **Example**: ```typescript const uiOverrides = {   Toolbar: (props) => (     <div class="my-toolbar">       <button onClick={props.onUndo}>Undo</button>       <button onClick={props.onRedo}>Redo</button>     </div>   ) }; ```                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               | `UIComponentOverrides`                                                                                                                                    | `undefined` |
 
 
+## Methods
+
+### `exportState() => Promise<GridExport>`
+
+Export current state to JSON-serializable format
+
+**Purpose**: Export grid layout for saving or transferring to viewer app
+
+**Use Cases**:
+- Save layout to database/localStorage
+- Transfer layout to viewer app via API
+- Create layout templates/presets
+- Backup/restore functionality
+
+**Example - Save to API**:
+```typescript
+const builder = document.querySelector('grid-builder');
+const exportData = await builder.exportState();
+await fetch('/api/layouts', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify(exportData)
+});
+```
+
+**Example - Save to localStorage**:
+```typescript
+const exportData = await builder.exportState();
+localStorage.setItem('grid-layout', JSON.stringify(exportData));
+```
+
+#### Returns
+
+Type: `Promise<GridExport>`
+
+Promise<GridExport> - JSON-serializable export object
+
+
 ## Dependencies
 
 ### Used by
