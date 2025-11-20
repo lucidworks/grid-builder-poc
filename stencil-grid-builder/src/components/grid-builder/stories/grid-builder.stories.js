@@ -1,10 +1,12 @@
 import { html } from 'lit-html';
+import { h } from '@stencil/core';
 
 export default {
   title: 'Components/Grid Builder',
 };
 
-// Simple component definitions for the story
+// Simple component definitions using Stencil's h() function
+// This demonstrates the recommended approach for Stencil applications
 const simpleComponents = [
   {
     type: 'header',
@@ -12,15 +14,13 @@ const simpleComponents = [
     icon: '📄',
     defaultSize: { width: 50, height: 6 },
     minSize: { width: 20, height: 3 },
-    render: ({ config }) => {
-      const container = document.createElement('div');
-      container.style.cssText = 'padding: 20px; background: #f0f0f0; border-radius: 4px; height: 100%;';
-      const heading = document.createElement('h2');
-      heading.style.margin = '0';
-      heading.textContent = config?.title || 'Header Component';
-      container.appendChild(heading);
-      return container;
-    },
+    // Render function using Stencil's h() - typical usage pattern
+    render: ({ config }) =>
+      h(
+        'div',
+        { style: { padding: '20px', background: '#f0f0f0', borderRadius: '4px', height: '100%' } },
+        h('h2', { style: { margin: '0' } }, config?.title || 'Header Component'),
+      ),
   },
   {
     type: 'text',
@@ -28,15 +28,13 @@ const simpleComponents = [
     icon: '📝',
     defaultSize: { width: 25, height: 10 },
     minSize: { width: 10, height: 5 },
-    render: ({ config }) => {
-      const container = document.createElement('div');
-      container.style.cssText = 'padding: 15px; background: #fff; border: 1px solid #ddd; border-radius: 4px; height: 100%;';
-      const paragraph = document.createElement('p');
-      paragraph.style.margin = '0';
-      paragraph.textContent = config?.text || 'Lorem ipsum dolor sit amet, consectetur adipiscing elit.';
-      container.appendChild(paragraph);
-      return container;
-    },
+    // Using h() to create virtual DOM nodes
+    render: ({ config }) =>
+      h(
+        'div',
+        { style: { padding: '15px', background: '#fff', border: '1px solid #ddd', borderRadius: '4px', height: '100%' } },
+        h('p', { style: { margin: '0' } }, config?.text || 'Lorem ipsum dolor sit amet, consectetur adipiscing elit.'),
+      ),
   },
   {
     type: 'button',
@@ -44,22 +42,25 @@ const simpleComponents = [
     icon: '🔘',
     defaultSize: { width: 15, height: 5 },
     minSize: { width: 10, height: 3 },
-    render: ({ config }) => {
-      const button = document.createElement('button');
-      button.style.cssText = `
-        padding: 12px 24px;
-        background: #007bff;
-        color: white;
-        border: none;
-        border-radius: 4px;
-        cursor: pointer;
-        font-size: 16px;
-        width: 100%;
-        height: 100%;
-      `;
-      button.textContent = config?.label || 'Click Me';
-      return button;
-    },
+    // h() works for any HTML element
+    render: ({ config }) =>
+      h(
+        'button',
+        {
+          style: {
+            padding: '12px 24px',
+            background: '#007bff',
+            color: 'white',
+            border: 'none',
+            borderRadius: '4px',
+            cursor: 'pointer',
+            fontSize: '16px',
+            width: '100%',
+            height: '100%',
+          },
+        },
+        config?.label || 'Click Me',
+      ),
   },
 ];
 
