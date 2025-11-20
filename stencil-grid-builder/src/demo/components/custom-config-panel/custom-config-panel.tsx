@@ -7,7 +7,7 @@
  *
  * **Key Features**:
  * - Custom styling to match blog theme (purple gradient)
- * - Auto-close when selected item is deleted (via componentDeleted event)
+ * - Auto-close when selected item is deleted (via itemRemoved event)
  * - Uses manual event listeners for item-click events (Stencil @Listen doesn't work for custom events)
  * - Receives GridBuilderAPI as a prop from parent component
  * - Demonstrates proper event subscription/unsubscription pattern
@@ -82,10 +82,10 @@ export class CustomConfigPanel {
   private eventsSubscribed: boolean = false;
 
   /**
-   * Callback for componentDeleted event (stored for unsubscribe)
+   * Callback for itemRemoved event (stored for unsubscribe)
    */
-  private handleComponentDeleted = (event: { itemId: string; canvasId: string }) => {
-    console.log('🎨 custom-config-panel received componentDeleted event', {
+  private handleItemRemoved = (event: { itemId: string; canvasId: string }) => {
+    console.log('🎨 custom-config-panel received itemRemoved event', {
       eventItemId: event.itemId,
       selectedItemId: this.selectedItemId,
       isOpen: this.isOpen,
@@ -110,10 +110,10 @@ export class CustomConfigPanel {
       return; // API not ready yet, will try again later
     }
 
-    // Subscribe to componentDeleted events via API
-    this.api.on('componentDeleted', this.handleComponentDeleted);
+    // Subscribe to itemRemoved events via API
+    this.api.on('itemRemoved', this.handleItemRemoved);
     this.eventsSubscribed = true;
-    console.log('  ✅ Custom panel: Subscribed to componentDeleted event');
+    console.log('  ✅ Custom panel: Subscribed to itemRemoved event');
   }
 
   componentDidLoad() {
@@ -138,9 +138,9 @@ export class CustomConfigPanel {
   disconnectedCallback() {
     console.log('🎨 custom-config-panel disconnectedCallback - cleaning up');
 
-    // Unsubscribe from componentDeleted events
+    // Unsubscribe from itemRemoved events
     if (this.api && this.eventsSubscribed) {
-      this.api.off('componentDeleted', this.handleComponentDeleted);
+      this.api.off('itemRemoved', this.handleItemRemoved);
       this.eventsSubscribed = false;
     }
 
@@ -161,10 +161,10 @@ export class CustomConfigPanel {
     this.selectedItemId = itemId;
     this.selectedCanvasId = canvasId;
 
-    // Get item from API (API searches all canvases automatically)
+    // Get item from API
     console.log('  🔧 API exists:', !!this.api);
 
-    const item = this.api?.getItem(itemId);
+    const item = this.api?.getItem(canvasId, itemId);
     console.log('  🔧 Item retrieved:', !!item, item);
 
     if (!item) {
@@ -198,9 +198,9 @@ export class CustomConfigPanel {
    */
   private closePanel = () => {
     // Revert changes on cancel by restoring original state
-    if (this.selectedItemId && this.originalState && this.api) {
+    if (this.selectedItemId && this.selectedCanvasId && this.originalState && this.api) {
       // Revert config changes
-      this.api.updateConfig(this.selectedItemId, this.originalState.config);
+      this.api.updateItem(this.selectedCanvasId, this.selectedItemId, { config: this.originalState.config });
 
       // Revert name changes
       const state = this.api.getState();
@@ -278,8 +278,8 @@ export class CustomConfigPanel {
     this.componentConfig = { ...this.componentConfig, [fieldName]: value };
 
     // Apply changes immediately (live preview) via API
-    if (this.selectedItemId && this.api) {
-      this.api.updateConfig(this.selectedItemId, this.componentConfig);
+    if (this.selectedItemId && this.selectedCanvasId && this.api) {
+      this.api.updateItem(this.selectedCanvasId, this.selectedItemId, { config: this.componentConfig });
     }
   };
 
@@ -288,8 +288,8 @@ export class CustomConfigPanel {
       return null;
     }
 
-    // Get item from API (searches all canvases automatically)
-    const item = this.api?.getItem(this.selectedItemId);
+    // Get item from API
+    const item = this.api?.getItem(this.selectedCanvasId, this.selectedItemId);
     if (!item) {
       return null;
     }
