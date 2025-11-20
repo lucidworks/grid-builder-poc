@@ -1,8 +1,10 @@
 dist/
 www/
 loader/
+demo/
 node_modules/
 .vscode/
 .DS_Store
 *.log
 .stencil/
+src/utils/version.ts
