@@ -758,6 +758,12 @@ export class MoveItemCommand implements Command {
   /** Position after drag (grid coordinates) */
   private targetPosition: { x: number; y: number };
 
+  /** Size before operation (grid units) - optional for resize tracking */
+  private sourceSize?: { width: number; height: number };
+
+  /** Size after operation (grid units) - optional for resize tracking */
+  private targetSize?: { width: number; height: number };
+
   /** Original array index in source canvas (for undo restoration) */
   private sourceIndex: number;
 
@@ -770,12 +776,16 @@ export class MoveItemCommand implements Command {
    *
    * **No item clone**: Uses reference-based approach (item ID tracking)
    *
+   * **Resize support**: Optional size parameters track width/height changes
+   *
    * @param itemId - ID of moved item
    * @param sourceCanvasId - Canvas where item started
    * @param targetCanvasId - Canvas where item ended
    * @param sourcePosition - Position before drag (will be shallow cloned)
    * @param targetPosition - Position after drag (will be shallow cloned)
    * @param sourceIndex - Original array index in source canvas
+   * @param sourceSize - Optional: Size before operation (for resize tracking)
+   * @param targetSize - Optional: Size after operation (for resize tracking)
    */
   constructor(
     itemId: string,
@@ -783,13 +793,17 @@ export class MoveItemCommand implements Command {
     targetCanvasId: string,
     sourcePosition: { x: number; y: number },
     targetPosition: { x: number; y: number },
-    sourceIndex: number
+    sourceIndex: number,
+    sourceSize?: { width: number; height: number },
+    targetSize?: { width: number; height: number }
   ) {
     this.itemId = itemId;
     this.sourceCanvasId = sourceCanvasId;
     this.targetCanvasId = targetCanvasId;
     this.sourcePosition = { ...sourcePosition };
     this.targetPosition = { ...targetPosition };
+    this.sourceSize = sourceSize ? { ...sourceSize } : undefined;
+    this.targetSize = targetSize ? { ...targetSize } : undefined;
     this.sourceIndex = sourceIndex;
   }
 
@@ -845,6 +859,12 @@ export class MoveItemCommand implements Command {
     item.layouts.desktop.x = this.sourcePosition.x;
     item.layouts.desktop.y = this.sourcePosition.y;
 
+    // Restore size if it was tracked (for resize operations)
+    if (this.sourceSize) {
+      item.layouts.desktop.width = this.sourceSize.width;
+      item.layouts.desktop.height = this.sourceSize.height;
+    }
+
     // Add back to source canvas at original index
     const sourceCanvas = gridState.canvases[this.sourceCanvasId];
     if (!sourceCanvas) {
@@ -896,6 +916,12 @@ export class MoveItemCommand implements Command {
     item.canvasId = this.targetCanvasId;
     item.layouts.desktop.x = this.targetPosition.x;
     item.layouts.desktop.y = this.targetPosition.y;
+
+    // Restore size if it was tracked (for resize operations)
+    if (this.targetSize) {
+      item.layouts.desktop.width = this.targetSize.width;
+      item.layouts.desktop.height = this.targetSize.height;
+    }
 
     // Add to target canvas
     const targetCanvas = gridState.canvases[this.targetCanvasId];

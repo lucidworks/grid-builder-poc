@@ -624,6 +624,7 @@ export class GridItemWrapper {
         const sourceIndex = sourceCanvas?.items.findIndex((i) => i.id === this.item.id) || 0;
 
         // Push undo command before updating state
+        // Include size tracking for resize operations (also handles resize with position change)
         pushCommand(
           new MoveItemCommand(
             updatedItem.id,
@@ -637,7 +638,20 @@ export class GridItemWrapper {
               x: updatedItem.layouts.desktop.x,
               y: updatedItem.layouts.desktop.y,
             },
-            sourceIndex
+            sourceIndex,
+            // Include size for resize tracking (position and size can both change)
+            isResize
+              ? {
+                  width: snapshot.layouts.desktop.width,
+                  height: snapshot.layouts.desktop.height,
+                }
+              : undefined,
+            isResize
+              ? {
+                  width: updatedItem.layouts.desktop.width,
+                  height: updatedItem.layouts.desktop.height,
+                }
+              : undefined
           )
         );
       }

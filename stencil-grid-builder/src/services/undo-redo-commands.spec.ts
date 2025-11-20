@@ -391,6 +391,169 @@ describe('undo-redo-commands', () => {
       expect(movedItem.type).toBe('header');
       expect(movedItem.zIndex).toBe(99);
     });
+
+    it('should undo item resize by restoring original size', () => {
+      // Clear prepopulated items for isolated test
+      gridState.canvases.canvas1.items = [];
+
+      const item = createTestItem('item-1', 'canvas1', 10, 10);
+      item.layouts.desktop.width = 20;
+      item.layouts.desktop.height = 15;
+      gridState.canvases.canvas1.items.push(item);
+
+      // Resize from width:20,height:15 to width:30,height:25
+      const command = new MoveItemCommand(
+        'item-1',
+        'canvas1',
+        'canvas1',
+        { x: 10, y: 10 },
+        { x: 10, y: 10 },
+        0,
+        { width: 20, height: 15 }, // source size
+        { width: 30, height: 25 }  // target size
+      );
+
+      // Undo should restore original size
+      command.undo();
+      expect(gridState.canvases.canvas1.items[0].layouts.desktop.width).toBe(20);
+      expect(gridState.canvases.canvas1.items[0].layouts.desktop.height).toBe(15);
+      expect(gridState.canvases.canvas1.items[0].layouts.desktop.x).toBe(10);
+      expect(gridState.canvases.canvas1.items[0].layouts.desktop.y).toBe(10);
+    });
+
+    it('should redo item resize to new size', () => {
+      // Clear prepopulated items for isolated test
+      gridState.canvases.canvas1.items = [];
+
+      const item = createTestItem('item-1', 'canvas1', 10, 10);
+      item.layouts.desktop.width = 20;
+      item.layouts.desktop.height = 15;
+      gridState.canvases.canvas1.items.push(item);
+
+      // Resize from width:20,height:15 to width:30,height:25
+      const command = new MoveItemCommand(
+        'item-1',
+        'canvas1',
+        'canvas1',
+        { x: 10, y: 10 },
+        { x: 10, y: 10 },
+        0,
+        { width: 20, height: 15 }, // source size
+        { width: 30, height: 25 }  // target size
+      );
+
+      // Redo should apply new size
+      command.redo();
+      expect(gridState.canvases.canvas1.items[0].layouts.desktop.width).toBe(30);
+      expect(gridState.canvases.canvas1.items[0].layouts.desktop.height).toBe(25);
+      expect(gridState.canvases.canvas1.items[0].layouts.desktop.x).toBe(10);
+      expect(gridState.canvases.canvas1.items[0].layouts.desktop.y).toBe(10);
+    });
+
+    it('should handle resize with position change (top-left corner resize)', () => {
+      // Clear prepopulated items for isolated test
+      gridState.canvases.canvas1.items = [];
+
+      const item = createTestItem('item-1', 'canvas1', 10, 10);
+      item.layouts.desktop.width = 20;
+      item.layouts.desktop.height = 15;
+      gridState.canvases.canvas1.items.push(item);
+
+      // Resize from top-left: position AND size change
+      // Original: x:10, y:10, width:20, height:15
+      // New: x:5, y:5, width:25, height:20 (moved top-left and expanded)
+      const command = new MoveItemCommand(
+        'item-1',
+        'canvas1',
+        'canvas1',
+        { x: 10, y: 10 },
+        { x: 5, y: 5 },
+        0,
+        { width: 20, height: 15 }, // source size
+        { width: 25, height: 20 }  // target size
+      );
+
+      // Redo should apply both position and size changes
+      command.redo();
+      expect(gridState.canvases.canvas1.items[0].layouts.desktop.x).toBe(5);
+      expect(gridState.canvases.canvas1.items[0].layouts.desktop.y).toBe(5);
+      expect(gridState.canvases.canvas1.items[0].layouts.desktop.width).toBe(25);
+      expect(gridState.canvases.canvas1.items[0].layouts.desktop.height).toBe(20);
+
+      // Undo should restore both position and size
+      command.undo();
+      expect(gridState.canvases.canvas1.items[0].layouts.desktop.x).toBe(10);
+      expect(gridState.canvases.canvas1.items[0].layouts.desktop.y).toBe(10);
+      expect(gridState.canvases.canvas1.items[0].layouts.desktop.width).toBe(20);
+      expect(gridState.canvases.canvas1.items[0].layouts.desktop.height).toBe(15);
+    });
+
+    it('should handle multiple resize undo/redo cycles', () => {
+      // Clear prepopulated items for isolated test
+      gridState.canvases.canvas1.items = [];
+
+      const item = createTestItem('item-1', 'canvas1', 0, 0);
+      item.layouts.desktop.width = 10;
+      item.layouts.desktop.height = 6;
+      gridState.canvases.canvas1.items.push(item);
+
+      const command = new MoveItemCommand(
+        'item-1',
+        'canvas1',
+        'canvas1',
+        { x: 0, y: 0 },
+        { x: 0, y: 0 },
+        0,
+        { width: 10, height: 6 },
+        { width: 20, height: 12 }
+      );
+
+      // Multiple cycles should maintain consistency
+      for (let i = 0; i < 3; i++) {
+        command.redo();
+        expect(gridState.canvases.canvas1.items[0].layouts.desktop.width).toBe(20);
+        expect(gridState.canvases.canvas1.items[0].layouts.desktop.height).toBe(12);
+
+        command.undo();
+        expect(gridState.canvases.canvas1.items[0].layouts.desktop.width).toBe(10);
+        expect(gridState.canvases.canvas1.items[0].layouts.desktop.height).toBe(6);
+      }
+    });
+
+    it('should maintain backward compatibility for move-only operations (no size tracking)', () => {
+      // Clear prepopulated items for isolated test
+      gridState.canvases.canvas1.items = [];
+
+      const item = createTestItem('item-1', 'canvas1', 0, 0);
+      item.layouts.desktop.width = 15;
+      item.layouts.desktop.height = 10;
+      gridState.canvases.canvas1.items.push(item);
+
+      // Move without size tracking (backward compatible)
+      const command = new MoveItemCommand(
+        'item-1',
+        'canvas1',
+        'canvas1',
+        { x: 0, y: 0 },
+        { x: 20, y: 20 },
+        0
+        // No size parameters
+      );
+
+      // Redo should update position only, size unchanged
+      command.redo();
+      expect(gridState.canvases.canvas1.items[0].layouts.desktop.x).toBe(20);
+      expect(gridState.canvases.canvas1.items[0].layouts.desktop.y).toBe(20);
+      expect(gridState.canvases.canvas1.items[0].layouts.desktop.width).toBe(15);
+      expect(gridState.canvases.canvas1.items[0].layouts.desktop.height).toBe(10);
+
+      // Undo should restore position only, size still unchanged
+      command.undo();
+      expect(gridState.canvases.canvas1.items[0].layouts.desktop.x).toBe(0);
+      expect(gridState.canvases.canvas1.items[0].layouts.desktop.y).toBe(0);
+      expect(gridState.canvases.canvas1.items[0].layouts.desktop.width).toBe(15);
+      expect(gridState.canvases.canvas1.items[0].layouts.desktop.height).toBe(10);
+    });
   });
 
   describe('Complex Scenarios', () => {
