@@ -374,6 +374,15 @@ export class GridBuilder {
   private canvasMoveHandler?: (e: Event) => void;
 
   /**
+   * ResizeObserver for container-based viewport switching
+   *
+   * **Purpose**: Automatically switch between desktop/mobile viewports based on container width
+   * **Breakpoint**: 768px (container width, not window width)
+   * **Cleanup**: disconnectedCallback() disconnects observer
+   */
+  private viewportResizeObserver?: ResizeObserver;
+
+  /**
    * Component will load lifecycle
    *
    * **Purpose**: Validate props and initialize component registry
@@ -548,6 +557,9 @@ export class GridBuilder {
     };
 
     this.hostElement.addEventListener('canvas-move', this.canvasMoveHandler);
+
+    // Setup container-based viewport switching
+    this.setupViewportResizeObserver();
   }
 
   /**
@@ -567,6 +579,11 @@ export class GridBuilder {
     }
     if (this.canvasMoveHandler) {
       this.hostElement.removeEventListener('canvas-move', this.canvasMoveHandler);
+    }
+
+    // Cleanup ResizeObserver
+    if (this.viewportResizeObserver) {
+      this.viewportResizeObserver.disconnect();
     }
 
     // Destroy plugins
@@ -898,6 +915,49 @@ export class GridBuilder {
       });
     }
   }
+
+  /**
+   * Setup ResizeObserver for container-based viewport switching
+   *
+   * **Purpose**: Automatically switch between desktop/mobile viewports based on container width
+   * **Breakpoint**: 768px (container width, not window viewport)
+   *
+   * **Observer callback**:
+   * 1. Get container width from ResizeObserver entry
+   * 2. Determine target viewport (mobile if < 768px, desktop otherwise)
+   * 3. Update gridState.currentViewport if changed
+   *
+   * **Why container-based**:
+   * - More flexible than window.resize (e.g., sidebar layouts, embedded widgets)
+   * - Grid-builder can be embedded at any size
+   * - Multiple instances can have different viewports on same page
+   *
+   * **Debouncing**: Not needed - ResizeObserver is already efficient
+   */
+  private setupViewportResizeObserver = () => {
+    if (!this.hostElement) {
+      return;
+    }
+
+    // Watch for grid-builder container size changes
+    this.viewportResizeObserver = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        // Get container width (use borderBoxSize for better accuracy)
+        const width = entry.borderBoxSize?.[0]?.inlineSize || entry.contentRect.width;
+
+        // Determine target viewport based on container width
+        const targetViewport = width < 768 ? 'mobile' : 'desktop';
+
+        // Only update if viewport changed
+        if (gridState.currentViewport !== targetViewport) {
+          console.log(`📱 Container-based viewport switch: ${gridState.currentViewport} → ${targetViewport} (width: ${Math.round(width)}px)`);
+          gridState.currentViewport = targetViewport;
+        }
+      }
+    });
+
+    this.viewportResizeObserver.observe(this.hostElement);
+  };
 
   /**
    * Reference to host element
