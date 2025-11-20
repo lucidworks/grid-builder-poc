@@ -38,10 +38,12 @@ import { domCache } from '../../../utils/dom-cache';
  *    - Make API calls or run custom validation
  *    - Return Promise<boolean> to approve/cancel deletion
  *
- * 5. **Grid Builder API** (window.gridBuilderAPI)
+ * 5. **Grid Builder API** (configurable storage via api-ref prop)
  *    - Programmatic control of grid state
  *    - Methods: addCanvas, removeCanvas, undo, redo, etc.
  *    - Event system: canvasAdded, canvasRemoved, etc.
+ *    - **Demo uses custom storage**: api-ref={{ target: this, key: 'api' }}
+ *    - API stored on component instance (this.api) instead of window
  *
  * 6. **Event System** (canvas-click, custom events)
  *    - Listen to library events for state synchronization
@@ -52,6 +54,14 @@ import { domCache } from '../../../utils/dom-cache';
  *    - Categorized/grouped components (Content, Interactive, etc.)
  *    - Collapsible category sections
  *    - All palettes drag to the same canvases
+ *
+ * 8. **Custom Config Panel** (Demonstrated with custom-config-panel component)
+ *    - Replace library's default config panel with custom UI
+ *    - Access grid state via API (this.api in this demo)
+ *    - Implement live preview for real-time updates
+ *    - Support cancel/revert functionality
+ *    - Subscribe to componentDeleted events for auto-close
+ *    - See: src/demo/components/custom-config-panel/
  *
  * Architecture Pattern:
  * --------------------
@@ -97,6 +107,90 @@ import { domCache } from '../../../utils/dom-cache';
  * - Interactive category: Buttons, CTAs (action components)
  * - Collapsible sections with expand/collapse state
  * - Clean categorized UI matching modern design patterns
+ *
+ * ## Custom Config Panel Pattern (Featured in this Demo)
+ *
+ * **Why use a custom config panel:**
+ * - Match your application's design system and branding
+ * - Add custom validation or business logic
+ * - Integrate with other parts of your application
+ * - Control the user experience and workflow
+ *
+ * **How it works:**
+ * 1. Hide the library's default config panel:
+ *    ```scss
+ *    config-panel {
+ *      display: none !important;
+ *    }
+ *    ```
+ *
+ * 2. Access the Grid Builder API:
+ *    ```typescript
+ *    const api = (window as any).gridBuilderAPI;
+ *    ```
+ *
+ * 3. Listen for item-click events:
+ *    ```typescript
+ *    document.addEventListener('item-click', (event: CustomEvent) => {
+ *      const { itemId, canvasId } = event.detail;
+ *      // Open your custom panel
+ *    });
+ *    ```
+ *
+ * 4. Implement live preview by directly updating state:
+ *    ```typescript
+ *    const state = api.getState();
+ *    const canvas = state.canvases[canvasId];
+ *    canvas.items[itemIndex] = {
+ *      ...canvas.items[itemIndex],
+ *      name: newValue
+ *    };
+ *    // Trigger reactivity
+ *    state.canvases = { ...state.canvases };
+ *    ```
+ *
+ * 5. Implement cancel/revert by storing original state:
+ *    ```typescript
+ *    // On panel open, store original values
+ *    this.originalState = {
+ *      name: item.name,
+ *      config: { ...item.config }
+ *    };
+ *
+ *    // On cancel, restore original values
+ *    api.updateConfig(itemId, this.originalState.config);
+ *    // Restore name using same pattern as live preview
+ *    ```
+ *
+ * 6. Subscribe to componentDeleted for auto-close:
+ *    ```typescript
+ *    api.on('componentDeleted', (event) => {
+ *      if (event.itemId === this.selectedItemId) {
+ *        this.closePanel();
+ *      }
+ *    });
+ *    ```
+ *
+ * **Key Library APIs Used:**
+ * - `window.gridBuilderAPI` - Global API instance
+ * - `api.getState()` - Get current grid state for direct manipulation
+ * - `api.getItem(itemId)` - Find item across all canvases
+ * - `api.updateConfig(itemId, config)` - Update item configuration
+ * - `api.on(event, handler)` - Subscribe to library events
+ * - `api.off(event, handler)` - Unsubscribe from library events
+ *
+ * **Event-driven Integration:**
+ * - `item-click` - Fired when user clicks a component (use document.addEventListener)
+ * - `componentDeleted` - Fired when a component is deleted (use api.on)
+ * - Manual event listeners required for custom events on document
+ *
+ * **Implementation in this demo:**
+ * - See `custom-config-panel.tsx` for complete implementation
+ * - Purple gradient styling matching blog theme
+ * - Live preview for component name and config fields
+ * - Cancel button reverts all changes
+ * - Save button persists changes
+ * - Auto-closes when selected component is deleted
  */
 
 @Component({
@@ -236,13 +330,16 @@ export class BlogApp {
    */
   componentDidLoad() {
     /**
-     * Get Grid Builder API
-     * --------------------
+     * Access Grid Builder API
+     * -----------------------
      *
-     * Library Feature: Programmatic API
+     * Library Feature: Configurable API Storage (api-ref prop)
      *
-     * The library exposes an API on the global window object.
-     * This API is set by the grid-builder component during its componentDidLoad lifecycle.
+     * **Demo Pattern**: API stored on component instance via api-ref={{ target: this, key: 'api' }}
+     * - The API is automatically set by grid-builder during its componentDidLoad
+     * - Accessed via this.api (not window.gridBuilderAPI)
+     * - Cleaner architecture - no global pollution
+     * - Supports multiple instances on same page
      *
      * Available API methods:
      * - addCanvas(canvasId: string): Add a new canvas
@@ -255,10 +352,9 @@ export class BlogApp {
      * - on(event, handler): Subscribe to events
      * - off(event, handler): Unsubscribe from events
      */
-    this.api = (window as any).gridBuilderAPI;
 
     if (!this.api) {
-      console.error('GridBuilderAPI not found on window. Make sure grid-builder component loaded first.');
+      console.error('GridBuilderAPI not set. Make sure grid-builder component loaded first.');
       return;
     }
 
@@ -931,6 +1027,8 @@ export class BlogApp {
                 initialState={this.initialState}
                 canvasMetadata={this.canvasMetadata}
                 onBeforeDelete={this.handleBeforeDelete}
+                showConfigPanel={false}
+                api-ref={{ target: this, key: 'api' }}
               />
             )}
           </div>
@@ -950,6 +1048,9 @@ export class BlogApp {
           onConfirm={this.handleConfirmDelete}
           onCancel={this.handleCancelDelete}
         />
+
+        {/* Custom Config Panel (demo-specific) */}
+        <custom-config-panel />
       </div>
     );
   }
