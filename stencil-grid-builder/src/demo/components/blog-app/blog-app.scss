@@ -9,26 +9,26 @@ blog-app {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      margin-bottom: 24px;
       padding: 16px 20px;
-      background: white;
       border-radius: 8px;
+      margin-bottom: 24px;
+      background: white;
       box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 
       .app-header-content {
         flex: 1;
 
         .app-title {
+          margin: 0 0 4px 0;
+          color: #212529;
           font-size: 24px;
           font-weight: 700;
-          color: #212529;
-          margin: 0 0 4px 0;
         }
 
         .app-subtitle {
-          font-size: 14px;
-          color: #6c757d;
           margin: 0;
+          color: #6c757d;
+          font-size: 14px;
         }
       }
 
@@ -43,18 +43,18 @@ blog-app {
 
           button {
             padding: 8px 14px;
-            font-size: 13px;
-            font-weight: 500;
-            color: #495057;
-            background: #e9ecef;
             border: 1px solid #dee2e6;
             border-radius: 6px;
+            background: #e9ecef;
+            color: #495057;
             cursor: pointer;
+            font-size: 13px;
+            font-weight: 500;
             transition: all 0.15s;
 
             &:hover:not(:disabled) {
-              background: #dee2e6;
               border-color: #adb5bd;
+              background: #dee2e6;
             }
 
             &:active:not(:disabled) {
@@ -62,21 +62,21 @@ blog-app {
             }
 
             &:disabled {
-              opacity: 0.4;
               cursor: not-allowed;
+              opacity: 0.4;
             }
           }
         }
 
         .add-section-btn {
           padding: 8px 16px;
-          font-size: 14px;
-          font-weight: 500;
-          color: white;
-          background: #4a90e2;
           border: none;
           border-radius: 6px;
+          background: #4a90e2;
+          color: white;
           cursor: pointer;
+          font-size: 14px;
+          font-weight: 500;
           transition: background 0.15s;
 
           &:hover {
@@ -91,28 +91,28 @@ blog-app {
     }
 
     .canvas-header {
+      position: relative;
       display: flex;
       align-items: center;
       justify-content: flex-end;
-      margin: 0 0 8px 0;
       padding: 0;
+      margin: 0 0 8px 0;
       gap: 8px;
-      position: relative;
 
       .canvas-title {
         display: inline-flex;
         align-items: center;
         padding: 6px 12px;
-        font-size: 13px;
-        font-weight: 500;
-        color: white;
+        border-radius: 4px;
         margin: 0;
         background: #4a90e2;
-        border-radius: 4px;
-        text-transform: none;
         box-shadow: 0 1px 3px rgba(74, 144, 226, 0.2);
-        transition: all 0.15s;
+        color: white;
         cursor: pointer;
+        font-size: 13px;
+        font-weight: 500;
+        text-transform: none;
+        transition: all 0.15s;
 
         &:hover {
           background: #357abd;
@@ -128,8 +128,8 @@ blog-app {
         .color-control {
           display: flex;
           align-items: center;
-          gap: 6px;
           cursor: pointer;
+          gap: 6px;
 
           .color-label {
             display: none; // Hide label for cleaner look
@@ -146,32 +146,32 @@ blog-app {
 
             &:hover {
               border-color: #4a90e2;
-              transform: scale(1.1);
               box-shadow: 0 2px 6px rgba(74, 144, 226, 0.2);
+              transform: scale(1.1);
             }
           }
         }
 
         .delete-canvas-btn {
+          display: flex;
           width: 28px;
           height: 28px;
-          padding: 0;
-          display: flex;
           align-items: center;
           justify-content: center;
+          padding: 0;
+          border: 1px solid #dee2e6;
+          border-radius: 4px;
+          background: white;
+          color: #dc3545;
+          cursor: pointer;
           font-size: 20px;
           font-weight: 300;
           line-height: 1;
-          color: #dc3545;
-          background: white;
-          border: 1px solid #dee2e6;
-          border-radius: 4px;
-          cursor: pointer;
           transition: all 0.15s;
 
           &:hover {
-            background: rgba(220, 53, 69, 0.1);
             border-color: #dc3545;
+            background: rgba(220, 53, 69, 0.1);
             transform: scale(1.1);
           }
 

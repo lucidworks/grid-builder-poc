@@ -5,10 +5,10 @@
 
 // Import all component SCSS files to make them available globally
 // Note: Component styles are also scoped to components via shadow DOM or class names
-@import '../components/component-palette/component-palette.scss';
-@import '../components/canvas-section/canvas-section.scss';
-@import '../components/grid-item-wrapper/grid-item-wrapper.scss';
-@import '../components/config-panel/config-panel.scss';
+@import '../components/component-palette/component-palette';
+@import '../components/canvas-section/canvas-section';
+@import '../components/grid-item-wrapper/grid-item-wrapper';
+@import '../components/config-panel/config-panel';
 
 * {
   box-sizing: border-box;

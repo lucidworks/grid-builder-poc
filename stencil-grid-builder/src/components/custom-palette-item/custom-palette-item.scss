@@ -1,40 +1,40 @@
 .custom-palette-item {
   display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 12px 16px;
   width: 100%;
   box-sizing: border-box;
+  align-items: center;
+  padding: 12px 16px;
+  gap: 12px;
 }
 
 .palette-icon {
+  flex-shrink: 0;
   font-size: 24px;
   line-height: 1;
-  flex-shrink: 0;
 }
 
 .palette-info {
   display: flex;
+  min-width: 0;
+  flex: 1;
   flex-direction: column;
   gap: 2px;
-  flex: 1;
-  min-width: 0;
 }
 
 .palette-name {
+  overflow: hidden;
+  color: #ffffff;
   font-size: 14px;
   font-weight: 600;
-  color: #ffffff;
-  white-space: nowrap;
-  overflow: hidden;
   text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .palette-type {
+  overflow: hidden;
+  color: rgba(255, 255, 255, 0.7);
   font-size: 11px;
   font-weight: 400;
-  color: rgba(255, 255, 255, 0.7);
-  white-space: nowrap;
-  overflow: hidden;
   text-overflow: ellipsis;
+  white-space: nowrap;
 }

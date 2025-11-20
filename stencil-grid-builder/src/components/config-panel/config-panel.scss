@@ -76,8 +76,8 @@ config-panel {
       color: #333;
       font-size: 14px;
       font-weight: 600;
-      text-transform: uppercase;
       letter-spacing: 0.5px;
+      text-transform: uppercase;
     }
 
     .no-config {
@@ -123,16 +123,16 @@ config-panel {
     }
 
     textarea {
-      resize: vertical;
       font-family: inherit;
+      resize: vertical;
     }
 
     &.config-field-checkbox {
       label {
         display: flex;
         align-items: center;
-        gap: 8px;
         cursor: pointer;
+        gap: 8px;
 
         input[type='checkbox'] {
           width: auto;
@@ -143,9 +143,9 @@ config-panel {
     }
 
     .field-error {
+      margin: 4px 0 0 0;
       color: #f44;
       font-size: 12px;
-      margin: 4px 0 0 0;
     }
   }
 

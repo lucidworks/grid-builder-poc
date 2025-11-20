@@ -1,25 +1,25 @@
 section-editor-panel {
   .section-editor-overlay {
     position: fixed;
+    z-index: 10000;
     top: 0;
-    left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(0, 0, 0, 0.5);
+    left: 0;
     display: flex;
     align-items: center;
     justify-content: center;
-    z-index: 10000;
     animation: fadeIn 0.2s ease-out;
+    background: rgba(0, 0, 0, 0.5);
   }
 
   .section-editor-panel {
-    background: white;
-    border-radius: 8px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
     width: 90%;
     max-width: 400px;
+    border-radius: 8px;
     animation: slideUp 0.2s ease-out;
+    background: white;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
   }
 
   .panel-header {
@@ -30,27 +30,27 @@ section-editor-panel {
     border-bottom: 1px solid #e9ecef;
 
     .panel-title {
+      margin: 0;
+      color: #212529;
       font-size: 18px;
       font-weight: 600;
-      color: #212529;
-      margin: 0;
     }
 
     .close-btn {
+      display: flex;
       width: 32px;
       height: 32px;
-      padding: 0;
-      display: flex;
       align-items: center;
       justify-content: center;
+      padding: 0;
+      border: none;
+      border-radius: 4px;
+      background: transparent;
+      color: #6c757d;
+      cursor: pointer;
       font-size: 28px;
       font-weight: 300;
       line-height: 1;
-      color: #6c757d;
-      background: transparent;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
       transition: all 0.15s;
 
       &:hover {
@@ -76,27 +76,27 @@ section-editor-panel {
 
       label {
         display: block;
+        margin-bottom: 8px;
+        color: #495057;
         font-size: 14px;
         font-weight: 500;
-        color: #495057;
-        margin-bottom: 8px;
       }
 
       .section-title-input {
         width: 100%;
+        box-sizing: border-box;
         padding: 10px 12px;
-        font-size: 14px;
-        color: #212529;
-        background: white;
         border: 1px solid #dee2e6;
         border-radius: 6px;
+        background: white;
+        color: #212529;
+        font-size: 14px;
         transition: all 0.15s;
-        box-sizing: border-box;
 
         &:focus {
-          outline: none;
           border-color: #4a90e2;
           box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.1);
+          outline: none;
         }
 
         &::placeholder {
@@ -106,8 +106,8 @@ section-editor-panel {
 
       .color-picker-wrapper {
         display: flex;
-        gap: 12px;
         align-items: center;
+        gap: 12px;
 
         .section-color-input {
           width: 60px;
@@ -124,27 +124,27 @@ section-editor-panel {
           }
 
           &:focus {
-            outline: none;
             border-color: #4a90e2;
             box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.1);
+            outline: none;
           }
         }
 
         .color-hex-input {
           flex: 1;
           padding: 10px 12px;
-          font-size: 14px;
-          font-family: 'Courier New', monospace;
-          color: #212529;
-          background: white;
           border: 1px solid #dee2e6;
           border-radius: 6px;
+          background: white;
+          color: #212529;
+          font-family: 'Courier New', monospace;
+          font-size: 14px;
           transition: all 0.15s;
 
           &:focus {
-            outline: none;
             border-color: #4a90e2;
             box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.1);
+            outline: none;
           }
 
           &::placeholder {
@@ -157,18 +157,18 @@ section-editor-panel {
 
   .panel-footer {
     display: flex;
-    gap: 12px;
+    justify-content: flex-end;
     padding: 20px 24px;
     border-top: 1px solid #e9ecef;
-    justify-content: flex-end;
+    gap: 12px;
 
     button {
       padding: 10px 20px;
-      font-size: 14px;
-      font-weight: 500;
       border: none;
       border-radius: 6px;
       cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
       transition: all 0.15s;
 
       &:active {
@@ -177,19 +177,19 @@ section-editor-panel {
     }
 
     .cancel-btn {
-      color: #495057;
-      background: #e9ecef;
       border: 1px solid #dee2e6;
+      background: #e9ecef;
+      color: #495057;
 
       &:hover {
-        background: #dee2e6;
         border-color: #adb5bd;
+        background: #dee2e6;
       }
     }
 
     .save-btn {
-      color: white;
       background: #4a90e2;
+      color: white;
 
       &:hover {
         background: #357abd;

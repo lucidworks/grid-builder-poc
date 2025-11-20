@@ -10,12 +10,12 @@
   position: absolute;
   min-width: 100px;
   min-height: 80px;
+  box-sizing: border-box; /* Include padding and border in width/height */
   padding: 20px;
   border: 2px solid transparent;
   border-radius: 4px;
   background: white;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 10%);
-  box-sizing: border-box; /* Include padding and border in width/height */
   cursor: default;
   transition: border-color 0.2s, box-shadow 0.2s;
   will-change: transform; /* GPU acceleration hint */
@@ -29,9 +29,9 @@
 }
 
 .grid-item.selected {
+  padding: 19px; /* Compensate for thicker border to prevent content shift */
   /* z-index handled via inline style to respect actual item.zIndex */
   border: 3px solid var(--selection-color);
-  padding: 19px; /* Compensate for thicker border to prevent content shift */
   box-shadow:
     0 0 0 3px color-mix(in srgb, var(--selection-color) 20%, transparent),
     0 4px 12px color-mix(in srgb, var(--selection-color) 30%, transparent);
@@ -50,26 +50,26 @@
 /* Item Header - tab on selection border that only shows when selected */
 .grid-item-header {
   position: absolute;
+  z-index: 100; /* Well above resize handles (z-index: 10) */
   top: -26px; /* Position above the border (adjust based on content height) */
   left: 12px; /* Offset from left edge */
-  z-index: 100; /* Well above resize handles (z-index: 10) */
   display: flex;
   align-items: center;
-  gap: 6px;
   padding: 4px 10px;
-  background: var(--selection-color);
   border: 2px solid var(--selection-color);
-  border-bottom: none; /* No bottom border to connect with component border */
   border-radius: 4px 4px 0 0; /* Rounded top corners only */
+  border-bottom: none; /* No bottom border to connect with component border */
+  background: var(--selection-color);
   color: white;
+  cursor: move !important; /* Indicate draggability - force override */
   font-size: 11px;
   font-weight: 600;
+  gap: 6px;
   letter-spacing: 0.3px;
   opacity: 0; /* Visual hiding only */
-  transition: opacity 0.2s;
-  cursor: move !important; /* Indicate draggability - force override */
-  user-select: none; /* Prevent text selection while dragging */
   pointer-events: auto; /* Always interactive for interact.js */
+  transition: opacity 0.2s;
+  user-select: none; /* Prevent text selection while dragging */
 }
 
 .grid-item.selected .grid-item-header,
@@ -109,9 +109,9 @@
 /* Item Controls */
 .grid-item-controls {
   position: absolute;
+  z-index: 10; /* Ensure controls appear above item content */
   top: -16px; /* Float above the component */
   right: 8px;
-  z-index: 10; /* Ensure controls appear above item content */
   display: flex;
   gap: 4px;
   opacity: 0;
