@@ -95,6 +95,23 @@ export class GridItemWrapper {
   @Prop() componentRegistry?: Map<string, ComponentDefinition>;
 
   /**
+   * Deletion hook (from parent grid-builder)
+   *
+   * **Source**: grid-builder component (from onBeforeDelete prop)
+   * **Purpose**: Allow host app to intercept deletion requests
+   *
+   * **Hook behavior**:
+   * - Called before deleting a component
+   * - Receives context with item data
+   * - Returns true/false or Promise<boolean>
+   * - If false, deletion is cancelled
+   * - If true, deletion proceeds
+   *
+   * **Default**: If not provided, components delete immediately
+   */
+  @Prop() onBeforeDelete?: (context: any) => boolean | Promise<boolean>;
+
+  /**
    * Selection state (reactive)
    *
    * **Managed by**: updateComponentState()
@@ -479,12 +496,6 @@ export class GridItemWrapper {
 
         {/* Item Controls */}
         <div class="grid-item-controls">
-          <button class="grid-item-control-btn bring-to-front" onClick={() => this.handleBringToFront()} title="Bring to Front">
-            ⬆️
-          </button>
-          <button class="grid-item-control-btn send-to-back" onClick={() => this.handleSendToBack()} title="Send to Back">
-            ⬇️
-          </button>
           <button class="grid-item-delete" onClick={() => this.handleDelete()}>
             ×
           </button>
@@ -635,46 +646,37 @@ export class GridItemWrapper {
   };
 
   /**
-   * Handle bring to front (increase z-index)
-   */
-  private handleBringToFront = () => {
-    console.log('⬆️ handleBringToFront', { itemId: this.item.id, currentZ: this.item.zIndex });
-    const canvas = gridState.canvases[this.item.canvasId];
-    if (!canvas) {
-      console.log('  ❌ Canvas not found');
-      return;
-    }
-
-    const maxZ = Math.max(...canvas.items.map((i) => i.zIndex));
-    console.log('  📊 Max Z-index:', maxZ, '→ New Z:', maxZ + 1);
-    updateItem(this.item.canvasId, this.item.id, { zIndex: maxZ + 1 });
-  };
-
-  /**
-   * Handle send to back (decrease z-index)
-   */
-  private handleSendToBack = () => {
-    console.log('⬇️ handleSendToBack', { itemId: this.item.id, currentZ: this.item.zIndex });
-    const canvas = gridState.canvases[this.item.canvasId];
-    if (!canvas) {
-      console.log('  ❌ Canvas not found');
-      return;
-    }
-
-    const minZ = Math.min(...canvas.items.map((i) => i.zIndex));
-    console.log('  📊 Min Z-index:', minZ, '→ New Z:', minZ - 1);
-    updateItem(this.item.canvasId, this.item.id, { zIndex: minZ - 1 });
-  };
-
-  /**
    * Handle delete from default wrapper button
-   * Dispatches internal 'grid-item:delete' event directly to grid-builder
+   * Calls deletion hook if provided, then dispatches delete event if approved
    */
-  private handleDelete = () => {
+  private handleDelete = async () => {
     console.log('🗑️ handleDelete (default wrapper button)', {
       itemId: this.item.id,
       canvasId: this.item.canvasId,
     });
+
+    // If deletion hook provided, call it first
+    if (this.onBeforeDelete) {
+      console.log('  🪝 Calling deletion hook...');
+      try {
+        const shouldDelete = await this.onBeforeDelete({
+          item: this.item,
+          canvasId: this.item.canvasId,
+          itemId: this.item.id,
+        });
+
+        if (!shouldDelete) {
+          console.log('  ❌ Deletion cancelled by hook');
+          return;
+        }
+        console.log('  ✅ Deletion approved by hook');
+      } catch (error) {
+        console.error('  ❌ Deletion hook error:', error);
+        return;
+      }
+    }
+
+    // Proceed with deletion
     const event = new CustomEvent('grid-item:delete', {
       detail: { itemId: this.item.id, canvasId: this.item.canvasId },
       bubbles: true,
