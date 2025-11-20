@@ -1,16 +1,39 @@
 # Stencil Grid Builder
 
-A flexible, component-agnostic grid builder library built with StencilJS. Create drag-and-drop grid layouts with responsive viewports, undo/redo support, and a rich event system.
+A flexible, component-agnostic grid layout system built with StencilJS. Create drag-and-drop grid layouts with a full-featured builder component and a lightweight viewer component for displaying layouts.
+
+## Two Components, One System
+
+This library provides **two complementary components** for different use cases:
+
+### 🛠️ **grid-builder** - Full Editing Experience
+Create and edit grid layouts with drag-and-drop, resize, and configuration controls.
+- Bundle size: ~150KB (includes interact.js for editing)
+- Use in: Admin panels, content management systems, layout editors
+
+### 👁️ **grid-viewer** - Display-Only Mode
+Render grid layouts without any editing functionality for production display.
+- Bundle size: ~30KB (80% smaller - no interact.js)
+- Use in: Public-facing websites, mobile apps, content delivery
+
+**Workflow**: Build layouts in `grid-builder`, export them, then display in `grid-viewer` for optimal performance.
 
 ## Features
 
+### Common Features (Both Components)
 - 🎯 **Component-Agnostic**: Works with any web components or frameworks
 - 📱 **Responsive**: Desktop and mobile viewport support with independent layouts
-- ↩️ **Undo/Redo**: Full command pattern implementation with 50-action history
 - 🎨 **Customizable**: Configurable grid sizing, colors, and component rendering
-- 🔌 **Event-Driven**: Rich event system for state changes and user interactions
 - ⚡ **Performance**: Virtual rendering with IntersectionObserver for large grids
 - 📦 **TypeScript**: Full type definitions included
+
+### grid-builder Exclusive Features
+- ↩️ **Undo/Redo**: Full command pattern implementation with 50-action history
+- 🔌 **Event-Driven**: Rich event system for state changes and user interactions
+- 🎛️ **Component Palette**: Drag components from palette to canvas
+- ⚙️ **Configuration Panel**: Edit component properties in real-time
+- 📏 **Resize Handles**: Click and drag to resize components
+- 🗑️ **Delete Controls**: Remove components with confirmation
 
 ## Installation
 
@@ -20,7 +43,13 @@ npm install @lucidworks/stencil-grid-builder
 
 ## Quick Start
 
-### 1. Basic Setup
+Choose the component that matches your use case:
+- **Building/Editing layouts?** → Use `grid-builder`
+- **Displaying pre-built layouts?** → Use `grid-viewer`
+
+### grid-builder: Creating Layouts
+
+#### 1. Basic Setup
 
 ```html
 <!DOCTYPE html>
@@ -82,7 +111,7 @@ npm install @lucidworks/stencil-grid-builder
 </html>
 ```
 
-### 2. Using the API
+#### 2. Using the API
 
 ```typescript
 import { GridBuilderAPI } from '@lucidworks/stencil-grid-builder';
@@ -120,7 +149,7 @@ if (savedState) {
 }
 ```
 
-### 3. Batch Operations for Performance
+#### 3. Batch Operations for Performance
 
 For optimal performance when adding, deleting, or updating multiple items, use the batch API methods. Batch operations trigger a single state update and re-render, compared to N updates for N individual operations.
 
@@ -196,6 +225,216 @@ api.redo();
 - **Batch related operations**: Group related adds/deletes/updates together for logical undo/redo
 - **Consider memory**: While batches can handle 1000+ items, keep individual batches under 1000 for best performance
 - **Event listeners**: Batch operations emit single batch events (`itemsBatchAdded`, `itemsBatchDeleted`, `itemsBatchUpdated`)
+
+### grid-viewer: Displaying Layouts
+
+The `grid-viewer` component is a **lightweight, display-only** version of grid-builder. Use it to render pre-built layouts without any editing functionality.
+
+#### Why Use grid-viewer?
+
+| Feature | grid-builder | grid-viewer |
+|---------|--------------|-------------|
+| **Bundle Size** | ~150KB | ~30KB (80% smaller) |
+| **Dependencies** | interact.js, full UI | Minimal (no interact.js) |
+| **Use Case** | Editing layouts | Displaying layouts |
+| **Drag & Drop** | ✅ Yes | ❌ No |
+| **Resize** | ✅ Yes | ❌ No |
+| **Config Panel** | ✅ Yes | ❌ No |
+| **Component Palette** | ✅ Yes | ❌ No |
+| **Responsive Layouts** | ✅ Yes | ✅ Yes |
+| **Virtual Rendering** | ✅ Yes | ✅ Yes |
+| **Custom Themes** | ✅ Yes | ✅ Yes |
+
+#### 1. Basic Usage
+
+```html
+<!DOCTYPE html>
+<html>
+<head>
+  <script type="module" src="node_modules/@lucidworks/stencil-grid-builder/dist/stencil-grid-builder/stencil-grid-builder.esm.js"></script>
+</head>
+<body>
+  <grid-viewer id="myViewer"></grid-viewer>
+
+  <script>
+    const viewer = document.getElementById('myViewer');
+
+    // Use the same component definitions as grid-builder
+    viewer.components = [
+      {
+        type: 'header',
+        name: 'Header',
+        icon: '📄',
+        defaultSize: { width: 30, height: 4 },
+        minSize: { width: 15, height: 3 },
+        render: ({ config }) => {
+          const div = document.createElement('div');
+          div.style.cssText = 'padding: 12px; background: #f0f0f0;';
+          const h3 = document.createElement('h3');
+          h3.textContent = config?.title || 'Header';
+          div.appendChild(h3);
+          return div;
+        }
+      },
+      {
+        type: 'text',
+        name: 'Text Block',
+        icon: '📝',
+        defaultSize: { width: 20, height: 6 },
+        minSize: { width: 10, height: 4 },
+        render: ({ config }) => {
+          const div = document.createElement('div');
+          div.style.cssText = 'padding: 10px; background: #fff;';
+          const p = document.createElement('p');
+          p.textContent = config?.text || 'Sample text';
+          div.appendChild(p);
+          return div;
+        }
+      }
+    ];
+
+    // Load layout data (from API, localStorage, etc.)
+    fetch('/api/layouts/123')
+      .then(r => r.json())
+      .then(layout => {
+        viewer.initialState = layout;
+      });
+  </script>
+</body>
+</html>
+```
+
+#### 2. Export from Builder, Display in Viewer
+
+The recommended workflow is to build layouts in `grid-builder` and display them in `grid-viewer`:
+
+```typescript
+// ==========================================
+// BUILDER APP (Admin/CMS)
+// ==========================================
+const builder = document.querySelector('grid-builder');
+
+// Export layout when user clicks "Publish"
+document.querySelector('#publishBtn').addEventListener('click', async () => {
+  // Export state from builder
+  const layoutData = await builder.exportState();
+
+  // Save to API
+  const response = await fetch('/api/layouts', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(layoutData)
+  });
+
+  const { layoutId } = await response.json();
+  console.log('Layout published:', layoutId);
+});
+
+// ==========================================
+// VIEWER APP (Public Website)
+// ==========================================
+const viewer = document.querySelector('grid-viewer');
+
+// Load and display published layout
+const layoutId = '123'; // from URL, route params, etc.
+const layout = await fetch(`/api/layouts/${layoutId}`).then(r => r.json());
+
+viewer.components = componentDefinitions; // Same definitions as builder
+viewer.initialState = layout;              // Exported layout data
+```
+
+#### 3. Multi-Section Landing Pages
+
+Create landing pages with multiple sections, each with its own background:
+
+```javascript
+// Layout data with multiple canvases (sections)
+const landingPageLayout = {
+  version: '1.0.0',
+  viewport: 'desktop',
+  canvases: {
+    'hero': {
+      items: [
+        {
+          id: 'hero-title',
+          type: 'header',
+          layouts: {
+            desktop: { x: 5, y: 2, width: 40, height: 6 },
+            mobile: { x: null, y: null, width: null, height: null, customized: false }
+          },
+          config: { title: 'Welcome to Our Product' }
+        }
+      ]
+    },
+    'features': {
+      items: [
+        {
+          id: 'feature-1',
+          type: 'text',
+          layouts: {
+            desktop: { x: 0, y: 5, width: 15, height: 8 },
+            mobile: { x: null, y: null, width: null, height: null, customized: false }
+          },
+          config: { text: 'Feature 1 description' }
+        }
+      ]
+    },
+    'cta': {
+      items: [
+        {
+          id: 'cta-button',
+          type: 'button',
+          layouts: {
+            desktop: { x: 20, y: 2, width: 12, height: 4 },
+            mobile: { x: null, y: null, width: null, height: null, customized: false }
+          },
+          config: { label: 'Get Started' }
+        }
+      ]
+    }
+  }
+};
+
+// Canvas metadata (background colors, etc.)
+const canvasMetadata = {
+  'hero': { backgroundColor: '#e0f2fe' },
+  'features': { backgroundColor: '#f0fdf4' },
+  'cta': { backgroundColor: '#fef3c7' }
+};
+
+viewer.initialState = landingPageLayout;
+viewer.canvasMetadata = canvasMetadata;
+```
+
+#### 4. Responsive Behavior
+
+Grid-viewer automatically switches between desktop and mobile layouts based on **container width** (not window width):
+
+```html
+<!-- Desktop container (900px) shows horizontal layout -->
+<div style="width: 900px;">
+  <grid-viewer id="desktop-viewer"></grid-viewer>
+</div>
+
+<!-- Mobile container (600px) shows vertical stacked layout -->
+<div style="width: 600px;">
+  <grid-viewer id="mobile-viewer"></grid-viewer>
+</div>
+```
+
+**Breakpoint**: 768px container width
+- **≥ 768px**: Desktop layout (uses `layouts.desktop` positioning)
+- **< 768px**: Mobile layout (vertically stacks full-width components)
+
+#### grid-viewer Props
+
+| Prop | Type | Required | Description |
+|------|------|----------|-------------|
+| `components` | `ComponentDefinition[]` | ✅ Yes | Component registry (same as grid-builder) |
+| `initialState` | `GridExport \| ViewerState` | ❌ No | Layout data to display |
+| `config` | `GridConfig` | ❌ No | Grid configuration (should match builder config) |
+| `theme` | `GridBuilderTheme` | ❌ No | Visual theme customization |
+| `canvasMetadata` | `Record<string, any>` | ❌ No | Canvas-level metadata (backgrounds, etc.) |
 
 ## Component Definition Schema
 
@@ -399,7 +638,7 @@ if (savedLayout) {
 - `clearHistory()` - Clear undo/redo history
 
 #### State Management
-- `exportState(): string` - Export state as JSON
+- `exportState(): Promise<GridExport>` - Export layout for saving or viewer display
 - `importState(json: string)` - Import state from JSON
 - `reset()` - Reset to initial state
 
@@ -524,11 +763,18 @@ Full TypeScript definitions included:
 
 ```typescript
 import type {
+  // Builder types
   GridBuilderAPI,
   ComponentDefinition,
   GridItem,
   GridConfig,
-  GridBuilderEventMap
+  GridBuilderEventMap,
+  GridBuilderTheme,
+
+  // Export/Viewer types
+  GridExport,
+  ViewerState,
+  ViewerCanvas
 } from '@lucidworks/stencil-grid-builder';
 ```
 
