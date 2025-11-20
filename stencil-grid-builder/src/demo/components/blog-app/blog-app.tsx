@@ -337,6 +337,11 @@ export class BlogApp {
    * 2. Listening to library events (canvasAdded, canvasRemoved)
    * 3. Synchronizing host app state with library state
    */
+  /**
+   * Track whether we've initialized the API integration
+   */
+  private apiInitialized = false;
+
   componentDidLoad() {
     /**
      * Access Grid Builder API
@@ -362,24 +367,22 @@ export class BlogApp {
      * - off(event, handler): Unsubscribe from events
      */
 
-    // Wait for API to be set by grid-builder component
-    // This is necessary because parent's componentDidLoad may fire before child's
-    if (!this.api) {
-      console.log('Waiting for GridBuilderAPI to be set by grid-builder component...');
-      setTimeout(() => {
-        this.setupGridBuilderIntegration();
-      }, 50);
-      return;
-    }
+    // Setup will happen in componentDidUpdate when API becomes available
+    this.setupGridBuilderIntegration();
+  }
 
+  componentDidUpdate() {
+    // Setup API integration once it becomes available
     this.setupGridBuilderIntegration();
   }
 
   private setupGridBuilderIntegration() {
-    if (!this.api) {
-      console.error('GridBuilderAPI not set. Make sure grid-builder component loaded first.');
+    // Only initialize once, and only when API is available
+    if (this.apiInitialized || !this.api) {
       return;
     }
+
+    this.apiInitialized = true;
 
     // Inject canvas headers after initial render
     // This is demo-specific UI (not part of library)
