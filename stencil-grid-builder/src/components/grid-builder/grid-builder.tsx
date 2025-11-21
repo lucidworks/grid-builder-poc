@@ -562,6 +562,11 @@ export class GridBuilder {
       this.applyTheme(this.theme);
     }
 
+    // Configure event debouncing
+    const debounceDelay = this.config?.eventDebounceDelay ?? 300;
+    eventManager.setDebounceDelay(debounceDelay);
+    console.log(`GridBuilder: Event debounce delay set to ${debounceDelay}ms`);
+
     // Debug helper
     (window as any).debugInteractables = () => {
       const interactables = (interact as any).interactables.list;
@@ -1107,6 +1112,221 @@ export class GridBuilder {
     }
 
     return exportData;
+  }
+
+  /**
+   * Import state from JSON-serializable format
+   *
+   * **Purpose**: Restore previously exported grid state
+   *
+   * **Example**:
+   * ```typescript
+   * const builder = document.querySelector('grid-builder');
+   * const savedState = JSON.parse(localStorage.getItem('grid-layout'));
+   * await builder.importState(savedState);
+   * ```
+   *
+   * @param state - GridExport or partial GridState object
+   */
+  @Method()
+  async importState(state: Partial<GridState> | GridExport) {
+    Object.assign(gridState, state);
+  }
+
+  /**
+   * Get current grid state
+   *
+   * **Purpose**: Direct access to grid state for reading
+   *
+   * **Example**:
+   * ```typescript
+   * const builder = document.querySelector('grid-builder');
+   * const state = await builder.getState();
+   * console.log('Current viewport:', state.currentViewport);
+   * ```
+   *
+   * @returns Promise<GridState> - Current grid state
+   */
+  @Method()
+  async getState(): Promise<GridState> {
+    return gridState;
+  }
+
+  /**
+   * Add a new canvas programmatically
+   *
+   * **Purpose**: Create new section/canvas in the grid
+   *
+   * **Example**:
+   * ```typescript
+   * const builder = document.querySelector('grid-builder');
+   * await builder.addCanvas('new-section');
+   * ```
+   *
+   * @param canvasId - Unique canvas identifier
+   */
+  @Method()
+  async addCanvas(canvasId: string) {
+    this.api?.addCanvas(canvasId);
+  }
+
+  /**
+   * Remove a canvas programmatically
+   *
+   * **Purpose**: Delete section/canvas from the grid
+   *
+   * **Example**:
+   * ```typescript
+   * const builder = document.querySelector('grid-builder');
+   * await builder.removeCanvas('old-section');
+   * ```
+   *
+   * @param canvasId - Canvas identifier to remove
+   */
+  @Method()
+  async removeCanvas(canvasId: string) {
+    this.api?.removeCanvas(canvasId);
+  }
+
+  /**
+   * Undo last action
+   *
+   * **Purpose**: Revert last user action (move, resize, add, delete, etc.)
+   *
+   * **Example**:
+   * ```typescript
+   * const builder = document.querySelector('grid-builder');
+   * await builder.undo();
+   * ```
+   */
+  @Method()
+  async undo() {
+    this.api?.undo();
+  }
+
+  /**
+   * Redo last undone action
+   *
+   * **Purpose**: Re-apply last undone action
+   *
+   * **Example**:
+   * ```typescript
+   * const builder = document.querySelector('grid-builder');
+   * await builder.redo();
+   * ```
+   */
+  @Method()
+  async redo() {
+    this.api?.redo();
+  }
+
+  /**
+   * Check if undo is available
+   *
+   * **Purpose**: Determine if there are actions to undo
+   *
+   * **Example**:
+   * ```typescript
+   * const builder = document.querySelector('grid-builder');
+   * const canUndo = await builder.canUndo();
+   * undoButton.disabled = !canUndo;
+   * ```
+   *
+   * @returns Promise<boolean> - True if undo is available
+   */
+  @Method()
+  async canUndo(): Promise<boolean> {
+    return this.api?.canUndo() || false;
+  }
+
+  /**
+   * Check if redo is available
+   *
+   * **Purpose**: Determine if there are actions to redo
+   *
+   * **Example**:
+   * ```typescript
+   * const builder = document.querySelector('grid-builder');
+   * const canRedo = await builder.canRedo();
+   * redoButton.disabled = !canRedo;
+   * ```
+   *
+   * @returns Promise<boolean> - True if redo is available
+   */
+  @Method()
+  async canRedo(): Promise<boolean> {
+    return this.api?.canRedo() || false;
+  }
+
+  /**
+   * Add a component programmatically
+   *
+   * **Purpose**: Add new component to canvas without dragging from palette
+   *
+   * **Example**:
+   * ```typescript
+   * const builder = document.querySelector('grid-builder');
+   * const itemId = await builder.addComponent('canvas1', 'header', {
+   *   x: 10, y: 10, width: 30, height: 6
+   * }, { title: 'My Header' });
+   * ```
+   *
+   * @param canvasId - Canvas to add component to
+   * @param componentType - Component type from registry
+   * @param position - Grid position and size
+   * @param config - Optional component configuration
+   * @returns Promise<string | null> - New item ID or null if failed
+   */
+  @Method()
+  async addComponent(
+    canvasId: string,
+    componentType: string,
+    position: { x: number; y: number; width: number; height: number },
+    config?: Record<string, any>
+  ): Promise<string | null> {
+    return this.api?.addComponent(canvasId, componentType, position, config) || null;
+  }
+
+  /**
+   * Delete a component programmatically
+   *
+   * **Purpose**: Remove component from grid
+   *
+   * **Example**:
+   * ```typescript
+   * const builder = document.querySelector('grid-builder');
+   * const success = await builder.deleteComponent('item-123');
+   * ```
+   *
+   * @param itemId - Item ID to delete
+   * @returns Promise<boolean> - True if deleted successfully
+   */
+  @Method()
+  async deleteComponent(itemId: string): Promise<boolean> {
+    return this.api?.deleteComponent(itemId) || false;
+  }
+
+  /**
+   * Update component configuration
+   *
+   * **Purpose**: Update component properties/config
+   *
+   * **Example**:
+   * ```typescript
+   * const builder = document.querySelector('grid-builder');
+   * const success = await builder.updateConfig('item-123', {
+   *   title: 'Updated Title',
+   *   color: '#ff0000'
+   * });
+   * ```
+   *
+   * @param itemId - Item ID to update
+   * @param config - Configuration updates
+   * @returns Promise<boolean> - True if updated successfully
+   */
+  @Method()
+  async updateConfig(itemId: string, config: Record<string, any>): Promise<boolean> {
+    return this.api?.updateConfig(itemId, config) || false;
   }
 
   /**
