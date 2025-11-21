@@ -18,7 +18,10 @@
   position: absolute;
   top: 0;
   left: 0;
-  width: 100%;
-  height: 100%;
+  max-width: 100%; /* CRITICAL: Never exceed container width */
+  max-height: 100%; /* CRITICAL: Never exceed container height */
+  width: auto;
+  height: auto;
   object-fit: cover;
+  object-position: center;
 }
