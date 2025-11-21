@@ -34,6 +34,121 @@ Main library component providing complete grid builder functionality.
 
 ## Methods
 
+### `addCanvas(canvasId: string) => Promise<void>`
+
+Add a new canvas programmatically
+
+**Purpose**: Create new section/canvas in the grid
+
+**Example**:
+```typescript
+const builder = document.querySelector('grid-builder');
+await builder.addCanvas('new-section');
+```
+
+#### Parameters
+
+| Name       | Type     | Description                |
+| ---------- | -------- | -------------------------- |
+| `canvasId` | `string` | - Unique canvas identifier |
+
+#### Returns
+
+Type: `Promise<void>`
+
+
+
+### `addComponent(canvasId: string, componentType: string, position: { x: number; y: number; width: number; height: number; }, config?: Record<string, any>) => Promise<string | null>`
+
+Add a component programmatically
+
+**Purpose**: Add new component to canvas without dragging from palette
+
+**Example**:
+```typescript
+const builder = document.querySelector('grid-builder');
+const itemId = await builder.addComponent('canvas1', 'header', {
+  x: 10, y: 10, width: 30, height: 6
+}, { title: 'My Header' });
+```
+
+#### Parameters
+
+| Name            | Type                                                       | Description                        |
+| --------------- | ---------------------------------------------------------- | ---------------------------------- |
+| `canvasId`      | `string`                                                   | - Canvas to add component to       |
+| `componentType` | `string`                                                   | - Component type from registry     |
+| `position`      | `{ x: number; y: number; width: number; height: number; }` | - Grid position and size           |
+| `config`        | `{ [x: string]: any; }`                                    | - Optional component configuration |
+
+#### Returns
+
+Type: `Promise<string>`
+
+Promise<string | null> - New item ID or null if failed
+
+### `canRedo() => Promise<boolean>`
+
+Check if redo is available
+
+**Purpose**: Determine if there are actions to redo
+
+**Example**:
+```typescript
+const builder = document.querySelector('grid-builder');
+const canRedo = await builder.canRedo();
+redoButton.disabled = !canRedo;
+```
+
+#### Returns
+
+Type: `Promise<boolean>`
+
+Promise<boolean> - True if redo is available
+
+### `canUndo() => Promise<boolean>`
+
+Check if undo is available
+
+**Purpose**: Determine if there are actions to undo
+
+**Example**:
+```typescript
+const builder = document.querySelector('grid-builder');
+const canUndo = await builder.canUndo();
+undoButton.disabled = !canUndo;
+```
+
+#### Returns
+
+Type: `Promise<boolean>`
+
+Promise<boolean> - True if undo is available
+
+### `deleteComponent(itemId: string) => Promise<boolean>`
+
+Delete a component programmatically
+
+**Purpose**: Remove component from grid
+
+**Example**:
+```typescript
+const builder = document.querySelector('grid-builder');
+const success = await builder.deleteComponent('item-123');
+```
+
+#### Parameters
+
+| Name     | Type     | Description         |
+| -------- | -------- | ------------------- |
+| `itemId` | `string` | - Item ID to delete |
+
+#### Returns
+
+Type: `Promise<boolean>`
+
+Promise<boolean> - True if deleted successfully
+
 ### `exportState() => Promise<GridExport>`
 
 Export current state to JSON-serializable format
@@ -68,6 +183,138 @@ localStorage.setItem('grid-layout', JSON.stringify(exportData));
 Type: `Promise<GridExport>`
 
 Promise<GridExport> - JSON-serializable export object
+
+### `getState() => Promise<GridState>`
+
+Get current grid state
+
+**Purpose**: Direct access to grid state for reading
+
+**Example**:
+```typescript
+const builder = document.querySelector('grid-builder');
+const state = await builder.getState();
+console.log('Current viewport:', state.currentViewport);
+```
+
+#### Returns
+
+Type: `Promise<GridState>`
+
+Promise<GridState> - Current grid state
+
+### `importState(state: Partial<GridState> | GridExport) => Promise<void>`
+
+Import state from JSON-serializable format
+
+**Purpose**: Restore previously exported grid state
+
+**Example**:
+```typescript
+const builder = document.querySelector('grid-builder');
+const savedState = JSON.parse(localStorage.getItem('grid-layout'));
+await builder.importState(savedState);
+```
+
+#### Parameters
+
+| Name    | Type                               | Description                              |
+| ------- | ---------------------------------- | ---------------------------------------- |
+| `state` | `GridExport \| Partial<GridState>` | - GridExport or partial GridState object |
+
+#### Returns
+
+Type: `Promise<void>`
+
+
+
+### `redo() => Promise<void>`
+
+Redo last undone action
+
+**Purpose**: Re-apply last undone action
+
+**Example**:
+```typescript
+const builder = document.querySelector('grid-builder');
+await builder.redo();
+```
+
+#### Returns
+
+Type: `Promise<void>`
+
+
+
+### `removeCanvas(canvasId: string) => Promise<void>`
+
+Remove a canvas programmatically
+
+**Purpose**: Delete section/canvas from the grid
+
+**Example**:
+```typescript
+const builder = document.querySelector('grid-builder');
+await builder.removeCanvas('old-section');
+```
+
+#### Parameters
+
+| Name       | Type     | Description                   |
+| ---------- | -------- | ----------------------------- |
+| `canvasId` | `string` | - Canvas identifier to remove |
+
+#### Returns
+
+Type: `Promise<void>`
+
+
+
+### `undo() => Promise<void>`
+
+Undo last action
+
+**Purpose**: Revert last user action (move, resize, add, delete, etc.)
+
+**Example**:
+```typescript
+const builder = document.querySelector('grid-builder');
+await builder.undo();
+```
+
+#### Returns
+
+Type: `Promise<void>`
+
+
+
+### `updateConfig(itemId: string, config: Record<string, any>) => Promise<boolean>`
+
+Update component configuration
+
+**Purpose**: Update component properties/config
+
+**Example**:
+```typescript
+const builder = document.querySelector('grid-builder');
+const success = await builder.updateConfig('item-123', {
+  title: 'Updated Title',
+  color: '#ff0000'
+});
+```
+
+#### Parameters
+
+| Name     | Type                    | Description             |
+| -------- | ----------------------- | ----------------------- |
+| `itemId` | `string`                | - Item ID to update     |
+| `config` | `{ [x: string]: any; }` | - Configuration updates |
+
+#### Returns
+
+Type: `Promise<boolean>`
+
+Promise<boolean> - True if updated successfully
 
 
 ## Dependencies
