@@ -1,0 +1,61 @@
+.live-data {
+  font-size: 11px;
+}
+
+.temperature-display {
+  margin-bottom: 8px;
+  padding: 6px;
+  border-radius: 3px;
+  background: #e3f2fd;
+}
+
+.temperature-label {
+  color: #1976d2;
+  font-weight: 600;
+}
+
+.temperature-value {
+  color: #1976d2;
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.metric {
+  margin-bottom: 6px;
+}
+
+.metric-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 2px;
+}
+
+.metric-label {
+  font-weight: 600;
+}
+
+.progress-bar {
+  overflow: hidden;
+  height: 6px;
+  border-radius: 3px;
+  background: #e0e0e0;
+}
+
+.progress-fill {
+  height: 100%;
+  transition: width 0.5s;
+}
+
+.progress-primary {
+  background: #4a90e2;
+}
+
+.progress-success {
+  background: #28a745;
+}
+
+.update-info {
+  margin-top: 8px;
+  color: #999;
+  font-size: 10px;
+}

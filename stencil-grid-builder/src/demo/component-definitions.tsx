@@ -530,4 +530,89 @@ export const blogComponentDefinitions: ComponentDefinition[] = [
       />
     ),
   },
+  {
+    type: 'image-gallery',
+    name: 'Image Gallery',
+    icon: '🖼️',
+    defaultSize: { width: 30, height: 12 },
+    minSize: { width: 15, height: 8 },
+    selectionColor: '#8b5cf6',
+    renderPaletteItem: ({ componentType, name, icon }) =>
+      `<custom-palette-item
+        component-type="${componentType}"
+        name="${name}"
+        icon="${icon}">
+      </custom-palette-item>`,
+    renderDragClone: ({ componentType, name, icon, width, height }) =>
+      `<custom-drag-clone
+        component-type="${componentType}"
+        name="${name}"
+        icon="${icon}"
+        width="${width}"
+        height="${height}">
+      </custom-drag-clone>`,
+    configSchema: [
+      {
+        name: 'imageCount',
+        label: 'Number of Images',
+        type: 'select',
+        defaultValue: '6',
+        options: [
+          { value: '3', label: '3 images' },
+          { value: '6', label: '6 images' },
+          { value: '9', label: '9 images' },
+          { value: '12', label: '12 images' },
+        ],
+      },
+    ],
+    render: ({ config }) => (
+      <image-gallery imageCount={parseInt(config?.imageCount || '6')} />
+    ),
+  },
+  {
+    type: 'dashboard-widget',
+    name: 'Dashboard',
+    icon: '📊',
+    defaultSize: { width: 25, height: 10 },
+    minSize: { width: 15, height: 8 },
+    selectionColor: '#ec4899',
+    renderPaletteItem: ({ componentType, name, icon }) =>
+      `<custom-palette-item
+        component-type="${componentType}"
+        name="${name}"
+        icon="${icon}">
+      </custom-palette-item>`,
+    renderDragClone: ({ componentType, name, icon, width, height }) =>
+      `<custom-drag-clone
+        component-type="${componentType}"
+        name="${name}"
+        icon="${icon}"
+        width="${width}"
+        height="${height}">
+      </custom-drag-clone>`,
+    render: () => <dashboard-widget />,
+  },
+  {
+    type: 'live-data',
+    name: 'Live Data',
+    icon: '📡',
+    defaultSize: { width: 20, height: 10 },
+    minSize: { width: 15, height: 8 },
+    selectionColor: '#06b6d4',
+    renderPaletteItem: ({ componentType, name, icon }) =>
+      `<custom-palette-item
+        component-type="${componentType}"
+        name="${name}"
+        icon="${icon}">
+      </custom-palette-item>`,
+    renderDragClone: ({ componentType, name, icon, width, height }) =>
+      `<custom-drag-clone
+        component-type="${componentType}"
+        name="${name}"
+        icon="${icon}"
+        width="${width}"
+        height="${height}">
+      </custom-drag-clone>`,
+    render: () => <live-data />,
+  },
 ];

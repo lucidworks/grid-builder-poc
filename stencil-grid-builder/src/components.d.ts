@@ -505,6 +505,8 @@ export namespace Components {
          */
         "name": string;
     }
+    interface DashboardWidget {
+    }
     /**
      * GridBuilder Component
      * ======================
@@ -699,6 +701,14 @@ export namespace Components {
           * Visual theme customization  **Optional prop**: Customizes colors, fonts, and styling **Default**: Bootstrap-inspired blue theme
          */
         "theme"?: GridBuilderTheme;
+    }
+    interface ImageGallery {
+        /**
+          * @default 6
+         */
+        "imageCount": number;
+    }
+    interface LiveData {
     }
     /**
      * Section Editor Panel Component
@@ -1162,6 +1172,12 @@ declare global {
         prototype: HTMLCustomPaletteItemElement;
         new (): HTMLCustomPaletteItemElement;
     };
+    interface HTMLDashboardWidgetElement extends Components.DashboardWidget, HTMLStencilElement {
+    }
+    var HTMLDashboardWidgetElement: {
+        prototype: HTMLDashboardWidgetElement;
+        new (): HTMLDashboardWidgetElement;
+    };
     /**
      * GridBuilder Component
      * ======================
@@ -1208,6 +1224,18 @@ declare global {
     var HTMLGridViewerElement: {
         prototype: HTMLGridViewerElement;
         new (): HTMLGridViewerElement;
+    };
+    interface HTMLImageGalleryElement extends Components.ImageGallery, HTMLStencilElement {
+    }
+    var HTMLImageGalleryElement: {
+        prototype: HTMLImageGalleryElement;
+        new (): HTMLImageGalleryElement;
+    };
+    interface HTMLLiveDataElement extends Components.LiveData, HTMLStencilElement {
+    }
+    var HTMLLiveDataElement: {
+        prototype: HTMLLiveDataElement;
+        new (): HTMLLiveDataElement;
     };
     interface HTMLSectionEditorPanelElementEventMap {
         "closePanel": void;
@@ -1272,9 +1300,12 @@ declare global {
         "custom-config-panel": HTMLCustomConfigPanelElement;
         "custom-drag-clone": HTMLCustomDragCloneElement;
         "custom-palette-item": HTMLCustomPaletteItemElement;
+        "dashboard-widget": HTMLDashboardWidgetElement;
         "grid-builder": HTMLGridBuilderElement;
         "grid-item-wrapper": HTMLGridItemWrapperElement;
         "grid-viewer": HTMLGridViewerElement;
+        "image-gallery": HTMLImageGalleryElement;
+        "live-data": HTMLLiveDataElement;
         "section-editor-panel": HTMLSectionEditorPanelElement;
     }
 }
@@ -1765,6 +1796,8 @@ declare namespace LocalJSX {
          */
         "name": string;
     }
+    interface DashboardWidget {
+    }
     /**
      * GridBuilder Component
      * ======================
@@ -1895,6 +1928,14 @@ declare namespace LocalJSX {
          */
         "theme"?: GridBuilderTheme;
     }
+    interface ImageGallery {
+        /**
+          * @default 6
+         */
+        "imageCount"?: number;
+    }
+    interface LiveData {
+    }
     /**
      * Section Editor Panel Component
      * ===============================
@@ -1963,9 +2004,12 @@ declare namespace LocalJSX {
         "custom-config-panel": CustomConfigPanel;
         "custom-drag-clone": CustomDragClone;
         "custom-palette-item": CustomPaletteItem;
+        "dashboard-widget": DashboardWidget;
         "grid-builder": GridBuilder;
         "grid-item-wrapper": GridItemWrapper;
         "grid-viewer": GridViewer;
+        "image-gallery": ImageGallery;
+        "live-data": LiveData;
         "section-editor-panel": SectionEditorPanel;
     }
 }
@@ -2291,6 +2335,7 @@ declare module "@stencil/core" {
              * Updated to display SVG icons on top with titles below (similar to UI builder pattern)
              */
             "custom-palette-item": LocalJSX.CustomPaletteItem & JSXBase.HTMLAttributes<HTMLCustomPaletteItemElement>;
+            "dashboard-widget": LocalJSX.DashboardWidget & JSXBase.HTMLAttributes<HTMLDashboardWidgetElement>;
             /**
              * GridBuilder Component
              * ======================
@@ -2323,6 +2368,8 @@ declare module "@stencil/core" {
              * - Rendering-only canvas sections
              */
             "grid-viewer": LocalJSX.GridViewer & JSXBase.HTMLAttributes<HTMLGridViewerElement>;
+            "image-gallery": LocalJSX.ImageGallery & JSXBase.HTMLAttributes<HTMLImageGalleryElement>;
+            "live-data": LocalJSX.LiveData & JSXBase.HTMLAttributes<HTMLLiveDataElement>;
             /**
              * Section Editor Panel Component
              * ===============================
