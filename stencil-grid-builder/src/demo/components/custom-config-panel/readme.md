@@ -22,6 +22,7 @@
 
 - [blog-header](../blog-header)
 - [blog-article](../blog-article)
+- [blog-image](../src/demo/components/blog-image)
 - [blog-button](../blog-button)
 
 ### Graph
@@ -29,6 +30,7 @@
 graph TD;
   custom-config-panel --> blog-header
   custom-config-panel --> blog-article
+  custom-config-panel --> blog-image
   custom-config-panel --> blog-button
   blog-app --> custom-config-panel
   style custom-config-panel fill:#f9f,stroke:#333,stroke-width:4px
