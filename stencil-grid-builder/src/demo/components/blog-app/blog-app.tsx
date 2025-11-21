@@ -1083,6 +1083,10 @@ export class BlogApp {
               <grid-builder
                 key="builder"
                 components={blogComponentDefinitions}
+                config={{
+                  enableAnimations: true,
+                  animationDuration: 100,
+                }}
                 initialState={this.initialState}
                 canvasMetadata={this.canvasMetadata}
                 onBeforeDelete={this.handleBeforeDelete}

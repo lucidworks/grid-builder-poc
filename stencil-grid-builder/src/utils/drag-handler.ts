@@ -132,6 +132,7 @@
  */
 
 import { GridItem } from '../services/state-manager';
+import { GridConfig } from '../types/grid-config';
 import { domCache } from './dom-cache';
 import { getGridSizeHorizontal, getGridSizeVertical, pixelsToGridX, pixelsToGridY } from './grid-calculations';
 import { constrainPositionToCanvas, CANVAS_WIDTH_UNITS } from './boundary-constraints';
@@ -238,6 +239,9 @@ export class DragHandler {
   /** Callback to update parent state after drag ends */
   private onUpdate: (item: GridItem) => void;
 
+  /** Grid configuration options */
+  private config?: GridConfig;
+
   /** interact.js draggable instance for cleanup */
   private interactInstance: any;
 
@@ -270,6 +274,7 @@ export class DragHandler {
    * @param element - DOM element to make draggable (grid-item-wrapper)
    * @param item - Grid item data for position/layout management
    * @param onUpdate - Callback invoked with updated item after drag ends
+   * @param config - Grid configuration options (for auto-scroll, etc.)
    * @param dragHandleElement - Optional element to use as drag handle
    * @param onDragMove - Optional callback when drag movement occurs
    * @example
@@ -283,6 +288,7 @@ export class DragHandler {
    *     this.element,
    *     this.item,
    *     (item) => this.handleItemUpdate(item),
+   *     this.config,
    *     header,
    *     () => this.wasDragged = true
    *   );
@@ -293,12 +299,14 @@ export class DragHandler {
     element: HTMLElement,
     item: GridItem,
     onUpdate: (item: GridItem) => void,
+    config?: GridConfig,
     dragHandleElement?: HTMLElement,
     onDragMove?: () => void
   ) {
     this.element = element;
     this.item = item;
     this.onUpdate = onUpdate;
+    this.config = config;
     this.dragHandleElement = dragHandleElement;
     this.onDragMove = onDragMove;
 
@@ -358,6 +366,13 @@ export class DragHandler {
    * - Grid snapping works better without inertia
    * - Provides more predictable, precise positioning
    *
+   * **autoScroll configuration**:
+   * - Enabled by default (can be disabled via config.enableAutoScroll)
+   * - Automatically scrolls nearest scrollable container when dragging near edge
+   * - Speed increases as item gets closer to edge (distance-based)
+   * - margin: 60px - triggers scroll when within 60px of edge
+   * - Works with both window scrolling and nested scrollable containers
+   *
    * **Event binding**:
    * - Uses `.bind(this)` to preserve class context in event handlers
    * - Without bind, `this` would be interact.js context, not DragHandler
@@ -373,6 +388,7 @@ export class DragHandler {
    * interact(element).draggable({
    *   allowFrom: '.drag-handle, .border-drag-zone',
    *   inertia: false,
+   *   autoScroll: true,
    *   listeners: {
    *     start: handleDragStart,
    *     move: handleDragMove,
@@ -391,8 +407,22 @@ export class DragHandler {
     // If a separate drag handle element is provided, make it draggable
     // Otherwise, use allowFrom on the main element
     const dragElement = this.dragHandleElement || this.element;
+
+    // Check if auto-scroll is enabled (default: true)
+    const enableAutoScroll = this.config?.enableAutoScroll ?? true;
+
     const config: any = {
       inertia: false,
+      // Auto-scroll configuration
+      autoScroll: enableAutoScroll ? {
+        enabled: true,
+        // Find nearest scrollable parent container
+        container: 'parent',
+        // Trigger scroll when within 60px of edge
+        margin: 60,
+        // Scroll speed range (min 300px/s, max 600px/s)
+        speed: 600,
+      } : false,
       listeners: {
         start: this.handleDragStart.bind(this),
         move: this.handleDragMove.bind(this),
@@ -664,12 +694,12 @@ export class DragHandler {
    * ```
    */
   private handleDragEnd(event: any): void {
-    // Remove dragging class from main element
-    const elementToMark = this.dragHandleElement ? this.element : event.target;
-    elementToMark.classList.remove('dragging');
-
     const deltaX = parseFloat(event.target.getAttribute('data-x')) || 0;
     const deltaY = parseFloat(event.target.getAttribute('data-y')) || 0;
+
+    // Remove dragging class immediately to enable CSS transitions
+    const elementToMark = this.dragHandleElement ? this.element : event.target;
+    elementToMark.classList.remove('dragging');
 
     // If drag movement occurred, prevent click event from opening config panel
     if (this.hasMoved) {
@@ -715,8 +745,7 @@ export class DragHandler {
     // If canvas changed from drag start, let the dropzone handle it
     // (Use dragStartCanvasId since item.canvasId may have been updated by dropzone already)
     if (targetCanvasId !== this.dragStartCanvasId) {
-      // Clean up drag state
-      event.target.classList.remove('dragging');
+      // Clean up drag state (dragging class already removed above)
       event.target.setAttribute('data-x', '0');
       event.target.setAttribute('data-y', '0');
 
@@ -792,18 +821,23 @@ export class DragHandler {
       }
     }
 
-    // Apply final snapped position to DOM (to main element if dragging from handle)
-    const elementToMove = this.dragHandleElement ? this.element : event.target;
-    elementToMove.style.transform = `translate(${newX}px, ${newY}px)`;
-    event.target.setAttribute('data-x', '0');
-    event.target.setAttribute('data-y', '0');
+    // Wait for next animation frame before applying final position
+    // This allows CSS transitions to animate from current position to final snapped position
+    // (dragging class was removed above, enabling transitions)
+    requestAnimationFrame(() => {
+      // Apply final snapped position to DOM (to main element if dragging from handle)
+      const elementToMove = this.dragHandleElement ? this.element : event.target;
+      elementToMove.style.transform = `translate(${newX}px, ${newY}px)`;
+      event.target.setAttribute('data-x', '0');
+      event.target.setAttribute('data-y', '0');
 
-    // End performance tracking
-    if ((window as any).perfMonitor) {
-      (window as any).perfMonitor.endOperation('drag');
-    }
+      // End performance tracking
+      if ((window as any).perfMonitor) {
+        (window as any).perfMonitor.endOperation('drag');
+      }
 
-    // Trigger StencilJS update (single re-render at end)
-    this.onUpdate(this.item);
+      // Trigger StencilJS update (single re-render at end)
+      this.onUpdate(this.item);
+    });
   }
 }

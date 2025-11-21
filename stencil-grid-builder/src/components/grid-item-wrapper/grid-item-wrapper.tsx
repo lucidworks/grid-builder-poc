@@ -252,6 +252,7 @@ export class GridItemWrapper {
         this.itemRef,
         this.item,
         this.handleItemUpdate,
+        this.config,
         headerElement,
         () => {
           this.wasDragged = true;
@@ -452,6 +453,7 @@ export class GridItemWrapper {
     const itemClasses = {
       'grid-item': true,
       selected: isSelected,
+      'with-animations': this.config?.enableAnimations ?? false,
     };
 
     // Convert grid units to pixels (with GridConfig support)
@@ -472,6 +474,7 @@ export class GridItemWrapper {
       height: `${heightPixels}px`,
       zIndex: this.item.zIndex.toString(),
       '--selection-color': selectionColor,
+      '--animation-duration': `${this.config?.animationDuration ?? 200}ms`,
     };
 
     // Generate unique content slot ID for custom wrapper

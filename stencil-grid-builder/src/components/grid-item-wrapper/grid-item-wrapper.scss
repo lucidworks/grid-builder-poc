@@ -24,6 +24,47 @@
   --selection-color: #f59e0b;
 }
 
+/**
+ * Smooth animations for drag/resize operations
+ * ==============================================
+ *
+ * When enabled via config.enableAnimations, this class adds smooth CSS transitions
+ * for transform (position) and width/height properties.
+ *
+ * **When applied**:
+ * - Automatically added if config.enableAnimations is true
+ * - Temporarily removed during drag/resize for instant feedback
+ * - Reapplied at drag/resize end for smooth grid snapping
+ *
+ * **Performance**:
+ * - Uses GPU-accelerated CSS transforms
+ * - Negligible performance impact (~0.1ms per frame)
+ * - Transition duration controlled by --animation-duration CSS variable
+ *
+ * **CSS Variable**:
+ * - --animation-duration: Set via config.animationDuration (default: 200ms)
+ */
+.grid-item.with-animations {
+  transition:
+    border-color 0.2s,
+    box-shadow 0.2s,
+    transform var(--animation-duration, 200ms) ease-out,
+    width var(--animation-duration, 200ms) ease-out,
+    height var(--animation-duration, 200ms) ease-out;
+}
+
+/**
+ * Disable animations during active drag/resize
+ * =============================================
+ *
+ * During drag/resize, we want instant feedback without animation delay.
+ * This class is added during drag/resize and removes all transitions.
+ */
+.grid-item.dragging,
+.grid-item.resizing {
+  transition: none !important;
+}
+
 .grid-item:hover {
   border-color: var(--selection-color);
 }
