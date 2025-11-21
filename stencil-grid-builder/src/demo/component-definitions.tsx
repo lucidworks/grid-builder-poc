@@ -305,8 +305,16 @@ export const mediaComponents: ComponentDefinition[] = [
   },
 ];
 
-// All components combined (for backward compatibility)
+// All components combined (for grid-builder registration)
 export const blogComponentDefinitions: ComponentDefinition[] = [
+  ...contentComponents,
+  ...interactiveComponents,
+  ...mediaComponents,
+];
+
+// Detailed documentation for each component type
+// (Keeping for reference, but using combined arrays above)
+export const _blogComponentDefinitionsDetailed: ComponentDefinition[] = [
   /**
    * Blog Header Component
    * ---------------------
