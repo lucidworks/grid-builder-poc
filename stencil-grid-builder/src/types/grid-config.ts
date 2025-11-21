@@ -296,7 +296,7 @@ export interface GridConfig {
    * **What it does**: Adds smooth CSS transitions when items snap to grid or resize
    * **Why**: Provides polished visual feedback for drag/resize operations
    *
-   * **Default**: false (disabled for performance and instant feedback)
+   * **Default**: true (enabled for polished UX)
    *
    * **What gets animated** (when enabled):
    * - Grid snapping at drag end (smooth snap to grid instead of instant)
@@ -327,7 +327,7 @@ export interface GridConfig {
    * };
    * ```
    *
-   * @default false
+   * @default true
    */
   enableAnimations?: boolean;
 
@@ -335,12 +335,12 @@ export interface GridConfig {
    * Animation duration in milliseconds (only used if enableAnimations is true)
    *
    * **What it controls**: Duration of CSS transitions for drag/resize animations
-   * **Default**: 200ms (balanced - not too slow, not too fast)
+   * **Default**: 100ms (fast, responsive feel)
    *
    * **Typical values**:
-   * - 100ms: Very fast, subtle animation
-   * - 150ms: Fast, responsive feel ✅ Recommended for power users
-   * - 200ms: Balanced (default) ✅ Recommended for general use
+   * - 100ms: Very fast, subtle animation ✅ Default
+   * - 150ms: Fast, responsive feel
+   * - 200ms: Balanced
    * - 300ms: Slower, more noticeable animation
    * - 400ms+: Very slow, primarily for presentations
    *
@@ -357,7 +357,7 @@ export interface GridConfig {
    * };
    * ```
    *
-   * @default 200
+   * @default 100
    */
   animationDuration?: number;
 }
