@@ -568,7 +568,7 @@ export class GridItemWrapper {
         )}
 
         {/* Item Content (always rendered) */}
-        <div class="grid-item-content" id={contentSlotId}>
+        <div class="grid-item-content" id={contentSlotId} data-component-type={this.item.type}>
           {this.renderComponent()}
         </div>
 

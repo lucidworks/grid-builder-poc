@@ -14,6 +14,15 @@ export class BlogImage {
   @State() imageLoaded: boolean = false;
   @State() imageError: boolean = false;
 
+  private imgRef?: HTMLImageElement;
+
+  componentDidLoad() {
+    // Check if image is already loaded (cached)
+    if (this.imgRef?.complete && this.imgRef?.naturalHeight !== 0) {
+      this.imageLoaded = true;
+    }
+  }
+
   private handleImageLoad = () => {
     this.imageLoaded = true;
     this.imageError = false;
@@ -40,6 +49,7 @@ export class BlogImage {
             </div>
           )}
           <img
+            ref={(el) => this.imgRef = el}
             src={this.src}
             alt={this.alt}
             class={{

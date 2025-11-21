@@ -39,6 +39,8 @@ blog-image {
 
 // The actual img element - centered with flexbox
 .blog-image {
+  position: relative; // Create stacking context
+  z-index: 2; // Appear above placeholder (z-index: 1)
   display: block;
   max-width: 100%; // CRITICAL: Never exceed container width
   max-height: 100%; // CRITICAL: Never exceed container height

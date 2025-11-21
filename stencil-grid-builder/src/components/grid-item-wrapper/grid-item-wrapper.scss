@@ -148,6 +148,11 @@
   font-size: 13px;
 }
 
+/* Only apply full height to components that explicitly need it (e.g., image components) */
+.grid-item-content[data-component-type="blog-image"] {
+  height: 100%; /* Fill available space for image components that use height: 100% */
+}
+
 .component-placeholder,
 .component-error {
   display: flex;
