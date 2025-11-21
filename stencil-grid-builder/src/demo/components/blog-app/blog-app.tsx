@@ -1,5 +1,5 @@
 import { Component, h, State } from '@stencil/core';
-import { blogComponentDefinitions, contentComponents, interactiveComponents } from '../../component-definitions';
+import { blogComponentDefinitions, contentComponents, interactiveComponents, mediaComponents } from '../../component-definitions';
 import { GridBuilderAPI } from '../../../types/api';
 import { SectionEditorData } from '../section-editor-panel/section-editor-panel';
 import { ConfirmationModalData } from '../confirmation-modal/confirmation-modal';
@@ -315,6 +315,7 @@ export class BlogApp {
   @State() categoryStates: Record<string, boolean> = {
     content: true, // Content category expanded by default
     interactive: true, // Interactive category expanded by default
+    media: true, // Media category expanded by default
   };
 
   /**
@@ -1107,6 +1108,23 @@ export class BlogApp {
                 {this.categoryStates.interactive && (
                   <component-palette
                     components={interactiveComponents}
+                    showHeader={false}
+                  />
+                )}
+              </div>
+
+              {/* Media Category */}
+              <div class="palette-category">
+                <div
+                  class="category-header"
+                  onClick={() => this.toggleCategory('media')}
+                >
+                  <span class="category-icon">{this.categoryStates.media ? '▼' : '▶'}</span>
+                  <span class="category-name">Media</span>
+                </div>
+                {this.categoryStates.media && (
+                  <component-palette
+                    components={mediaComponents}
                     showHeader={false}
                   />
                 )}
