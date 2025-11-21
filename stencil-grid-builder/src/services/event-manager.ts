@@ -84,6 +84,36 @@ export class EventManager {
   private listeners: Map<string, Set<EventCallback>> = new Map();
 
   /**
+   * Debounce timers for events
+   *
+   * **Key**: Event name
+   * **Value**: setTimeout timer ID
+   *
+   * **Purpose**: Store timers for debounced events
+   */
+  private debounceTimers: Map<string, NodeJS.Timeout> = new Map();
+
+  /**
+   * Debounce delay in milliseconds
+   *
+   * **Default**: 300ms
+   * **Configured by**: grid-builder via setDebounceDelay()
+   */
+  private debounceDelay: number = 300;
+
+  /**
+   * Events that should be debounced
+   *
+   * **Events**: componentDragged, componentResized, stateChanged
+   * **Reason**: Fire on every pixel during drag/resize
+   */
+  private debouncedEvents: Set<string> = new Set([
+    'componentDragged',
+    'componentResized',
+    'stateChanged',
+  ]);
+
+  /**
    * Subscribe to event
    *
    * **Idempotent**: Calling multiple times with same callback does nothing
@@ -149,6 +179,14 @@ export class EventManager {
   /**
    * Fire event to all subscribers
    *
+   * **Debouncing**: Some events are automatically debounced:
+   * - componentDragged (fires on every pixel)
+   * - componentResized (fires on every pixel)
+   * - stateChanged (fires on every state update)
+   *
+   * **Immediate events** (not debounced):
+   * - componentSelected, componentDeleted, componentAdded, etc.
+   *
    * **Execution order**: Subscribers called in insertion order
    * **Error handling**: One callback error doesn't prevent others
    *
@@ -168,6 +206,23 @@ export class EventManager {
    * ```
    */
   emit<T = any>(eventName: string, data: T): void {
+    // Check if this event should be debounced
+    if (this.debouncedEvents.has(eventName)) {
+      this.emitDebounced(eventName, data);
+    } else {
+      this.emitImmediate(eventName, data);
+    }
+  }
+
+  /**
+   * Fire event immediately (no debouncing)
+   *
+   * **Private method**: Called by emit()
+   *
+   * @param eventName - Event to fire
+   * @param data - Data to pass to callbacks
+   */
+  private emitImmediate<T = any>(eventName: string, data: T): void {
     const callbacks = this.listeners.get(eventName);
     if (callbacks) {
       callbacks.forEach((callback) => {
@@ -178,6 +233,66 @@ export class EventManager {
         }
       });
     }
+  }
+
+  /**
+   * Fire event with debouncing
+   *
+   * **How it works**:
+   * 1. Clear any existing timer for this event
+   * 2. Set new timer with debounceDelay
+   * 3. When timer fires, call emitImmediate()
+   * 4. If emit() called again before timer fires, restart timer
+   *
+   * **Result**: Event only fires once after activity stops
+   *
+   * **Private method**: Called by emit()
+   *
+   * @param eventName - Event to fire
+   * @param data - Data to pass to callbacks
+   */
+  private emitDebounced<T = any>(eventName: string, data: T): void {
+    // Clear existing timer for this event
+    const existingTimer = this.debounceTimers.get(eventName);
+    if (existingTimer) {
+      clearTimeout(existingTimer);
+    }
+
+    // Set new timer
+    const timer = setTimeout(() => {
+      this.emitImmediate(eventName, data);
+      this.debounceTimers.delete(eventName);
+    }, this.debounceDelay);
+
+    this.debounceTimers.set(eventName, timer);
+  }
+
+  /**
+   * Set debounce delay for all debounced events
+   *
+   * **Configurable**: Called by grid-builder with config.eventDebounceDelay
+   *
+   * @param delay - Delay in milliseconds
+   *
+   * @example
+   * ```typescript
+   * // In grid-builder componentDidLoad
+   * eventManager.setDebounceDelay(config?.eventDebounceDelay || 300);
+   * ```
+   */
+  setDebounceDelay(delay: number): void {
+    this.debounceDelay = delay;
+  }
+
+  /**
+   * Get current debounce delay
+   *
+   * **Use case**: Debugging, testing
+   *
+   * @returns Debounce delay in milliseconds
+   */
+  getDebounceDelay(): number {
+    return this.debounceDelay;
   }
 
   /**

@@ -203,4 +203,161 @@ export interface GridConfig {
    * @default '20%'
    */
   virtualRenderMargin?: string;
+
+  /**
+   * Event debounce delay in milliseconds
+   *
+   * **What it does**: Delays high-frequency events to reduce excessive calls
+   * **Why**: Drag/resize events fire on every pixel - debouncing groups them together
+   *
+   * **Default**: 300ms (good balance between responsiveness and performance)
+   *
+   * **Events that are debounced**:
+   * - `componentDragged` - fires during drag (every pixel)
+   * - `componentResized` - fires during resize (every pixel)
+   * - `stateChanged` - fires on any state update
+   *
+   * **Events that are NOT debounced** (fire immediately):
+   * - `componentSelected` - click selection
+   * - `componentDeleted` - delete action
+   * - `componentAdded` - add action
+   * - `canvasAdded` - canvas operations
+   * - `canvasRemoved` - canvas operations
+   *
+   * **Typical values**:
+   * - 0: No debouncing (fire immediately - may cause performance issues)
+   * - 150ms: Fast response (good for local state updates)
+   * - 300ms: Balanced (default) ✅ Recommended
+   * - 500ms: Slower response (good for API calls, reduces server load)
+   * - 1000ms: Very slow (use only for expensive operations)
+   *
+   * **Use cases**:
+   * - **Auto-save to API**: Use 500-1000ms to reduce server calls
+   * - **Local state sync**: Use 150-300ms for responsive feel
+   * - **Analytics tracking**: Use 300-500ms to batch events
+   *
+   * **Example - Auto-save with debouncing**:
+   * ```typescript
+   * const config: GridConfig = {
+   *   eventDebounceDelay: 500  // Wait 500ms after last change before saving
+   * };
+   *
+   * api.on('stateChanged', async () => {
+   *   // This only fires 500ms after user stops making changes
+   *   await fetch('/api/save', {
+   *     method: 'POST',
+   *     body: JSON.stringify(await api.exportState())
+   *   });
+   * });
+   * ```
+   *
+   * @default 300
+   */
+  eventDebounceDelay?: number;
+
+  /**
+   * Enable auto-scroll during drag operations
+   *
+   * **What it does**: Automatically scrolls the page when dragging an item near the edge of a scrollable container
+   * **Why**: Allows users to drag items to areas not currently visible without manually scrolling
+   *
+   * **Default**: true (enabled for better UX)
+   *
+   * **How it works**:
+   * - Detects when item is dragged within 60px of container edge
+   * - Automatically scrolls the nearest scrollable parent container
+   * - Scroll speed increases as item gets closer to edge
+   * - Works with both canvas scrolling and window scrolling
+   *
+   * **Use cases**:
+   * - **Long scrollable pages**: Essential for dragging items across long layouts
+   * - **Nested scrollable containers**: Works with canvas containers inside scrollable divs
+   * - **Constrained viewports**: Useful when grid-builder is in a fixed-height container
+   *
+   * **When to disable** (set to false):
+   * - Small grids that fit entirely in viewport (no scrolling needed)
+   * - Custom scroll handling implemented
+   * - Performance-critical scenarios (though auto-scroll is highly optimized)
+   *
+   * **Example - Disable auto-scroll**:
+   * ```typescript
+   * const config: GridConfig = {
+   *   enableAutoScroll: false  // Disable if grid fits in viewport
+   * };
+   * ```
+   *
+   * @default true
+   */
+  enableAutoScroll?: boolean;
+
+  /**
+   * Enable smooth CSS transitions for animations
+   *
+   * **What it does**: Adds smooth CSS transitions when items snap to grid or resize
+   * **Why**: Provides polished visual feedback for drag/resize operations
+   *
+   * **Default**: false (disabled for performance and instant feedback)
+   *
+   * **What gets animated** (when enabled):
+   * - Grid snapping at drag end (smooth snap to grid instead of instant)
+   * - Resize handle operations (smooth size changes)
+   * - Selection border appearance/disappearance
+   *
+   * **Performance considerations**:
+   * - Animations use GPU-accelerated CSS transforms
+   * - Very low performance impact (~0.1ms per frame)
+   * - May feel slightly less responsive than instant snapping
+   * - Some users prefer instant feedback (hence disabled by default)
+   *
+   * **Use cases**:
+   * - **Presentation/demo mode**: Polished animations for showcasing
+   * - **Public-facing apps**: Better visual appeal for end users
+   * - **Design-focused apps**: When aesthetics matter more than speed
+   *
+   * **When to disable** (default):
+   * - **Power users**: Prefer instant feedback without animation delay
+   * - **Performance-critical apps**: Eliminate any animation overhead
+   * - **Precise positioning**: Instant snapping shows exact final position
+   *
+   * **Example - Enable animations**:
+   * ```typescript
+   * const config: GridConfig = {
+   *   enableAnimations: true,       // Enable smooth transitions
+   *   animationDuration: 150        // Fast animations (150ms)
+   * };
+   * ```
+   *
+   * @default false
+   */
+  enableAnimations?: boolean;
+
+  /**
+   * Animation duration in milliseconds (only used if enableAnimations is true)
+   *
+   * **What it controls**: Duration of CSS transitions for drag/resize animations
+   * **Default**: 200ms (balanced - not too slow, not too fast)
+   *
+   * **Typical values**:
+   * - 100ms: Very fast, subtle animation
+   * - 150ms: Fast, responsive feel ✅ Recommended for power users
+   * - 200ms: Balanced (default) ✅ Recommended for general use
+   * - 300ms: Slower, more noticeable animation
+   * - 400ms+: Very slow, primarily for presentations
+   *
+   * **Rule of thumb**:
+   * - Shorter durations (100-150ms) feel more responsive
+   * - Longer durations (300-400ms) feel more polished but slower
+   * - Don't exceed 500ms (feels sluggish)
+   *
+   * **Example - Fast animations**:
+   * ```typescript
+   * const config: GridConfig = {
+   *   enableAnimations: true,
+   *   animationDuration: 150  // Fast, snappy animations
+   * };
+   * ```
+   *
+   * @default 200
+   */
+  animationDuration?: number;
 }
