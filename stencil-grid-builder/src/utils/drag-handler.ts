@@ -416,11 +416,11 @@ export class DragHandler {
       // Auto-scroll configuration
       autoScroll: enableAutoScroll ? {
         enabled: true,
-        // Find nearest scrollable parent container
-        container: 'parent',
+        // Scroll the window (works for most cases)
+        container: window,
         // Trigger scroll when within 60px of edge
         margin: 60,
-        // Scroll speed range (min 300px/s, max 600px/s)
+        // Scroll speed
         speed: 600,
       } : false,
       listeners: {
