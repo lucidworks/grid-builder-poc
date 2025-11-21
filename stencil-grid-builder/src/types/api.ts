@@ -7,6 +7,7 @@
  */
 
 import { GridItem, GridState } from '../services/state-manager';
+import { UndoRedoState } from '../services/undo-redo';
 
 /**
  * Event callback type for grid builder events
@@ -629,6 +630,38 @@ export interface GridBuilderAPI {
    * ```
    */
   canRedo(): boolean;
+
+  /**
+   * Reactive undo/redo state for button updates
+   *
+   * **Reactive**: StencilJS components automatically re-render when state changes
+   * **Use instead of**: canUndo() and canRedo() functions for reactive UIs
+   *
+   * **Use cases**:
+   * - Enable/disable undo/redo buttons reactively
+   * - Show/hide undo/redo UI based on availability
+   * - Display in status bars
+   *
+   * **Properties**:
+   * - canUndo: boolean - Whether undo is available
+   * - canRedo: boolean - Whether redo is available
+   *
+   * @example
+   * ```typescript
+   * // Reactive undo/redo buttons (updates automatically)
+   * <button
+   *   disabled={!api.undoRedoState.canUndo}
+   *   onClick={() => api.undo()}>
+   *   Undo
+   * </button>
+   * <button
+   *   disabled={!api.undoRedoState.canRedo}
+   *   onClick={() => api.redo()}>
+   *   Redo
+   * </button>
+   * ```
+   */
+  undoRedoState: UndoRedoState;
 
   // ======================
   // Canvas Management

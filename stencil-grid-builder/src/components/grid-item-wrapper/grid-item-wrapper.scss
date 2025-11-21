@@ -20,6 +20,7 @@
   transition: border-color 0.2s, box-shadow 0.2s;
   will-change: transform; /* GPU acceleration hint */
   touch-action: none; /* Prevent default touch behaviors (scrolling, zooming) for drag/resize */
+  container-type: inline-size; /* Enable container queries for child components */
 
   /* Default selection color (can be overridden per component type) */
   --selection-color: #f59e0b;

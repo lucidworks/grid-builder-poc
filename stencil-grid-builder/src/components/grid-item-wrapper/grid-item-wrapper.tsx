@@ -258,7 +258,7 @@ export class GridItemWrapper {
           this.wasDragged = true;
         }
       );
-      this.resizeHandler = new ResizeHandler(this.itemRef, this.item, this.handleItemUpdate, componentDefinition);
+      this.resizeHandler = new ResizeHandler(this.itemRef, this.item, this.handleItemUpdate, componentDefinition, this.config);
     }
   }
 

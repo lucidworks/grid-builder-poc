@@ -197,6 +197,7 @@
 
 import { GridItem } from '../services/state-manager';
 import { ComponentDefinition } from '../types/component-definition';
+import { GridConfig } from '../types/grid-config';
 import { domCache } from './dom-cache';
 import { getGridSizeHorizontal, getGridSizeVertical, pixelsToGridX, pixelsToGridY, gridToPixelsX, gridToPixelsY } from './grid-calculations';
 import { BUILD_TIMESTAMP } from './version';
@@ -297,6 +298,9 @@ export class ResizeHandler {
   /** Component definition (for min/max size constraints) */
   private componentDefinition?: ComponentDefinition;
 
+  /** Grid configuration (for consistent grid size calculations) */
+  private config?: GridConfig;
+
   /** Callback to update parent state after resize ends */
   private onUpdate: (item: GridItem) => void;
 
@@ -367,11 +371,12 @@ export class ResizeHandler {
    * }
    * ```
    */
-  constructor(element: HTMLElement, item: GridItem, onUpdate: (item: GridItem) => void, componentDefinition?: ComponentDefinition) {
+  constructor(element: HTMLElement, item: GridItem, onUpdate: (item: GridItem) => void, componentDefinition?: ComponentDefinition, config?: GridConfig) {
     this.element = element;
     this.item = item;
     this.onUpdate = onUpdate;
     this.componentDefinition = componentDefinition;
+    this.config = config;
 
     // Ensure element has width/height before initializing interact.js
     // StencilJS might not have applied styles yet
@@ -486,6 +491,7 @@ export class ResizeHandler {
   private initialize(): void {
     // DEBUG: Log build timestamp for debugging (easy to remove/disable)
     console.log('📦 resize-handler.ts build:', BUILD_TIMESTAMP);
+    console.log('🔧 Grid config fix applied - resize handler now uses same grid calculations as render');
 
     const interact = (window as any).interact;
     if (!interact) {
@@ -498,14 +504,14 @@ export class ResizeHandler {
     const maxSizeGridUnits = this.componentDefinition?.maxSize;
 
     this.minWidth = minSizeGridUnits
-      ? gridToPixelsX(minSizeGridUnits.width, this.item.canvasId)
+      ? gridToPixelsX(minSizeGridUnits.width, this.item.canvasId, this.config)
       : 100;
     this.minHeight = minSizeGridUnits
       ? gridToPixelsY(minSizeGridUnits.height)
       : 80;
 
     this.maxWidth = maxSizeGridUnits
-      ? gridToPixelsX(maxSizeGridUnits.width, this.item.canvasId)
+      ? gridToPixelsX(maxSizeGridUnits.width, this.item.canvasId, this.config)
       : Infinity;
     this.maxHeight = maxSizeGridUnits
       ? gridToPixelsY(maxSizeGridUnits.height)
@@ -736,29 +742,48 @@ export class ResizeHandler {
     let newX = this.startRect.x + deltaX;
     let newY = this.startRect.y + deltaY;
 
-    // Apply min/max constraints DURING resize (not just at end)
-    // This prevents crossing boundaries while allowing resize in other directions
-    const originalWidth = newWidth;
-    const originalHeight = newHeight;
+    // Get canvas dimensions for boundary constraints
+    const container = domCache.getCanvas(this.item.canvasId);
+    const containerWidth = container ? container.clientWidth : Infinity;
+    const containerHeight = container ? container.clientHeight : Infinity;
 
-    // Clamp width to min/max
+    // Apply min/max size constraints first
     newWidth = Math.max(this.minWidth, Math.min(this.maxWidth, newWidth));
-
-    // Clamp height to min/max
     newHeight = Math.max(this.minHeight, Math.min(this.maxHeight, newHeight));
 
-    // If width was clamped and we're resizing from the left edge, adjust x position
-    // This keeps the right edge anchored while blocking further left expansion
-    if (originalWidth !== newWidth && event.edges.left) {
-      const widthDiff = originalWidth - newWidth;
-      newX += widthDiff;
+    // CRITICAL: Enforce canvas boundaries during resize
+    // Check all four edges independently to prevent overflow
+
+    // Left edge: position must be >= 0
+    if (newX < 0) {
+      if (event.edges.left) {
+        // Resizing from left edge: reduce width to compensate for negative position
+        newWidth = Math.max(this.minWidth, newWidth + newX);
+      }
+      newX = 0;
     }
 
-    // If height was clamped and we're resizing from the top edge, adjust y position
-    // This keeps the bottom edge anchored while blocking further upward expansion
-    if (originalHeight !== newHeight && event.edges.top) {
-      const heightDiff = originalHeight - newHeight;
-      newY += heightDiff;
+    // Top edge: position must be >= 0
+    if (newY < 0) {
+      if (event.edges.top) {
+        // Resizing from top edge: reduce height to compensate for negative position
+        newHeight = Math.max(this.minHeight, newHeight + newY);
+      }
+      newY = 0;
+    }
+
+    // Right edge: x + width must be <= containerWidth
+    if (newX + newWidth > containerWidth) {
+      // Limit width so right edge stays at container boundary
+      // This works for both left and right edge resizing
+      newWidth = Math.max(this.minWidth, containerWidth - newX);
+    }
+
+    // Bottom edge: y + height must be <= containerHeight
+    if (newY + newHeight > containerHeight) {
+      // Limit height so bottom edge stays at container boundary
+      // This works for both top and bottom edge resizing
+      newHeight = Math.max(this.minHeight, containerHeight - newY);
     }
 
     // Cancel any pending RAF from previous move event
@@ -954,6 +979,8 @@ export class ResizeHandler {
       // No change → keep original (round normally)
       newWidth = Math.round(newWidth / gridSizeX) * gridSizeX;
     }
+    // Ensure grid snapping doesn't violate minimum size
+    newWidth = Math.max(this.minWidth, newWidth);
 
     // Height: directional rounding based on whether user grew or shrunk
     if (newHeight > this.startRect.height) {
@@ -966,6 +993,8 @@ export class ResizeHandler {
       // No change → keep original
       newHeight = Math.round(newHeight / gridSizeY) * gridSizeY;
     }
+    // Ensure grid snapping doesn't violate minimum size
+    newHeight = Math.max(this.minHeight, newHeight);
 
     // Position: directional rounding for top/left edge resizes
     if (newX < this.startRect.x) {
@@ -1013,11 +1042,87 @@ export class ResizeHandler {
 
     console.log('  afterMinMaxClamp:', { newX, newY, newWidth, newHeight });
 
-    // Keep within parent boundaries (manual implementation since interact.js restrictEdges breaks deltaRect)
-    newX = Math.max(0, newX); // Don't go past left edge
-    newY = Math.max(0, newY); // Don't go past top edge
-    newX = Math.min(newX, container.clientWidth - newWidth); // Don't go past right edge
-    newY = Math.min(newY, container.clientHeight - newHeight); // Don't go past bottom edge
+    // COMPREHENSIVE BOUNDARY CONSTRAINT CHECK
+    // =========================================
+    // Ensure all 4 corners of the component stay within canvas bounds.
+    // Priority: shrink if too large, then move if position is outside.
+
+    const canvasWidth = container.clientWidth;
+    const canvasHeight = container.clientHeight;
+
+    console.log('  canvasBounds:', { canvasWidth, canvasHeight });
+
+    // 1. HORIZONTAL BOUNDS CHECK
+    // ---------------------------
+    // If component is wider than canvas, shrink it to fit
+    if (newWidth > canvasWidth) {
+      console.log('  ⚠️ Width exceeds canvas, shrinking from', newWidth, 'to', canvasWidth);
+      newWidth = canvasWidth;
+    }
+
+    // Ensure left edge is within bounds (x >= 0)
+    if (newX < 0) {
+      console.log('  ⚠️ Left edge outside canvas, moving from x =', newX, 'to x = 0');
+      newX = 0;
+    }
+
+    // Ensure right edge is within bounds (x + width <= canvasWidth)
+    if (newX + newWidth > canvasWidth) {
+      if (event.edges && event.edges.right) {
+        // Resizing from RIGHT edge: clamp width to fit, keep position
+        const maxWidth = canvasWidth - newX;
+        console.log('  ⚠️ Right edge overflow (resizing from right), clamping width from', newWidth, 'to', maxWidth);
+        newWidth = Math.max(this.minWidth, maxWidth);
+      } else {
+        // Not resizing from right (dragging or resizing from left): move left to fit
+        const requiredX = canvasWidth - newWidth;
+        console.log('  ⚠️ Right edge outside canvas, moving from x =', newX, 'to x =', requiredX);
+        newX = requiredX;
+
+        // If still doesn't fit (requiredX < 0), shrink width
+        if (newX < 0) {
+          console.log('  ⚠️ Cannot fit by moving, shrinking width to', canvasWidth);
+          newWidth = canvasWidth;
+          newX = 0;
+        }
+      }
+    }
+
+    // 2. VERTICAL BOUNDS CHECK
+    // -------------------------
+    // If component is taller than canvas, shrink it to fit
+    if (newHeight > canvasHeight) {
+      console.log('  ⚠️ Height exceeds canvas, shrinking from', newHeight, 'to', canvasHeight);
+      newHeight = canvasHeight;
+    }
+
+    // Ensure top edge is within bounds (y >= 0)
+    if (newY < 0) {
+      console.log('  ⚠️ Top edge outside canvas, moving from y =', newY, 'to y = 0');
+      newY = 0;
+    }
+
+    // Ensure bottom edge is within bounds (y + height <= canvasHeight)
+    if (newY + newHeight > canvasHeight) {
+      if (event.edges && event.edges.bottom) {
+        // Resizing from BOTTOM edge: clamp height to fit, keep Y position
+        const maxHeight = canvasHeight - newY;
+        console.log('  ⚠️ Bottom edge overflow (resizing from bottom), clamping height from', newHeight, 'to', maxHeight);
+        newHeight = Math.max(this.minHeight, maxHeight);
+      } else {
+        // Not resizing from bottom (dragging or resizing from top): move up to fit
+        const requiredY = canvasHeight - newHeight;
+        console.log('  ⚠️ Bottom edge outside canvas, moving from y =', newY, 'to y =', requiredY);
+        newY = requiredY;
+
+        // If still doesn't fit (requiredY < 0), shrink height
+        if (newY < 0) {
+          console.log('  ⚠️ Cannot fit by moving, shrinking height to', canvasHeight);
+          newHeight = canvasHeight;
+          newY = 0;
+        }
+      }
+    }
 
     console.log('  afterBoundaryCheck:', { newX, newY, newWidth, newHeight });
 
@@ -1036,9 +1141,9 @@ export class ResizeHandler {
     const currentViewport = (window as any).gridState?.currentViewport || 'desktop';
     const layout = this.item.layouts[currentViewport as 'desktop' | 'mobile'];
 
-    layout.width = pixelsToGridX(newWidth, this.item.canvasId);
+    layout.width = pixelsToGridX(newWidth, this.item.canvasId, this.config);
     layout.height = pixelsToGridY(newHeight);
-    layout.x = pixelsToGridX(newX, this.item.canvasId);
+    layout.x = pixelsToGridX(newX, this.item.canvasId, this.config);
     layout.y = pixelsToGridY(newY);
 
     console.log('  finalGridUnits:', {

@@ -60,8 +60,8 @@ import { GridExport } from '../../types/grid-export';
 import { gridState, GridState, generateItemId, deleteItemsBatch, addItemsBatch, updateItemsBatch } from '../../services/state-manager';
 import { virtualRenderer } from '../../services/virtual-renderer';
 import { eventManager } from '../../services/event-manager';
-import { BatchAddCommand, BatchDeleteCommand, BatchUpdateConfigCommand, AddCanvasCommand, RemoveCanvasCommand } from '../../services/undo-redo-commands';
-import { undoRedo } from '../../services/undo-redo';
+import { BatchAddCommand, BatchDeleteCommand, BatchUpdateConfigCommand, AddCanvasCommand, RemoveCanvasCommand, MoveItemCommand } from '../../services/undo-redo-commands';
+import { undoRedo, undoRedoState } from '../../services/undo-redo';
 
 // Utility imports
 import { pixelsToGridX, pixelsToGridY } from '../../utils/grid-calculations';
@@ -426,6 +426,7 @@ export class GridBuilder {
    */
   private canvasDropHandler?: (e: Event) => void;
   private canvasMoveHandler?: (e: Event) => void;
+  private keyboardHandler?: (e: KeyboardEvent) => void;
 
   /**
    * ResizeObserver for container-based viewport switching
@@ -465,13 +466,11 @@ export class GridBuilder {
       detail: event.detail,
     });
 
-    const { itemId, canvasId } = event.detail;
+    const { itemId } = event.detail;
     if (itemId) {
-      console.log('  ✅ Deleting item:', itemId);
-      deleteItemsBatch([itemId]);
-
-      // Emit componentDeleted event to notify config panels and other listeners
-      eventManager.emit('componentDeleted', { itemId, canvasId });
+      console.log('  ✅ Deleting item via API (with undo support):', itemId);
+      // Use API method instead of direct deleteItemsBatch to enable undo/redo
+      this.api?.deleteComponent(itemId);
     }
   }
 
@@ -642,6 +641,130 @@ export class GridBuilder {
 
     this.hostElement.addEventListener('canvas-move', this.canvasMoveHandler);
 
+    // Setup keyboard shortcuts
+    this.keyboardHandler = (event: KeyboardEvent) => {
+      // Get modifier keys (Cmd on Mac, Ctrl on Windows/Linux)
+      const isUndo = (event.metaKey || event.ctrlKey) && event.key === 'z' && !event.shiftKey;
+      const isRedo = (event.metaKey || event.ctrlKey) && (
+        (event.key === 'z' && event.shiftKey) || // Ctrl/Cmd+Shift+Z
+        event.key === 'y' // Ctrl/Cmd+Y
+      );
+
+      // Handle undo/redo
+      if (isUndo) {
+        console.log('⌨️ Keyboard: Undo triggered');
+        event.preventDefault();
+        this.api?.undo();
+        return;
+      }
+
+      if (isRedo) {
+        console.log('⌨️ Keyboard: Redo triggered');
+        event.preventDefault();
+        this.api?.redo();
+        return;
+      }
+
+      // Handle arrow key nudging (only if component is selected)
+      if (!gridState.selectedItemId || !gridState.selectedCanvasId) {
+        return;
+      }
+
+      const isArrowKey = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(event.key);
+      if (!isArrowKey) {
+        return;
+      }
+
+      event.preventDefault();
+
+      // Get selected item
+      const canvas = gridState.canvases[gridState.selectedCanvasId];
+      if (!canvas) {
+        return;
+      }
+
+      const item = canvas.items.find(i => i.id === gridState.selectedItemId);
+      if (!item) {
+        return;
+      }
+
+      // Get current viewport layout
+      const viewport = gridState.currentViewport;
+      const layout = item.layouts[viewport];
+
+      // Calculate nudge amount (1 grid unit in each direction)
+      const nudgeAmount = 1;
+      let deltaX = 0;
+      let deltaY = 0;
+
+      switch (event.key) {
+        case 'ArrowUp':
+          deltaY = -nudgeAmount;
+          break;
+        case 'ArrowDown':
+          deltaY = nudgeAmount;
+          break;
+        case 'ArrowLeft':
+          deltaX = -nudgeAmount;
+          break;
+        case 'ArrowRight':
+          deltaX = nudgeAmount;
+          break;
+      }
+
+      console.log('⌨️ Keyboard: Nudging component', {
+        key: event.key,
+        deltaX,
+        deltaY,
+        itemId: item.id,
+      });
+
+      // Capture old position for undo
+      const oldX = layout.x;
+      const oldY = layout.y;
+
+      // Update position with boundary checks
+      const newX = Math.max(0, layout.x + deltaX);
+      const newY = Math.max(0, layout.y + deltaY);
+
+      // Check right boundary (100 grid units = 100%)
+      const maxX = 100 - layout.width;
+      const constrainedX = Math.min(newX, maxX);
+      const constrainedY = newY; // No vertical limit
+
+      // Only update if position actually changed
+      if (oldX === constrainedX && oldY === constrainedY) {
+        return; // No change, don't create undo command
+      }
+
+      // Update item layout (mutate in place to preserve all properties like 'customized')
+      layout.x = constrainedX;
+      layout.y = constrainedY;
+
+      // Create undo command for nudge
+      const nudgeCommand = new MoveItemCommand(
+        item.id,
+        gridState.selectedCanvasId,
+        gridState.selectedCanvasId,
+        { x: oldX, y: oldY },
+        { x: constrainedX, y: constrainedY },
+        canvas.items.findIndex(i => i.id === item.id)
+      );
+      undoRedo.push(nudgeCommand);
+
+      // Trigger state update
+      gridState.canvases = { ...gridState.canvases };
+
+      // Emit event
+      eventManager.emit('componentDragged', {
+        itemId: item.id,
+        canvasId: gridState.selectedCanvasId,
+        position: { x: constrainedX, y: constrainedY },
+      });
+    };
+
+    document.addEventListener('keydown', this.keyboardHandler);
+
     // Setup container-based viewport switching
     this.setupViewportResizeObserver();
   }
@@ -663,6 +786,9 @@ export class GridBuilder {
     }
     if (this.canvasMoveHandler) {
       this.hostElement.removeEventListener('canvas-move', this.canvasMoveHandler);
+    }
+    if (this.keyboardHandler) {
+      document.removeEventListener('keydown', this.keyboardHandler);
     }
 
     // Cleanup ResizeObserver
@@ -778,6 +904,9 @@ export class GridBuilder {
         canvas.items.push(newItem);
         gridState.canvases = { ...gridState.canvases };
 
+        // Add to undo/redo history
+        undoRedo.push(new BatchAddCommand([newItem.id]));
+
         // Emit event
         eventManager.emit('componentAdded', { item: newItem, canvasId });
 
@@ -790,6 +919,10 @@ export class GridBuilder {
           const canvas = gridState.canvases[canvasId];
           const itemIndex = canvas.items.findIndex((i) => i.id === itemId);
           if (itemIndex !== -1) {
+            // Add to undo/redo history BEFORE deletion (need state for undo)
+            undoRedo.push(new BatchDeleteCommand([itemId]));
+
+            // Delete item
             canvas.items.splice(itemIndex, 1);
             gridState.canvases = { ...gridState.canvases };
 
@@ -814,10 +947,21 @@ export class GridBuilder {
           const canvas = gridState.canvases[canvasId];
           const itemIndex = canvas.items.findIndex((i) => i.id === itemId);
           if (itemIndex !== -1) {
+            const item = canvas.items[itemIndex];
+            const newConfig = { ...item.config, ...config };
+
+            // Create undo command BEFORE making changes
+            const batchUpdate = [{
+              itemId,
+              canvasId,
+              updates: { config: newConfig },
+            }];
+            undoRedo.push(new BatchUpdateConfigCommand(batchUpdate));
+
             // Merge config
             canvas.items[itemIndex] = {
               ...canvas.items[itemIndex],
-              config: { ...canvas.items[itemIndex].config, ...config },
+              config: newConfig,
             };
             gridState.canvases = { ...gridState.canvases };
 
@@ -930,10 +1074,14 @@ export class GridBuilder {
 
       undo: () => {
         undoRedo.undo();
+        // Emit event after undo
+        eventManager.emit('undoExecuted', {});
       },
 
       redo: () => {
         undoRedo.redo();
+        // Emit event after redo
+        eventManager.emit('redoExecuted', {});
       },
 
       canUndo: () => {
@@ -943,6 +1091,8 @@ export class GridBuilder {
       canRedo: () => {
         return undoRedo.canRedo();
       },
+
+      undoRedoState: undoRedoState,
 
       // ======================
       // Canvas Management

@@ -830,6 +830,14 @@ export class MoveItemCommand implements Command {
    * **Safety**: Returns early if canvas or item not found
    */
   undo(): void {
+    console.log('🔙 MoveItemCommand.undo()', {
+      itemId: this.itemId,
+      sourceCanvasId: this.sourceCanvasId,
+      targetCanvasId: this.targetCanvasId,
+      sourcePosition: this.sourcePosition,
+      targetPosition: this.targetPosition,
+    });
+
     // Find the item in target canvas first
     let targetCanvas = gridState.canvases[this.targetCanvasId];
     let item = targetCanvas?.items.find((i) => i.id === this.itemId);
@@ -848,8 +856,14 @@ export class MoveItemCommand implements Command {
     }
 
     if (!item || !targetCanvas) {
+      console.warn('  ❌ Item or canvas not found, aborting undo');
       return;
     }
+
+    console.log('  📍 Found item, current position:', {
+      x: item.layouts.desktop.x,
+      y: item.layouts.desktop.y,
+    });
 
     // Remove from current canvas (wherever it is)
     targetCanvas.items = targetCanvas.items.filter((i) => i.id !== this.itemId);
@@ -858,6 +872,11 @@ export class MoveItemCommand implements Command {
     item.canvasId = this.sourceCanvasId;
     item.layouts.desktop.x = this.sourcePosition.x;
     item.layouts.desktop.y = this.sourcePosition.y;
+
+    console.log('  ✅ Updated item position to:', {
+      x: item.layouts.desktop.x,
+      y: item.layouts.desktop.y,
+    });
 
     // Restore size if it was tracked (for resize operations)
     if (this.sourceSize) {
@@ -868,6 +887,7 @@ export class MoveItemCommand implements Command {
     // Add back to source canvas at original index
     const sourceCanvas = gridState.canvases[this.sourceCanvasId];
     if (!sourceCanvas) {
+      console.warn('  ❌ Source canvas not found, aborting undo');
       return;
     }
 
@@ -877,7 +897,18 @@ export class MoveItemCommand implements Command {
       sourceCanvas.items.push(item);
     }
 
+    // Trigger state update
     gridState.canvases = { ...gridState.canvases };
+
+    // Clear any inline transform style that might be persisting from drag handler
+    // This ensures the component re-renders with the correct position from state
+    const element = document.getElementById(this.itemId);
+    if (element) {
+      console.log('  🎨 Clearing inline transform style');
+      element.style.transform = '';
+    }
+
+    console.log('  ✅ Undo complete');
   }
 
   /**
@@ -902,12 +933,26 @@ export class MoveItemCommand implements Command {
    * **Safety**: Returns early if canvas or item not found
    */
   redo(): void {
+    console.log('🔜 MoveItemCommand.redo()', {
+      itemId: this.itemId,
+      sourceCanvasId: this.sourceCanvasId,
+      targetCanvasId: this.targetCanvasId,
+      sourcePosition: this.sourcePosition,
+      targetPosition: this.targetPosition,
+    });
+
     // Find the item in source canvas
     const sourceCanvas = gridState.canvases[this.sourceCanvasId];
     const item = sourceCanvas?.items.find((i) => i.id === this.itemId);
     if (!item) {
+      console.warn('  ❌ Item not found, aborting redo');
       return;
     }
+
+    console.log('  📍 Found item, current position:', {
+      x: item.layouts.desktop.x,
+      y: item.layouts.desktop.y,
+    });
 
     // Remove from source canvas
     sourceCanvas.items = sourceCanvas.items.filter((i) => i.id !== this.itemId);
@@ -916,6 +961,11 @@ export class MoveItemCommand implements Command {
     item.canvasId = this.targetCanvasId;
     item.layouts.desktop.x = this.targetPosition.x;
     item.layouts.desktop.y = this.targetPosition.y;
+
+    console.log('  ✅ Updated item position to:', {
+      x: item.layouts.desktop.x,
+      y: item.layouts.desktop.y,
+    });
 
     // Restore size if it was tracked (for resize operations)
     if (this.targetSize) {
@@ -926,12 +976,24 @@ export class MoveItemCommand implements Command {
     // Add to target canvas
     const targetCanvas = gridState.canvases[this.targetCanvasId];
     if (!targetCanvas) {
+      console.warn('  ❌ Target canvas not found, aborting redo');
       return;
     }
 
     targetCanvas.items.push(item);
 
+    // Trigger state update
     gridState.canvases = { ...gridState.canvases };
+
+    // Clear any inline transform style that might be persisting from drag handler
+    // This ensures the component re-renders with the correct position from state
+    const element = document.getElementById(this.itemId);
+    if (element) {
+      console.log('  🎨 Clearing inline transform style');
+      element.style.transform = '';
+    }
+
+    console.log('  ✅ Redo complete');
   }
 }
 

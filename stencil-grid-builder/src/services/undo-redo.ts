@@ -333,7 +333,7 @@ export interface Command {
  * }
  * ```
  */
-interface UndoRedoState {
+export interface UndoRedoState {
   /** Whether undo operation is available (historyPosition >= 0) */
   canUndo: boolean;
 
