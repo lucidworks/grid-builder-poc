@@ -19,6 +19,7 @@
   cursor: default;
   transition: border-color 0.2s, box-shadow 0.2s;
   will-change: transform; /* GPU acceleration hint */
+  touch-action: none; /* Prevent default touch behaviors (scrolling, zooming) for drag/resize */
 
   /* Default selection color (can be overridden per component type) */
   --selection-color: #f59e0b;
@@ -123,6 +124,7 @@
   pointer-events: auto; /* Always interactive for interact.js */
   transition: opacity 0.2s;
   user-select: none; /* Prevent text selection while dragging */
+  touch-action: none; /* Enable touch dragging on mobile/tablet */
 }
 
 .grid-item.selected .grid-item-header,
@@ -234,6 +236,7 @@
   box-shadow: 0 0 4px rgba(0, 0, 0, 40%);
   opacity: 0;
   transition: opacity 0.2s, transform 0.2s;
+  touch-action: none; /* Enable touch resizing on mobile/tablet */
 }
 
 .resize-handle:hover {

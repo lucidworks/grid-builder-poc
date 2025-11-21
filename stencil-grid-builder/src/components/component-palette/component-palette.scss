@@ -46,6 +46,7 @@
   text-align: center;
   transition: transform 0.2s, box-shadow 0.2s;
   user-select: none;
+  touch-action: none; /* Enable touch dragging from palette on mobile/tablet */
 }
 
 .palette-item:hover {
