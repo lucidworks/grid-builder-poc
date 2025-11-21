@@ -68,6 +68,12 @@ export const contentComponents: ComponentDefinition[] = [
     minSize: { width: 20, height: 3 },
     maxSize: { width: 50, height: 10 },
     selectionColor: '#3b82f6',
+    renderPaletteItem: ({ componentType, name, icon }) =>
+      `<custom-palette-item
+        component-type="${componentType}"
+        name="${name}"
+        icon="${icon}">
+      </custom-palette-item>`,
     render: ({ config }) => (
       <blog-header
         headerTitle={config?.title || 'Default Header'}
@@ -81,11 +87,72 @@ export const contentComponents: ComponentDefinition[] = [
     icon: '📝',
     defaultSize: { width: 25, height: 10 },
     selectionColor: '#10b981',
+    renderPaletteItem: ({ componentType, name, icon }) =>
+      `<custom-palette-item
+        component-type="${componentType}"
+        name="${name}"
+        icon="${icon}">
+      </custom-palette-item>`,
     render: ({ config }) => (
       <blog-article
         content={config?.content || 'Article content goes here'}
         author={config?.author}
         date={config?.date}
+      />
+    ),
+  },
+  {
+    type: 'blog-image',
+    name: 'Blog Image',
+    icon: '🖼️',
+    defaultSize: { width: 45, height: 20 },
+    minSize: { width: 10, height: 8 },
+    selectionColor: '#8b5cf6',
+    renderPaletteItem: ({ componentType, name, icon }) =>
+      `<custom-palette-item
+        component-type="${componentType}"
+        name="${name}"
+        icon="${icon}">
+      </custom-palette-item>`,
+    configSchema: [
+      {
+        name: 'src',
+        label: 'Image URL',
+        type: 'text',
+        defaultValue: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&h=600&fit=crop',
+        placeholder: 'Enter image URL',
+      },
+      {
+        name: 'alt',
+        label: 'Alt Text',
+        type: 'text',
+        defaultValue: 'Placeholder image',
+        placeholder: 'Enter alt text for accessibility',
+      },
+      {
+        name: 'caption',
+        label: 'Caption',
+        type: 'text',
+        defaultValue: '',
+        placeholder: 'Optional caption (max 2 lines)',
+      },
+      {
+        name: 'objectFit',
+        label: 'Fit Mode',
+        type: 'select',
+        defaultValue: 'contain',
+        options: [
+          { value: 'contain', label: 'Contain (show all, no crop)' },
+          { value: 'cover', label: 'Cover (fill, may crop)' },
+        ],
+      },
+    ],
+    render: ({ config }) => (
+      <blog-image
+        src={config?.src || 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&h=600&fit=crop'}
+        alt={config?.alt || 'Placeholder image'}
+        caption={config?.caption}
+        objectFit={config?.objectFit || 'contain'}
       />
     ),
   },
@@ -136,6 +203,7 @@ export const blogComponentDefinitions: ComponentDefinition[] = [
    * - Custom minimum size (can't be smaller than 20x3)
    * - Custom maximum size (can't be taller than 10 units)
    * - Custom selection color (blue for headers)
+   * - Custom palette item with SVG preview
    * - Config-driven rendering (title and subtitle from config)
    */
   {
@@ -160,6 +228,14 @@ export const blogComponentDefinitions: ComponentDefinition[] = [
     // Applied to selection outline when this component is selected
     selectionColor: '#3b82f6', // Blue for headers
 
+    // Custom palette item with SVG preview
+    renderPaletteItem: ({ componentType, name, icon }) =>
+      `<custom-palette-item
+        component-type="${componentType}"
+        name="${name}"
+        icon="${icon}">
+      </custom-palette-item>`,
+
     // Render function - returns the actual component JSX
     // The library calls this with { config, itemId, ...otherProps }
     // Config comes from gridState.canvases[canvasId].items[itemId].config
@@ -179,6 +255,7 @@ export const blogComponentDefinitions: ComponentDefinition[] = [
    * - Half-width default size (25 units = 50% of canvas)
    * - No size constraints (uses library defaults)
    * - Custom selection color (green for articles)
+   * - Custom palette item with SVG preview
    * - Multiple config properties (content, author, date)
    */
   {
@@ -196,6 +273,14 @@ export const blogComponentDefinitions: ComponentDefinition[] = [
 
     // No minSize/maxSize specified
     // Library will use defaults: 100px min width, 80px min height, no maximum
+
+    // Custom palette item with SVG preview
+    renderPaletteItem: ({ componentType, name, icon }) =>
+      `<custom-palette-item
+        component-type="${componentType}"
+        name="${name}"
+        icon="${icon}">
+      </custom-palette-item>`,
 
     // Render function with multiple config properties
     // Demonstrates passing multiple configuration values to child component
@@ -291,6 +376,103 @@ export const blogComponentDefinitions: ComponentDefinition[] = [
         label={config?.label || 'Click me!'}
         variant={config?.variant || 'primary'}
         href={config?.href}
+      />
+    ),
+  },
+
+  /**
+   * Blog Image Component
+   * --------------------
+   *
+   * Features demonstrated:
+   * - Proper aspect ratio preservation (no distortion)
+   * - Maximum space utilization within container
+   * - Guaranteed no overflow (critical for images)
+   * - Loading state with spinner animation
+   * - Error state with fallback UI
+   * - Optional caption with truncation
+   * - Two fit modes: contain (show all) and cover (fill container)
+   * - Container-relative sizing for all elements
+   * - Editable config (src, alt, caption, objectFit)
+   */
+  {
+    type: 'blog-image',
+    name: 'Blog Image',
+    icon: '🖼️',
+
+    // Default size for images
+    // 25 units = 50% canvas width (good for side-by-side layouts)
+    // 15 units height = adequate space for various aspect ratios
+    defaultSize: { width: 25, height: 15 },
+
+    // Minimum size constraints
+    // Min 10 units width (20%), 8 units height
+    // Allows for small thumbnails while maintaining usability
+    minSize: { width: 10, height: 8 },
+
+    // Custom selection color (purple for media components)
+    selectionColor: '#8b5cf6', // Purple for images
+
+    // Custom palette item
+    renderPaletteItem: ({ componentType, name, icon }) =>
+      `<custom-palette-item
+        component-type="${componentType}"
+        name="${name}"
+        icon="${icon}">
+      </custom-palette-item>`,
+
+    /**
+     * Configuration Schema
+     * --------------------
+     *
+     * Library Feature: configSchema
+     * - Defines editable fields in the config panel
+     * - Supports: text, number, select, checkbox, color, textarea
+     * - Changes apply immediately (live preview)
+     * - Schema is used by custom-config-panel component
+     */
+    configSchema: [
+      {
+        name: 'src',
+        label: 'Image URL',
+        type: 'text',
+        defaultValue: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&h=600&fit=crop',
+        placeholder: 'Enter image URL',
+      },
+      {
+        name: 'alt',
+        label: 'Alt Text',
+        type: 'text',
+        defaultValue: 'Placeholder image',
+        placeholder: 'Enter alt text for accessibility',
+      },
+      {
+        name: 'caption',
+        label: 'Caption',
+        type: 'text',
+        defaultValue: '',
+        placeholder: 'Optional caption (max 2 lines)',
+      },
+      {
+        name: 'objectFit',
+        label: 'Fit Mode',
+        type: 'select',
+        defaultValue: 'contain',
+        options: [
+          { value: 'contain', label: 'Contain (show all, no crop)' },
+          { value: 'cover', label: 'Cover (fill, may crop)' },
+        ],
+      },
+    ],
+
+    // Render function with image-specific config
+    // Demonstrates src, alt, caption, and objectFit configuration
+    render: ({ config }) => (
+      <blog-image
+        src={config?.src || 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&h=600&fit=crop'}
+        alt={config?.alt || 'Placeholder image'}
+        caption={config?.caption}
+        objectFit={config?.objectFit || 'contain'}
       />
     ),
   },

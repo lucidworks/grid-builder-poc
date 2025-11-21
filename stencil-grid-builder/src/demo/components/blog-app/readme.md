@@ -25,6 +25,7 @@ using the
 - [custom-config-panel](../custom-config-panel)
 - [blog-header](../blog-header)
 - [blog-article](../blog-article)
+- [blog-image](../src/demo/components/blog-image)
 - [blog-button](../blog-button)
 
 ### Graph
@@ -38,6 +39,7 @@ graph TD;
   blog-app --> custom-config-panel
   blog-app --> blog-header
   blog-app --> blog-article
+  blog-app --> blog-image
   blog-app --> blog-button
   grid-viewer --> canvas-section-viewer
   canvas-section-viewer --> grid-item-wrapper
@@ -47,6 +49,7 @@ graph TD;
   canvas-section --> grid-item-wrapper
   custom-config-panel --> blog-header
   custom-config-panel --> blog-article
+  custom-config-panel --> blog-image
   custom-config-panel --> blog-button
   style blog-app fill:#f9f,stroke:#333,stroke-width:4px
 ```

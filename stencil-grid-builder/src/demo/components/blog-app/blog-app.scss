@@ -322,6 +322,13 @@ blog-app {
           background: white;
         }
 
+        /* Remove blue background from palette items with custom components */
+        .palette-item:has(custom-palette-item) {
+          background: transparent;
+          padding: 0;
+          margin-bottom: 12px;
+        }
+
         .palette-item {
           margin-bottom: 8px;
           font-size: 13px;

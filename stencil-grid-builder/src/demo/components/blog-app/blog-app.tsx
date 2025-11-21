@@ -213,6 +213,23 @@ export class BlogApp {
    * Must be @State to trigger re-render when API becomes available
    */
   @State() private api!: GridBuilderAPI;
+
+  /**
+   * Local undo/redo state (synced from API)
+   * ------------------------------------
+   *
+   * Why local state instead of imported undoRedoState:
+   * - Stencil reactivity doesn't work across module boundaries
+   * - When demo is built separately from library, imported store is different instance
+   * - Local @State() properties trigger re-renders reliably
+   *
+   * Synchronization:
+   * - Updated via API events in setupGridBuilderIntegration()
+   * - Listens to stateChanged event to update button states
+   */
+  @State() private canUndo: boolean = false;
+  @State() private canRedo: boolean = false;
+
   private sectionCounter = 1;
 
   /**
@@ -334,55 +351,33 @@ export class BlogApp {
     this.updateCanvasStyles();
   }
 
-  /**
-   * Component Lifecycle: componentDidLoad
-   * --------------------------------------
-   *
-   * Library Feature: Grid Builder API (window.gridBuilderAPI)
-   *
-   * The library exposes a programmatic API on window.gridBuilderAPI that provides:
-   * - State management methods: addCanvas, removeCanvas, undo, redo, etc.
-   * - Query methods: getState, canUndo, canRedo
-   * - Event system: on, off for subscribing to state changes
-   *
-   * This lifecycle hook demonstrates:
-   * 1. Accessing the Grid Builder API
-   * 2. Listening to library events (canvasAdded, canvasRemoved)
-   * 3. Synchronizing host app state with library state
-   */
+  componentDidLoad() {
+    // Wait for grid-builder to initialize and expose API on window
+    // Check every 50ms for up to 2 seconds
+    let attempts = 0;
+    const maxAttempts = 40; // 2 seconds / 50ms
+
+    const checkForAPI = () => {
+      attempts++;
+
+      if ((window as any).gridBuilderAPI) {
+        console.log('🔧 blog-app found API on window, initializing...');
+        this.api = (window as any).gridBuilderAPI;
+        this.setupGridBuilderIntegration();
+      } else if (attempts < maxAttempts) {
+        setTimeout(checkForAPI, 50);
+      } else {
+        console.warn('⚠️ blog-app timeout waiting for API');
+      }
+    };
+
+    checkForAPI();
+  }
+
   /**
    * Track whether we've initialized the API integration
    */
   private apiInitialized = false;
-
-  componentDidLoad() {
-    /**
-     * Access Grid Builder API
-     * -----------------------
-     *
-     * Library Feature: Configurable API Storage (api-ref prop)
-     *
-     * **Demo Pattern**: API stored on component instance via api-ref={{ target: this, key: 'api' }}
-     * - The API is automatically set by grid-builder during its componentDidLoad
-     * - Accessed via this.api (not window.gridBuilderAPI)
-     * - Cleaner architecture - no global pollution
-     * - Supports multiple instances on same page
-     *
-     * Available API methods:
-     * - addCanvas(canvasId: string): Add a new canvas
-     * - removeCanvas(canvasId: string): Remove a canvas
-     * - undo(): Undo last action
-     * - redo(): Redo last undone action
-     * - canUndo(): Check if undo is available
-     * - canRedo(): Check if redo is available
-     * - getState(): Get current grid state
-     * - on(event, handler): Subscribe to events
-     * - off(event, handler): Unsubscribe from events
-     */
-
-    // Setup will happen in componentDidUpdate when API becomes available
-    this.setupGridBuilderIntegration();
-  }
 
   private setupGridBuilderIntegration() {
     console.log('🔧 blog-app setupGridBuilderIntegration called', {
@@ -482,18 +477,61 @@ export class BlogApp {
       this.removeCanvasHeader(canvasId);
       console.log('  ✅ Header removal attempted for:', canvasId);
     });
+
+    /**
+     * Sync undo/redo button state
+     * -----------------------------
+     *
+     * Since Stencil reactivity doesn't work across module boundaries,
+     * we listen to library events that indicate undo/redo state changes.
+     *
+     * Events that change undo/redo state:
+     * - componentAdded, componentDeleted (modify history)
+     * - componentDragged, componentResized (modify history)
+     * - componentsBatchAdded, componentsBatchDeleted (modify history)
+     * - canvasAdded, canvasRemoved (modify history)
+     *
+     * This ensures undo/redo buttons update correctly in the demo.
+     */
+
+    // Initial sync
+    this.syncUndoRedoState();
+
+    // Listen to all events that modify history
+    const eventsToWatch = [
+      'componentAdded',
+      'componentDeleted',
+      'componentDragged',
+      'componentResized',
+      'componentsBatchAdded',
+      'componentsBatchDeleted',
+      'canvasAdded',
+      'canvasRemoved',
+      'undoExecuted',  // Library emits this when undo() is called
+      'redoExecuted'   // Library emits this when redo() is called
+    ];
+
+    eventsToWatch.forEach(eventName => {
+      this.api.on(eventName, this.syncUndoRedoState);
+    });
   }
 
-  componentDidUpdate() {
-    // Get API from window if not already set
-    if (!this.api && (window as any).gridBuilderAPI) {
-      console.log('🔧 blog-app componentDidUpdate - API now available on window');
-      this.api = (window as any).gridBuilderAPI;
+  private syncUndoRedoState = () => {
+    if (!this.api) return;
+
+    const newCanUndo = this.api.canUndo();
+    const newCanRedo = this.api.canRedo();
+
+    // Only update if changed (avoid unnecessary re-renders)
+    if (this.canUndo !== newCanUndo) {
+      this.canUndo = newCanUndo;
     }
+    if (this.canRedo !== newCanRedo) {
+      this.canRedo = newCanRedo;
+    }
+  };
 
-    // Setup API integration once it becomes available (after grid-builder loads)
-    this.setupGridBuilderIntegration();
-
+  componentDidUpdate() {
     // Update canvas styles whenever metadata changes
     this.updateCanvasStyles();
     // Inject canvas headers
@@ -862,7 +900,7 @@ export class BlogApp {
         ],
       },
       'articles-grid': {
-        zIndexCounter: 3,
+        zIndexCounter: 4,
         items: [
           {
             id: 'article-1',
@@ -897,6 +935,23 @@ export class BlogApp {
             },
           },
           {
+            id: 'featured-image',
+            canvasId: 'articles-grid',
+            type: 'blog-image',
+            name: 'Featured Image',
+            layouts: {
+              desktop: { x: 0, y: 13, width: 12, height: 15 },
+              mobile: { x: null, y: null, width: null, height: null, customized: false },
+            },
+            zIndex: 3,
+            config: {
+              src: 'https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=800&h=600&fit=crop',
+              alt: 'Developer workspace with laptop and code',
+              caption: 'A modern development environment',
+              objectFit: 'cover',
+            },
+          },
+          {
             id: 'article-3',
             canvasId: 'articles-grid',
             type: 'blog-article',
@@ -905,7 +960,7 @@ export class BlogApp {
               desktop: { x: 12, y: 13, width: 26, height: 12 },
               mobile: { x: null, y: null, width: null, height: null, customized: false },
             },
-            zIndex: 3,
+            zIndex: 4,
             config: {
               content: 'Learn how to build amazing layouts with drag-and-drop functionality.',
               author: 'Alex Chen',
@@ -984,7 +1039,7 @@ export class BlogApp {
                 <button
                   class="undo-btn"
                   onClick={() => this.api?.undo()}
-                  disabled={!this.api || !this.api.canUndo()}
+                  disabled={!this.api || !this.canUndo}
                   title="Undo (components and sections)"
                 >
                   ↶ Undo
@@ -992,7 +1047,7 @@ export class BlogApp {
                 <button
                   class="redo-btn"
                   onClick={() => this.api?.redo()}
-                  disabled={!this.api || !this.api.canRedo()}
+                  disabled={!this.api || !this.canRedo}
                   title="Redo (components and sections)"
                 >
                   ↷ Redo
@@ -1111,8 +1166,8 @@ export class BlogApp {
           onCancel={this.handleCancelDelete}
         />
 
-        {/* Custom Config Panel (demo-specific) - Uses window.gridBuilderAPI */}
-        <custom-config-panel />
+        {/* Custom Config Panel (demo-specific) */}
+        <custom-config-panel api={this.api} />
       </div>
     );
   }
