@@ -497,4 +497,169 @@ describe('grid-builder', () => {
       expect(component.components[2].selectionColor).toBe('rgba(255, 87, 51, 0.8)');
     });
   });
+
+  describe('@Method() Decorators', () => {
+    it('should expose exportState method', async () => {
+      const component = new GridBuilder();
+      component.components = mockComponentDefinitions;
+
+      expect(typeof component.exportState).toBe('function');
+
+      const result = await component.exportState();
+      expect(result).toBeDefined();
+      expect(result.canvases).toBeDefined();
+    });
+
+    it('should expose importState method', async () => {
+      const component = new GridBuilder();
+      component.components = mockComponentDefinitions;
+
+      expect(typeof component.importState).toBe('function');
+
+      const mockState = {
+        canvases: {
+          'canvas-1': {
+            zIndexCounter: 1,
+            items: [],
+          },
+        },
+      };
+
+      await component.importState(mockState);
+      // Should not throw
+    });
+
+    it('should expose getState method', async () => {
+      const component = new GridBuilder();
+      component.components = mockComponentDefinitions;
+
+      expect(typeof component.getState).toBe('function');
+
+      const state = await component.getState();
+      expect(state).toBeDefined();
+      expect(state.canvases).toBeDefined();
+    });
+
+    it('should expose addCanvas method', async () => {
+      const component = new GridBuilder();
+      component.components = mockComponentDefinitions;
+      component.componentDidLoad();
+
+      expect(typeof component.addCanvas).toBe('function');
+
+      await component.addCanvas('test-canvas');
+      // Should not throw
+    });
+
+    it('should expose removeCanvas method', async () => {
+      const component = new GridBuilder();
+      component.components = mockComponentDefinitions;
+      component.componentDidLoad();
+
+      expect(typeof component.removeCanvas).toBe('function');
+
+      await component.removeCanvas('test-canvas');
+      // Should not throw
+    });
+
+    it('should expose undo/redo methods', async () => {
+      const component = new GridBuilder();
+      component.components = mockComponentDefinitions;
+      component.componentDidLoad();
+
+      expect(typeof component.undo).toBe('function');
+      expect(typeof component.redo).toBe('function');
+      expect(typeof component.canUndo).toBe('function');
+      expect(typeof component.canRedo).toBe('function');
+
+      const canUndoResult = await component.canUndo();
+      expect(typeof canUndoResult).toBe('boolean');
+
+      const canRedoResult = await component.canRedo();
+      expect(typeof canRedoResult).toBe('boolean');
+    });
+
+    it('should expose component manipulation methods', async () => {
+      const component = new GridBuilder();
+      component.components = mockComponentDefinitions;
+      component.componentDidLoad();
+
+      expect(typeof component.addComponent).toBe('function');
+      expect(typeof component.deleteComponent).toBe('function');
+      expect(typeof component.updateConfig).toBe('function');
+
+      // Test addComponent
+      const itemId = await component.addComponent(
+        'test-canvas',
+        'header',
+        { x: 0, y: 0, width: 10, height: 5 },
+        { title: 'Test' }
+      );
+      expect(itemId).toBeDefined();
+    });
+  });
+
+  describe('Configuration Options', () => {
+    it('should accept enableAnimations config', () => {
+      const customConfig = {
+        enableAnimations: true,
+        animationDuration: 200,
+      };
+
+      const component = new GridBuilder();
+      component.config = customConfig;
+
+      expect(component.config.enableAnimations).toBe(true);
+      expect(component.config.animationDuration).toBe(200);
+    });
+
+    it('should accept enableAutoScroll config', () => {
+      const customConfig = {
+        enableAutoScroll: false,
+      };
+
+      const component = new GridBuilder();
+      component.config = customConfig;
+
+      expect(component.config.enableAutoScroll).toBe(false);
+    });
+
+    it('should accept eventDebounceDelay config', () => {
+      const customConfig = {
+        eventDebounceDelay: 500,
+      };
+
+      const component = new GridBuilder();
+      component.config = customConfig;
+
+      expect(component.config.eventDebounceDelay).toBe(500);
+    });
+
+    it('should work with default config values', () => {
+      const component = new GridBuilder();
+      component.components = mockComponentDefinitions;
+
+      // Should work without explicit config
+      expect(component.config).toBeUndefined();
+    });
+
+    it('should accept all new config options together', () => {
+      const customConfig = {
+        enableAnimations: true,
+        animationDuration: 150,
+        enableAutoScroll: true,
+        eventDebounceDelay: 300,
+        gridSizePercent: 2,
+      };
+
+      const component = new GridBuilder();
+      component.config = customConfig;
+
+      expect(component.config.enableAnimations).toBe(true);
+      expect(component.config.animationDuration).toBe(150);
+      expect(component.config.enableAutoScroll).toBe(true);
+      expect(component.config.eventDebounceDelay).toBe(300);
+      expect(component.config.gridSizePercent).toBe(2);
+    });
+  });
 });
