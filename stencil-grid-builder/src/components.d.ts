@@ -214,6 +214,21 @@ export namespace Components {
         "headerTitle": string;
         "subtitle"?: string;
     }
+    interface BlogImage {
+        /**
+          * @default 'Placeholder image'
+         */
+        "alt": string;
+        "caption"?: string;
+        /**
+          * @default 'contain'
+         */
+        "objectFit": 'contain' | 'cover';
+        /**
+          * @default 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&h=600&fit=crop'
+         */
+        "src": string;
+    }
     /**
      * CanvasSection Component
      * =======================
@@ -473,6 +488,7 @@ export namespace Components {
      * ==============================
      * Example custom palette item that shows how consumers can create
      * fully customized palette entries for their components.
+     * Updated to display SVG icons on top with titles below (similar to UI builder pattern)
      */
     interface CustomPaletteItem {
         /**
@@ -480,7 +496,7 @@ export namespace Components {
          */
         "componentType": string;
         /**
-          * Icon/emoji
+          * Icon/emoji or SVG identifier
          */
         "icon": string;
         /**
@@ -932,6 +948,12 @@ declare global {
         prototype: HTMLBlogHeaderElement;
         new (): HTMLBlogHeaderElement;
     };
+    interface HTMLBlogImageElement extends Components.BlogImage, HTMLStencilElement {
+    }
+    var HTMLBlogImageElement: {
+        prototype: HTMLBlogImageElement;
+        new (): HTMLBlogImageElement;
+    };
     /**
      * CanvasSection Component
      * =======================
@@ -1130,6 +1152,7 @@ declare global {
      * ==============================
      * Example custom palette item that shows how consumers can create
      * fully customized palette entries for their components.
+     * Updated to display SVG icons on top with titles below (similar to UI builder pattern)
      */
     interface HTMLCustomPaletteItemElement extends Components.CustomPaletteItem, HTMLStencilElement {
     }
@@ -1238,6 +1261,7 @@ declare global {
         "blog-article": HTMLBlogArticleElement;
         "blog-button": HTMLBlogButtonElement;
         "blog-header": HTMLBlogHeaderElement;
+        "blog-image": HTMLBlogImageElement;
         "canvas-section": HTMLCanvasSectionElement;
         "canvas-section-viewer": HTMLCanvasSectionViewerElement;
         "component-palette": HTMLComponentPaletteElement;
@@ -1439,6 +1463,21 @@ declare namespace LocalJSX {
          */
         "headerTitle"?: string;
         "subtitle"?: string;
+    }
+    interface BlogImage {
+        /**
+          * @default 'Placeholder image'
+         */
+        "alt"?: string;
+        "caption"?: string;
+        /**
+          * @default 'contain'
+         */
+        "objectFit"?: 'contain' | 'cover';
+        /**
+          * @default 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&h=600&fit=crop'
+         */
+        "src"?: string;
     }
     /**
      * CanvasSection Component
@@ -1707,6 +1746,7 @@ declare namespace LocalJSX {
      * ==============================
      * Example custom palette item that shows how consumers can create
      * fully customized palette entries for their components.
+     * Updated to display SVG icons on top with titles below (similar to UI builder pattern)
      */
     interface CustomPaletteItem {
         /**
@@ -1714,7 +1754,7 @@ declare namespace LocalJSX {
          */
         "componentType": string;
         /**
-          * Icon/emoji
+          * Icon/emoji or SVG identifier
          */
         "icon": string;
         /**
@@ -1911,6 +1951,7 @@ declare namespace LocalJSX {
         "blog-article": BlogArticle;
         "blog-button": BlogButton;
         "blog-header": BlogHeader;
+        "blog-image": BlogImage;
         "canvas-section": CanvasSection;
         "canvas-section-viewer": CanvasSectionViewer;
         "component-palette": ComponentPalette;
@@ -2091,6 +2132,7 @@ declare module "@stencil/core" {
             "blog-article": LocalJSX.BlogArticle & JSXBase.HTMLAttributes<HTMLBlogArticleElement>;
             "blog-button": LocalJSX.BlogButton & JSXBase.HTMLAttributes<HTMLBlogButtonElement>;
             "blog-header": LocalJSX.BlogHeader & JSXBase.HTMLAttributes<HTMLBlogHeaderElement>;
+            "blog-image": LocalJSX.BlogImage & JSXBase.HTMLAttributes<HTMLBlogImageElement>;
             /**
              * CanvasSection Component
              * =======================
@@ -2242,6 +2284,7 @@ declare module "@stencil/core" {
              * ==============================
              * Example custom palette item that shows how consumers can create
              * fully customized palette entries for their components.
+             * Updated to display SVG icons on top with titles below (similar to UI builder pattern)
              */
             "custom-palette-item": LocalJSX.CustomPaletteItem & JSXBase.HTMLAttributes<HTMLCustomPaletteItemElement>;
             /**
