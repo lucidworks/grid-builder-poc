@@ -5,17 +5,27 @@ blog-button {
     height: 100%;
     align-items: center;
     justify-content: center;
+    padding: min(3%, 8px); // Container-relative padding
+    overflow: hidden; // Prevent content overflow
+    box-sizing: border-box;
   }
 
   .demo-button {
-    padding: 12px 28px;
+    max-width: 100%; // Don't exceed container width
+    max-height: 100%; // Don't exceed container height
+    padding: min(4%, 12px) min(8%, 28px); // Container-relative padding
     border: none;
-    border-radius: 6px;
+    border-radius: min(2%, 6px); // Container-relative border radius
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     cursor: pointer;
-    font-size: 15px;
+    font-size: clamp(12px, 4cqw, 16px); // Container query width units
     font-weight: 600;
+    line-height: 1.2;
     transition: all 0.2s ease;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap; // Single line with ellipsis
+    box-sizing: border-box;
 
     &.primary {
       background: #4a90e2;
