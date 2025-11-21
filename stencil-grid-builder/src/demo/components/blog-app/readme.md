@@ -25,7 +25,7 @@ using the
 - [custom-config-panel](../custom-config-panel)
 - [blog-header](../blog-header)
 - [blog-article](../blog-article)
-- [blog-image](../src/demo/components/blog-image)
+- [blog-image](../blog-image)
 - [blog-button](../blog-button)
 
 ### Graph

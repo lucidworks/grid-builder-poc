@@ -456,10 +456,11 @@ export namespace Components {
     /**
      * Custom Drag Clone Component
      * ============================
-     * Example custom drag clone that mimics a button component appearance.
-     * This shows how to create a drag preview that looks exactly like the
-     * component that will be dropped - helping with visual alignment.
-     * The component fills the exact width and height provided, with no extra chrome.
+     * Custom drag clone that shows a visual preview of the component being dragged.
+     * Each component type has a unique appearance that matches what will be placed
+     * on the canvas, helping with visual alignment and user understanding.
+     * The component fills the exact width and height provided, scaled to match
+     * the actual drop size.
      */
     interface CustomDragClone {
         /**
@@ -1136,10 +1137,11 @@ declare global {
     /**
      * Custom Drag Clone Component
      * ============================
-     * Example custom drag clone that mimics a button component appearance.
-     * This shows how to create a drag preview that looks exactly like the
-     * component that will be dropped - helping with visual alignment.
-     * The component fills the exact width and height provided, with no extra chrome.
+     * Custom drag clone that shows a visual preview of the component being dragged.
+     * Each component type has a unique appearance that matches what will be placed
+     * on the canvas, helping with visual alignment and user understanding.
+     * The component fills the exact width and height provided, scaled to match
+     * the actual drop size.
      */
     interface HTMLCustomDragCloneElement extends Components.CustomDragClone, HTMLStencilElement {
     }
@@ -1714,10 +1716,11 @@ declare namespace LocalJSX {
     /**
      * Custom Drag Clone Component
      * ============================
-     * Example custom drag clone that mimics a button component appearance.
-     * This shows how to create a drag preview that looks exactly like the
-     * component that will be dropped - helping with visual alignment.
-     * The component fills the exact width and height provided, with no extra chrome.
+     * Custom drag clone that shows a visual preview of the component being dragged.
+     * Each component type has a unique appearance that matches what will be placed
+     * on the canvas, helping with visual alignment and user understanding.
+     * The component fills the exact width and height provided, scaled to match
+     * the actual drop size.
      */
     interface CustomDragClone {
         /**
@@ -2273,10 +2276,11 @@ declare module "@stencil/core" {
             /**
              * Custom Drag Clone Component
              * ============================
-             * Example custom drag clone that mimics a button component appearance.
-             * This shows how to create a drag preview that looks exactly like the
-             * component that will be dropped - helping with visual alignment.
-             * The component fills the exact width and height provided, with no extra chrome.
+             * Custom drag clone that shows a visual preview of the component being dragged.
+             * Each component type has a unique appearance that matches what will be placed
+             * on the canvas, helping with visual alignment and user understanding.
+             * The component fills the exact width and height provided, scaled to match
+             * the actual drop size.
              */
             "custom-drag-clone": LocalJSX.CustomDragClone & JSXBase.HTMLAttributes<HTMLCustomDragCloneElement>;
             /**

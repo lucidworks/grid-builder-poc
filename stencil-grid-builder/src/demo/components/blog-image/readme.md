@@ -19,8 +19,8 @@
 
 ### Used by
 
- - [blog-app](../../../../blog-app)
- - [custom-config-panel](../../../../custom-config-panel)
+ - [blog-app](../blog-app)
+ - [custom-config-panel](../custom-config-panel)
 
 ### Graph
 ```mermaid

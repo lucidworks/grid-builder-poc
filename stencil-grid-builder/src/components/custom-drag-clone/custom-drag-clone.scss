@@ -1,28 +1,154 @@
 /**
- * Custom drag clone that mimics the actual button component appearance.
- * This fills the exact dimensions provided and looks like a real button.
+ * Custom drag clone styles for component previews
  */
 .custom-drag-clone {
   display: flex;
+  box-sizing: border-box;
+  padding: 12px;
+  border: 2px solid rgba(74, 144, 226, 0.5);
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.95);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  cursor: grabbing;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  opacity: 0.95;
+  overflow: hidden;
+}
+
+// Blog Header Preview
+.drag-clone-header {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: linear-gradient(135deg, #f0f4f8 0%, #e8f0f2 100%);
+  padding: 16px;
+
+  .header-title {
+    color: #2c3e50;
+    font-size: clamp(14px, 2.5vw, 20px);
+    font-weight: 700;
+    text-align: center;
+  }
+
+  .header-subtitle {
+    color: #6c757d;
+    font-size: clamp(11px, 1.8vw, 14px);
+    font-style: italic;
+    text-align: center;
+  }
+}
+
+// Blog Article Preview
+.drag-clone-article {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  flex-direction: column;
+  gap: 12px;
+  background: #ffffff;
+  padding: 16px;
+
+  .article-title {
+    color: #2c3e50;
+    font-size: clamp(12px, 2vw, 16px);
+    font-weight: 600;
+  }
+
+  .article-content {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: 6px;
+
+    .content-line {
+      height: 4px;
+      border-radius: 2px;
+      background: #dee2e6;
+
+      &.short {
+        width: 70%;
+      }
+    }
+  }
+
+  .article-meta {
+    display: flex;
+    gap: 12px;
+    color: #6c757d;
+    font-size: clamp(9px, 1.5vw, 11px);
+
+    .meta-item {
+      opacity: 0.7;
+    }
+  }
+}
+
+// Blog Button Preview
+.drag-clone-button {
+  display: flex;
+  width: 100%;
+  height: 100%;
   align-items: center;
   justify-content: center;
   border-radius: 6px;
-
-  /* Button-like appearance matching blog-button component */
   background: linear-gradient(135deg, #4a90e2 0%, #357abd 100%);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-  color: #ffffff;
 
-  /* Cursor feedback */
-  cursor: grabbing;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  font-size: 14px;
-  font-weight: 600;
+  .button-text {
+    color: #ffffff;
+    font-size: clamp(12px, 2vw, 16px);
+    font-weight: 600;
+  }
+}
 
-  /* Semi-transparent to indicate it's a preview */
-  opacity: 0.9;
+// Blog Image Preview
+.drag-clone-image {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  flex-direction: column;
+  background: #f8f9fa;
 
-  /* Slight elevation effect */
-  transform: translateY(-2px);
-  transition: transform 0.2s ease;
+  .image-placeholder {
+    display: flex;
+    flex: 1;
+    align-items: center;
+    justify-content: center;
+    background: #e9ecef;
+
+    svg {
+      width: 40%;
+      height: 40%;
+      max-width: 80px;
+      max-height: 80px;
+      color: #adb5bd;
+    }
+  }
+
+  .image-caption {
+    flex-shrink: 0;
+    padding: 8px;
+    background: rgba(0, 0, 0, 0.03);
+    color: #6c757d;
+    font-size: clamp(9px, 1.5vw, 11px);
+    font-style: italic;
+    text-align: center;
+  }
+}
+
+// Default Preview (fallback)
+.drag-clone-default {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  color: #495057;
+  font-size: clamp(12px, 2vw, 14px);
+  font-weight: 500;
 }

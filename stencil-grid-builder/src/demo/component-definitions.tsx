@@ -74,6 +74,14 @@ export const contentComponents: ComponentDefinition[] = [
         name="${name}"
         icon="${icon}">
       </custom-palette-item>`,
+    renderDragClone: ({ componentType, name, icon, width, height }) =>
+      `<custom-drag-clone
+        component-type="${componentType}"
+        name="${name}"
+        icon="${icon}"
+        width="${width}"
+        height="${height}">
+      </custom-drag-clone>`,
     render: ({ config }) => (
       <blog-header
         headerTitle={config?.title || 'Default Header'}
@@ -93,6 +101,14 @@ export const contentComponents: ComponentDefinition[] = [
         name="${name}"
         icon="${icon}">
       </custom-palette-item>`,
+    renderDragClone: ({ componentType, name, icon, width, height }) =>
+      `<custom-drag-clone
+        component-type="${componentType}"
+        name="${name}"
+        icon="${icon}"
+        width="${width}"
+        height="${height}">
+      </custom-drag-clone>`,
     render: ({ config }) => (
       <blog-article
         content={config?.content || 'Article content goes here'}
@@ -114,6 +130,14 @@ export const contentComponents: ComponentDefinition[] = [
         name="${name}"
         icon="${icon}">
       </custom-palette-item>`,
+    renderDragClone: ({ componentType, name, icon, width, height }) =>
+      `<custom-drag-clone
+        component-type="${componentType}"
+        name="${name}"
+        icon="${icon}"
+        width="${width}"
+        height="${height}">
+      </custom-drag-clone>`,
     configSchema: [
       {
         name: 'src',
@@ -236,6 +260,16 @@ export const blogComponentDefinitions: ComponentDefinition[] = [
         icon="${icon}">
       </custom-palette-item>`,
 
+    // Custom drag clone preview
+    renderDragClone: ({ componentType, name, icon, width, height }) =>
+      `<custom-drag-clone
+        component-type="${componentType}"
+        name="${name}"
+        icon="${icon}"
+        width="${width}"
+        height="${height}">
+      </custom-drag-clone>`,
+
     // Render function - returns the actual component JSX
     // The library calls this with { config, itemId, ...otherProps }
     // Config comes from gridState.canvases[canvasId].items[itemId].config
@@ -281,6 +315,16 @@ export const blogComponentDefinitions: ComponentDefinition[] = [
         name="${name}"
         icon="${icon}">
       </custom-palette-item>`,
+
+    // Custom drag clone preview
+    renderDragClone: ({ componentType, name, icon, width, height }) =>
+      `<custom-drag-clone
+        component-type="${componentType}"
+        name="${name}"
+        icon="${icon}"
+        width="${width}"
+        height="${height}">
+      </custom-drag-clone>`,
 
     // Render function with multiple config properties
     // Demonstrates passing multiple configuration values to child component
@@ -420,6 +464,16 @@ export const blogComponentDefinitions: ComponentDefinition[] = [
         name="${name}"
         icon="${icon}">
       </custom-palette-item>`,
+
+    // Custom drag clone preview
+    renderDragClone: ({ componentType, name, icon, width, height }) =>
+      `<custom-drag-clone
+        component-type="${componentType}"
+        name="${name}"
+        icon="${icon}"
+        width="${width}"
+        height="${height}">
+      </custom-drag-clone>`,
 
     /**
      * Configuration Schema
