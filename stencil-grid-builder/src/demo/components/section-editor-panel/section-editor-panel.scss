@@ -157,10 +157,15 @@ section-editor-panel {
 
   .panel-footer {
     display: flex;
-    justify-content: flex-end;
+    align-items: center;
+    justify-content: space-between;
     padding: 20px 24px;
     border-top: 1px solid #e9ecef;
-    gap: 12px;
+
+    .footer-actions {
+      display: flex;
+      gap: 12px;
+    }
 
     button {
       padding: 10px 20px;
@@ -173,6 +178,19 @@ section-editor-panel {
 
       &:active {
         transform: translateY(1px);
+      }
+    }
+
+    .delete-btn {
+      background: #dc3545;
+      color: white;
+
+      &:hover {
+        background: #c82333;
+      }
+
+      &:active {
+        background: #bd2130;
       }
     }
 

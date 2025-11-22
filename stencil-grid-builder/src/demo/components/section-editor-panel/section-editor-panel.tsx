@@ -76,6 +76,20 @@ export class SectionEditorPanel {
   @Event() previewColorChange: EventEmitter<{ canvasId: string; backgroundColor: string }>;
 
   /**
+   * Event: Preview title change
+   * Fired when user types in title input (live preview)
+   * Parent temporarily updates canvas title
+   */
+  @Event() previewTitleChange: EventEmitter<{ canvasId: string; title: string }>;
+
+  /**
+   * Event: Delete section
+   * Fired when user clicks Delete button
+   * Parent handles canvas removal
+   */
+  @Event() deleteSection: EventEmitter<{ canvasId: string }>;
+
+  /**
    * Internal editing state
    * These track user's changes before saving
    */
@@ -83,18 +97,20 @@ export class SectionEditorPanel {
   @State() editedColor: string = '';
 
   /**
-   * Original color when modal opened
+   * Original values when modal opened
    * Used to revert on cancel
    */
   private originalColor: string = '';
+  private originalTitle: string = '';
 
   @Watch('sectionData')
   handleSectionDataChange(newData: SectionEditorData | null) {
     if (newData) {
       this.editedTitle = newData.title;
       this.editedColor = newData.backgroundColor;
-      // Store original color for revert on cancel
+      // Store original values for revert on cancel
       this.originalColor = newData.backgroundColor;
+      this.originalTitle = newData.title;
     }
   }
 
@@ -102,17 +118,22 @@ export class SectionEditorPanel {
     if (this.sectionData) {
       this.editedTitle = this.sectionData.title;
       this.editedColor = this.sectionData.backgroundColor;
-      // Store original color for revert on cancel
+      // Store original values for revert on cancel
       this.originalColor = this.sectionData.backgroundColor;
+      this.originalTitle = this.sectionData.title;
     }
   }
 
   private handleClose = () => {
-    // Revert to original color on cancel
+    // Revert to original values on cancel
     if (this.sectionData) {
       this.previewColorChange.emit({
         canvasId: this.sectionData.canvasId,
         backgroundColor: this.originalColor,
+      });
+      this.previewTitleChange.emit({
+        canvasId: this.sectionData.canvasId,
+        title: this.originalTitle,
       });
     }
     this.closePanel.emit();
@@ -129,8 +150,25 @@ export class SectionEditorPanel {
     }
   };
 
+  private handleDelete = () => {
+    if (this.sectionData) {
+      this.deleteSection.emit({
+        canvasId: this.sectionData.canvasId,
+      });
+      this.closePanel.emit();
+    }
+  };
+
   private handleTitleInput = (e: Event) => {
     this.editedTitle = (e.target as HTMLInputElement).value;
+
+    // Emit preview event for live title update
+    if (this.sectionData) {
+      this.previewTitleChange.emit({
+        canvasId: this.sectionData.canvasId,
+        title: this.editedTitle,
+      });
+    }
   };
 
   private handleColorInput = (e: Event) => {
@@ -195,12 +233,17 @@ export class SectionEditorPanel {
           </div>
 
           <div class="panel-footer">
-            <button class="cancel-btn" onClick={this.handleClose}>
-              Cancel
+            <button class="delete-btn" onClick={this.handleDelete}>
+              Delete Section
             </button>
-            <button class="save-btn" onClick={this.handleSave}>
-              Save Changes
-            </button>
+            <div class="footer-actions">
+              <button class="cancel-btn" onClick={this.handleClose}>
+                Cancel
+              </button>
+              <button class="save-btn" onClick={this.handleSave}>
+                Save Changes
+              </button>
+            </div>
           </div>
         </div>
       </div>

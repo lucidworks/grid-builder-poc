@@ -55,7 +55,9 @@ Why This Approach:
 | Event                | Description                                                                                                                  | Type                                                                         |
 | -------------------- | ---------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------- |
 | `closePanel`         | Event: Close panel Fired when user clicks Cancel, Save, or overlay                                                           | `CustomEvent<void>`                                                          |
+| `deleteSection`      | Event: Delete section Fired when user clicks Delete button Parent handles canvas removal                                     | `CustomEvent<{ canvasId: string; }>`                                         |
 | `previewColorChange` | Event: Preview color change Fired when user changes color picker (live preview) Parent temporarily updates canvas background | `CustomEvent<{ canvasId: string; backgroundColor: string; }>`                |
+| `previewTitleChange` | Event: Preview title change Fired when user types in title input (live preview) Parent temporarily updates canvas title      | `CustomEvent<{ canvasId: string; title: string; }>`                          |
 | `updateSection`      | Event: Update section Fired when user clicks Save with edited values Parent updates canvasMetadata state in response         | `CustomEvent<{ canvasId: string; title: string; backgroundColor: string; }>` |
 
 

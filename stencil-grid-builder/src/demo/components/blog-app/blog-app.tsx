@@ -6,6 +6,7 @@ import { ConfirmationModalData } from '../../types/confirmation-modal-data';
 import { DeletionHookContext } from '../../../types/deletion-hook';
 import { getGridSizeVertical, clearGridSizeCache } from '../../../utils/grid-calculations';
 import { domCache } from '../../../utils/dom-cache';
+import { setActiveCanvas } from '../../../services/state-manager';
 
 /**
  * Blog App Demo - Host Application for grid-builder Library
@@ -606,11 +607,14 @@ export class BlogApp {
     const actions = document.createElement('div');
     actions.className = 'canvas-actions';
 
-    // Section title badge (clickable to open editor)
+    // Section title badge (clickable to open editor and activate canvas)
     const title = document.createElement('span');
     title.className = 'canvas-title';
     title.textContent = this.canvasMetadata[canvasId]?.title || canvasId;
     title.addEventListener('click', () => {
+      // Activate the canvas (adds visual highlight)
+      setActiveCanvas(canvasId);
+      // Open section editor panel
       this.handleOpenSectionEditor(canvasId);
     });
     actions.appendChild(title);
@@ -674,6 +678,27 @@ export class BlogApp {
     const canvas = document.querySelector(`[data-canvas-id="${canvasId}"] .grid-container`) as HTMLElement;
     if (canvas) {
       canvas.style.backgroundColor = backgroundColor;
+    }
+  };
+
+  /**
+   * Preview Title Change Handler
+   * -----------------------------
+   *
+   * Handles live preview of section title changes.
+   * Updates canvas title immediately without saving to metadata.
+   * This allows real-time preview while editing, with revert on cancel.
+   */
+  private handlePreviewTitleChange = (event: CustomEvent<{ canvasId: string; title: string }>) => {
+    const { canvasId, title } = event.detail;
+    // Find the canvas header for this canvas
+    const header = document.querySelector(`.canvas-header[data-canvas-id="${canvasId}"]`) as HTMLElement;
+    if (header) {
+      const titleEl = header.querySelector('.canvas-title') as HTMLElement;
+      if (titleEl) {
+        // Directly update title text (don't update metadata yet)
+        titleEl.textContent = title;
+      }
     }
   };
 
@@ -808,6 +833,16 @@ export class BlogApp {
 
     // Metadata will be removed automatically via canvasRemoved event listener
     // Header will also be removed in the canvasRemoved event listener
+  };
+
+  /**
+   * Handle section deletion from editor panel
+   */
+  private handleDeleteSectionFromPanel = (event: CustomEvent<{ canvasId: string }>) => {
+    const { canvasId } = event.detail;
+    this.handleDeleteSection(canvasId);
+    // Close the panel (already handled in section-editor-panel, but ensure it's closed)
+    this.isPanelOpen = false;
   };
 
   /**
@@ -1174,6 +1209,8 @@ export class BlogApp {
           onClosePanel={this.handleClosePanel}
           onUpdateSection={this.handleUpdateSection}
           onPreviewColorChange={this.handlePreviewColorChange}
+          onPreviewTitleChange={this.handlePreviewTitleChange}
+          onDeleteSection={this.handleDeleteSectionFromPanel}
         />
 
         <confirmation-modal
