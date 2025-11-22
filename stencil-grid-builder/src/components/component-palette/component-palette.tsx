@@ -621,4 +621,45 @@ export class ComponentPalette {
       (element as any)._dragInitialized = true;
     });
   };
+
+  /**
+   * Disconnected callback (cleanup)
+   *
+   * **Called**: When component is removed from DOM
+   * **Purpose**: Clean up interact.js instances to prevent memory leaks
+   *
+   * ## Cleanup Process
+   *
+   * 1. **Query all palette items**: Find all elements with `.palette-item` class
+   * 2. **Remove interact.js**: Call `interact(element).unset()` on each
+   * 3. **Clear flags**: Remove `_dragInitialized` marker
+   *
+   * ## Why Important
+   *
+   * **Without cleanup**:
+   * - interact.js event listeners persist after unmount
+   * - Memory leaks accumulate with mount/unmount cycles
+   * - References prevent garbage collection
+   *
+   * **With cleanup**:
+   * - All event listeners removed
+   * - Elements can be garbage collected
+   * - Clean state for future mounts
+   *
+   * ## Pattern Match
+   *
+   * This follows the same cleanup pattern as:
+   * - canvas-section.tsx: Cleans up dropzone interact instance
+   * - grid-item-wrapper.tsx: Cleans up drag/resize handlers
+   */
+  disconnectedCallback() {
+    // Cleanup interact.js on all palette items
+    const paletteItems = document.querySelectorAll('.palette-item');
+    paletteItems.forEach((element: HTMLElement) => {
+      if ((element as any)._dragInitialized) {
+        interact(element).unset();
+        delete (element as any)._dragInitialized;
+      }
+    });
+  }
 }
