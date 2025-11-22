@@ -495,6 +495,9 @@ describe('ResizeHandler', () => {
       const mockEvent = {
         target: mockElement,
         rect: { width: 200, height: 120, left: 100, top: 100 },
+        deltaRect: { left: 0, top: 0, width: 0, height: 0 },
+        edges: {},
+        interaction: {},
       };
 
       handler['handleResizeStart'](mockEvent);
@@ -556,6 +559,9 @@ describe('ResizeHandler', () => {
       handler1['handleResizeStart']({
         target: element1,
         rect: { width: 200, height: 120, left: 0, top: 0 },
+        deltaRect: { left: 0, top: 0, width: 0, height: 0 },
+        edges: {},
+        interaction: {},
       });
       expect(gridState.activeCanvasId).toBe('canvas1');
 
@@ -563,6 +569,9 @@ describe('ResizeHandler', () => {
       handler2['handleResizeStart']({
         target: element2,
         rect: { width: 200, height: 120, left: 0, top: 0 },
+        deltaRect: { left: 0, top: 0, width: 0, height: 0 },
+        edges: {},
+        interaction: {},
       });
       expect(gridState.activeCanvasId).toBe('canvas2');
 
@@ -602,6 +611,9 @@ describe('ResizeHandler', () => {
       const mockEvent = {
         target: mockElement,
         rect: { width: 200, height: 120, left: 0, top: 0 },
+        deltaRect: { left: 0, top: 0, width: 0, height: 0 },
+        edges: {},
+        interaction: {},
       };
 
       handler['handleResizeStart'](mockEvent);
@@ -651,6 +663,9 @@ describe('ResizeHandler', () => {
       const mockEvent = {
         target: mockElement,
         rect: { width: 200, height: 120, left: 0, top: 0 },
+        deltaRect: { left: 0, top: 0, width: 0, height: 0 },
+        edges: {},
+        interaction: {},
       };
 
       handler['handleResizeStart'](mockEvent);
@@ -695,6 +710,9 @@ describe('ResizeHandler', () => {
       const mockEvent = {
         target: mockElement,
         rect: { width: 200, height: 120, left: 0, top: 0 },
+        deltaRect: { left: 0, top: 0, width: 0, height: 0 },
+        edges: {},
+        interaction: {},
       };
 
       handler['handleResizeStart'](mockEvent);

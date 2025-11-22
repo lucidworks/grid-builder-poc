@@ -219,7 +219,7 @@ describe('canvas-section - Active Canvas', () => {
       container.addEventListener('canvas-activated', eventSpy);
 
       // Click canvas1 directly
-      container.click();
+      (container as HTMLElement).click();
       await page.waitForChanges();
 
       expect(eventSpy).toHaveBeenCalledTimes(1);
@@ -231,7 +231,7 @@ describe('canvas-section - Active Canvas', () => {
 
       // Click again (same container, just changed canvasId)
       eventSpy.mockClear();
-      container.click();
+      (container as HTMLElement).click();
       await page.waitForChanges();
 
       expect(eventSpy).toHaveBeenCalledTimes(1);

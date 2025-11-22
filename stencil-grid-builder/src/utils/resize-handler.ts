@@ -195,7 +195,7 @@
  * @module resize-handler
  */
 
-import type { InteractResizeEvent, Interactable } from '../types/interact';
+import type { InteractResizeEvent, Interactable } from 'interactjs';
 import { GridItem, setActiveCanvas } from '../services/state-manager';
 import { ComponentDefinition } from '../types/component-definition';
 import { GridConfig } from '../types/grid-config';

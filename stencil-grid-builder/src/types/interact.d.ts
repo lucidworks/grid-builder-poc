@@ -207,6 +207,9 @@ declare module 'interactjs' {
     /** Disable momentum/physics after resize release */
     inertia?: boolean | object;
 
+    /** CSS selector for elements to ignore (prevent resize from these) */
+    ignoreFrom?: string;
+
     /** Event listeners */
     listeners?: {
       /** Resize start event handler */
@@ -233,6 +236,41 @@ declare module 'interactjs' {
   }
 
   /**
+   * Dropzone configuration options
+   */
+  export interface InteractDropzoneOptions {
+    /** CSS selector for elements that can be dropped */
+    accept?: string;
+
+    /** Overlap requirement (percentage or pixels) */
+    overlap?: number | 'pointer' | 'center';
+
+    /** Check if element is draggable before accepting drop */
+    checker?: (dragEvent: any, event: any, dropped: boolean, dropzone: Interactable, dropElement: HTMLElement, draggable: Interactable, draggableElement: HTMLElement) => boolean;
+
+    /** Event listeners */
+    listeners?: {
+      /** Drop activated (drag enters dropzone area) */
+      activate?: (event: any) => void;
+
+      /** Drag enters dropzone */
+      dragenter?: (event: any) => void;
+
+      /** Drag moves within dropzone */
+      dragmove?: (event: any) => void;
+
+      /** Drag leaves dropzone */
+      dragleave?: (event: any) => void;
+
+      /** Drop occurs (drag ends in dropzone) */
+      drop?: (event: any) => void;
+
+      /** Drop deactivated (drag ends outside dropzone) */
+      deactivate?: (event: any) => void;
+    };
+  }
+
+  /**
    * Interactable instance
    *
    * Returned by interact(element) call
@@ -243,6 +281,9 @@ declare module 'interactjs' {
 
     /** Make element resizable */
     resizable(options: InteractResizableOptions | boolean): Interactable;
+
+    /** Make element a dropzone for draggable elements */
+    dropzone(options: InteractDropzoneOptions | boolean): Interactable;
 
     /** Remove all interact.js functionality from element */
     unset(): void;

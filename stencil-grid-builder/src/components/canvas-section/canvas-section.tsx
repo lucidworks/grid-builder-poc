@@ -506,26 +506,27 @@ export class CanvasSection {
       accept: '.palette-item, .grid-item, .grid-item-header',
       overlap: 'pointer',
 
-      ondragenter: (_event: any) => {
-        // Add visual feedback when drag enters canvas
-        this.gridContainerRef?.classList.add('drop-target');
-      },
+      listeners: {
+        dragenter: (_event: any) => {
+          // Add visual feedback when drag enters canvas
+          this.gridContainerRef?.classList.add('drop-target');
+        },
 
-      ondragleave: (_event: any) => {
-        // Remove visual feedback when drag leaves canvas
-        this.gridContainerRef?.classList.remove('drop-target');
-      },
+        dragleave: (_event: any) => {
+          // Remove visual feedback when drag leaves canvas
+          this.gridContainerRef?.classList.remove('drop-target');
+        },
 
-      ondrop: (event: any) => {
-        // Remove visual feedback on successful drop
-        this.gridContainerRef?.classList.remove('drop-target');
-        const droppedElement = event.relatedTarget;
-        const isPaletteItem = droppedElement.classList.contains('palette-item');
+        drop: (event: any) => {
+          // Remove visual feedback on successful drop
+          this.gridContainerRef?.classList.remove('drop-target');
+          const droppedElement = event.relatedTarget;
+          const isPaletteItem = droppedElement.classList.contains('palette-item');
 
-        // Mark palette item drop as valid (for snap-back animation)
-        if (isPaletteItem) {
-          (droppedElement as any)._dropWasValid = true;
-        }
+          // Mark palette item drop as valid (for snap-back animation)
+          if (isPaletteItem) {
+            (droppedElement as any)._dropWasValid = true;
+          }
 
         // Check if it's a grid item or grid item header (drag handle)
         const isGridItemHeader = droppedElement.classList.contains('grid-item-header');
@@ -596,7 +597,8 @@ export class CanvasSection {
           }
         }
       },
-    });
+    },
+  });
 
     this.dropzoneInitialized = true;
   };

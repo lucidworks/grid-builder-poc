@@ -131,7 +131,7 @@
  * @module drag-handler
  */
 
-import type { InteractDragEvent, Interactable } from '../types/interact';
+import type { InteractDragEvent, Interactable } from 'interactjs';
 import { GridItem, setActiveCanvas } from '../services/state-manager';
 import { GridConfig } from '../types/grid-config';
 import { domCache } from './dom-cache';
