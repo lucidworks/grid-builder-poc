@@ -29,7 +29,7 @@
 import { Component, h, Listen, Prop, State } from '@stencil/core';
 
 // Internal imports
-import { GridItem, gridState, updateItem } from '../../services/state-manager';
+import { GridItem, gridState, updateItem, setActiveCanvas } from '../../services/state-manager';
 import { pushCommand } from '../../services/undo-redo';
 import { MoveItemCommand } from '../../services/undo-redo-commands';
 import { virtualRenderer } from '../../services/virtual-renderer';
@@ -734,6 +734,9 @@ export class GridItemWrapper {
     // Set selection state immediately
     gridState.selectedItemId = this.item.id;
     gridState.selectedCanvasId = this.item.canvasId;
+
+    // Set this canvas as active
+    setActiveCanvas(this.item.canvasId);
 
     // Emit selection event for plugins
     eventManager.emit('componentSelected', {

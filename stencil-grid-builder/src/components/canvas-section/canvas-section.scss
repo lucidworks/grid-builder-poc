@@ -30,3 +30,19 @@
 .grid-container.hide-grid {
   background-image: none;
 }
+
+/* Active canvas highlighting */
+.grid-container.active {
+  border: 2px solid var(--primary-color, #007bff);
+  box-shadow: 0 0 0 1px rgba(0, 123, 255, 0.3);
+}
+
+/* Canvas title styling - consumer can override */
+.canvas-title {
+  opacity: 0.3;
+  transition: opacity 0.2s ease;
+}
+
+.grid-container.active ~ .canvas-title {
+  opacity: 1;
+}

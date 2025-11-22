@@ -739,4 +739,72 @@ export interface GridBuilderAPI {
    * ```
    */
   removeCanvas(canvasId: string): void;
+
+  /**
+   * Set active canvas programmatically
+   *
+   * **Use cases**:
+   * - Focus specific section for editing
+   * - Programmatic navigation between sections
+   * - Highlight canvas after adding items
+   * - Show canvas-specific settings panel
+   *
+   * **Library responsibility**:
+   * - Update gridState.activeCanvasId
+   * - Pass isActive prop to canvas-section components
+   * - Apply 'active' CSS class to active canvas
+   * - Emit 'canvasActivated' event
+   *
+   * **Host app responsibility**:
+   * - Listen to 'canvasActivated' event (optional)
+   * - Update canvas-specific UI (settings panel, etc.)
+   * - Apply custom styling via CSS (title opacity, etc.)
+   *
+   * **Automatic activation**: Canvas automatically activates when user:
+   * - Clicks item on canvas
+   * - Clicks canvas background
+   * - Starts dragging item
+   * - Starts resizing item
+   *
+   * **Events triggered**: 'canvasActivated'
+   *
+   * @param canvasId - Canvas to activate
+   *
+   * @example
+   * ```typescript
+   * // Activate canvas after adding item
+   * const itemId = api.addComponent('canvas2', 'header', { x: 1, y: 1, width: 20, height: 6 });
+   * api.setActiveCanvas('canvas2');
+   *
+   * // Listen to activation events
+   * api.on('canvasActivated', ({ canvasId }) => {
+   *   showCanvasSettings(canvasId);
+   * });
+   * ```
+   */
+  setActiveCanvas(canvasId: string): void;
+
+  /**
+   * Get currently active canvas ID
+   *
+   * **Use cases**:
+   * - Check which canvas is currently active
+   * - Conditional UI rendering based on active canvas
+   * - State synchronization
+   *
+   * **Returns**:
+   * - Canvas ID string if a canvas is active
+   * - `null` if no canvas is active
+   *
+   * @returns Canvas ID or null if none active
+   *
+   * @example
+   * ```typescript
+   * const activeId = api.getActiveCanvas();
+   * if (activeId === 'canvas1') {
+   *   // Show canvas1-specific settings
+   * }
+   * ```
+   */
+  getActiveCanvas(): string | null;
 }

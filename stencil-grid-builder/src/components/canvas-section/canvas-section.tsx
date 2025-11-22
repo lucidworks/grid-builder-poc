@@ -69,7 +69,7 @@ import { Component, h, Prop, State } from '@stencil/core';
 import interact from 'interactjs';
 
 // Internal imports
-import { Canvas, GridItem, gridState, onChange } from '../../services/state-manager';
+import { Canvas, GridItem, gridState, onChange, setActiveCanvas } from '../../services/state-manager';
 import { clearGridSizeCache, gridToPixelsX, gridToPixelsY, getGridSizeVertical } from '../../utils/grid-calculations';
 import { GridConfig } from '../../types/grid-config';
 import { ComponentDefinition } from '../../types/component-definition';
@@ -151,6 +151,39 @@ export class CanvasSection {
    * ```
    */
   @Prop() canvasTitle?: string;
+
+  /**
+   * Whether this canvas is currently active
+   *
+   * **Purpose**: Indicate which canvas is currently focused/active
+   * **Source**: Computed from gridState.activeCanvasId in grid-builder
+   * **Default**: false
+   * **Visual effect**: Applies 'active' CSS class to grid-container
+   *
+   * **Canvas becomes active when**:
+   * - User clicks item on canvas
+   * - User clicks canvas background
+   * - User starts dragging item on canvas
+   * - User starts resizing item on canvas
+   * - Programmatically via api.setActiveCanvas()
+   *
+   * **Consumer styling hook**:
+   * Consumer can style active canvas via CSS:
+   * ```css
+   * .grid-container.active .canvas-title {
+   *   opacity: 1;
+   * }
+   * ```
+   *
+   * @example
+   * ```tsx
+   * <canvas-section
+   *   canvasId="hero-section"
+   *   isActive={gridState.activeCanvasId === 'hero-section'}
+   * />
+   * ```
+   */
+  @Prop() isActive?: boolean = false;
 
   /**
    * Deletion hook (from parent grid-builder)
@@ -307,6 +340,20 @@ export class CanvasSection {
       // Only fire if clicking directly on the grid container
       // (not on a grid item or other child element)
       if (event.target === this.gridContainerRef) {
+        // Set this canvas as active
+        setActiveCanvas(this.canvasId);
+
+        // Emit canvas-activated event
+        const canvasActivatedEvent = new CustomEvent('canvas-activated', {
+          detail: {
+            canvasId: this.canvasId,
+          },
+          bubbles: true,
+          composed: true,
+        });
+        this.gridContainerRef.dispatchEvent(canvasActivatedEvent);
+
+        // Emit canvas-click event (backward compatibility)
         const canvasClickEvent = new CustomEvent('canvas-click', {
           detail: {
             canvasId: this.canvasId,
@@ -523,6 +570,7 @@ export class CanvasSection {
           class={{
             'grid-container': true,
             'hide-grid': !showGrid,
+            'active': this.isActive,
           }}
           id={this.canvasId}
           data-canvas-id={this.canvasId}

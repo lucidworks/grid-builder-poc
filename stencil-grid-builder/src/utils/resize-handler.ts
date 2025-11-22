@@ -195,7 +195,7 @@
  * @module resize-handler
  */
 
-import { GridItem } from '../services/state-manager';
+import { GridItem, setActiveCanvas } from '../services/state-manager';
 import { ComponentDefinition } from '../types/component-definition';
 import { GridConfig } from '../types/grid-config';
 import { domCache } from './dom-cache';
@@ -614,6 +614,9 @@ export class ResizeHandler {
     }
 
     event.target.classList.add('resizing');
+
+    // Set this canvas as active
+    setActiveCanvas(this.item.canvasId);
 
     // Store the starting position and size
     const position = getTransformPosition(event.target);

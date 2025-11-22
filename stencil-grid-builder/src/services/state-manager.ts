@@ -534,6 +534,32 @@ export interface GridState {
   selectedCanvasId: string | null;
 
   /**
+   * Currently active/focused canvas ID or null if none active
+   *
+   * **Selection flow**:
+   * 1. User interacts with canvas (click, drag, resize) → `setActiveCanvas(canvasId)`
+   * 2. State updates → `activeCanvasId = 'canvas1'`
+   * 3. Canvas section component receives isActive prop
+   * 4. Visual feedback applied (title opacity, border, etc.)
+   *
+   * **Activation triggers**:
+   * - Clicking item on canvas
+   * - Clicking canvas background
+   * - Starting drag operation on item
+   * - Starting resize operation on item
+   *
+   * **Use cases**:
+   * - Highlight which section user is working on
+   * - Show canvas-specific settings panel
+   * - Provide visual context in multi-section layouts
+   *
+   * **Difference from selectedCanvasId**:
+   * - `selectedCanvasId`: Canvas containing selected **item** (editing focus)
+   * - `activeCanvasId`: Canvas that is **active** for interaction (section focus)
+   */
+  activeCanvasId: string | null;
+
+  /**
    * Current viewport mode (desktop or mobile)
    *
    * **Affects**:
@@ -752,6 +778,7 @@ const initialState: GridState = {
   },
   selectedItemId: null,
   selectedCanvasId: null,
+  activeCanvasId: null,
   currentViewport: 'desktop',
   showGrid: true,
 };
@@ -818,6 +845,7 @@ export function reset() {
   state.canvases = JSON.parse(JSON.stringify(initialState.canvases));
   state.selectedItemId = null;
   state.selectedCanvasId = null;
+  state.activeCanvasId = null;
   state.currentViewport = 'desktop';
   state.showGrid = true;
 }
@@ -1216,6 +1244,82 @@ export function selectItem(itemId: string, canvasId: string) {
 export function deselectItem() {
   state.selectedItemId = null;
   state.selectedCanvasId = null;
+}
+
+/**
+ * Set active canvas
+ *
+ * **Use cases**:
+ * - User clicks item on canvas → activate that canvas
+ * - User clicks canvas background → activate that canvas
+ * - User starts dragging item → activate canvas containing item
+ * - User starts resizing item → activate canvas containing item
+ * - Programmatic canvas focus (e.g., after adding item)
+ *
+ * **Visual effects**:
+ * - Canvas title opacity changes (consumer-controlled CSS)
+ * - Canvas border/highlight applied
+ * - Canvas-specific settings panel shown
+ *
+ * **State changes**:
+ * - `activeCanvasId` = canvasId
+ * - Components re-render with isActive prop
+ * - 'canvasActivated' event emitted
+ *
+ * **Reactivity**: Direct assignment (no spread needed for primitive)
+ *
+ * @param canvasId - Canvas ID to activate
+ *
+ * @example
+ * ```typescript
+ * // Handle item click (activate canvas)
+ * handleItemClick(itemId, canvasId) {
+ *   setActiveCanvas(canvasId);
+ *   selectItem(itemId, canvasId);
+ * }
+ *
+ * // Handle canvas background click
+ * handleCanvasClick(canvasId) {
+ *   setActiveCanvas(canvasId);
+ *   deselectItem();
+ * }
+ * ```
+ */
+export function setActiveCanvas(canvasId: string) {
+  state.activeCanvasId = canvasId;
+}
+
+/**
+ * Clear active canvas
+ *
+ * **Use cases**:
+ * - Reset application state
+ * - Close all panels
+ * - Deactivate all canvases
+ *
+ * **Visual effects**:
+ * - All canvas titles return to inactive state
+ * - No canvas highlighted
+ * - Canvas settings panel hidden
+ *
+ * **State changes**:
+ * - `activeCanvasId` = null
+ * - Components re-render without active state
+ *
+ * **Safety**: Safe to call even if no canvas active
+ *
+ * @example
+ * ```typescript
+ * // Reset button handler
+ * handleReset() {
+ *   clearActiveCanvas();
+ *   deselectItem();
+ *   reset();
+ * }
+ * ```
+ */
+export function clearActiveCanvas() {
+  state.activeCanvasId = null;
 }
 
 /**

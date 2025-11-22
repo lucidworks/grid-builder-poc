@@ -57,7 +57,7 @@ import { DeletionHook } from '../../types/deletion-hook';
 import { GridExport } from '../../types/grid-export';
 
 // Service imports
-import { gridState, GridState, generateItemId, deleteItemsBatch, addItemsBatch, updateItemsBatch } from '../../services/state-manager';
+import { gridState, GridState, generateItemId, deleteItemsBatch, addItemsBatch, updateItemsBatch, setActiveCanvas } from '../../services/state-manager';
 import { virtualRenderer } from '../../services/virtual-renderer';
 import { eventManager } from '../../services/event-manager';
 import { BatchAddCommand, BatchDeleteCommand, BatchUpdateConfigCommand, AddCanvasCommand, RemoveCanvasCommand, MoveItemCommand } from '../../services/undo-redo-commands';
@@ -426,6 +426,7 @@ export class GridBuilder {
    */
   private canvasDropHandler?: (e: Event) => void;
   private canvasMoveHandler?: (e: Event) => void;
+  private canvasActivatedHandler?: (e: Event) => void;
   private keyboardHandler?: (e: KeyboardEvent) => void;
 
   /**
@@ -641,6 +642,19 @@ export class GridBuilder {
 
     this.hostElement.addEventListener('canvas-move', this.canvasMoveHandler);
 
+    // Setup canvas activated event handler
+    this.canvasActivatedHandler = (event: Event) => {
+      const customEvent = event as CustomEvent;
+      const { canvasId } = customEvent.detail;
+
+      console.log('🎨 canvas-activated event received:', { canvasId });
+
+      // Emit plugin event
+      eventManager.emit('canvasActivated', { canvasId });
+    };
+
+    this.hostElement.addEventListener('canvas-activated', this.canvasActivatedHandler);
+
     // Setup keyboard shortcuts
     this.keyboardHandler = (event: KeyboardEvent) => {
       // Get modifier keys (Cmd on Mac, Ctrl on Windows/Linux)
@@ -786,6 +800,9 @@ export class GridBuilder {
     }
     if (this.canvasMoveHandler) {
       this.hostElement.removeEventListener('canvas-move', this.canvasMoveHandler);
+    }
+    if (this.canvasActivatedHandler) {
+      this.hostElement.removeEventListener('canvas-activated', this.canvasActivatedHandler);
     }
     if (this.keyboardHandler) {
       document.removeEventListener('keydown', this.keyboardHandler);
@@ -1111,6 +1128,15 @@ export class GridBuilder {
         undoRedo.push(command);
         command.redo();
       },
+
+      setActiveCanvas: (canvasId: string) => {
+        setActiveCanvas(canvasId);
+        eventManager.emit('canvasActivated', { canvasId });
+      },
+
+      getActiveCanvas: () => {
+        return gridState.activeCanvasId;
+      },
     };
   }
 
@@ -1339,6 +1365,52 @@ export class GridBuilder {
   }
 
   /**
+   * Set active canvas programmatically
+   *
+   * **Purpose**: Activate a specific canvas for focused editing
+   *
+   * **Use cases**:
+   * - Focus specific section after adding items
+   * - Programmatic navigation between sections
+   * - Show canvas-specific settings panel
+   *
+   * **Events triggered**: 'canvasActivated'
+   *
+   * @param canvasId - Canvas to activate
+   *
+   * @example
+   * ```typescript
+   * const builder = document.querySelector('grid-builder');
+   * await builder.setActiveCanvas('canvas2');
+   * ```
+   */
+  @Method()
+  async setActiveCanvas(canvasId: string) {
+    this.api?.setActiveCanvas(canvasId);
+  }
+
+  /**
+   * Get currently active canvas ID
+   *
+   * **Purpose**: Check which canvas is currently active/focused
+   *
+   * @returns Promise<string | null> - Active canvas ID or null if none active
+   *
+   * @example
+   * ```typescript
+   * const builder = document.querySelector('grid-builder');
+   * const activeId = await builder.getActiveCanvas();
+   * if (activeId === 'canvas1') {
+   *   console.log('Canvas 1 is active');
+   * }
+   * ```
+   */
+  @Method()
+  async getActiveCanvas(): Promise<string | null> {
+    return this.api?.getActiveCanvas() || null;
+  }
+
+  /**
    * Undo last action
    *
    * **Purpose**: Revert last user action (move, resize, add, delete, etc.)
@@ -1519,6 +1591,7 @@ export class GridBuilder {
                 <canvas-section
                   key={canvasId}
                   canvasId={canvasId}
+                  isActive={gridState.activeCanvasId === canvasId}
                   config={this.config}
                   componentRegistry={this.componentRegistry}
                   backgroundColor={this.canvasMetadata?.[canvasId]?.backgroundColor}

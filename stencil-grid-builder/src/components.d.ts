@@ -261,6 +261,12 @@ export namespace Components {
          */
         "config"?: GridConfig;
         /**
+          * Whether this canvas is currently active  **Purpose**: Indicate which canvas is currently focused/active **Source**: Computed from gridState.activeCanvasId in grid-builder **Default**: false **Visual effect**: Applies 'active' CSS class to grid-container  **Canvas becomes active when**: - User clicks item on canvas - User clicks canvas background - User starts dragging item on canvas - User starts resizing item on canvas - Programmatically via api.setActiveCanvas()  **Consumer styling hook**: Consumer can style active canvas via CSS: ```css .grid-container.active .canvas-title {   opacity: 1; } ```
+          * @example ```tsx <canvas-section   canvasId="hero-section"   isActive={gridState.activeCanvasId === 'hero-section'} /> ```
+          * @default false
+         */
+        "isActive"?: boolean;
+        /**
           * Deletion hook (from parent grid-builder)  **Source**: grid-builder component (from onBeforeDelete prop) **Purpose**: Pass through to grid-item-wrapper for deletion interception **Optional**: If not provided, components delete immediately
          */
         "onBeforeDelete"?: (context: any) => boolean | Promise<boolean>;
@@ -569,6 +575,12 @@ export namespace Components {
          */
         "exportState": () => Promise<GridExport>;
         /**
+          * Get currently active canvas ID  **Purpose**: Check which canvas is currently active/focused
+          * @returns Promise<string | null> - Active canvas ID or null if none active
+          * @example ```typescript const builder = document.querySelector('grid-builder'); const activeId = await builder.getActiveCanvas(); if (activeId === 'canvas1') {   console.log('Canvas 1 is active'); } ```
+         */
+        "getActiveCanvas": () => Promise<string | null>;
+        /**
           * Get current grid state  **Purpose**: Direct access to grid state for reading  **Example**: ```typescript const builder = document.querySelector('grid-builder'); const state = await builder.getState(); console.log('Current viewport:', state.currentViewport); ```
           * @returns Promise<GridState> - Current grid state
          */
@@ -599,6 +611,12 @@ export namespace Components {
           * @param canvasId - Canvas identifier to remove
          */
         "removeCanvas": (canvasId: string) => Promise<void>;
+        /**
+          * Set active canvas programmatically  **Purpose**: Activate a specific canvas for focused editing  **Use cases**: - Focus specific section after adding items - Programmatic navigation between sections - Show canvas-specific settings panel  **Events triggered**: 'canvasActivated'
+          * @param canvasId - Canvas to activate
+          * @example ```typescript const builder = document.querySelector('grid-builder'); await builder.setActiveCanvas('canvas2'); ```
+         */
+        "setActiveCanvas": (canvasId: string) => Promise<void>;
         /**
           * Show the default configuration panel  **Optional prop**: Controls whether the default config panel is rendered **Default**: true (show the config panel) **Purpose**: Allow host apps to use custom config panels instead  **Example - Custom config panel**: ```typescript // Hide default config panel to use custom one <grid-builder showConfigPanel={false} ... />  // Then implement your own config panel that listens to item-click events: document.addEventListener('item-click', (event) => {   const { itemId, canvasId } = event.detail;   // Show your custom config panel }); ```  **See**: custom-config-panel component in demo for full example
           * @default true
@@ -1543,6 +1561,12 @@ declare namespace LocalJSX {
           * Grid configuration options  **Optional**: Customizes grid system behavior **Passed from**: grid-builder component **Used for**: Grid size calculations, constraints
          */
         "config"?: GridConfig;
+        /**
+          * Whether this canvas is currently active  **Purpose**: Indicate which canvas is currently focused/active **Source**: Computed from gridState.activeCanvasId in grid-builder **Default**: false **Visual effect**: Applies 'active' CSS class to grid-container  **Canvas becomes active when**: - User clicks item on canvas - User clicks canvas background - User starts dragging item on canvas - User starts resizing item on canvas - Programmatically via api.setActiveCanvas()  **Consumer styling hook**: Consumer can style active canvas via CSS: ```css .grid-container.active .canvas-title {   opacity: 1; } ```
+          * @example ```tsx <canvas-section   canvasId="hero-section"   isActive={gridState.activeCanvasId === 'hero-section'} /> ```
+          * @default false
+         */
+        "isActive"?: boolean;
         /**
           * Deletion hook (from parent grid-builder)  **Source**: grid-builder component (from onBeforeDelete prop) **Purpose**: Pass through to grid-item-wrapper for deletion interception **Optional**: If not provided, components delete immediately
          */
