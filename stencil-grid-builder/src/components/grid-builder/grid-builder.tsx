@@ -1366,6 +1366,7 @@ export class GridBuilder {
    */
   @Method()
   async importState(state: Partial<GridState> | GridExport) {
+    // Import grid state
     Object.assign(gridState, state);
   }
 
