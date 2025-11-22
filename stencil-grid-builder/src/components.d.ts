@@ -1254,6 +1254,8 @@ declare global {
         "closePanel": void;
         "updateSection": { canvasId: string; title: string; backgroundColor: string };
         "previewColorChange": { canvasId: string; backgroundColor: string };
+        "previewTitleChange": { canvasId: string; title: string };
+        "deleteSection": { canvasId: string };
     }
     /**
      * Section Editor Panel Component
@@ -1991,9 +1993,17 @@ declare namespace LocalJSX {
          */
         "onClosePanel"?: (event: SectionEditorPanelCustomEvent<void>) => void;
         /**
+          * Event: Delete section Fired when user clicks Delete button Parent handles canvas removal
+         */
+        "onDeleteSection"?: (event: SectionEditorPanelCustomEvent<{ canvasId: string }>) => void;
+        /**
           * Event: Preview color change Fired when user changes color picker (live preview) Parent temporarily updates canvas background
          */
         "onPreviewColorChange"?: (event: SectionEditorPanelCustomEvent<{ canvasId: string; backgroundColor: string }>) => void;
+        /**
+          * Event: Preview title change Fired when user types in title input (live preview) Parent temporarily updates canvas title
+         */
+        "onPreviewTitleChange"?: (event: SectionEditorPanelCustomEvent<{ canvasId: string; title: string }>) => void;
         /**
           * Event: Update section Fired when user clicks Save with edited values Parent updates canvasMetadata state in response
          */

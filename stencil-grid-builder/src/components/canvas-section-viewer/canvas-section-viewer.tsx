@@ -41,11 +41,12 @@
  * @module canvas-section-viewer
  */
 
-import { Component, h, Prop, State } from '@stencil/core';
+import { Component, h, Prop, State, Watch } from '@stencil/core';
 
 // Internal imports - no interact.js
 import { GridItem } from '../../services/state-manager';
-import { clearGridSizeCache } from '../../utils/grid-calculations';
+import { clearGridSizeCache, gridToPixelsY } from '../../utils/grid-calculations';
+import { calculateCanvasHeightFromItems } from '../../utils/canvas-height-calculator';
 import { GridConfig } from '../../types/grid-config';
 import { ComponentDefinition } from '../../types/component-definition';
 
@@ -128,6 +129,15 @@ export class CanvasSectionViewer {
   @State() renderVersion: number = 0;
 
   /**
+   * Calculated canvas height based on content
+   *
+   * **Purpose**: Dynamic canvas height that fits all items
+   * **Calculated from**: Item positions (bottom-most item determines height)
+   * **Recalculated when**: Items change, viewport changes, or resize occurs
+   */
+  @State() calculatedHeight: number = 400;
+
+  /**
    * Grid container DOM reference
    *
    * **Used for**: ResizeObserver monitoring
@@ -147,9 +157,12 @@ export class CanvasSectionViewer {
    * Component did load lifecycle hook
    *
    * **Called**: After first render (DOM available)
-   * **Purpose**: Setup ResizeObserver
+   * **Purpose**: Setup ResizeObserver and calculate initial height
    */
   componentDidLoad() {
+    // Calculate initial canvas height
+    this.updateCanvasHeight();
+
     this.setupResizeObserver();
   }
 
@@ -179,6 +192,48 @@ export class CanvasSectionViewer {
   }
 
   /**
+   * Watch items prop for changes
+   *
+   * **Purpose**: Recalculate canvas height when items change
+   */
+  @Watch('items')
+  handleItemsChange() {
+    this.updateCanvasHeight();
+  }
+
+  /**
+   * Watch currentViewport prop for changes
+   *
+   * **Purpose**: Recalculate canvas height when viewport changes
+   */
+  @Watch('currentViewport')
+  handleViewportChange() {
+    this.updateCanvasHeight();
+  }
+
+  /**
+   * Update canvas height based on current items and viewport
+   *
+   * **Purpose**: Calculate dynamic height that fits all items
+   * **Called when**:
+   * - Component loads
+   * - Items prop changes
+   * - Viewport prop changes
+   * - Canvas resizes
+   */
+  private updateCanvasHeight = () => {
+    if (!this.items || !this.currentViewport) {
+      return;
+    }
+
+    this.calculatedHeight = calculateCanvasHeightFromItems(
+      this.items,
+      this.currentViewport,
+      this.config
+    );
+  };
+
+  /**
    * Setup ResizeObserver for grid cache invalidation
    *
    * **Purpose**: Detect container size changes and force grid recalculation
@@ -186,6 +241,7 @@ export class CanvasSectionViewer {
    * **Observer callback**:
    * 1. Clear grid size cache (grid-calculations.ts)
    * 2. Increment renderVersion (triggers item re-renders)
+   * 3. Recalculate canvas height
    *
    * **Why needed**:
    * - Grid calculations cached for performance
@@ -202,6 +258,9 @@ export class CanvasSectionViewer {
     this.resizeObserver = new ResizeObserver(() => {
       // Clear grid size cache when container resizes
       clearGridSizeCache();
+
+      // Recalculate canvas height
+      this.updateCanvasHeight();
 
       // Force re-render to update item positions
       this.renderVersion++;
@@ -222,6 +281,10 @@ export class CanvasSectionViewer {
    * **No dropzone**: Rendering-only, no drag-and-drop
    */
   render() {
+    // Calculate min-height from config (default 20 grid units)
+    const minHeightGridUnits = this.config?.canvasMinHeight ?? 20;
+    const minHeightPx = gridToPixelsY(minHeightGridUnits, this.config);
+
     return (
       <div class="canvas-section-viewer" data-canvas-id={this.canvasId}>
         <div
@@ -230,6 +293,8 @@ export class CanvasSectionViewer {
           data-canvas-id={this.canvasId}
           style={{
             backgroundColor: this.backgroundColor || '#ffffff',
+            minHeight: `${minHeightPx}px`,
+            height: this.calculatedHeight > 0 ? `${this.calculatedHeight}px` : undefined,
           }}
           ref={(el) => (this.gridContainerRef = el)}
         >

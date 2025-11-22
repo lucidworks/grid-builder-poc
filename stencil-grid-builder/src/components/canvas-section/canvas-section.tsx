@@ -71,6 +71,7 @@ import interact from 'interactjs';
 // Internal imports
 import { Canvas, GridItem, gridState, onChange, setActiveCanvas } from '../../services/state-manager';
 import { clearGridSizeCache, gridToPixelsX, gridToPixelsY, getGridSizeVertical } from '../../utils/grid-calculations';
+import { calculateCanvasHeight } from '../../utils/canvas-height-calculator';
 import { GridConfig } from '../../types/grid-config';
 import { ComponentDefinition } from '../../types/component-definition';
 
@@ -214,6 +215,26 @@ export class CanvasSection {
   @State() renderVersion: number = 0;
 
   /**
+   * Calculated canvas height (content-based)
+   *
+   * **Purpose**: Dynamic canvas height based on bottommost item
+   * **Calculation**: `(bottommost item y + height) + 5 grid units margin`
+   * **Updates**: Real-time on item add/move/delete/resize
+   * **Minimum**: 0 (CSS min-height: 400px will apply)
+   *
+   * **Formula**:
+   * ```
+   * calculatedHeight = gridToPixelsY(maxItemBottom + 5)
+   * ```
+   *
+   * **Applied in render**:
+   * ```typescript
+   * style={{ height: calculatedHeight > 0 ? `${calculatedHeight}px` : undefined }}
+   * ```
+   */
+  @State() private calculatedHeight: number = 0;
+
+  /**
    * Grid container DOM reference
    *
    * **Used for**:
@@ -257,16 +278,28 @@ export class CanvasSection {
     // Initial load
     this.canvas = gridState.canvases[this.canvasId];
 
+    // Calculate initial height
+    this.calculatedHeight = calculateCanvasHeight(this.canvasId, this.config);
+
     // Subscribe to state changes
     onChange('canvases', () => {
       try {
         if (this.canvasId && gridState.canvases[this.canvasId]) {
           this.canvas = gridState.canvases[this.canvasId];
           this.renderVersion++; // Force re-render
+
+          // Recalculate canvas height based on content
+          this.calculatedHeight = calculateCanvasHeight(this.canvasId, this.config);
         }
       } catch (error) {
         console.debug('Canvas section state update skipped:', error);
       }
+    });
+
+    // Subscribe to viewport changes (desktop ↔ mobile)
+    onChange('currentViewport', () => {
+      // Recalculate height for new viewport layout
+      this.calculatedHeight = calculateCanvasHeight(this.canvasId, this.config);
     });
   }
 
@@ -467,13 +500,26 @@ export class CanvasSection {
       accept: '.palette-item, .grid-item, .grid-item-header',
       overlap: 'pointer',
 
-      checker: (_dragEvent: any, _event: any, dropped: boolean) => {
-        return dropped;
+      ondragenter: (_event: any) => {
+        // Add visual feedback when drag enters canvas
+        this.gridContainerRef?.classList.add('drop-target');
+      },
+
+      ondragleave: (_event: any) => {
+        // Remove visual feedback when drag leaves canvas
+        this.gridContainerRef?.classList.remove('drop-target');
       },
 
       ondrop: (event: any) => {
+        // Remove visual feedback on successful drop
+        this.gridContainerRef?.classList.remove('drop-target');
         const droppedElement = event.relatedTarget;
         const isPaletteItem = droppedElement.classList.contains('palette-item');
+
+        // Mark palette item drop as valid (for snap-back animation)
+        if (isPaletteItem) {
+          (droppedElement as any)._dropWasValid = true;
+        }
 
         // Check if it's a grid item or grid item header (drag handle)
         const isGridItemHeader = droppedElement.classList.contains('grid-item-header');
@@ -572,6 +618,10 @@ export class CanvasSection {
     const showGrid = gridState.showGrid;
     const verticalGridSize = getGridSizeVertical(this.config);
 
+    // Calculate min-height from config (default 20 grid units)
+    const minHeightGridUnits = this.config?.canvasMinHeight ?? 20;
+    const minHeightPx = gridToPixelsY(minHeightGridUnits, this.config);
+
     return (
       <div class="canvas-section" data-canvas-id={this.canvasId}>
         <div
@@ -585,6 +635,8 @@ export class CanvasSection {
           style={{
             backgroundColor: this.backgroundColor || '#ffffff',
             backgroundSize: `2% ${verticalGridSize}px`,
+            minHeight: `${minHeightPx}px`,
+            ...(this.calculatedHeight > 0 ? { height: `${this.calculatedHeight}px` } : {}),
           }}
           ref={(el) => (this.gridContainerRef = el)}
         >

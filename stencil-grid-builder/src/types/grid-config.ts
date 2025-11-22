@@ -360,4 +360,89 @@ export interface GridConfig {
    * @default 100
    */
   animationDuration?: number;
+
+  /**
+   * Bottom margin for canvases in grid units
+   *
+   * **What it does**: Adds extra space below the bottommost item in each canvas
+   * **Why**: Provides breathing room and space for adding new items below
+   *
+   * **Default**: 5 grid units (~100px with 20px vertical grid)
+   *
+   * **How it works**:
+   * - Calculated canvas height = (bottommost item position + height) + canvasBottomMargin
+   * - Applied to all canvases in both edit and preview modes
+   * - Scales with grid size (responsive to verticalGridSize setting)
+   *
+   * **Typical values**:
+   * - 3: Compact spacing (60px with default grid)
+   * - 5: Standard spacing ✅ Recommended (~100px with default grid)
+   * - 10: Spacious spacing (200px with default grid)
+   * - 15: Very spacious (300px with default grid)
+   *
+   * **Use cases**:
+   * - **Tight layouts**: Use 3 for compact designs with minimal whitespace
+   * - **Standard layouts**: Use 5 for balanced spacing (default)
+   * - **Spacious layouts**: Use 10+ for more breathing room
+   * - **Drop zones**: Larger margins make it easier to drop new items at bottom
+   *
+   * **Example - Spacious canvas margins**:
+   * ```typescript
+   * const config: GridConfig = {
+   *   canvasBottomMargin: 10  // Extra space for new items
+   * };
+   * ```
+   *
+   * @default 5
+   */
+  canvasBottomMargin?: number;
+
+  /**
+   * Minimum canvas height in grid units
+   *
+   * **What it does**: Sets the minimum height for empty or small canvases
+   * **Why**: Prevents canvases from collapsing when empty, provides drop target area
+   *
+   * **Default**: 20 grid units (~400px with 20px vertical grid)
+   *
+   * **How it works**:
+   * - Applied as CSS min-height on all canvas containers
+   * - Only takes effect when calculated height is smaller
+   * - Scales with grid size (responsive to verticalGridSize setting)
+   * - Ensures empty canvases are visible and usable
+   *
+   * **Typical values**:
+   * - 10: Compact minimum (200px with default grid)
+   * - 15: Small minimum (300px with default grid)
+   * - 20: Standard minimum ✅ Recommended (~400px with default grid)
+   * - 25: Large minimum (500px with default grid)
+   * - 30: Very large minimum (600px with default grid)
+   *
+   * **Use cases**:
+   * - **Mobile layouts**: Use 10-15 for smaller screens
+   * - **Desktop layouts**: Use 20-25 for comfortable drop targets
+   * - **Large displays**: Use 25-30 for spacious canvases
+   * - **Empty state UX**: Larger minimums make it clearer where to drop items
+   *
+   * **Example - Compact mobile canvas**:
+   * ```typescript
+   * const mobileConfig: GridConfig = {
+   *   canvasMinHeight: 15,     // Smaller minimum for mobile
+   *   verticalGridSize: 15     // Smaller grid for mobile
+   * };
+   * // Result: 15 × 15px = 225px minimum height
+   * ```
+   *
+   * **Example - Spacious desktop canvas**:
+   * ```typescript
+   * const desktopConfig: GridConfig = {
+   *   canvasMinHeight: 25,     // Larger minimum for desktop
+   *   verticalGridSize: 20     // Standard grid
+   * };
+   * // Result: 25 × 20px = 500px minimum height
+   * ```
+   *
+   * @default 20
+   */
+  canvasMinHeight?: number;
 }

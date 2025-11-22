@@ -19,7 +19,7 @@
 .grid-container {
   position: relative;
   width: 100%;
-  min-height: 400px;
+  /* min-height set dynamically via inline style (grid-based) */
   background-image: linear-gradient(rgba(0, 0, 0, 5%) 1px, transparent 1px),
     linear-gradient(90deg, rgba(0, 0, 0, 5%) 1px, transparent 1px);
   /* background-size set dynamically via inline style (config-based) */
@@ -36,6 +36,17 @@
   outline: 2px solid var(--primary-color, #007bff);
   outline-offset: -2px;
   box-shadow: 0 0 0 1px rgba(0, 123, 255, 0.3);
+}
+
+/* Drop target highlighting (when dragging over canvas) */
+/* Only show drop target styling if canvas is not already active */
+.grid-container.drop-target:not(.active) {
+  outline: 3px dashed var(--primary-color, #007bff);
+  outline-offset: -3px;
+  box-shadow:
+    0 0 0 3px color-mix(in srgb, var(--primary-color) 25%, transparent),
+    inset 0 0 30px color-mix(in srgb, var(--primary-color) 15%, transparent);
+  background-color: color-mix(in srgb, var(--primary-color) 8%, transparent);
 }
 
 /* Canvas title styling - consumer can override */
