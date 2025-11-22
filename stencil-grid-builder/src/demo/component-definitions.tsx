@@ -75,15 +75,14 @@ export const contentComponents: ComponentDefinition[] = [
         icon={icon}
       />
     ),
-    renderDragClone: ({ componentType, name, icon, width, height}) => (
-      <custom-drag-clone
-        componentType={componentType}
-        name={name}
-        icon={icon}
-        width={width}
-        height={height}
-      />
-    ),
+    renderDragClone: ({ componentType, name, icon, width, height}) =>
+      `<custom-drag-clone
+        component-type="${componentType}"
+        name="${name}"
+        icon="${icon}"
+        width="${width}"
+        height="${height}">
+      </custom-drag-clone>`,
     render: ({ config }) => (
       <blog-header
         headerTitle={config?.title || 'Default Header'}
@@ -104,15 +103,14 @@ export const contentComponents: ComponentDefinition[] = [
         icon={icon}
       />
     ),
-    renderDragClone: ({ componentType, name, icon, width, height}) => (
-      <custom-drag-clone
-        componentType={componentType}
-        name={name}
-        icon={icon}
-        width={width}
-        height={height}
-      />
-    ),
+    renderDragClone: ({ componentType, name, icon, width, height}) =>
+      `<custom-drag-clone
+        component-type="${componentType}"
+        name="${name}"
+        icon="${icon}"
+        width="${width}"
+        height="${height}">
+      </custom-drag-clone>`,
     render: ({ config }) => (
       <blog-article
         content={config?.content || 'Article content goes here'}
@@ -135,15 +133,14 @@ export const contentComponents: ComponentDefinition[] = [
         icon={icon}
       />
     ),
-    renderDragClone: ({ componentType, name, icon, width, height}) => (
-      <custom-drag-clone
-        componentType={componentType}
-        name={name}
-        icon={icon}
-        width={width}
-        height={height}
-      />
-    ),
+    renderDragClone: ({ componentType, name, icon, width, height}) =>
+      `<custom-drag-clone
+        component-type="${componentType}"
+        name="${name}"
+        icon="${icon}"
+        width="${width}"
+        height="${height}">
+      </custom-drag-clone>`,
     configSchema: [
       {
         name: 'src',
@@ -205,15 +202,14 @@ export const interactiveComponents: ComponentDefinition[] = [
         icon={icon}
       />
     ),
-    renderDragClone: ({ componentType, name, icon, width, height}) => (
-      <custom-drag-clone
-        componentType={componentType}
-        name={name}
-        icon={icon}
-        width={width}
-        height={height}
-      />
-    ),
+    renderDragClone: ({ componentType, name, icon, width, height}) =>
+      `<custom-drag-clone
+        component-type="${componentType}"
+        name="${name}"
+        icon="${icon}"
+        width="${width}"
+        height="${height}">
+      </custom-drag-clone>`,
     render: ({ config }) => (
       <blog-button
         label={config?.label || 'Click me!'}
@@ -240,15 +236,14 @@ export const mediaComponents: ComponentDefinition[] = [
         icon={icon}
       />
     ),
-    renderDragClone: ({ componentType, name, icon, width, height}) => (
-      <custom-drag-clone
-        componentType={componentType}
-        name={name}
-        icon={icon}
-        width={width}
-        height={height}
-      />
-    ),
+    renderDragClone: ({ componentType, name, icon, width, height}) =>
+      `<custom-drag-clone
+        component-type="${componentType}"
+        name="${name}"
+        icon="${icon}"
+        width="${width}"
+        height="${height}">
+      </custom-drag-clone>`,
     configSchema: [
       {
         name: 'imageCount',
@@ -281,15 +276,14 @@ export const mediaComponents: ComponentDefinition[] = [
         icon={icon}
       />
     ),
-    renderDragClone: ({ componentType, name, icon, width, height}) => (
-      <custom-drag-clone
-        componentType={componentType}
-        name={name}
-        icon={icon}
-        width={width}
-        height={height}
-      />
-    ),
+    renderDragClone: ({ componentType, name, icon, width, height}) =>
+      `<custom-drag-clone
+        component-type="${componentType}"
+        name="${name}"
+        icon="${icon}"
+        width="${width}"
+        height="${height}">
+      </custom-drag-clone>`,
     render: () => <dashboard-widget />,
   },
   {
@@ -306,15 +300,14 @@ export const mediaComponents: ComponentDefinition[] = [
         icon={icon}
       />
     ),
-    renderDragClone: ({ componentType, name, icon, width, height}) => (
-      <custom-drag-clone
-        componentType={componentType}
-        name={name}
-        icon={icon}
-        width={width}
-        height={height}
-      />
-    ),
+    renderDragClone: ({ componentType, name, icon, width, height}) =>
+      `<custom-drag-clone
+        component-type="${componentType}"
+        name="${name}"
+        icon="${icon}"
+        width="${width}"
+        height="${height}">
+      </custom-drag-clone>`,
     render: () => <live-data />,
   },
 ];

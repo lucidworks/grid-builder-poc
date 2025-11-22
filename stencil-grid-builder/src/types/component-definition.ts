@@ -525,7 +525,7 @@ export interface ComponentDefinition {
   /**
    * Optional: Custom drag clone renderer
    *
-   * **When provided**: Returns JSX element for custom drag clone.
+   * **When provided**: Returns HTML string for custom drag clone.
    *
    * **When NOT provided**: Library uses default drag clone styling.
    *
@@ -541,28 +541,28 @@ export interface ComponentDefinition {
    * - `width`: Calculated width in pixels (from defaultSize)
    * - `height`: Calculated height in pixels (from defaultSize)
    *
-   * **Return value**: JSX element (StencilJS vNode)
+   * **Return value**: HTML string
    *
-   * **Security**: Using JSX instead of HTML strings prevents XSS vulnerabilities
+   * **Security Note**: Since component definitions are developer-written (not user input),
+   * XSS risk is minimal. However, avoid using untrusted data in the HTML string.
    *
    * **Note**: The library automatically positions and manages the drag clone.
-   * You only need to provide the JSX element.
+   * You only need to provide the HTML string for the content.
    *
    * @param props - Drag clone rendering context
-   * @returns JSX element
+   * @returns HTML string
    *
    * @example
    * ```typescript
-   * // Custom Stencil component for drag clone
-   * renderDragClone: ({ componentType, name, icon, width, height }) => (
-   *   <custom-drag-clone
-   *     component-type={componentType}
-   *     name={name}
-   *     icon={icon}
-   *     width={width}
-   *     height={height}
-   *   />
-   * )
+   * // Custom drag clone with HTML string
+   * renderDragClone: ({ componentType, name, icon, width, height }) =>
+   *   `<custom-drag-clone
+   *     component-type="${componentType}"
+   *     name="${name}"
+   *     icon="${icon}"
+   *     width="${width}"
+   *     height="${height}">
+   *   </custom-drag-clone>`
    * ```
    */
   renderDragClone?: (props: {
@@ -571,7 +571,7 @@ export interface ComponentDefinition {
     icon: string;
     width: number;
     height: number;
-  }) => any;
+  }) => string;
 
   /**
    * Optional: Custom item wrapper/chrome renderer

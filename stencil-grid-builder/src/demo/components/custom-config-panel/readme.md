@@ -21,7 +21,6 @@
 ### Depends on
 
 - [custom-palette-item](../custom-palette-item)
-- [custom-drag-clone](../custom-drag-clone)
 - [blog-header](../blog-header)
 - [blog-article](../blog-article)
 - [blog-image](../blog-image)
@@ -34,7 +33,6 @@
 ```mermaid
 graph TD;
   custom-config-panel --> custom-palette-item
-  custom-config-panel --> custom-drag-clone
   custom-config-panel --> blog-header
   custom-config-panel --> blog-article
   custom-config-panel --> blog-image

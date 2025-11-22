@@ -535,8 +535,8 @@ export class ComponentPalette {
 
             // Use custom renderer if provided, otherwise use simple default
             if (definition.renderDragClone) {
-              // Render custom drag clone JSX
-              const customElement = definition.renderDragClone({
+              // Render custom drag clone HTML string
+              const customHTML = definition.renderDragClone({
                 componentType: componentType,
                 name: definition.name,
                 icon: definition.icon,
@@ -544,24 +544,7 @@ export class ComponentPalette {
                 height: heightPx,
               });
 
-              // For JSX elements, we need to append them directly
-              // StencilJS vNodes can't be directly appended, so we wrap in a container
-              const wrapper = document.createElement('div');
-              wrapper.style.width = '100%';
-              wrapper.style.height = '100%';
-
-              // If it's an HTMLElement, append directly
-              if (customElement instanceof HTMLElement) {
-                wrapper.appendChild(customElement);
-              } else {
-                // For vNodes/JSX, we can't easily render them imperatively
-                // The component should return an HTMLElement or use the default renderer
-                console.warn('renderDragClone should return an HTMLElement for imperative rendering');
-                // Fallback to default
-                wrapper.innerHTML = `<div style="font-weight: 600; color: #ffffff; font-size: 14px;">${definition.icon} ${definition.name}</div>`;
-              }
-
-              dragClone.appendChild(wrapper);
+              dragClone.innerHTML = customHTML;
             } else {
               // Use simple default styled div
               dragClone.style.width = widthPx + 'px';

@@ -28,6 +28,21 @@ the actual drop size.
 | `width` _(required)_         | `width`          | Width in pixels              | `number` | `undefined` |
 
 
+## Dependencies
+
+### Used by
+
+ - [blog-app](../blog-app)
+ - [custom-config-panel](../custom-config-panel)
+
+### Graph
+```mermaid
+graph TD;
+  blog-app --> custom-drag-clone
+  custom-config-panel --> custom-drag-clone
+  style custom-drag-clone fill:#f9f,stroke:#333,stroke-width:4px
+```
+
 ----------------------------------------------
 
 *Built with [StencilJS](https://stenciljs.com/)*
