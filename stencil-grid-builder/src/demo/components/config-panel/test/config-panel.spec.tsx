@@ -10,8 +10,8 @@
 
 import { h } from '@stencil/core';
 import { ConfigPanel } from '../config-panel';
-import { eventManager } from '../../../services/event-manager';
-import { gridState, reset as resetState } from '../../../services/state-manager';
+import { eventManager } from '../../../../services/event-manager';
+import { gridState, reset as resetState } from '../../../../services/state-manager';
 
 // Mock component definitions for tests
 const mockComponentDefinitions = [

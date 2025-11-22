@@ -28,9 +28,9 @@
 import { Component, h, Listen, Prop, State } from '@stencil/core';
 
 // Internal imports
-import { eventManager } from '../../services/event-manager';
-import { gridState } from '../../services/state-manager';
-import { ComponentDefinition, ConfigField } from '../../types/component-definition';
+import { eventManager } from '../../../services/event-manager';
+import { gridState } from '../../../services/state-manager';
+import { ComponentDefinition, ConfigField } from '../../../types/component-definition';
 
 /**
  * ConfigPanel Component

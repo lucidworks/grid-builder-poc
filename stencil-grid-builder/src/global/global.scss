@@ -8,7 +8,6 @@
 @import '../components/component-palette/component-palette';
 @import '../components/canvas-section/canvas-section';
 @import '../components/grid-item-wrapper/grid-item-wrapper';
-@import '../components/config-panel/config-panel';
 
 * {
   box-sizing: border-box;
@@ -32,7 +31,6 @@ grid-builder {
 
 component-palette,
 canvas-section,
-grid-item-wrapper,
-config-panel {
+grid-item-wrapper {
   display: block;
 }
