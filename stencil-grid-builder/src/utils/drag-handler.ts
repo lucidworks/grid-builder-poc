@@ -504,6 +504,13 @@ export class DragHandler {
     const elementToRead = this.dragHandleElement ? this.element : event.target;
     this.basePosition = getTransformPosition(elementToRead);
 
+    // Store original position for snap-back animation (if dropped outside canvas)
+    (this.element as any)._originalTransform = this.element.style.transform;
+    (this.element as any)._originalPosition = {
+      x: this.basePosition.x,
+      y: this.basePosition.y,
+    };
+
     // Reset accumulation
     event.target.setAttribute('data-x', '0');
     event.target.setAttribute('data-y', '0');
@@ -583,6 +590,7 @@ export class DragHandler {
     event.target.setAttribute('data-x', x.toString());
     event.target.setAttribute('data-y', y.toString());
   }
+
 
   /**
    * Handle drag end event - finalize position and update state
@@ -726,24 +734,44 @@ export class DragHandler {
     // Get the element's current position in viewport (use main element if dragging from handle)
     const elementForRect = this.dragHandleElement ? this.element : event.target;
     const rect = elementForRect.getBoundingClientRect();
-    const centerX = rect.left + rect.width / 2;
-    const centerY = rect.top + rect.height / 2;
 
-    // Find which canvas the center of the item is over
+    // Find which canvas the item should belong to (hybrid approach)
     let targetCanvasId = this.item.canvasId;
+    let isFullyContained = false;
 
     const gridContainers = document.querySelectorAll('.grid-container');
+
+    // Priority 1: Check if item is fully contained in any canvas
     gridContainers.forEach((container: HTMLElement) => {
       const containerRect = container.getBoundingClientRect();
       if (
-        centerX >= containerRect.left &&
-        centerX <= containerRect.right &&
-        centerY >= containerRect.top &&
-        centerY <= containerRect.bottom
+        rect.left >= containerRect.left &&
+        rect.right <= containerRect.right &&
+        rect.top >= containerRect.top &&
+        rect.bottom <= containerRect.bottom
       ) {
         targetCanvasId = container.getAttribute('data-canvas-id') || this.item.canvasId;
+        isFullyContained = true;
       }
     });
+
+    // Priority 2: Fallback to center point detection (for oversized items)
+    if (!isFullyContained) {
+      const centerX = rect.left + rect.width / 2;
+      const centerY = rect.top + rect.height / 2;
+
+      gridContainers.forEach((container: HTMLElement) => {
+        const containerRect = container.getBoundingClientRect();
+        if (
+          centerX >= containerRect.left &&
+          centerX <= containerRect.right &&
+          centerY >= containerRect.top &&
+          centerY <= containerRect.bottom
+        ) {
+          targetCanvasId = container.getAttribute('data-canvas-id') || this.item.canvasId;
+        }
+      });
+    }
 
     // If canvas changed from drag start, let the dropzone handle it
     // (Use dragStartCanvasId since item.canvasId may have been updated by dropzone already)
@@ -762,6 +790,8 @@ export class DragHandler {
     // Calculate new position relative to current canvas (same-canvas drag only)
     const targetContainer = domCache.getCanvas(targetCanvasId);
     if (!targetContainer) {
+      // Invalid drop - no canvas found, snap back to original position
+      this.snapBackToOriginalPosition(event);
       return;
     }
 
@@ -776,17 +806,19 @@ export class DragHandler {
     newX = Math.round(newX / gridSizeX) * gridSizeX;
     newY = Math.round(newY / gridSizeY) * gridSizeY;
 
-    // Get item dimensions
-    const itemWidth = parseFloat(event.target.style.width) || 0;
-    const itemHeight = parseFloat(event.target.style.height) || 0;
+    // Get item dimensions (use main element if dragging from handle)
+    const elementForDimensions = this.dragHandleElement ? this.element : event.target;
+    const itemWidth = parseFloat(elementForDimensions.style.width) || 0;
+    const itemHeight = parseFloat(elementForDimensions.style.height) || 0;
 
     // Convert to grid units for boundary checking
-    let gridX = pixelsToGridX(newX, targetCanvasId);
-    let gridY = pixelsToGridY(newY);
+    const gridX = pixelsToGridX(newX, targetCanvasId);
+    const gridY = pixelsToGridY(newY);
     const gridWidth = pixelsToGridX(itemWidth, targetCanvasId);
     const gridHeight = pixelsToGridY(itemHeight);
 
     // Apply boundary constraints to keep component fully within canvas
+    // If item is dragged beyond edge, it will snap to the nearest valid position
     const constrained = constrainPositionToCanvas(
       gridX,
       gridY,
@@ -801,16 +833,12 @@ export class DragHandler {
     newX = constrained.x * gridSizeXForConversion;
     newY = constrained.y * gridSizeYForConversion;
 
-    // Update grid coordinates for state
-    gridX = constrained.x;
-    gridY = constrained.y;
-
     // Update item position in current viewport's layout (use constrained grid units)
     const currentViewport = (window as any).gridState?.currentViewport || 'desktop';
     const layout = this.item.layouts[currentViewport as 'desktop' | 'mobile'];
 
-    layout.x = gridX;
-    layout.y = gridY;
+    layout.x = constrained.x;
+    layout.y = constrained.y;
 
     // If in mobile view, mark as customized
     if (currentViewport === 'mobile') {
@@ -842,5 +870,70 @@ export class DragHandler {
       // Trigger StencilJS update (single re-render at end)
       this.onUpdate(this.item);
     });
+  }
+
+  /**
+   * Snap item back to original position on invalid drop
+   *
+   * **Called when**: Item is dropped outside all canvases
+   *
+   * ## Behavior
+   *
+   * 1. **Retrieve stored position**: Get original transform and position from drag start
+   * 2. **Enable CSS transition**: Smooth 300ms cubic-bezier animation
+   * 3. **Restore original transform**: Snap back to starting position
+   * 4. **Clean up**: Remove transition and temp properties after animation
+   * 5. **No state update**: Item stays in original canvas position
+   *
+   * ## Visual Feedback
+   *
+   * **Transition**: 300ms cubic-bezier(0.4, 0.0, 0.2, 1) - Material Design standard
+   * **Effect**: Grid item smoothly animates back to palette/original position
+   * **User perception**: Clear indication that drop was invalid
+   *
+   * @param event - interact.js drag end event
+   */
+  private snapBackToOriginalPosition(event: any): void {
+    const originalPos = (this.element as any)._originalPosition;
+    const originalTransform = (this.element as any)._originalTransform;
+
+    if (!originalPos) {
+      // Fallback: just remove dragging class if no original position stored
+      const elementToMark = this.dragHandleElement ? this.element : event.target;
+      elementToMark.classList.remove('dragging');
+      return;
+    }
+
+    // Determine which element to animate
+    const elementToMove = this.dragHandleElement ? this.element : event.target;
+
+    // Enable CSS transitions for smooth snap-back
+    elementToMove.style.transition = 'transform 0.3s cubic-bezier(0.4, 0.0, 0.2, 1)';
+
+    // Snap back to original position
+    elementToMove.style.transform =
+      originalTransform || `translate(${originalPos.x}px, ${originalPos.y}px)`;
+
+    // Remove transition after animation completes
+    setTimeout(() => {
+      elementToMove.style.transition = '';
+      elementToMove.classList.remove('dragging');
+    }, 300);
+
+    // Reset data attributes
+    event.target.setAttribute('data-x', '0');
+    event.target.setAttribute('data-y', '0');
+
+    // Cleanup stored properties
+    delete (this.element as any)._originalPosition;
+    delete (this.element as any)._originalTransform;
+
+    // End performance tracking
+    if ((window as any).perfMonitor) {
+      (window as any).perfMonitor.endOperation('drag');
+    }
+
+    // No state update - item stays in original position
+    // No undo/redo command pushed - invalid action
   }
 }

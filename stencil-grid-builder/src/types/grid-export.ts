@@ -130,6 +130,17 @@ export interface GridExportItem {
 export interface GridExportCanvas {
   /** Grid items on this canvas */
   items: GridExportItem[];
+
+  /**
+   * Canvas height (optional)
+   *
+   * Stores the current canvas height as a CSS value (e.g., '800px', '50vh').
+   * If not specified, canvas height will default to auto/content height.
+   *
+   * This allows canvases that have been dynamically expanded (via drag operations)
+   * to maintain their height when exported and re-imported.
+   */
+  height?: string;
 }
 
 /**

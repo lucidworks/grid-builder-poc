@@ -436,6 +436,14 @@ export class ComponentPalette {
           start: (event: any) => {
             event.target.classList.add('dragging-from-palette');
 
+            // Store original palette item position for snap-back animation
+            const paletteRect = event.target.getBoundingClientRect();
+            (event.target as any)._originalPosition = {
+              left: paletteRect.left,
+              top: paletteRect.top,
+            };
+            (event.target as any)._dropWasValid = false; // Flag to track if drop occurred
+
             // Get component type and find definition
             const componentType = event.target.getAttribute('data-component-type');
             const definition = this.components.find((c) => c.type === componentType);
@@ -578,11 +586,32 @@ export class ComponentPalette {
           end: (event: any) => {
             event.target.classList.remove('dragging-from-palette');
             const dragClone = (event.target as any)._dragClone;
+            const dropWasValid = (event.target as any)._dropWasValid;
+            const originalPos = (event.target as any)._originalPosition;
+
             if (dragClone) {
-              dragClone.remove();
+              if (!dropWasValid && originalPos) {
+                // Invalid drop - animate back to palette
+                dragClone.style.transition = 'all 0.3s cubic-bezier(0.4, 0.0, 0.2, 1)';
+                dragClone.style.left = originalPos.left + 'px';
+                dragClone.style.top = originalPos.top + 'px';
+                dragClone.style.opacity = '0';
+
+                // Remove after animation completes
+                setTimeout(() => {
+                  dragClone.remove();
+                }, 300);
+              } else {
+                // Valid drop - remove immediately
+                dragClone.remove();
+              }
+
+              // Cleanup
               delete (event.target as any)._dragClone;
               delete (event.target as any)._halfWidth;
               delete (event.target as any)._halfHeight;
+              delete (event.target as any)._dropWasValid;
+              delete (event.target as any)._originalPosition;
             }
           },
         },
