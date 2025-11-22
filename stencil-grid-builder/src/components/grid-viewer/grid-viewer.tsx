@@ -63,6 +63,9 @@ import { GridExport } from '../../types/grid-export';
 // Service imports - only rendering-related, no editing
 import { ViewerState } from '../../services/state-manager';
 import { createStore } from '@stencil/store';
+import { createDebugLogger } from '../../utils/debug';
+
+const debug = createDebugLogger('grid-viewer');
 
 /**
  * GridViewer Component
@@ -354,7 +357,7 @@ export class GridViewer {
         // Skip viewport switching if width is 0 or very small (container not yet laid out)
         // This prevents premature switching to mobile before CSS layout is complete
         if (width < 100) {
-          console.log(`📱 [Viewer] Skipping viewport switch - container not yet laid out (width: ${Math.round(width)}px)`);
+          debug.log(`📱 [Viewer] Skipping viewport switch - container not yet laid out (width: ${Math.round(width)}px)`);
           return;
         }
 
@@ -363,7 +366,7 @@ export class GridViewer {
 
         // Only update if viewport changed
         if (this.viewerState.state.currentViewport !== targetViewport) {
-          console.log(`📱 [Viewer] Container-based viewport switch: ${this.viewerState.state.currentViewport} → ${targetViewport} (width: ${Math.round(width)}px)`);
+          debug.log(`📱 [Viewer] Container-based viewport switch: ${this.viewerState.state.currentViewport} → ${targetViewport} (width: ${Math.round(width)}px)`);
           this.viewerState.state.currentViewport = targetViewport;
         }
       }

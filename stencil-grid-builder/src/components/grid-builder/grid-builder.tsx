@@ -66,6 +66,9 @@ import { undoRedo, undoRedoState } from '../../services/undo-redo';
 // Utility imports
 import { pixelsToGridX, pixelsToGridY } from '../../utils/grid-calculations';
 import { applyBoundaryConstraints, constrainPositionToCanvas, CANVAS_WIDTH_UNITS } from '../../utils/boundary-constraints';
+import { createDebugLogger } from '../../utils/debug';
+
+const debug = createDebugLogger('grid-builder');
 
 /**
  * GridBuilder Component
@@ -440,13 +443,13 @@ export class GridBuilder {
    */
   @Listen('grid-item:delete')
   handleGridItemDelete(event: CustomEvent) {
-    console.log('🗑️ @Listen(grid-item:delete) in grid-builder', {
+    debug.log('🗑️ @Listen(grid-item:delete) in grid-builder', {
       detail: event.detail,
     });
 
     const { itemId } = event.detail;
     if (itemId) {
-      console.log('  ✅ Deleting item via API (with undo support):', itemId);
+      debug.log('  ✅ Deleting item via API (with undo support):', itemId);
       // Use API method instead of direct deleteItemsBatch to enable undo/redo
       this.api?.deleteComponent(itemId);
     }
@@ -498,7 +501,7 @@ export class GridBuilder {
     this.api = this.createAPI();
 
     // Expose API based on apiRef configuration
-    console.log('🔧 grid-builder exposing API', {
+    debug.log('🔧 grid-builder exposing API', {
       hasApiRef: !!this.apiRef,
       apiRefKey: this.apiRef?.key,
       hasTarget: !!this.apiRef?.target,
@@ -508,13 +511,13 @@ export class GridBuilder {
 
     if (this.apiRef && this.apiRef.key) {
       const target = this.apiRef.target || window;
-      console.log('  📤 Setting API on target', {
+      debug.log('  📤 Setting API on target', {
         key: this.apiRef.key,
         isWindow: target === window,
         targetKeys: Object.keys(target).slice(0, 10), // Show first 10 keys
       });
       target[this.apiRef.key] = this.api;
-      console.log('  ✅ API set on target -', {
+      debug.log('  ✅ API set on target -', {
         key: this.apiRef.key,
         apiNowExists: !!target[this.apiRef.key],
       });
@@ -525,7 +528,7 @@ export class GridBuilder {
       this.initializedPlugins = this.plugins.filter(plugin => {
         try {
           plugin.init(this.api!);
-          console.log(`GridBuilder: Initialized plugin "${plugin.name}"`);
+          debug.log(`GridBuilder: Initialized plugin "${plugin.name}"`);
           return true;
         } catch (e) {
           console.error(`GridBuilder: Failed to initialize plugin "${plugin.name}":`, e);
@@ -542,14 +545,14 @@ export class GridBuilder {
     // Configure event debouncing
     const debounceDelay = this.config?.eventDebounceDelay ?? 300;
     eventManager.setDebounceDelay(debounceDelay);
-    console.log(`GridBuilder: Event debounce delay set to ${debounceDelay}ms`);
+    debug.log(`GridBuilder: Event debounce delay set to ${debounceDelay}ms`);
 
     // Debug helper
     (window as any).debugInteractables = () => {
       const interactables = (interact as any).interactables.list;
-      console.log('Total interactables:', interactables.length);
+      debug.log('Total interactables:', interactables.length);
       interactables.forEach((interactable: any, index: number) => {
-        console.log(`Interactable ${index}:`, {
+        debug.log(`Interactable ${index}:`, {
           target: interactable.target,
           actions: interactable._actions,
           options: interactable.options,
@@ -562,7 +565,7 @@ export class GridBuilder {
       const customEvent = event as CustomEvent;
       const { canvasId, componentType, x, y } = customEvent.detail;
 
-      console.log('🎯 canvas-drop event received:', { canvasId, componentType, x, y });
+      debug.log('🎯 canvas-drop event received:', { canvasId, componentType, x, y });
 
       // Get component definition to determine default size
       const definition = this.componentRegistry.get(componentType);
@@ -575,7 +578,7 @@ export class GridBuilder {
       const gridX = pixelsToGridX(x, canvasId);
       const gridY = pixelsToGridY(y);
 
-      console.log('  Converting to grid units (before constraints):', {
+      debug.log('  Converting to grid units (before constraints):', {
         gridX,
         gridY,
         defaultWidth: definition.defaultSize.width,
@@ -590,7 +593,7 @@ export class GridBuilder {
         return;
       }
 
-      console.log('  After boundary constraints:', constrained);
+      debug.log('  After boundary constraints:', constrained);
 
       // Use existing addComponent API method with constrained values
       const newItem = this.api?.addComponent(canvasId, componentType, {
@@ -600,7 +603,7 @@ export class GridBuilder {
         height: constrained.height,
       });
 
-      console.log('  Created item:', newItem);
+      debug.log('  Created item:', newItem);
     };
 
     this.hostElement.addEventListener('canvas-drop', this.canvasDropHandler);
@@ -610,7 +613,7 @@ export class GridBuilder {
       const customEvent = event as CustomEvent;
       const { itemId, sourceCanvasId, targetCanvasId, x, y } = customEvent.detail;
 
-      console.log('🔄 canvas-move event received:', { itemId, sourceCanvasId, targetCanvasId, x, y });
+      debug.log('🔄 canvas-move event received:', { itemId, sourceCanvasId, targetCanvasId, x, y });
 
       // 1. Get item from source canvas
       const sourceCanvas = gridState.canvases[sourceCanvasId];
@@ -692,7 +695,7 @@ export class GridBuilder {
 
       eventManager.emit('canvasActivated', { canvasId: targetCanvasId });
 
-      console.log('✅ Cross-canvas move completed:', {
+      debug.log('✅ Cross-canvas move completed:', {
         itemId,
         from: sourceCanvasId,
         to: targetCanvasId,
@@ -707,7 +710,7 @@ export class GridBuilder {
       const customEvent = event as CustomEvent;
       const { canvasId } = customEvent.detail;
 
-      console.log('🎨 canvas-activated event received:', { canvasId });
+      debug.log('🎨 canvas-activated event received:', { canvasId });
 
       // Emit plugin event
       eventManager.emit('canvasActivated', { canvasId });
@@ -726,14 +729,14 @@ export class GridBuilder {
 
       // Handle undo/redo
       if (isUndo) {
-        console.log('⌨️ Keyboard: Undo triggered');
+        debug.log('⌨️ Keyboard: Undo triggered');
         event.preventDefault();
         this.api?.undo();
         return;
       }
 
       if (isRedo) {
-        console.log('⌨️ Keyboard: Redo triggered');
+        debug.log('⌨️ Keyboard: Redo triggered');
         event.preventDefault();
         this.api?.redo();
         return;
@@ -786,7 +789,7 @@ export class GridBuilder {
           break;
       }
 
-      console.log('⌨️ Keyboard: Nudging component', {
+      debug.log('⌨️ Keyboard: Nudging component', {
         key: event.key,
         deltaX,
         deltaY,
@@ -878,7 +881,7 @@ export class GridBuilder {
       this.initializedPlugins.forEach(plugin => {
         try {
           plugin.destroy();
-          console.log(`GridBuilder: Destroyed plugin "${plugin.name}"`);
+          debug.log(`GridBuilder: Destroyed plugin "${plugin.name}"`);
         } catch (e) {
           console.error(`GridBuilder: Failed to destroy plugin "${plugin.name}":`, e);
         }
@@ -1275,7 +1278,7 @@ export class GridBuilder {
 
         // Only update if viewport changed
         if (gridState.currentViewport !== targetViewport) {
-          console.log(`📱 Container-based viewport switch: ${gridState.currentViewport} → ${targetViewport} (width: ${Math.round(width)}px)`);
+          debug.log(`📱 Container-based viewport switch: ${gridState.currentViewport} → ${targetViewport} (width: ${Math.round(width)}px)`);
           gridState.currentViewport = targetViewport;
         }
       }

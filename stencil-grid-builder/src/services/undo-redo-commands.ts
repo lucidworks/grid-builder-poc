@@ -165,6 +165,9 @@ import {
 } from './state-manager';
 import { Command } from './undo-redo';
 import { eventManager } from './event-manager';
+import { createDebugLogger } from '../utils/debug';
+
+const debug = createDebugLogger('undo-redo-commands');
 
 /**
  * Helper function to remove an item from a canvas and clear selection
@@ -830,7 +833,7 @@ export class MoveItemCommand implements Command {
    * **Safety**: Returns early if canvas or item not found
    */
   undo(): void {
-    console.log('🔙 MoveItemCommand.undo()', {
+    debug.log('🔙 MoveItemCommand.undo()', {
       itemId: this.itemId,
       sourceCanvasId: this.sourceCanvasId,
       targetCanvasId: this.targetCanvasId,
@@ -860,7 +863,7 @@ export class MoveItemCommand implements Command {
       return;
     }
 
-    console.log('  📍 Found item, current position:', {
+    debug.log('  📍 Found item, current position:', {
       x: item.layouts.desktop.x,
       y: item.layouts.desktop.y,
     });
@@ -873,7 +876,7 @@ export class MoveItemCommand implements Command {
     item.layouts.desktop.x = this.sourcePosition.x;
     item.layouts.desktop.y = this.sourcePosition.y;
 
-    console.log('  ✅ Updated item position to:', {
+    debug.log('  ✅ Updated item position to:', {
       x: item.layouts.desktop.x,
       y: item.layouts.desktop.y,
     });
@@ -904,11 +907,11 @@ export class MoveItemCommand implements Command {
     // This ensures the component re-renders with the correct position from state
     const element = document.getElementById(this.itemId);
     if (element) {
-      console.log('  🎨 Clearing inline transform style');
+      debug.log('  🎨 Clearing inline transform style');
       element.style.transform = '';
     }
 
-    console.log('  ✅ Undo complete');
+    debug.log('  ✅ Undo complete');
   }
 
   /**
@@ -933,7 +936,7 @@ export class MoveItemCommand implements Command {
    * **Safety**: Returns early if canvas or item not found
    */
   redo(): void {
-    console.log('🔜 MoveItemCommand.redo()', {
+    debug.log('🔜 MoveItemCommand.redo()', {
       itemId: this.itemId,
       sourceCanvasId: this.sourceCanvasId,
       targetCanvasId: this.targetCanvasId,
@@ -949,7 +952,7 @@ export class MoveItemCommand implements Command {
       return;
     }
 
-    console.log('  📍 Found item, current position:', {
+    debug.log('  📍 Found item, current position:', {
       x: item.layouts.desktop.x,
       y: item.layouts.desktop.y,
     });
@@ -962,7 +965,7 @@ export class MoveItemCommand implements Command {
     item.layouts.desktop.x = this.targetPosition.x;
     item.layouts.desktop.y = this.targetPosition.y;
 
-    console.log('  ✅ Updated item position to:', {
+    debug.log('  ✅ Updated item position to:', {
       x: item.layouts.desktop.x,
       y: item.layouts.desktop.y,
     });
@@ -989,11 +992,11 @@ export class MoveItemCommand implements Command {
     // This ensures the component re-renders with the correct position from state
     const element = document.getElementById(this.itemId);
     if (element) {
-      console.log('  🎨 Clearing inline transform style');
+      debug.log('  🎨 Clearing inline transform style');
       element.style.transform = '';
     }
 
-    console.log('  ✅ Redo complete');
+    debug.log('  ✅ Redo complete');
   }
 }
 
@@ -1327,7 +1330,7 @@ export class AddCanvasCommand implements Command {
   }
 
   undo(): void {
-    console.log('🔙 AddCanvasCommand.undo() - removing canvas:', this.canvasId);
+    debug.log('🔙 AddCanvasCommand.undo() - removing canvas:', this.canvasId);
 
     // Remove canvas from library state
     delete gridState.canvases[this.canvasId];
@@ -1336,7 +1339,7 @@ export class AddCanvasCommand implements Command {
     gridState.canvases = { ...gridState.canvases };
 
     // Emit event so host app can sync its metadata
-    console.log('  📢 Emitting canvasRemoved event for:', this.canvasId);
+    debug.log('  📢 Emitting canvasRemoved event for:', this.canvasId);
     eventManager.emit('canvasRemoved', { canvasId: this.canvasId });
   }
 

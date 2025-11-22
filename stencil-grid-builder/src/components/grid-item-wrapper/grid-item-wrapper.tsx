@@ -39,6 +39,9 @@ import { ResizeHandler } from '../../utils/resize-handler';
 import { gridToPixelsX, gridToPixelsY } from '../../utils/grid-calculations';
 import { GridConfig } from '../../types/grid-config';
 import { ComponentDefinition } from '../../types/component-definition';
+import { createDebugLogger } from '../../utils/debug';
+
+const debug = createDebugLogger('grid-item-wrapper');
 
 /**
  * GridItemWrapper Component
@@ -287,7 +290,7 @@ export class GridItemWrapper {
    */
   @Listen('item-delete')
   handleItemDeleteEvent(event: CustomEvent) {
-    console.log('🔴 @Listen(item-delete) - from custom wrapper', {
+    debug.log('🔴 @Listen(item-delete) - from custom wrapper', {
       eventTarget: event.target,
       itemId: this.item.id,
     });
@@ -301,7 +304,7 @@ export class GridItemWrapper {
       bubbles: true,
       composed: true,
     });
-    console.log('  📤 Re-dispatching as grid-item:delete');
+    debug.log('  📤 Re-dispatching as grid-item:delete');
     this.itemRef.dispatchEvent(deleteEvent);
   }
 
@@ -696,13 +699,13 @@ export class GridItemWrapper {
 
     // Skip click handling in viewer mode
     if (this.viewerMode) {
-      console.log('  ⏭️ Skipping - viewer mode');
+      debug.log('  ⏭️ Skipping - viewer mode');
       return;
     }
 
     // Don't open config panel if item was just dragged
     if (this.wasDragged) {
-      console.log('  ⏭️ Skipping - was dragged');
+      debug.log('  ⏭️ Skipping - was dragged');
       // Reset flag after a small delay to allow this click event to finish
       setTimeout(() => {
         this.wasDragged = false;
@@ -720,11 +723,11 @@ export class GridItemWrapper {
       target.classList.contains('grid-item-delete') ||
       target.classList.contains('grid-item-control-btn')
     ) {
-      console.log('  ⏭️ Skipping - clicked on control element');
+      debug.log('  ⏭️ Skipping - clicked on control element');
       return;
     }
 
-    console.log('  ✅ Proceeding with click handling');
+    debug.log('  ✅ Proceeding with click handling');
 
     // Set selection state immediately
     gridState.selectedItemId = this.item.id;
@@ -740,7 +743,7 @@ export class GridItemWrapper {
     });
 
     // Dispatch event to open config panel
-    console.log('  📤 Dispatching item-click event', {
+    debug.log('  📤 Dispatching item-click event', {
       itemId: this.item.id,
       canvasId: this.item.canvasId,
       hasItemRef: !!this.itemRef,
@@ -751,7 +754,7 @@ export class GridItemWrapper {
       composed: true,
     });
     this.itemRef.dispatchEvent(event);
-    console.log('  ✅ item-click event dispatched');
+    debug.log('  ✅ item-click event dispatched');
   };
 
   /**
@@ -759,14 +762,14 @@ export class GridItemWrapper {
    * Calls deletion hook if provided, then dispatches delete event if approved
    */
   private handleDelete = async () => {
-    console.log('🗑️ handleDelete (default wrapper button)', {
+    debug.log('🗑️ handleDelete (default wrapper button)', {
       itemId: this.item.id,
       canvasId: this.item.canvasId,
     });
 
     // If deletion hook provided, call it first
     if (this.onBeforeDelete) {
-      console.log('  🪝 Calling deletion hook...');
+      debug.log('  🪝 Calling deletion hook...');
       try {
         const shouldDelete = await this.onBeforeDelete({
           item: this.item,
@@ -775,10 +778,10 @@ export class GridItemWrapper {
         });
 
         if (!shouldDelete) {
-          console.log('  ❌ Deletion cancelled by hook');
+          debug.log('  ❌ Deletion cancelled by hook');
           return;
         }
-        console.log('  ✅ Deletion approved by hook');
+        debug.log('  ✅ Deletion approved by hook');
       } catch (error) {
         console.error('  ❌ Deletion hook error:', error);
         return;
@@ -791,7 +794,7 @@ export class GridItemWrapper {
       bubbles: true,
       composed: true,
     });
-    console.log('  📤 Dispatching grid-item:delete (internal event)');
+    debug.log('  📤 Dispatching grid-item:delete (internal event)');
     this.itemRef.dispatchEvent(event);
   };
 }
