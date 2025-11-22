@@ -57,7 +57,7 @@ import { DeletionHook } from '../../types/deletion-hook';
 import { GridExport } from '../../types/grid-export';
 
 // Service imports
-import { gridState, GridState, generateItemId, deleteItemsBatch, addItemsBatch, updateItemsBatch, setActiveCanvas } from '../../services/state-manager';
+import { gridState, GridState, generateItemId, deleteItemsBatch, addItemsBatch, updateItemsBatch, setActiveCanvas, moveItemToCanvas } from '../../services/state-manager';
 import { virtualRenderer } from '../../services/virtual-renderer';
 import { eventManager } from '../../services/event-manager';
 import { BatchAddCommand, BatchDeleteCommand, BatchUpdateConfigCommand, AddCanvasCommand, RemoveCanvasCommand, MoveItemCommand } from '../../services/undo-redo-commands';
@@ -65,7 +65,7 @@ import { undoRedo, undoRedoState } from '../../services/undo-redo';
 
 // Utility imports
 import { pixelsToGridX, pixelsToGridY } from '../../utils/grid-calculations';
-import { applyBoundaryConstraints } from '../../utils/boundary-constraints';
+import { applyBoundaryConstraints, constrainPositionToCanvas, CANVAS_WIDTH_UNITS } from '../../utils/boundary-constraints';
 
 /**
  * GridBuilder Component
@@ -612,9 +612,92 @@ export class GridBuilder {
 
       console.log('🔄 canvas-move event received:', { itemId, sourceCanvasId, targetCanvasId, x, y });
 
-      // TODO: Implement cross-canvas move
-      // This would require updating the item's canvasId and position
-      console.warn('Cross-canvas moves not yet implemented');
+      // 1. Get item from source canvas
+      const sourceCanvas = gridState.canvases[sourceCanvasId];
+      if (!sourceCanvas) {
+        console.error('Source canvas not found:', sourceCanvasId);
+        return;
+      }
+
+      const itemIndex = sourceCanvas.items.findIndex(i => i.id === itemId);
+      if (itemIndex === -1) {
+        console.error('Item not found in source canvas:', itemId);
+        return;
+      }
+
+      const item = sourceCanvas.items[itemIndex];
+
+      // 2. Capture state BEFORE move (for undo)
+      const sourcePosition = {
+        x: item.layouts.desktop.x,
+        y: item.layouts.desktop.y
+      };
+
+      // 3. Convert drop position (pixels) to grid units for target canvas
+      let gridX = pixelsToGridX(x, targetCanvasId);
+      let gridY = pixelsToGridY(y);
+
+      // 4. Constrain position to target canvas boundaries
+      const constrained = constrainPositionToCanvas(
+        gridX,
+        gridY,
+        item.layouts.desktop.width,
+        item.layouts.desktop.height,
+        CANVAS_WIDTH_UNITS
+      );
+
+      gridX = constrained.x;
+      gridY = constrained.y;
+
+      const targetPosition = { x: gridX, y: gridY };
+
+      // 5. Update item position in desktop layout
+      item.layouts.desktop.x = gridX;
+      item.layouts.desktop.y = gridY;
+
+      // 6. Move item between canvases (updates canvasId, removes from source, adds to target)
+      moveItemToCanvas(sourceCanvasId, targetCanvasId, itemId);
+
+      // 7. Assign new z-index in target canvas
+      const targetCanvas = gridState.canvases[targetCanvasId];
+      item.zIndex = targetCanvas.zIndexCounter++;
+      gridState.canvases = { ...gridState.canvases }; // Trigger reactivity
+
+      // 8. Set target canvas as active
+      setActiveCanvas(targetCanvasId);
+
+      // 9. Update selection state if item was selected
+      if (gridState.selectedItemId === itemId) {
+        gridState.selectedCanvasId = targetCanvasId;
+      }
+
+      // 10. Create undo/redo command
+      const command = new MoveItemCommand(
+        itemId,
+        sourceCanvasId,
+        targetCanvasId,
+        sourcePosition,
+        targetPosition,
+        itemIndex
+      );
+      undoRedo.push(command);
+
+      // 11. Emit events for plugins
+      eventManager.emit('componentMoved', {
+        item,
+        sourceCanvasId,
+        targetCanvasId,
+        position: targetPosition
+      });
+
+      eventManager.emit('canvasActivated', { canvasId: targetCanvasId });
+
+      console.log('✅ Cross-canvas move completed:', {
+        itemId,
+        from: sourceCanvasId,
+        to: targetCanvasId,
+        position: targetPosition
+      });
     };
 
     this.hostElement.addEventListener('canvas-move', this.canvasMoveHandler);

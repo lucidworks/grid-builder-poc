@@ -741,7 +741,10 @@ describe('grid-builder', () => {
           addEventListener: jest.fn(),
           removeEventListener: jest.fn(),
         };
-        (component as any).hostElement = mockHostElement;
+        Object.defineProperty(component, 'hostElement', {
+          value: mockHostElement,
+          writable: true,
+        });
 
         component.componentDidLoad();
 
@@ -761,7 +764,10 @@ describe('grid-builder', () => {
           addEventListener: jest.fn(),
           removeEventListener: jest.fn(),
         };
-        (component as any).hostElement = mockHostElement;
+        Object.defineProperty(component, 'hostElement', {
+          value: mockHostElement,
+          writable: true,
+        });
 
         component.componentDidLoad();
         component.disconnectedCallback();
@@ -781,7 +787,10 @@ describe('grid-builder', () => {
           addEventListener: jest.fn(),
           removeEventListener: jest.fn(),
         };
-        (component as any).hostElement = mockHostElement;
+        Object.defineProperty(component, 'hostElement', {
+          value: mockHostElement,
+          writable: true,
+        });
 
         // Spy on eventManager.emit
         const emitSpy = jest.spyOn(eventManager, 'emit');
@@ -1042,7 +1051,10 @@ describe('grid-builder', () => {
           addEventListener: jest.fn(),
           removeEventListener: jest.fn(),
         };
-        (component as any).hostElement = mockHostElement;
+        Object.defineProperty(component, 'hostElement', {
+          value: mockHostElement,
+          writable: true,
+        });
 
         component.componentDidLoad();
 
@@ -1067,6 +1079,558 @@ describe('grid-builder', () => {
 
         expect(activatedEvents.length).toBe(3);
         expect(activatedEvents[2]).toEqual({ canvasId: 'canvas3' });
+      });
+    });
+
+    describe('Cross-Canvas Move', () => {
+      beforeEach(() => {
+        // Reset grid state
+        gridState.canvases = {
+          canvas1: { items: [], zIndexCounter: 0 },
+          canvas2: { items: [], zIndexCounter: 0 },
+        };
+        gridState.selectedItemId = null;
+        gridState.selectedCanvasId = null;
+        gridState.activeCanvasId = null;
+      });
+
+      it('should register canvas-move event handler in componentDidLoad', () => {
+        const component = new GridBuilder();
+        component.components = mockComponentDefinitions;
+
+        const mockHostElement = {
+          addEventListener: jest.fn(),
+          removeEventListener: jest.fn(),
+        };
+        Object.defineProperty(component, 'hostElement', {
+          value: mockHostElement,
+          writable: true,
+        });
+
+        component.componentDidLoad();
+
+        // Verify canvas-move event listener was registered
+        const addEventListenerCalls = mockHostElement.addEventListener.mock.calls;
+        const canvasMoveCall = addEventListenerCalls.find(call => call[0] === 'canvas-move');
+
+        expect(canvasMoveCall).toBeDefined();
+        expect(typeof canvasMoveCall[1]).toBe('function');
+      });
+
+      it('should remove canvas-move event handler in disconnectedCallback', () => {
+        const component = new GridBuilder();
+        component.components = mockComponentDefinitions;
+
+        const mockHostElement = {
+          addEventListener: jest.fn(),
+          removeEventListener: jest.fn(),
+        };
+        Object.defineProperty(component, 'hostElement', {
+          value: mockHostElement,
+          writable: true,
+        });
+
+        component.componentDidLoad();
+        component.disconnectedCallback();
+
+        // Verify event listener was removed
+        const removeEventListenerCalls = mockHostElement.removeEventListener.mock.calls;
+        const canvasMoveCall = removeEventListenerCalls.find(call => call[0] === 'canvas-move');
+
+        expect(canvasMoveCall).toBeDefined();
+      });
+
+      it('should move item from source to target canvas', () => {
+        // Setup: Add item to source canvas
+        const testItem = {
+          id: 'test-item-1',
+          canvasId: 'canvas1',
+          type: 'header',
+          name: 'Test Header',
+          zIndex: 1,
+          layouts: {
+            desktop: { x: 10, y: 10, width: 20, height: 6 },
+            mobile: { x: 0, y: 0, width: 50, height: 6, customized: false },
+          },
+          config: {},
+        };
+        gridState.canvases.canvas1.items.push(testItem);
+        gridState.canvases.canvas1.zIndexCounter = 2;
+
+        const component = new GridBuilder();
+        component.components = mockComponentDefinitions;
+
+        const mockHostElement = {
+          addEventListener: jest.fn(),
+          removeEventListener: jest.fn(),
+        };
+        Object.defineProperty(component, 'hostElement', {
+          value: mockHostElement,
+          writable: true,
+        });
+
+        component.componentDidLoad();
+
+        // Get the registered handler
+        const addEventListenerCalls = mockHostElement.addEventListener.mock.calls;
+        const canvasMoveCall = addEventListenerCalls.find(call => call[0] === 'canvas-move');
+        const handler = canvasMoveCall[1];
+
+        // Simulate canvas-move event
+        const mockEvent = new CustomEvent('canvas-move', {
+          detail: {
+            itemId: 'test-item-1',
+            sourceCanvasId: 'canvas1',
+            targetCanvasId: 'canvas2',
+            x: 100, // pixels
+            y: 50, // pixels
+          },
+        });
+
+        handler(mockEvent);
+
+        // Verify item removed from source canvas
+        expect(gridState.canvases.canvas1.items.length).toBe(0);
+
+        // Verify item added to target canvas
+        expect(gridState.canvases.canvas2.items.length).toBe(1);
+        expect(gridState.canvases.canvas2.items[0].id).toBe('test-item-1');
+
+        // Verify canvasId updated
+        expect(gridState.canvases.canvas2.items[0].canvasId).toBe('canvas2');
+      });
+
+      it('should update item position to grid coordinates', () => {
+        // Setup: Add item to source canvas
+        const testItem = {
+          id: 'test-item-1',
+          canvasId: 'canvas1',
+          type: 'header',
+          name: 'Test Header',
+          zIndex: 1,
+          layouts: {
+            desktop: { x: 10, y: 10, width: 20, height: 6 },
+            mobile: { x: 0, y: 0, width: 50, height: 6, customized: false },
+          },
+          config: {},
+        };
+        gridState.canvases.canvas1.items.push(testItem);
+
+        const component = new GridBuilder();
+        component.components = mockComponentDefinitions;
+
+        const mockHostElement = {
+          addEventListener: jest.fn(),
+          removeEventListener: jest.fn(),
+        };
+        Object.defineProperty(component, 'hostElement', {
+          value: mockHostElement,
+          writable: true,
+        });
+
+        component.componentDidLoad();
+
+        // Get the registered handler
+        const addEventListenerCalls = mockHostElement.addEventListener.mock.calls;
+        const canvasMoveCall = addEventListenerCalls.find(call => call[0] === 'canvas-move');
+        const handler = canvasMoveCall[1];
+
+        // Simulate canvas-move event (drop at specific pixel position)
+        const mockEvent = new CustomEvent('canvas-move', {
+          detail: {
+            itemId: 'test-item-1',
+            sourceCanvasId: 'canvas1',
+            targetCanvasId: 'canvas2',
+            x: 200, // pixels
+            y: 100, // pixels
+          },
+        });
+
+        handler(mockEvent);
+
+        const movedItem = gridState.canvases.canvas2.items[0];
+
+        // Verify position was converted to grid units (not pixels)
+        expect(typeof movedItem.layouts.desktop.x).toBe('number');
+        expect(typeof movedItem.layouts.desktop.y).toBe('number');
+        expect(movedItem.layouts.desktop.x).toBeGreaterThanOrEqual(0);
+        expect(movedItem.layouts.desktop.y).toBeGreaterThanOrEqual(0);
+      });
+
+      it('should assign new z-index in target canvas', () => {
+        // Setup: Add item to source canvas
+        const testItem = {
+          id: 'test-item-1',
+          canvasId: 'canvas1',
+          type: 'header',
+          name: 'Test Header',
+          zIndex: 5, // Has z-index 5 in source
+          layouts: {
+            desktop: { x: 10, y: 10, width: 20, height: 6 },
+            mobile: { x: 0, y: 0, width: 50, height: 6, customized: false },
+          },
+          config: {},
+        };
+        gridState.canvases.canvas1.items.push(testItem);
+        gridState.canvases.canvas1.zIndexCounter = 6;
+
+        // Target canvas already has some items
+        gridState.canvases.canvas2.zIndexCounter = 3;
+
+        const component = new GridBuilder();
+        component.components = mockComponentDefinitions;
+
+        const mockHostElement = {
+          addEventListener: jest.fn(),
+          removeEventListener: jest.fn(),
+        };
+        Object.defineProperty(component, 'hostElement', {
+          value: mockHostElement,
+          writable: true,
+        });
+
+        component.componentDidLoad();
+
+        // Get the registered handler
+        const addEventListenerCalls = mockHostElement.addEventListener.mock.calls;
+        const canvasMoveCall = addEventListenerCalls.find(call => call[0] === 'canvas-move');
+        const handler = canvasMoveCall[1];
+
+        // Simulate canvas-move event
+        const mockEvent = new CustomEvent('canvas-move', {
+          detail: {
+            itemId: 'test-item-1',
+            sourceCanvasId: 'canvas1',
+            targetCanvasId: 'canvas2',
+            x: 100,
+            y: 50,
+          },
+        });
+
+        handler(mockEvent);
+
+        const movedItem = gridState.canvases.canvas2.items[0];
+
+        // Verify new z-index assigned from target canvas counter
+        expect(movedItem.zIndex).toBe(3);
+
+        // Verify target canvas counter incremented
+        expect(gridState.canvases.canvas2.zIndexCounter).toBe(4);
+      });
+
+      it('should set target canvas as active', () => {
+        // Setup: Add item to source canvas
+        const testItem = {
+          id: 'test-item-1',
+          canvasId: 'canvas1',
+          type: 'header',
+          name: 'Test Header',
+          zIndex: 1,
+          layouts: {
+            desktop: { x: 10, y: 10, width: 20, height: 6 },
+            mobile: { x: 0, y: 0, width: 50, height: 6, customized: false },
+          },
+          config: {},
+        };
+        gridState.canvases.canvas1.items.push(testItem);
+
+        // Initially canvas1 is active
+        gridState.activeCanvasId = 'canvas1';
+
+        const component = new GridBuilder();
+        component.components = mockComponentDefinitions;
+
+        const mockHostElement = {
+          addEventListener: jest.fn(),
+          removeEventListener: jest.fn(),
+        };
+        Object.defineProperty(component, 'hostElement', {
+          value: mockHostElement,
+          writable: true,
+        });
+
+        component.componentDidLoad();
+
+        // Get the registered handler
+        const addEventListenerCalls = mockHostElement.addEventListener.mock.calls;
+        const canvasMoveCall = addEventListenerCalls.find(call => call[0] === 'canvas-move');
+        const handler = canvasMoveCall[1];
+
+        // Simulate canvas-move event
+        const mockEvent = new CustomEvent('canvas-move', {
+          detail: {
+            itemId: 'test-item-1',
+            sourceCanvasId: 'canvas1',
+            targetCanvasId: 'canvas2',
+            x: 100,
+            y: 50,
+          },
+        });
+
+        handler(mockEvent);
+
+        // Verify active canvas updated to target
+        expect(gridState.activeCanvasId).toBe('canvas2');
+      });
+
+      it('should update selection state if moved item was selected', () => {
+        // Setup: Add item to source canvas and select it
+        const testItem = {
+          id: 'test-item-1',
+          canvasId: 'canvas1',
+          type: 'header',
+          name: 'Test Header',
+          zIndex: 1,
+          layouts: {
+            desktop: { x: 10, y: 10, width: 20, height: 6 },
+            mobile: { x: 0, y: 0, width: 50, height: 6, customized: false },
+          },
+          config: {},
+        };
+        gridState.canvases.canvas1.items.push(testItem);
+        gridState.selectedItemId = 'test-item-1';
+        gridState.selectedCanvasId = 'canvas1';
+
+        const component = new GridBuilder();
+        component.components = mockComponentDefinitions;
+
+        const mockHostElement = {
+          addEventListener: jest.fn(),
+          removeEventListener: jest.fn(),
+        };
+        Object.defineProperty(component, 'hostElement', {
+          value: mockHostElement,
+          writable: true,
+        });
+
+        component.componentDidLoad();
+
+        // Get the registered handler
+        const addEventListenerCalls = mockHostElement.addEventListener.mock.calls;
+        const canvasMoveCall = addEventListenerCalls.find(call => call[0] === 'canvas-move');
+        const handler = canvasMoveCall[1];
+
+        // Simulate canvas-move event
+        const mockEvent = new CustomEvent('canvas-move', {
+          detail: {
+            itemId: 'test-item-1',
+            sourceCanvasId: 'canvas1',
+            targetCanvasId: 'canvas2',
+            x: 100,
+            y: 50,
+          },
+        });
+
+        handler(mockEvent);
+
+        // Verify selectedCanvasId updated to target
+        expect(gridState.selectedCanvasId).toBe('canvas2');
+        expect(gridState.selectedItemId).toBe('test-item-1'); // Still selected
+      });
+
+      it('should emit componentMoved and canvasActivated events', () => {
+        // Setup: Add item to source canvas
+        const testItem = {
+          id: 'test-item-1',
+          canvasId: 'canvas1',
+          type: 'header',
+          name: 'Test Header',
+          zIndex: 1,
+          layouts: {
+            desktop: { x: 10, y: 10, width: 20, height: 6 },
+            mobile: { x: 0, y: 0, width: 50, height: 6, customized: false },
+          },
+          config: {},
+        };
+        gridState.canvases.canvas1.items.push(testItem);
+
+        const component = new GridBuilder();
+        component.components = mockComponentDefinitions;
+
+        const mockHostElement = {
+          addEventListener: jest.fn(),
+          removeEventListener: jest.fn(),
+        };
+        Object.defineProperty(component, 'hostElement', {
+          value: mockHostElement,
+          writable: true,
+        });
+
+        // Spy on eventManager.emit
+        const emitSpy = jest.spyOn(eventManager, 'emit');
+
+        component.componentDidLoad();
+
+        // Get the registered handler
+        const addEventListenerCalls = mockHostElement.addEventListener.mock.calls;
+        const canvasMoveCall = addEventListenerCalls.find(call => call[0] === 'canvas-move');
+        const handler = canvasMoveCall[1];
+
+        // Simulate canvas-move event
+        const mockEvent = new CustomEvent('canvas-move', {
+          detail: {
+            itemId: 'test-item-1',
+            sourceCanvasId: 'canvas1',
+            targetCanvasId: 'canvas2',
+            x: 100,
+            y: 50,
+          },
+        });
+
+        handler(mockEvent);
+
+        // Verify componentMoved event emitted
+        expect(emitSpy).toHaveBeenCalledWith(
+          'componentMoved',
+          expect.objectContaining({
+            sourceCanvasId: 'canvas1',
+            targetCanvasId: 'canvas2',
+          })
+        );
+
+        // Verify canvasActivated event emitted
+        expect(emitSpy).toHaveBeenCalledWith('canvasActivated', { canvasId: 'canvas2' });
+
+        emitSpy.mockRestore();
+      });
+
+      it('should handle missing source canvas gracefully', () => {
+        const component = new GridBuilder();
+        component.components = mockComponentDefinitions;
+
+        const mockHostElement = {
+          addEventListener: jest.fn(),
+          removeEventListener: jest.fn(),
+        };
+        Object.defineProperty(component, 'hostElement', {
+          value: mockHostElement,
+          writable: true,
+        });
+
+        // Spy on console.error
+        const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
+
+        component.componentDidLoad();
+
+        // Get the registered handler
+        const addEventListenerCalls = mockHostElement.addEventListener.mock.calls;
+        const canvasMoveCall = addEventListenerCalls.find(call => call[0] === 'canvas-move');
+        const handler = canvasMoveCall[1];
+
+        // Simulate canvas-move event with non-existent source canvas
+        const mockEvent = new CustomEvent('canvas-move', {
+          detail: {
+            itemId: 'test-item-1',
+            sourceCanvasId: 'non-existent',
+            targetCanvasId: 'canvas2',
+            x: 100,
+            y: 50,
+          },
+        });
+
+        handler(mockEvent);
+
+        // Verify error was logged
+        expect(consoleErrorSpy).toHaveBeenCalledWith('Source canvas not found:', 'non-existent');
+
+        consoleErrorSpy.mockRestore();
+      });
+
+      it('should handle missing item gracefully', () => {
+        const component = new GridBuilder();
+        component.components = mockComponentDefinitions;
+
+        const mockHostElement = {
+          addEventListener: jest.fn(),
+          removeEventListener: jest.fn(),
+        };
+        Object.defineProperty(component, 'hostElement', {
+          value: mockHostElement,
+          writable: true,
+        });
+
+        // Spy on console.error
+        const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
+
+        component.componentDidLoad();
+
+        // Get the registered handler
+        const addEventListenerCalls = mockHostElement.addEventListener.mock.calls;
+        const canvasMoveCall = addEventListenerCalls.find(call => call[0] === 'canvas-move');
+        const handler = canvasMoveCall[1];
+
+        // Simulate canvas-move event with non-existent item
+        const mockEvent = new CustomEvent('canvas-move', {
+          detail: {
+            itemId: 'non-existent-item',
+            sourceCanvasId: 'canvas1',
+            targetCanvasId: 'canvas2',
+            x: 100,
+            y: 50,
+          },
+        });
+
+        handler(mockEvent);
+
+        // Verify error was logged
+        expect(consoleErrorSpy).toHaveBeenCalledWith('Item not found in source canvas:', 'non-existent-item');
+
+        consoleErrorSpy.mockRestore();
+      });
+
+      it('should constrain position to target canvas boundaries', () => {
+        // Setup: Add item to source canvas with large width
+        const testItem = {
+          id: 'test-item-1',
+          canvasId: 'canvas1',
+          type: 'header',
+          name: 'Test Header',
+          zIndex: 1,
+          layouts: {
+            desktop: { x: 10, y: 10, width: 40, height: 6 }, // 40 units wide
+            mobile: { x: 0, y: 0, width: 50, height: 6, customized: false },
+          },
+          config: {},
+        };
+        gridState.canvases.canvas1.items.push(testItem);
+
+        const component = new GridBuilder();
+        component.components = mockComponentDefinitions;
+
+        const mockHostElement = {
+          addEventListener: jest.fn(),
+          removeEventListener: jest.fn(),
+        };
+        Object.defineProperty(component, 'hostElement', {
+          value: mockHostElement,
+          writable: true,
+        });
+
+        component.componentDidLoad();
+
+        // Get the registered handler
+        const addEventListenerCalls = mockHostElement.addEventListener.mock.calls;
+        const canvasMoveCall = addEventListenerCalls.find(call => call[0] === 'canvas-move');
+        const handler = canvasMoveCall[1];
+
+        // Simulate canvas-move event with position that would overflow
+        const mockEvent = new CustomEvent('canvas-move', {
+          detail: {
+            itemId: 'test-item-1',
+            sourceCanvasId: 'canvas1',
+            targetCanvasId: 'canvas2',
+            x: 9999, // Very far right (will be constrained)
+            y: 50,
+          },
+        });
+
+        handler(mockEvent);
+
+        const movedItem = gridState.canvases.canvas2.items[0];
+
+        // Verify position was constrained (x + width should not exceed canvas width)
+        // Canvas width is 50 grid units (CANVAS_WIDTH_UNITS)
+        expect(movedItem.layouts.desktop.x + movedItem.layouts.desktop.width).toBeLessThanOrEqual(50);
       });
     });
   });

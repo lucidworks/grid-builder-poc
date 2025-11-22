@@ -464,7 +464,7 @@ export class CanvasSection {
     const interactable = interact(this.gridContainerRef);
 
     interactable.dropzone({
-      accept: '.palette-item, .grid-item',
+      accept: '.palette-item, .grid-item, .grid-item-header',
       overlap: 'pointer',
 
       checker: (_dragEvent: any, _event: any, dropped: boolean) => {
@@ -474,7 +474,15 @@ export class CanvasSection {
       ondrop: (event: any) => {
         const droppedElement = event.relatedTarget;
         const isPaletteItem = droppedElement.classList.contains('palette-item');
+
+        // Check if it's a grid item or grid item header (drag handle)
+        const isGridItemHeader = droppedElement.classList.contains('grid-item-header');
         const isGridItem = droppedElement.classList.contains('grid-item');
+
+        // If it's the header, find the parent grid-item
+        const gridItem = isGridItemHeader
+          ? droppedElement.closest('.grid-item')
+          : droppedElement;
 
         if (isPaletteItem) {
           // Dropping from palette - create new item
@@ -505,15 +513,15 @@ export class CanvasSection {
             composed: true,
           });
           this.gridContainerRef.dispatchEvent(dropEvent);
-        } else if (isGridItem) {
+        } else if (isGridItem || isGridItemHeader) {
           // Moving existing grid item to different canvas
-          const itemId = droppedElement.id;
-          const sourceCanvasId = droppedElement.getAttribute('data-canvas-id');
+          const itemId = gridItem.id;
+          const sourceCanvasId = gridItem.getAttribute('data-canvas-id');
 
           // Only process cross-canvas moves
           if (sourceCanvasId !== this.canvasId) {
             // Get element's position (already positioned by drag handler)
-            const droppedRect = droppedElement.getBoundingClientRect();
+            const droppedRect = gridItem.getBoundingClientRect();
             const rect = this.gridContainerRef.getBoundingClientRect();
 
             // Calculate position relative to target canvas

@@ -355,6 +355,10 @@ Promise<boolean> - True if updated successfully
 
 ## Dependencies
 
+### Used by
+
+ - [blog-app](../../demo/components/blog-app)
+
 ### Depends on
 
 - [component-palette](../component-palette)
@@ -366,6 +370,7 @@ graph TD;
   grid-builder --> component-palette
   grid-builder --> canvas-section
   canvas-section --> grid-item-wrapper
+  blog-app --> grid-builder
   style grid-builder fill:#f9f,stroke:#333,stroke-width:4px
 ```
 

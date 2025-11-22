@@ -35,6 +35,10 @@ Rendering-only grid component for displaying layouts created in grid-builder.
 
 ## Dependencies
 
+### Used by
+
+ - [blog-app](../../demo/components/blog-app)
+
 ### Depends on
 
 - [canvas-section-viewer](../canvas-section-viewer)
@@ -44,6 +48,7 @@ Rendering-only grid component for displaying layouts created in grid-builder.
 graph TD;
   grid-viewer --> canvas-section-viewer
   canvas-section-viewer --> grid-item-wrapper
+  blog-app --> grid-viewer
   style grid-viewer fill:#f9f,stroke:#333,stroke-width:4px
 ```
 

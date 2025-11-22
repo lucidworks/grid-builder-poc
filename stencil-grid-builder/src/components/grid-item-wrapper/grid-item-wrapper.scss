@@ -77,9 +77,9 @@
 }
 
 .grid-item.selected {
-  padding: 19px; /* Compensate for thicker border to prevent content shift */
-  /* z-index handled via inline style to respect actual item.zIndex */
-  border: 3px solid var(--selection-color);
+  /* Use outline instead of border to avoid layout shifts */
+  outline: 3px solid var(--selection-color);
+  outline-offset: -3px; /* Draw outline inside the element */
   box-shadow:
     0 0 0 3px color-mix(in srgb, var(--selection-color) 20%, transparent),
     0 4px 12px color-mix(in srgb, var(--selection-color) 30%, transparent);
