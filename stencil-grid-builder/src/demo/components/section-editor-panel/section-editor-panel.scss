@@ -15,25 +15,26 @@ section-editor-panel {
 
   .section-editor-panel {
     width: 90%;
-    max-width: 400px;
-    border-radius: 8px;
+    max-width: 440px;
+    border-radius: 12px;
     animation: slideUp 0.2s ease-out;
     background: white;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
   }
 
   .panel-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 20px 24px;
+    padding: 28px 32px 24px;
     border-bottom: 1px solid #e9ecef;
 
     .panel-title {
       margin: 0;
       color: #212529;
-      font-size: 18px;
+      font-size: 20px;
       font-weight: 600;
+      letter-spacing: -0.02em;
     }
 
     .close-btn {
@@ -44,11 +45,11 @@ section-editor-panel {
       justify-content: center;
       padding: 0;
       border: none;
-      border-radius: 4px;
+      border-radius: 6px;
       background: transparent;
       color: #6c757d;
       cursor: pointer;
-      font-size: 28px;
+      font-size: 24px;
       font-weight: 300;
       line-height: 1;
       transition: all 0.15s;
@@ -65,10 +66,10 @@ section-editor-panel {
   }
 
   .panel-body {
-    padding: 24px;
+    padding: 32px;
 
     .form-group {
-      margin-bottom: 20px;
+      margin-bottom: 28px;
 
       &:last-child {
         margin-bottom: 0;
@@ -76,26 +77,34 @@ section-editor-panel {
 
       label {
         display: block;
-        margin-bottom: 8px;
+        margin-bottom: 10px;
         color: #495057;
-        font-size: 14px;
-        font-weight: 500;
+        font-size: 13px;
+        font-weight: 600;
+        letter-spacing: 0.01em;
+        text-transform: uppercase;
       }
 
       .section-title-input {
         width: 100%;
         box-sizing: border-box;
-        padding: 10px 12px;
-        border: 1px solid #dee2e6;
-        border-radius: 6px;
-        background: white;
+        padding: 12px 16px;
+        border: 1.5px solid #e1e4e8;
+        border-radius: 8px;
+        background: #f8f9fa;
         color: #212529;
-        font-size: 14px;
-        transition: all 0.15s;
+        font-size: 15px;
+        transition: all 0.2s;
+
+        &:hover {
+          background: white;
+          border-color: #cbd3da;
+        }
 
         &:focus {
           border-color: #4a90e2;
-          box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.1);
+          background: white;
+          box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.08);
           outline: none;
         }
 
@@ -106,44 +115,50 @@ section-editor-panel {
 
       .color-picker-wrapper {
         display: flex;
-        align-items: center;
-        gap: 12px;
+        align-items: stretch;
+        gap: 14px;
 
         .section-color-input {
-          width: 60px;
-          height: 40px;
-          padding: 4px;
-          border: 1px solid #dee2e6;
-          border-radius: 6px;
+          width: 64px;
+          height: 48px;
+          padding: 6px;
+          border: 1.5px solid #e1e4e8;
+          border-radius: 8px;
           cursor: pointer;
-          transition: all 0.15s;
+          transition: all 0.2s;
 
           &:hover {
             border-color: #4a90e2;
-            box-shadow: 0 2px 6px rgba(74, 144, 226, 0.2);
+            box-shadow: 0 2px 8px rgba(74, 144, 226, 0.15);
           }
 
           &:focus {
             border-color: #4a90e2;
-            box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.1);
+            box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.08);
             outline: none;
           }
         }
 
         .color-hex-input {
           flex: 1;
-          padding: 10px 12px;
-          border: 1px solid #dee2e6;
-          border-radius: 6px;
-          background: white;
-          color: #212529;
-          font-family: 'Courier New', monospace;
+          padding: 12px 16px;
+          border: 1.5px solid #e1e4e8;
+          border-radius: 8px;
+          background: #f8f9fa;
+          color: #495057;
+          font-family: 'SF Mono', 'Monaco', 'Courier New', monospace;
           font-size: 14px;
-          transition: all 0.15s;
+          transition: all 0.2s;
+
+          &:hover {
+            background: white;
+            border-color: #cbd3da;
+          }
 
           &:focus {
             border-color: #4a90e2;
-            box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.1);
+            background: white;
+            box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.08);
             outline: none;
           }
 
@@ -159,7 +174,7 @@ section-editor-panel {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 20px 24px;
+    padding: 24px 32px 28px;
     border-top: 1px solid #e9ecef;
 
     .footer-actions {
@@ -168,13 +183,13 @@ section-editor-panel {
     }
 
     button {
-      padding: 10px 20px;
+      padding: 12px 24px;
       border: none;
-      border-radius: 6px;
+      border-radius: 8px;
       cursor: pointer;
       font-size: 14px;
-      font-weight: 500;
-      transition: all 0.15s;
+      font-weight: 600;
+      transition: all 0.2s;
 
       &:active {
         transform: translateY(1px);
@@ -182,39 +197,54 @@ section-editor-panel {
     }
 
     .delete-btn {
-      background: #dc3545;
-      color: white;
+      padding: 12px 16px;
+      margin-right: 16px;
+      border: 1.5px solid #dc3545;
+      background: transparent;
+      color: #dc3545;
+      font-weight: 500;
 
       &:hover {
-        background: #c82333;
+        background: #fff5f5;
+        border-color: #c82333;
+        color: #c82333;
       }
 
       &:active {
-        background: #bd2130;
+        background: #ffe5e5;
       }
     }
 
     .cancel-btn {
-      border: 1px solid #dee2e6;
-      background: #e9ecef;
+      border: 1.5px solid #e1e4e8;
+      background: white;
       color: #495057;
 
       &:hover {
-        border-color: #adb5bd;
-        background: #dee2e6;
+        border-color: #cbd3da;
+        background: #f8f9fa;
+      }
+
+      &:active {
+        background: #e9ecef;
       }
     }
 
     .save-btn {
       background: #4a90e2;
       color: white;
+      box-shadow: 0 2px 8px rgba(74, 144, 226, 0.2);
 
       &:hover {
         background: #357abd;
+        box-shadow: 0 4px 12px rgba(74, 144, 226, 0.25);
+        transform: translateY(-1px);
       }
 
       &:active {
         background: #2a5f8f;
+        box-shadow: 0 1px 4px rgba(74, 144, 226, 0.2);
+        transform: translateY(0);
       }
     }
   }
