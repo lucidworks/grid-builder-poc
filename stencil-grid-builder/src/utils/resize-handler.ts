@@ -511,14 +511,14 @@ export class ResizeHandler {
       ? gridToPixelsX(minSizeGridUnits.width, this.item.canvasId, this.config)
       : 100;
     this.minHeight = minSizeGridUnits
-      ? gridToPixelsY(minSizeGridUnits.height)
+      ? gridToPixelsY(minSizeGridUnits.height, this.config)
       : 80;
 
     this.maxWidth = maxSizeGridUnits
       ? gridToPixelsX(maxSizeGridUnits.width, this.item.canvasId, this.config)
       : Infinity;
     this.maxHeight = maxSizeGridUnits
-      ? gridToPixelsY(maxSizeGridUnits.height)
+      ? gridToPixelsY(maxSizeGridUnits.height, this.config)
       : Infinity;
 
     // Determine which edges should be enabled based on min/max constraints
@@ -1149,9 +1149,9 @@ export class ResizeHandler {
     const layout = this.item.layouts[currentViewport as 'desktop' | 'mobile'];
 
     layout.width = pixelsToGridX(newWidth, this.item.canvasId, this.config);
-    layout.height = pixelsToGridY(newHeight);
+    layout.height = pixelsToGridY(newHeight, this.config);
     layout.x = pixelsToGridX(newX, this.item.canvasId, this.config);
-    layout.y = pixelsToGridY(newY);
+    layout.y = pixelsToGridY(newY, this.config);
 
     debug.log('  finalGridUnits:', {
       x: layout.x,

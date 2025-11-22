@@ -842,10 +842,10 @@ export class DragHandler {
     const itemHeight = parseFloat(elementForDimensions.style.height) || 0;
 
     // Convert to grid units for boundary checking
-    const gridX = pixelsToGridX(newX, targetCanvasId);
-    const gridY = pixelsToGridY(newY);
-    const gridWidth = pixelsToGridX(itemWidth, targetCanvasId);
-    const gridHeight = pixelsToGridY(itemHeight);
+    const gridX = pixelsToGridX(newX, targetCanvasId, this.config);
+    const gridY = pixelsToGridY(newY, this.config);
+    const gridWidth = pixelsToGridX(itemWidth, targetCanvasId, this.config);
+    const gridHeight = pixelsToGridY(itemHeight, this.config);
 
     // Apply boundary constraints to keep component fully within canvas
     // If item is dragged beyond edge, it will snap to the nearest valid position

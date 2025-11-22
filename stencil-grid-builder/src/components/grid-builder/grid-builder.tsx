@@ -575,8 +575,8 @@ export class GridBuilder {
       }
 
       // Convert pixel position to grid units
-      const gridX = pixelsToGridX(x, canvasId);
-      const gridY = pixelsToGridY(y);
+      const gridX = pixelsToGridX(x, canvasId, this.config);
+      const gridY = pixelsToGridY(y, this.config);
 
       debug.log('  Converting to grid units (before constraints):', {
         gridX,
@@ -637,8 +637,8 @@ export class GridBuilder {
       };
 
       // 3. Convert drop position (pixels) to grid units for target canvas
-      let gridX = pixelsToGridX(x, targetCanvasId);
-      let gridY = pixelsToGridY(y);
+      let gridX = pixelsToGridX(x, targetCanvasId, this.config);
+      let gridY = pixelsToGridY(y, this.config);
 
       // 4. Constrain position to target canvas boundaries
       const constrained = constrainPositionToCanvas(
