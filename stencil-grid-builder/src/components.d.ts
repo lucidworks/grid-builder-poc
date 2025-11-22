@@ -8,25 +8,25 @@ import { HTMLStencilElement, JSXBase } from "@stencil/core/internal";
 import { GridConfig } from "./types/grid-config";
 import { ComponentDefinition } from "./types/component-definition";
 import { GridItem, GridState, ViewerState } from "./services/state-manager";
-import { ConfirmationModalData } from "./demo/components/confirmation-modal/confirmation-modal";
+import { ConfirmationModalData } from "./demo/types/confirmation-modal-data";
 import { GridBuilderAPI } from "./types/api";
 import { GridBuilderTheme } from "./types/theme";
 import { GridBuilderPlugin } from "./types/plugin";
 import { UIComponentOverrides } from "./types/ui-overrides";
 import { DeletionHook } from "./types/deletion-hook";
 import { GridExport } from "./types/grid-export";
-import { SectionEditorData } from "./demo/components/section-editor-panel/section-editor-panel";
+import { SectionEditorData } from "./demo/types/section-editor-data";
 export { GridConfig } from "./types/grid-config";
 export { ComponentDefinition } from "./types/component-definition";
 export { GridItem, GridState, ViewerState } from "./services/state-manager";
-export { ConfirmationModalData } from "./demo/components/confirmation-modal/confirmation-modal";
+export { ConfirmationModalData } from "./demo/types/confirmation-modal-data";
 export { GridBuilderAPI } from "./types/api";
 export { GridBuilderTheme } from "./types/theme";
 export { GridBuilderPlugin } from "./types/plugin";
 export { UIComponentOverrides } from "./types/ui-overrides";
 export { DeletionHook } from "./types/deletion-hook";
 export { GridExport } from "./types/grid-export";
-export { SectionEditorData } from "./demo/components/section-editor-panel/section-editor-panel";
+export { SectionEditorData } from "./demo/types/section-editor-data";
 export namespace Components {
     /**
      * Blog App Demo - Host Application for grid-builder Library
@@ -617,11 +617,6 @@ export namespace Components {
           * @example ```typescript const builder = document.querySelector('grid-builder'); await builder.setActiveCanvas('canvas2'); ```
          */
         "setActiveCanvas": (canvasId: string) => Promise<void>;
-        /**
-          * Show the default configuration panel  **Optional prop**: Controls whether the default config panel is rendered **Default**: true (show the config panel) **Purpose**: Allow host apps to use custom config panels instead  **Example - Custom config panel**: ```typescript // Hide default config panel to use custom one <grid-builder showConfigPanel={false} ... />  // Then implement your own config panel that listens to item-click events: document.addEventListener('item-click', (event) => {   const { itemId, canvasId } = event.detail;   // Show your custom config panel }); ```  **See**: custom-config-panel component in demo for full example
-          * @default true
-         */
-        "showConfigPanel": boolean;
         /**
           * Visual theme customization  **Optional prop**: Customizes colors, fonts, and styling **Default**: Bootstrap-inspired blue theme  **Theme options**: - primaryColor: Accent color (default: '#007bff') - paletteBackground: Palette sidebar color (default: '#f5f5f5') - canvasBackground: Canvas background (default: '#ffffff') - gridLineColor: Grid line color (default: 'rgba(0,0,0,0.1)') - selectionColor: Selection outline (default: '#007bff') - resizeHandleColor: Resize handle color (default: '#007bff') - fontFamily: UI font (default: system font stack) - customProperties: CSS variables for advanced theming  **Example**: ```typescript const theme = {   primaryColor: '#ff6b6b',        // Brand red   paletteBackground: '#fff5f5',   // Light red   customProperties: {     '--text-color': '#ffffff',     '--border-radius': '8px'   } }; ```
          */
@@ -1860,11 +1855,6 @@ declare namespace LocalJSX {
           * Plugin instances for extending functionality  **Optional prop**: Array of GridBuilderPlugin instances **Purpose**: Add custom features, analytics, integrations  **Plugin lifecycle**: 1. Library calls plugin.init(api) on componentDidLoad 2. Plugin subscribes to events, adds UI, etc. 3. Library calls plugin.destroy() on disconnectedCallback  **Example**: ```typescript class AnalyticsPlugin implements GridBuilderPlugin {   name = 'analytics';    init(api: GridBuilderAPI) {     api.on('componentAdded', (e) => {       analytics.track('Component Added', { type: e.item.type });     });   }    destroy() {     // Cleanup   } }  const plugins = [new AnalyticsPlugin()]; ```
          */
         "plugins"?: GridBuilderPlugin[];
-        /**
-          * Show the default configuration panel  **Optional prop**: Controls whether the default config panel is rendered **Default**: true (show the config panel) **Purpose**: Allow host apps to use custom config panels instead  **Example - Custom config panel**: ```typescript // Hide default config panel to use custom one <grid-builder showConfigPanel={false} ... />  // Then implement your own config panel that listens to item-click events: document.addEventListener('item-click', (event) => {   const { itemId, canvasId } = event.detail;   // Show your custom config panel }); ```  **See**: custom-config-panel component in demo for full example
-          * @default true
-         */
-        "showConfigPanel"?: boolean;
         /**
           * Visual theme customization  **Optional prop**: Customizes colors, fonts, and styling **Default**: Bootstrap-inspired blue theme  **Theme options**: - primaryColor: Accent color (default: '#007bff') - paletteBackground: Palette sidebar color (default: '#f5f5f5') - canvasBackground: Canvas background (default: '#ffffff') - gridLineColor: Grid line color (default: 'rgba(0,0,0,0.1)') - selectionColor: Selection outline (default: '#007bff') - resizeHandleColor: Resize handle color (default: '#007bff') - fontFamily: UI font (default: system font stack) - customProperties: CSS variables for advanced theming  **Example**: ```typescript const theme = {   primaryColor: '#ff6b6b',        // Brand red   paletteBackground: '#fff5f5',   // Light red   customProperties: {     '--text-color': '#ffffff',     '--border-radius': '8px'   } }; ```
          */

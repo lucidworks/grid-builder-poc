@@ -24,6 +24,9 @@
 - [blog-article](../blog-article)
 - [blog-image](../blog-image)
 - [blog-button](../blog-button)
+- [image-gallery](../image-gallery)
+- [dashboard-widget](../dashboard-widget)
+- [live-data](../live-data)
 
 ### Graph
 ```mermaid
@@ -32,6 +35,9 @@ graph TD;
   custom-config-panel --> blog-article
   custom-config-panel --> blog-image
   custom-config-panel --> blog-button
+  custom-config-panel --> image-gallery
+  custom-config-panel --> dashboard-widget
+  custom-config-panel --> live-data
   blog-app --> custom-config-panel
   style custom-config-panel fill:#f9f,stroke:#333,stroke-width:4px
 ```

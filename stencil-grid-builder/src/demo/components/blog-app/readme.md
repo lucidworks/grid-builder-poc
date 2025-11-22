@@ -27,6 +27,9 @@ using the
 - [blog-article](../blog-article)
 - [blog-image](../blog-image)
 - [blog-button](../blog-button)
+- [image-gallery](../image-gallery)
+- [dashboard-widget](../dashboard-widget)
+- [live-data](../live-data)
 
 ### Graph
 ```mermaid
@@ -41,16 +44,21 @@ graph TD;
   blog-app --> blog-article
   blog-app --> blog-image
   blog-app --> blog-button
+  blog-app --> image-gallery
+  blog-app --> dashboard-widget
+  blog-app --> live-data
   grid-viewer --> canvas-section-viewer
   canvas-section-viewer --> grid-item-wrapper
   grid-builder --> component-palette
   grid-builder --> canvas-section
-  grid-builder --> config-panel
   canvas-section --> grid-item-wrapper
   custom-config-panel --> blog-header
   custom-config-panel --> blog-article
   custom-config-panel --> blog-image
   custom-config-panel --> blog-button
+  custom-config-panel --> image-gallery
+  custom-config-panel --> dashboard-widget
+  custom-config-panel --> live-data
   style blog-app fill:#f9f,stroke:#333,stroke-width:4px
 ```
 
