@@ -65,7 +65,7 @@
  * @module canvas-section
  */
 
-import { Component, h, Prop, State } from '@stencil/core';
+import { Component, h, Prop, State, Watch } from '@stencil/core';
 import interact from 'interactjs';
 
 // Internal imports
@@ -347,6 +347,85 @@ export class CanvasSection {
     if (this.resizeObserver) {
       this.resizeObserver.disconnect();
     }
+  }
+
+  /**
+   * Watch for canvasId prop changes
+   *
+   * **When triggered**: Parent changes which canvas this component displays
+   * **Actions**: Reload canvas data from state, recalculate height
+   *
+   * **Why needed**:
+   * - Canvas ID is the key to access state
+   * - Changing canvas ID means displaying different canvas
+   * - Must reload items, metadata, and recalculate layout
+   *
+   * **Note**: This is rare in practice - usually canvas IDs are static
+   */
+  @Watch('canvasId')
+  handleCanvasIdChange(newCanvasId: string, oldCanvasId: string) {
+    // Skip if canvas ID hasn't changed
+    if (newCanvasId === oldCanvasId) return;
+
+    // Reload canvas data from state
+    this.canvas = gridState.canvases[newCanvasId];
+
+    // Recalculate canvas height for new canvas
+    this.calculatedHeight = calculateCanvasHeight(newCanvasId, this.config);
+
+    // Reinitialize dropzone with new canvas ID
+    // (dropzone needs to know which canvas it belongs to)
+    if (this.gridContainerRef && this.dropzoneInitialized) {
+      interact(this.gridContainerRef).unset();
+      this.dropzoneInitialized = false;
+      this.initializeDropzone();
+    }
+  }
+
+  /**
+   * Watch for config prop changes
+   *
+   * **When triggered**: Parent passes updated GridConfig
+   * **Actions**: Recalculate canvas height with new grid settings
+   *
+   * **Why needed**:
+   * - Grid calculations depend on config (min/max grid size, etc.)
+   * - Canvas height calculation uses grid-to-pixels conversions
+   * - Config changes affect layout calculations
+   */
+  @Watch('config')
+  handleConfigChange(newConfig: GridConfig, oldConfig: GridConfig) {
+    // Skip if config reference hasn't changed
+    if (newConfig === oldConfig) return;
+
+    // Recalculate canvas height with new config
+    this.calculatedHeight = calculateCanvasHeight(this.canvasId, newConfig);
+
+    // Force re-render to update item positions with new grid size
+    this.renderVersion++;
+  }
+
+  /**
+   * Watch for isActive prop changes
+   *
+   * **When triggered**: Active canvas changes in grid-builder
+   * **Purpose**: Apply/remove 'active' CSS class for styling
+   *
+   * **Note**: No action needed - the prop change triggers re-render
+   * and the render() method applies the 'active' class based on this.isActive
+   *
+   * **Visual feedback**:
+   * - Active canvas may have highlighted border
+   * - Canvas title may be un-dimmed
+   * - Host app can style via `.grid-container.active` selector
+   */
+  @Watch('isActive')
+  handleIsActiveChange(newIsActive: boolean, oldIsActive: boolean) {
+    // Skip if active state hasn't changed
+    if (newIsActive === oldIsActive) return;
+
+    // No action needed - render() will apply/remove 'active' class
+    // This watcher is just for documentation and potential future enhancements
   }
 
   /**

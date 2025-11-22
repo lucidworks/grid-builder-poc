@@ -97,7 +97,7 @@
  * @module component-palette
  */
 
-import { Component, h, Prop } from '@stencil/core';
+import { Component, h, Prop, Watch } from '@stencil/core';
 import interact from 'interactjs';
 
 // Type imports
@@ -245,6 +245,52 @@ export class ComponentPalette {
    * @default true
    */
   @Prop() showHeader?: boolean = true;
+
+  /**
+   * Watch for components prop changes
+   *
+   * **When triggered**: Parent passes updated component definitions
+   * **Actions**: Reinitialize drag handlers for new/changed palette items
+   *
+   * **Why needed**:
+   * - Component list may change dynamically (add/remove components)
+   * - New items need drag handlers attached
+   * - More efficient than componentDidUpdate (only runs on prop change)
+   */
+  @Watch('components')
+  handleComponentsChange(newComponents: ComponentDefinition[], oldComponents: ComponentDefinition[]) {
+    // Skip if components reference hasn't changed
+    if (newComponents === oldComponents) return;
+
+    // Skip if not yet mounted (componentDidLoad will handle initialization)
+    if (!oldComponents) return;
+
+    // Reinitialize palette items with new component list
+    // Use requestAnimationFrame to ensure DOM has updated
+    requestAnimationFrame(() => {
+      this.initializePaletteItems();
+    });
+  }
+
+  /**
+   * Watch for config prop changes
+   *
+   * **When triggered**: Parent passes updated GridConfig
+   * **Actions**: Config changes affect drag clone sizing
+   *
+   * **Note**: Config stored in closure by initializePaletteItems
+   * Will be used on next drag start, no immediate action needed
+   */
+  @Watch('config')
+  handleConfigChange(newConfig: GridConfig, oldConfig: GridConfig) {
+    // Skip if config reference hasn't changed
+    if (newConfig === oldConfig) return;
+
+    // Config changes are rare but affect drag clone sizing
+    // No immediate action needed - next drag will use new config
+    // If we want to be explicit, could reinitialize handlers:
+    // requestAnimationFrame(() => this.initializePaletteItems());
+  }
 
   /**
    * Component did load lifecycle hook

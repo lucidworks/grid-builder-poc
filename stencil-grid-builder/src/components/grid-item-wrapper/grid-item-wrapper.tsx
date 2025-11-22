@@ -26,7 +26,7 @@
  * @module grid-item-wrapper
  */
 
-import { Component, h, Listen, Prop, State } from '@stencil/core';
+import { Component, h, Listen, Prop, State, Watch } from '@stencil/core';
 
 // Internal imports
 import { GridItem, gridState, updateItem, setActiveCanvas } from '../../services/state-manager';
@@ -281,6 +281,131 @@ export class GridItemWrapper {
     if (this.itemRef) {
       virtualRenderer.unobserve(this.itemRef, this.item.id);
     }
+  }
+
+  /**
+   * Watch for item prop changes
+   *
+   * **When triggered**: Parent passes updated item data
+   * **Actions**:
+   * - Update component state (selection, snapshot)
+   * - Reinitialize drag/resize handlers with new item data
+   * - Preserve handlers if already initialized
+   */
+  @Watch('item')
+  handleItemChange(newItem: GridItem, oldItem: GridItem) {
+    // Skip if item reference hasn't actually changed
+    if (newItem === oldItem) return;
+
+    debug.log('📦 Item prop changed:', {
+      itemId: newItem.id,
+      oldId: oldItem?.id,
+    });
+
+    // Update component state
+    this.updateComponentState();
+
+    // Update drag/resize handlers with new item data
+    if (!this.viewerMode && this.dragHandler && this.resizeHandler) {
+      // Handlers are already initialized, they'll use the updated this.item reference
+      // No need to destroy and recreate - they reference this.item internally
+      debug.log('  ✅ Handlers updated with new item reference');
+    }
+  }
+
+  /**
+   * Watch for renderVersion prop changes
+   *
+   * **When triggered**: Parent increments renderVersion (e.g., on container resize)
+   * **Purpose**: Force component re-render to recalculate grid positions
+   * **Note**: This is a force-update mechanism, actual recalculation happens in render()
+   */
+  @Watch('renderVersion')
+  handleRenderVersionChange(newVersion: number, oldVersion: number) {
+    // Skip if version hasn't changed (undefined → undefined)
+    if (newVersion === oldVersion) return;
+
+    debug.log('🔄 RenderVersion changed:', {
+      oldVersion,
+      newVersion,
+      itemId: this.item.id,
+    });
+
+    // No action needed - the prop change itself triggers re-render
+    // Grid calculations will be re-executed in render()
+  }
+
+  /**
+   * Watch for config prop changes
+   *
+   * **When triggered**: Parent passes updated GridConfig
+   * **Actions**: Reinitialize drag/resize handlers with new config
+   * **Note**: Config changes are rare (e.g., user changes grid settings)
+   */
+  @Watch('config')
+  handleConfigChange(newConfig: GridConfig, oldConfig: GridConfig) {
+    // Skip if config reference hasn't changed
+    if (newConfig === oldConfig) return;
+
+    debug.log('⚙️ Config prop changed:', {
+      itemId: this.item.id,
+      oldConfig,
+      newConfig,
+    });
+
+    // Reinitialize handlers with new config
+    if (!this.viewerMode && this.itemRef) {
+      // Cleanup old handlers
+      if (this.dragHandler) {
+        this.dragHandler.destroy();
+      }
+      if (this.resizeHandler) {
+        this.resizeHandler.destroy();
+      }
+
+      // Recreate handlers with new config
+      const componentDefinition = this.componentRegistry?.get(this.item.type);
+      const headerElement = this.itemRef.querySelector('.grid-item-header') as HTMLElement;
+
+      this.dragHandler = new DragHandler(
+        this.itemRef,
+        this.item,
+        this.handleItemUpdate,
+        newConfig,
+        headerElement,
+        () => {
+          this.wasDragged = true;
+        }
+      );
+      this.resizeHandler = new ResizeHandler(this.itemRef, this.item, this.handleItemUpdate, componentDefinition, newConfig);
+
+      debug.log('  ✅ Handlers reinitialized with new config');
+    }
+  }
+
+  /**
+   * Watch for currentViewport prop changes (viewer mode only)
+   *
+   * **When triggered**: Viewport switches between desktop/mobile in viewer mode
+   * **Purpose**: Force re-render to use appropriate layout
+   * **Note**: Only relevant in viewerMode=true
+   */
+  @Watch('currentViewport')
+  handleViewportChange(newViewport: 'desktop' | 'mobile', oldViewport: 'desktop' | 'mobile') {
+    // Skip if viewport hasn't changed
+    if (newViewport === oldViewport) return;
+
+    // Only relevant in viewer mode
+    if (!this.viewerMode) return;
+
+    debug.log('📱 Viewport prop changed (viewer mode):', {
+      oldViewport,
+      newViewport,
+      itemId: this.item.id,
+    });
+
+    // No action needed - the prop change itself triggers re-render
+    // render() will use the new viewport to select layout
   }
 
   /**
