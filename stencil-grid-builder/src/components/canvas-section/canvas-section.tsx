@@ -235,6 +235,19 @@ export class CanvasSection {
   @State() private calculatedHeight: number = 0;
 
   /**
+   * Drop target state
+   *
+   * **Internal state**: Tracks whether this canvas is currently a valid drop target
+   * **Used for**: Adding 'drop-target' class for visual feedback during drag operations
+   * **Pattern**: Replaces classList manipulation with reactive state
+   *
+   * **Value**:
+   * - false: No drag is over this canvas
+   * - true: A draggable element is currently over this canvas
+   */
+  @State() private isDropTarget: boolean = false;
+
+  /**
    * Grid container DOM reference
    *
    * **Used for**:
@@ -587,18 +600,18 @@ export class CanvasSection {
 
       listeners: {
         dragenter: (_event: any) => {
-          // Add visual feedback when drag enters canvas
-          this.gridContainerRef?.classList.add('drop-target');
+          // Add visual feedback when drag enters canvas (replaces classList.add)
+          this.isDropTarget = true;
         },
 
         dragleave: (_event: any) => {
-          // Remove visual feedback when drag leaves canvas
-          this.gridContainerRef?.classList.remove('drop-target');
+          // Remove visual feedback when drag leaves canvas (replaces classList.remove)
+          this.isDropTarget = false;
         },
 
         drop: (event: any) => {
-          // Remove visual feedback on successful drop
-          this.gridContainerRef?.classList.remove('drop-target');
+          // Remove visual feedback on successful drop (replaces classList.remove)
+          this.isDropTarget = false;
           const droppedElement = event.relatedTarget;
           const isPaletteItem = droppedElement.classList.contains('palette-item');
 
@@ -716,6 +729,7 @@ export class CanvasSection {
             'grid-container': true,
             'hide-grid': !showGrid,
             'active': this.isActive,
+            'drop-target': this.isDropTarget,
           }}
           id={this.canvasId}
           data-canvas-id={this.canvasId}

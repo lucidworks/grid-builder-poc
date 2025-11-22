@@ -97,7 +97,7 @@
  * @module component-palette
  */
 
-import { Component, h, Prop, Watch } from '@stencil/core';
+import { Component, h, Prop, State, Watch } from '@stencil/core';
 import interact from 'interactjs';
 
 // Type imports
@@ -247,6 +247,19 @@ export class ComponentPalette {
   @Prop() showHeader?: boolean = true;
 
   /**
+   * Currently dragging component type
+   *
+   * **Internal state**: Tracks which palette item is being dragged
+   * **Used for**: Adding 'dragging-from-palette' class to the dragged item
+   * **Pattern**: Replaces classList manipulation with reactive state
+   *
+   * **Value**:
+   * - null: No item is being dragged
+   * - string: The component type of the item being dragged
+   */
+  @State() draggingItemType: string | null = null;
+
+  /**
    * Watch for components prop changes
    *
    * **When triggered**: Parent passes updated component definitions
@@ -361,21 +374,29 @@ export class ComponentPalette {
       <div class={paletteClasses}>
         {this.showHeader && <h2>Components</h2>}
 
-        {this.components.map((component) => (
-          <div
-            class="palette-item"
-            data-component-type={component.type}
-            key={component.type}
-          >
-            {component.renderPaletteItem
-              ? component.renderPaletteItem({
-                  componentType: component.type,
-                  name: component.name,
-                  icon: component.icon,
-                })
-              : `${component.icon} ${component.name}`}
-          </div>
-        ))}
+        {this.components.map((component) => {
+          // Class binding with reactive state
+          const itemClasses = {
+            'palette-item': true,
+            'dragging-from-palette': this.draggingItemType === component.type,
+          };
+
+          return (
+            <div
+              class={itemClasses}
+              data-component-type={component.type}
+              key={component.type}
+            >
+              {component.renderPaletteItem
+                ? component.renderPaletteItem({
+                    componentType: component.type,
+                    name: component.name,
+                    icon: component.icon,
+                  })
+                : `${component.icon} ${component.name}`}
+            </div>
+          );
+        })}
       </div>
     );
   }
@@ -479,7 +500,11 @@ export class ComponentPalette {
            * @param event - interact.js drag start event
            */
           start: (event: any) => {
-            event.target.classList.add('dragging-from-palette');
+            // Get component type and find definition
+            const componentType = event.target.getAttribute('data-component-type');
+
+            // Set dragging state (replaces classList.add)
+            this.draggingItemType = componentType;
 
             // Store original palette item position for snap-back animation
             const paletteRect = event.target.getBoundingClientRect();
@@ -488,9 +513,6 @@ export class ComponentPalette {
               top: paletteRect.top,
             };
             (event.target as any)._dropWasValid = false; // Flag to track if drop occurred
-
-            // Get component type and find definition
-            const componentType = event.target.getAttribute('data-component-type');
             const definition = this.components.find((c) => c.type === componentType);
 
             if (!definition) {
@@ -629,7 +651,9 @@ export class ComponentPalette {
            * @param event - interact.js drag end event
            */
           end: (event: any) => {
-            event.target.classList.remove('dragging-from-palette');
+            // Clear dragging state (replaces classList.remove)
+            this.draggingItemType = null;
+
             const dragClone = (event.target as any)._dragClone;
             const dropWasValid = (event.target as any)._dropWasValid;
             const originalPos = (event.target as any)._originalPosition;
