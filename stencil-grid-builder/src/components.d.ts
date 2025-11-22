@@ -230,6 +230,28 @@ export namespace Components {
         "src": string;
     }
     /**
+     * CanvasHeader Component
+     * ======================
+     * Declarative header component for canvas sections.
+     * **Tag**: `<canvas-header>`
+     * **Shadow DOM**: Disabled (matches blog-app styling)
+     */
+    interface CanvasHeader {
+        /**
+          * Canvas ID for data tracking  **Purpose**: Identify which canvas this header belongs to **Required**: Yes
+         */
+        "canvasId": string;
+        /**
+          * Whether this section can be deleted  **Purpose**: Control delete button visibility **Default**: true **Note**: Default sections (hero, articles, footer) should set to false
+          * @default true
+         */
+        "isDeletable": boolean;
+        /**
+          * Display title for the canvas section  **Purpose**: Text shown in the title badge **Required**: Yes **Note**: Named sectionTitle to avoid conflict with standard HTML title attribute
+         */
+        "sectionTitle": string;
+    }
+    /**
      * CanvasSection Component
      * =======================
      * Library component providing individual canvas dropzone.
@@ -770,6 +792,10 @@ export interface BlogButtonCustomEvent<T> extends CustomEvent<T> {
     detail: T;
     target: HTMLBlogButtonElement;
 }
+export interface CanvasHeaderCustomEvent<T> extends CustomEvent<T> {
+    detail: T;
+    target: HTMLCanvasHeaderElement;
+}
 export interface ConfirmationModalCustomEvent<T> extends CustomEvent<T> {
     detail: T;
     target: HTMLConfirmationModalElement;
@@ -977,6 +1003,31 @@ declare global {
     var HTMLBlogImageElement: {
         prototype: HTMLBlogImageElement;
         new (): HTMLBlogImageElement;
+    };
+    interface HTMLCanvasHeaderElementEventMap {
+        "headerClick": { canvasId: string };
+        "deleteClick": { canvasId: string };
+    }
+    /**
+     * CanvasHeader Component
+     * ======================
+     * Declarative header component for canvas sections.
+     * **Tag**: `<canvas-header>`
+     * **Shadow DOM**: Disabled (matches blog-app styling)
+     */
+    interface HTMLCanvasHeaderElement extends Components.CanvasHeader, HTMLStencilElement {
+        addEventListener<K extends keyof HTMLCanvasHeaderElementEventMap>(type: K, listener: (this: HTMLCanvasHeaderElement, ev: CanvasHeaderCustomEvent<HTMLCanvasHeaderElementEventMap[K]>) => any, options?: boolean | AddEventListenerOptions): void;
+        addEventListener<K extends keyof DocumentEventMap>(type: K, listener: (this: Document, ev: DocumentEventMap[K]) => any, options?: boolean | AddEventListenerOptions): void;
+        addEventListener<K extends keyof HTMLElementEventMap>(type: K, listener: (this: HTMLElement, ev: HTMLElementEventMap[K]) => any, options?: boolean | AddEventListenerOptions): void;
+        addEventListener(type: string, listener: EventListenerOrEventListenerObject, options?: boolean | AddEventListenerOptions): void;
+        removeEventListener<K extends keyof HTMLCanvasHeaderElementEventMap>(type: K, listener: (this: HTMLCanvasHeaderElement, ev: CanvasHeaderCustomEvent<HTMLCanvasHeaderElementEventMap[K]>) => any, options?: boolean | EventListenerOptions): void;
+        removeEventListener<K extends keyof DocumentEventMap>(type: K, listener: (this: Document, ev: DocumentEventMap[K]) => any, options?: boolean | EventListenerOptions): void;
+        removeEventListener<K extends keyof HTMLElementEventMap>(type: K, listener: (this: HTMLElement, ev: HTMLElementEventMap[K]) => any, options?: boolean | EventListenerOptions): void;
+        removeEventListener(type: string, listener: EventListenerOrEventListenerObject, options?: boolean | EventListenerOptions): void;
+    }
+    var HTMLCanvasHeaderElement: {
+        prototype: HTMLCanvasHeaderElement;
+        new (): HTMLCanvasHeaderElement;
     };
     /**
      * CanvasSection Component
@@ -1307,6 +1358,7 @@ declare global {
         "blog-button": HTMLBlogButtonElement;
         "blog-header": HTMLBlogHeaderElement;
         "blog-image": HTMLBlogImageElement;
+        "canvas-header": HTMLCanvasHeaderElement;
         "canvas-section": HTMLCanvasSectionElement;
         "canvas-section-viewer": HTMLCanvasSectionViewerElement;
         "component-palette": HTMLComponentPaletteElement;
@@ -1526,6 +1578,36 @@ declare namespace LocalJSX {
           * @default 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&h=600&fit=crop'
          */
         "src"?: string;
+    }
+    /**
+     * CanvasHeader Component
+     * ======================
+     * Declarative header component for canvas sections.
+     * **Tag**: `<canvas-header>`
+     * **Shadow DOM**: Disabled (matches blog-app styling)
+     */
+    interface CanvasHeader {
+        /**
+          * Canvas ID for data tracking  **Purpose**: Identify which canvas this header belongs to **Required**: Yes
+         */
+        "canvasId": string;
+        /**
+          * Whether this section can be deleted  **Purpose**: Control delete button visibility **Default**: true **Note**: Default sections (hero, articles, footer) should set to false
+          * @default true
+         */
+        "isDeletable"?: boolean;
+        /**
+          * Event emitted when delete button is clicked  **Detail**: { canvasId: string } **Use case**: Delete the canvas section
+         */
+        "onDeleteClick"?: (event: CanvasHeaderCustomEvent<{ canvasId: string }>) => void;
+        /**
+          * Event emitted when header title is clicked  **Detail**: { canvasId: string } **Use case**: Activate canvas and open section editor
+         */
+        "onHeaderClick"?: (event: CanvasHeaderCustomEvent<{ canvasId: string }>) => void;
+        /**
+          * Display title for the canvas section  **Purpose**: Text shown in the title badge **Required**: Yes **Note**: Named sectionTitle to avoid conflict with standard HTML title attribute
+         */
+        "sectionTitle": string;
     }
     /**
      * CanvasSection Component
@@ -2020,6 +2102,7 @@ declare namespace LocalJSX {
         "blog-button": BlogButton;
         "blog-header": BlogHeader;
         "blog-image": BlogImage;
+        "canvas-header": CanvasHeader;
         "canvas-section": CanvasSection;
         "canvas-section-viewer": CanvasSectionViewer;
         "component-palette": ComponentPalette;
@@ -2204,6 +2287,14 @@ declare module "@stencil/core" {
             "blog-button": LocalJSX.BlogButton & JSXBase.HTMLAttributes<HTMLBlogButtonElement>;
             "blog-header": LocalJSX.BlogHeader & JSXBase.HTMLAttributes<HTMLBlogHeaderElement>;
             "blog-image": LocalJSX.BlogImage & JSXBase.HTMLAttributes<HTMLBlogImageElement>;
+            /**
+             * CanvasHeader Component
+             * ======================
+             * Declarative header component for canvas sections.
+             * **Tag**: `<canvas-header>`
+             * **Shadow DOM**: Disabled (matches blog-app styling)
+             */
+            "canvas-header": LocalJSX.CanvasHeader & JSXBase.HTMLAttributes<HTMLCanvasHeaderElement>;
             /**
              * CanvasSection Component
              * =======================
