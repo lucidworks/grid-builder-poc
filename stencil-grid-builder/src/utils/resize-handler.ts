@@ -195,6 +195,7 @@
  * @module resize-handler
  */
 
+import type { InteractResizeEvent, Interactable } from '../types/interact';
 import { GridItem, setActiveCanvas } from '../services/state-manager';
 import { ComponentDefinition } from '../types/component-definition';
 import { GridConfig } from '../types/grid-config';
@@ -305,7 +306,7 @@ export class ResizeHandler {
   private onUpdate: (item: GridItem) => void;
 
   /** interact.js resizable instance for cleanup */
-  private interactInstance: any;
+  private interactInstance: Interactable | null = null;
 
   /** RAF ID for cancelling pending frame updates */
   private resizeRafId: number | null = null;
@@ -493,7 +494,7 @@ export class ResizeHandler {
     console.log('📦 resize-handler.ts build:', BUILD_TIMESTAMP);
     console.log('🔧 Grid config fix applied - resize handler now uses same grid calculations as render');
 
-    const interact = (window as any).interact;
+    const interact = window.interact;
     if (!interact) {
       console.warn('interact.js not loaded');
       return;
@@ -607,10 +608,10 @@ export class ResizeHandler {
    * }
    * ```
    */
-  private handleResizeStart(event: any): void {
+  private handleResizeStart(event: InteractResizeEvent): void {
     // Start performance tracking
-    if ((window as any).perfMonitor) {
-      (window as any).perfMonitor.startOperation('resize');
+    if (window.perfMonitor) {
+      window.perfMonitor.startOperation('resize');
     }
 
     event.target.classList.add('resizing');
@@ -725,7 +726,7 @@ export class ResizeHandler {
    * // newWidth = startWidth + 10
    * ```
    */
-  private handleResizeMove(event: any): void {
+  private handleResizeMove(event: InteractResizeEvent): void {
     // Use data attributes to track cumulative deltas (same pattern as drag-handler)
     // This prevents interact.js from getting confused about element position
     const deltaX = (parseFloat(event.target.getAttribute('data-x')) || 0) + event.deltaRect.left;
@@ -920,7 +921,7 @@ export class ResizeHandler {
    * //    - onUpdate(item) → re-render + undo command
    * ```
    */
-  private handleResizeEnd(event: any): void {
+  private handleResizeEnd(event: InteractResizeEvent): void {
     // Cancel any pending frame
     if (this.resizeRafId) {
       cancelAnimationFrame(this.resizeRafId);
@@ -1141,7 +1142,7 @@ export class ResizeHandler {
     });
 
     // Update item size and position in current viewport's layout (convert to grid units)
-    const currentViewport = (window as any).gridState?.currentViewport || 'desktop';
+    const currentViewport = window.gridState?.currentViewport || 'desktop';
     const layout = this.item.layouts[currentViewport as 'desktop' | 'mobile'];
 
     layout.width = pixelsToGridX(newWidth, this.item.canvasId, this.config);
@@ -1163,8 +1164,8 @@ export class ResizeHandler {
     }
 
     // End performance tracking
-    if ((window as any).perfMonitor) {
-      (window as any).perfMonitor.endOperation('resize');
+    if (window.perfMonitor) {
+      window.perfMonitor.endOperation('resize');
     }
 
     // Trigger StencilJS update (single re-render at end)

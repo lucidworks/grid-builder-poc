@@ -131,6 +131,7 @@
  * @module drag-handler
  */
 
+import type { InteractDragEvent, Interactable } from '../types/interact';
 import { GridItem, setActiveCanvas } from '../services/state-manager';
 import { GridConfig } from '../types/grid-config';
 import { domCache } from './dom-cache';
@@ -243,7 +244,7 @@ export class DragHandler {
   private config?: GridConfig;
 
   /** interact.js draggable instance for cleanup */
-  private interactInstance: any;
+  private interactInstance: Interactable | null = null;
 
   /** Position at drag start (from transform) - used to apply deltas */
   private basePosition: { x: number; y: number } = { x: 0, y: 0 };
@@ -259,6 +260,9 @@ export class DragHandler {
 
   /** Track if any drag movement occurred */
   private hasMoved: boolean = false;
+
+  /** RAF ID for batching drag move updates (limits to 60fps) */
+  private dragRafId: number | null = null;
 
   /**
    * Create drag handler and initialize interact.js
@@ -398,7 +402,7 @@ export class DragHandler {
    * ```
    */
   private initialize(): void {
-    const interact = (window as any).interact;
+    const interact = window.interact;
     if (!interact) {
       console.warn('interact.js not loaded');
       return;
@@ -481,10 +485,10 @@ export class DragHandler {
    * }
    * ```
    */
-  private handleDragStart(event: any): void {
+  private handleDragStart(event: InteractDragEvent): void {
     // Start performance tracking
-    if ((window as any).perfMonitor) {
-      (window as any).perfMonitor.startOperation('drag');
+    if (window.perfMonitor) {
+      window.perfMonitor.startOperation('drag');
     }
 
     // Reset movement flag
@@ -517,21 +521,28 @@ export class DragHandler {
   }
 
   /**
-   * Handle drag move event (high-frequency, ~60fps)
+   * Handle drag move event (high-frequency, ~200/sec → batched to 60fps)
    *
-   * **Critical Performance Path**: This runs ~60 times per second during drag
+   * **Critical Performance Path**: RAF batching limits updates to 60fps
    *
-   * **Direct DOM Manipulation**:
-   * - Updates `element.style.transform` directly
+   * **Direct DOM Manipulation with RAF Batching**:
+   * - Updates `element.style.transform` via requestAnimationFrame
+   * - Cancels pending RAF before scheduling new one
    * - No StencilJS state updates
    * - No component re-renders
    * - No virtual DOM diffing
-   * - Result: Smooth 60fps drag performance
+   * - Result: Smooth 60fps drag performance (consistent with resize)
    *
    * **Why this approach**:
    * - State-based: Update state → trigger render → diff vdom → update DOM (~16ms+)
-   * - Direct DOM: Update transform property directly (~0.5ms)
-   * - **30x faster** than state-based approach
+   * - RAF-batched DOM: Batch updates to animation frame (~0.5ms at 60fps)
+   * - **30x faster** than state-based, **consistent with resize-handler**
+   *
+   * **RAF Batching Pattern**:
+   * 1. Cancel any pending RAF from previous move event
+   * 2. Schedule new RAF for DOM updates
+   * 3. Limits visual updates to 60fps (browser refresh rate)
+   * 4. Prevents unnecessary work when events fire > 60/sec
    *
    * **Delta accumulation**:
    * - interact.js provides cumulative deltas since drag start
@@ -552,10 +563,10 @@ export class DragHandler {
    * - Survive potential element re-renders (though we avoid those)
    *
    * **Performance per frame**:
-   * - 1 transform style update
-   * - 2 data attribute updates
+   * - 1 transform style update (RAF-batched)
+   * - 2 data attribute updates (immediate)
    * - No layout/reflow (transform is composited)
-   * - Total: ~0.5ms
+   * - Total: ~0.5ms at 60fps max
    * @param event - interact.js drag move event
    * @example
    * ```typescript
@@ -570,9 +581,13 @@ export class DragHandler {
    * // transform = translate(baseX + 5px, baseY + 3px)
    * ```
    */
-  private handleDragMove(event: any): void {
+  private handleDragMove(event: InteractDragEvent): void {
     const x = (parseFloat(event.target.getAttribute('data-x')) || 0) + event.dx;
     const y = (parseFloat(event.target.getAttribute('data-y')) || 0) + event.dy;
+
+    // Update data attributes immediately for next move event
+    event.target.setAttribute('data-x', x.toString());
+    event.target.setAttribute('data-y', y.toString());
 
     // Mark that movement has occurred and notify parent immediately
     if (!this.hasMoved && this.onDragMove) {
@@ -580,15 +595,24 @@ export class DragHandler {
       this.onDragMove();
     }
 
-    // If dragging from a separate handle, apply transform to main element
-    // Otherwise, apply to the event target
-    const elementToMove = this.dragHandleElement ? this.element : event.target;
+    // Cancel any pending RAF from previous move event
+    if (this.dragRafId) {
+      cancelAnimationFrame(this.dragRafId);
+    }
 
-    // Apply drag delta to base position
-    // Direct DOM manipulation - no StencilJS re-render during drag
-    elementToMove.style.transform = `translate(${this.basePosition.x + x}px, ${this.basePosition.y + y}px)`;
-    event.target.setAttribute('data-x', x.toString());
-    event.target.setAttribute('data-y', y.toString());
+    // Batch DOM updates with RAF (limits to ~60fps instead of ~200/sec)
+    this.dragRafId = requestAnimationFrame(() => {
+      // If dragging from a separate handle, apply transform to main element
+      // Otherwise, apply to the event target
+      const elementToMove = this.dragHandleElement ? this.element : event.target;
+
+      // Apply drag delta to base position
+      // Direct DOM manipulation - no StencilJS re-render during drag
+      elementToMove.style.transform = `translate(${this.basePosition.x + x}px, ${this.basePosition.y + y}px)`;
+
+      // Clear RAF ID after execution
+      this.dragRafId = null;
+    });
   }
 
 
@@ -704,7 +728,13 @@ export class DragHandler {
    * //    - onUpdate(item) → re-render + undo command
    * ```
    */
-  private handleDragEnd(event: any): void {
+  private handleDragEnd(event: InteractDragEvent): void {
+    // Cancel any pending RAF from drag move
+    if (this.dragRafId) {
+      cancelAnimationFrame(this.dragRafId);
+      this.dragRafId = null;
+    }
+
     const deltaX = parseFloat(event.target.getAttribute('data-x')) || 0;
     const deltaY = parseFloat(event.target.getAttribute('data-y')) || 0;
 
@@ -781,8 +811,8 @@ export class DragHandler {
       event.target.setAttribute('data-y', '0');
 
       // End performance tracking
-      if ((window as any).perfMonitor) {
-        (window as any).perfMonitor.endOperation('drag');
+      if (window.perfMonitor) {
+        window.perfMonitor.endOperation('drag');
       }
       return;
     }
@@ -834,7 +864,7 @@ export class DragHandler {
     newY = constrained.y * gridSizeYForConversion;
 
     // Update item position in current viewport's layout (use constrained grid units)
-    const currentViewport = (window as any).gridState?.currentViewport || 'desktop';
+    const currentViewport = window.gridState?.currentViewport || 'desktop';
     const layout = this.item.layouts[currentViewport as 'desktop' | 'mobile'];
 
     layout.x = constrained.x;
@@ -863,8 +893,8 @@ export class DragHandler {
       event.target.setAttribute('data-y', '0');
 
       // End performance tracking
-      if ((window as any).perfMonitor) {
-        (window as any).perfMonitor.endOperation('drag');
+      if (window.perfMonitor) {
+        window.perfMonitor.endOperation('drag');
       }
 
       // Trigger StencilJS update (single re-render at end)
@@ -893,7 +923,7 @@ export class DragHandler {
    *
    * @param event - interact.js drag end event
    */
-  private snapBackToOriginalPosition(event: any): void {
+  private snapBackToOriginalPosition(event: InteractDragEvent): void {
     const originalPos = (this.element as any)._originalPosition;
     const originalTransform = (this.element as any)._originalTransform;
 
@@ -929,8 +959,8 @@ export class DragHandler {
     delete (this.element as any)._originalTransform;
 
     // End performance tracking
-    if ((window as any).perfMonitor) {
-      (window as any).perfMonitor.endOperation('drag');
+    if (window.perfMonitor) {
+      window.perfMonitor.endOperation('drag');
     }
 
     // No state update - item stays in original position
