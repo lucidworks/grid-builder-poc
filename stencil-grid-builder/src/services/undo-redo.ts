@@ -217,6 +217,9 @@
  */
 
 import { createStore } from '@stencil/store';
+import { createDebugLogger } from '../utils/debug';
+
+const debug = createDebugLogger('undo-redo');
 
 /**
  * Command Interface
@@ -548,7 +551,7 @@ function updateButtonStates(): void {
  * ```
  */
 export function pushCommand(command: Command): void {
-  console.log('➕ PUSH: Adding command to history:', (command as any).description || command);
+  debug.log('➕ PUSH: Adding command to history:', (command as any).description || command);
 
   // Remove any commands after current position
   commandHistory.splice(historyPosition + 1);
@@ -563,7 +566,7 @@ export function pushCommand(command: Command): void {
     historyPosition++;
   }
 
-  console.log('  History position now:', historyPosition, ', Total commands:', commandHistory.length);
+  debug.log('  History position now:', historyPosition, ', Total commands:', commandHistory.length);
 
   // Update button states
   updateButtonStates();
@@ -620,11 +623,11 @@ export function undo(): void {
   }
 
   const command = commandHistory[historyPosition];
-  console.log('🔙 UNDO: Executing command at position', historyPosition, ':', command);
-  console.log('  Command description:', (command as any).description);
+  debug.log('🔙 UNDO: Executing command at position', historyPosition, ':', command);
+  debug.log('  Command description:', (command as any).description);
   command.undo();
   historyPosition--;
-  console.log('  New position after undo:', historyPosition);
+  debug.log('  New position after undo:', historyPosition);
 
   updateButtonStates();
 }
@@ -710,7 +713,7 @@ export function redo(): void {
  * ```typescript
  * // Imperative check
  * if (canUndo()) {
- *   console.log('Undo available');
+ *   debug.log('Undo available');
  *   undo();
  * }
  *
@@ -744,7 +747,7 @@ export function canUndo(): boolean {
  * ```typescript
  * // Imperative check
  * if (canRedo()) {
- *   console.log('Redo available');
+ *   debug.log('Redo available');
  *   redo();
  * }
  *
@@ -783,7 +786,7 @@ export function canRedo(): boolean {
  * function resetApp() {
  *   clearHistory();
  *   reset(); // Reset state
- *   console.log('Application reset');
+ *   debug.log('Application reset');
  * }
  *
  * // Test cleanup

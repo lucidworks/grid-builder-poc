@@ -202,6 +202,9 @@ import { GridConfig } from '../types/grid-config';
 import { domCache } from './dom-cache';
 import { getGridSizeHorizontal, getGridSizeVertical, pixelsToGridX, pixelsToGridY, gridToPixelsX, gridToPixelsY } from './grid-calculations';
 import { BUILD_TIMESTAMP } from './version';
+import { createDebugLogger } from './debug';
+
+const debug = createDebugLogger('resize-handler');
 
 /**
  * Extract current transform position from element's inline style
@@ -490,9 +493,9 @@ export class ResizeHandler {
    * ```
    */
   private initialize(): void {
-    // DEBUG: Log build timestamp for debugging (easy to remove/disable)
-    console.log('📦 resize-handler.ts build:', BUILD_TIMESTAMP);
-    console.log('🔧 Grid config fix applied - resize handler now uses same grid calculations as render');
+    // Log build timestamp and version info (only in development)
+    debug.log('📦 resize-handler.ts build:', BUILD_TIMESTAMP);
+    debug.log('🔧 Grid config fix applied - resize handler now uses same grid calculations as render');
 
     const interact = window.interact;
     if (!interact) {
@@ -523,7 +526,7 @@ export class ResizeHandler {
     const canResizeWidth = this.maxWidth === Infinity || this.maxWidth > this.minWidth;
     const canResizeHeight = this.maxHeight === Infinity || this.maxHeight > this.minHeight;
 
-    console.log('🔧 ResizeHandler init for', this.item.id, {
+    debug.log('🔧 ResizeHandler init for', this.item.id, {
       minWidth: this.minWidth,
       maxWidth: this.maxWidth,
       minHeight: this.minHeight,
@@ -535,11 +538,11 @@ export class ResizeHandler {
 
     // Apply disabled class to element to control handle visibility via CSS
     if (!canResizeWidth) {
-      console.log('  ❌ Disabling width resize');
+      debug.log('  ❌ Disabling width resize');
       this.element.classList.add('resize-width-disabled');
     }
     if (!canResizeHeight) {
-      console.log('  ❌ Disabling height resize');
+      debug.log('  ❌ Disabling height resize');
       this.element.classList.add('resize-height-disabled');
     }
 
@@ -632,7 +635,7 @@ export class ResizeHandler {
     event.target.setAttribute('data-width', '0');
     event.target.setAttribute('data-height', '0');
 
-    console.log('🟢 RESIZE START:', {
+    debug.log('🟢 RESIZE START:', {
       edges: event.edges,
       startRect: { ...this.startRect },
       itemId: this.item.id,
@@ -797,7 +800,7 @@ export class ResizeHandler {
 
     // Batch DOM updates with RAF (limits to ~60fps instead of ~200/sec)
     this.resizeRafId = requestAnimationFrame(() => {
-      console.log('🔵 RESIZE MOVE (RAF):', {
+      debug.log('🔵 RESIZE MOVE (RAF):', {
         edges: event.edges,
         deltas: { deltaX, deltaY, deltaWidth, deltaHeight },
         startRect: { ...this.startRect },
@@ -958,7 +961,7 @@ export class ResizeHandler {
     let newWidth = this.startRect.width + deltaWidth;
     let newHeight = this.startRect.height + deltaHeight;
 
-    console.log('🔴 RESIZE END:', {
+    debug.log('🔴 RESIZE END:', {
       edges: event.edges,
       eventRect: { left: event.rect.left, top: event.rect.top, width: event.rect.width, height: event.rect.height },
       containerRect: { left: containerRect.left, top: containerRect.top },
@@ -1021,7 +1024,7 @@ export class ResizeHandler {
       newY = Math.round(newY / gridSizeY) * gridSizeY;
     }
 
-    console.log('  afterDirectionalSnap:', { newX, newY, newWidth, newHeight });
+    debug.log('  afterDirectionalSnap:', { newX, newY, newWidth, newHeight });
 
     // Apply min/max size constraints AFTER grid snapping
     // This ensures the final size respects component constraints
@@ -1044,7 +1047,7 @@ export class ResizeHandler {
       newY += heightDiff;
     }
 
-    console.log('  afterMinMaxClamp:', { newX, newY, newWidth, newHeight });
+    debug.log('  afterMinMaxClamp:', { newX, newY, newWidth, newHeight });
 
     // COMPREHENSIVE BOUNDARY CONSTRAINT CHECK
     // =========================================
@@ -1054,19 +1057,19 @@ export class ResizeHandler {
     const canvasWidth = container.clientWidth;
     const canvasHeight = container.clientHeight;
 
-    console.log('  canvasBounds:', { canvasWidth, canvasHeight });
+    debug.log('  canvasBounds:', { canvasWidth, canvasHeight });
 
     // 1. HORIZONTAL BOUNDS CHECK
     // ---------------------------
     // If component is wider than canvas, shrink it to fit
     if (newWidth > canvasWidth) {
-      console.log('  ⚠️ Width exceeds canvas, shrinking from', newWidth, 'to', canvasWidth);
+      debug.log('  ⚠️ Width exceeds canvas, shrinking from', newWidth, 'to', canvasWidth);
       newWidth = canvasWidth;
     }
 
     // Ensure left edge is within bounds (x >= 0)
     if (newX < 0) {
-      console.log('  ⚠️ Left edge outside canvas, moving from x =', newX, 'to x = 0');
+      debug.log('  ⚠️ Left edge outside canvas, moving from x =', newX, 'to x = 0');
       newX = 0;
     }
 
@@ -1075,17 +1078,17 @@ export class ResizeHandler {
       if (event.edges && event.edges.right) {
         // Resizing from RIGHT edge: clamp width to fit, keep position
         const maxWidth = canvasWidth - newX;
-        console.log('  ⚠️ Right edge overflow (resizing from right), clamping width from', newWidth, 'to', maxWidth);
+        debug.log('  ⚠️ Right edge overflow (resizing from right), clamping width from', newWidth, 'to', maxWidth);
         newWidth = Math.max(this.minWidth, maxWidth);
       } else {
         // Not resizing from right (dragging or resizing from left): move left to fit
         const requiredX = canvasWidth - newWidth;
-        console.log('  ⚠️ Right edge outside canvas, moving from x =', newX, 'to x =', requiredX);
+        debug.log('  ⚠️ Right edge outside canvas, moving from x =', newX, 'to x =', requiredX);
         newX = requiredX;
 
         // If still doesn't fit (requiredX < 0), shrink width
         if (newX < 0) {
-          console.log('  ⚠️ Cannot fit by moving, shrinking width to', canvasWidth);
+          debug.log('  ⚠️ Cannot fit by moving, shrinking width to', canvasWidth);
           newWidth = canvasWidth;
           newX = 0;
         }
@@ -1096,13 +1099,13 @@ export class ResizeHandler {
     // -------------------------
     // If component is taller than canvas, shrink it to fit
     if (newHeight > canvasHeight) {
-      console.log('  ⚠️ Height exceeds canvas, shrinking from', newHeight, 'to', canvasHeight);
+      debug.log('  ⚠️ Height exceeds canvas, shrinking from', newHeight, 'to', canvasHeight);
       newHeight = canvasHeight;
     }
 
     // Ensure top edge is within bounds (y >= 0)
     if (newY < 0) {
-      console.log('  ⚠️ Top edge outside canvas, moving from y =', newY, 'to y = 0');
+      debug.log('  ⚠️ Top edge outside canvas, moving from y =', newY, 'to y = 0');
       newY = 0;
     }
 
@@ -1111,31 +1114,31 @@ export class ResizeHandler {
       if (event.edges && event.edges.bottom) {
         // Resizing from BOTTOM edge: clamp height to fit, keep Y position
         const maxHeight = canvasHeight - newY;
-        console.log('  ⚠️ Bottom edge overflow (resizing from bottom), clamping height from', newHeight, 'to', maxHeight);
+        debug.log('  ⚠️ Bottom edge overflow (resizing from bottom), clamping height from', newHeight, 'to', maxHeight);
         newHeight = Math.max(this.minHeight, maxHeight);
       } else {
         // Not resizing from bottom (dragging or resizing from top): move up to fit
         const requiredY = canvasHeight - newHeight;
-        console.log('  ⚠️ Bottom edge outside canvas, moving from y =', newY, 'to y =', requiredY);
+        debug.log('  ⚠️ Bottom edge outside canvas, moving from y =', newY, 'to y =', requiredY);
         newY = requiredY;
 
         // If still doesn't fit (requiredY < 0), shrink height
         if (newY < 0) {
-          console.log('  ⚠️ Cannot fit by moving, shrinking height to', canvasHeight);
+          debug.log('  ⚠️ Cannot fit by moving, shrinking height to', canvasHeight);
           newHeight = canvasHeight;
           newY = 0;
         }
       }
     }
 
-    console.log('  afterBoundaryCheck:', { newX, newY, newWidth, newHeight });
+    debug.log('  afterBoundaryCheck:', { newX, newY, newWidth, newHeight });
 
     // Apply final snapped position
     event.target.style.transform = `translate(${newX}px, ${newY}px)`;
     event.target.style.width = newWidth + 'px';
     event.target.style.height = newHeight + 'px';
 
-    console.log('  appliedToDOM:', {
+    debug.log('  appliedToDOM:', {
       transform: `translate(${newX}px, ${newY}px)`,
       width: `${newWidth}px`,
       height: `${newHeight}px`,
@@ -1150,13 +1153,13 @@ export class ResizeHandler {
     layout.x = pixelsToGridX(newX, this.item.canvasId, this.config);
     layout.y = pixelsToGridY(newY);
 
-    console.log('  finalGridUnits:', {
+    debug.log('  finalGridUnits:', {
       x: layout.x,
       y: layout.y,
       width: layout.width,
       height: layout.height,
     });
-    console.log('---');
+    debug.log('---');
 
     // If in mobile view, mark as customized
     if (currentViewport === 'mobile') {
