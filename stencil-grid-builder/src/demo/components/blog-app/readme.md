@@ -24,6 +24,8 @@ using the
 - [section-editor-panel](../section-editor-panel)
 - [confirmation-modal](../confirmation-modal)
 - [custom-config-panel](../custom-config-panel)
+- [custom-palette-item](../custom-palette-item)
+- [custom-drag-clone](../custom-drag-clone)
 - [blog-header](../blog-header)
 - [blog-article](../blog-article)
 - [blog-image](../blog-image)
@@ -42,6 +44,8 @@ graph TD;
   blog-app --> section-editor-panel
   blog-app --> confirmation-modal
   blog-app --> custom-config-panel
+  blog-app --> custom-palette-item
+  blog-app --> custom-drag-clone
   blog-app --> blog-header
   blog-app --> blog-article
   blog-app --> blog-image
@@ -54,6 +58,8 @@ graph TD;
   grid-builder --> component-palette
   grid-builder --> canvas-section
   canvas-section --> grid-item-wrapper
+  custom-config-panel --> custom-palette-item
+  custom-config-panel --> custom-drag-clone
   custom-config-panel --> blog-header
   custom-config-panel --> blog-article
   custom-config-panel --> blog-image

@@ -24,6 +24,21 @@ Updated to display SVG icons on top with titles below (similar to UI builder pat
 | `name` _(required)_          | `name`           | Display name                 | `string` | `undefined` |
 
 
+## Dependencies
+
+### Used by
+
+ - [blog-app](../blog-app)
+ - [custom-config-panel](../custom-config-panel)
+
+### Graph
+```mermaid
+graph TD;
+  blog-app --> custom-palette-item
+  custom-config-panel --> custom-palette-item
+  style custom-palette-item fill:#f9f,stroke:#333,stroke-width:4px
+```
+
 ----------------------------------------------
 
 *Built with [StencilJS](https://stenciljs.com/)*

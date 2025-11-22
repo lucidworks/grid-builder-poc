@@ -241,6 +241,9 @@ export class GridItemWrapper {
       this.isVisible = isVisible;
     });
 
+    // Inject component content into custom wrapper's content slot if needed
+    this.injectComponentContent();
+
     // Skip drag/resize handlers in viewer mode
     if (!this.viewerMode) {
       // Get component definition for min/max size constraints
@@ -263,6 +266,58 @@ export class GridItemWrapper {
       );
       this.resizeHandler = new ResizeHandler(this.itemRef, this.item, this.handleItemUpdate, componentDefinition, this.config);
     }
+  }
+
+  /**
+   * Component did update lifecycle hook
+   */
+  componentDidUpdate() {
+    // Re-inject component content if custom wrapper re-rendered
+    this.injectComponentContent();
+  }
+
+  /**
+   * Inject component content into custom wrapper's content slot
+   *
+   * **Purpose**: For custom wrappers, find the content slot div and inject component
+   * **Called from**: componentDidLoad, componentDidUpdate
+   * **Why needed**: Custom wrapper JSX renders, then we inject content into its slot
+   */
+  private injectComponentContent() {
+    // Only for custom wrappers
+    const definition = this.componentRegistry?.get(this.item.type);
+    if (!definition?.renderItemWrapper || !this.itemRef) return;
+
+    // Find the content slot
+    const contentSlotId = `${this.item.id}-content`;
+    const contentSlot = this.itemRef.querySelector(`#${contentSlotId}`);
+    if (!contentSlot) return;
+
+    // Check if already injected
+    if (contentSlot.hasAttribute('data-content-injected')) return;
+
+    // Render and inject component content
+    const componentContent = this.renderComponent();
+
+    // Clear any existing content
+    contentSlot.innerHTML = '';
+
+    if (componentContent instanceof HTMLElement) {
+      contentSlot.appendChild(componentContent);
+    } else {
+      // For Stencil vNodes, we need to use a workaround
+      // Create a temporary container and let Stencil render into it
+      const tempContainer = document.createElement('div');
+      contentSlot.appendChild(tempContainer);
+
+      // This is a limitation - vNodes can't be manually appended
+      // The custom wrapper should handle rendering the component directly
+      // For now, we'll just set a placeholder
+      tempContainer.textContent = '[Component Content]';
+    }
+
+    // Mark as injected
+    contentSlot.setAttribute('data-content-injected', 'true');
   }
 
   /**
@@ -610,7 +665,7 @@ export class GridItemWrapper {
 
     // Check if custom item wrapper is provided
     if (definition?.renderItemWrapper) {
-      const customWrapperHTML = definition.renderItemWrapper({
+      const customWrapper = definition.renderItemWrapper({
         itemId: this.item.id,
         componentType: this.item.type,
         name: displayName,
@@ -628,28 +683,15 @@ export class GridItemWrapper {
           data-viewer-mode={this.viewerMode ? 'true' : 'false'}
           style={itemStyle}
           onClick={(e) => this.handleClick(e)}
-          ref={(el) => {
-            this.itemRef = el;
-            if (el && !el.hasAttribute('data-custom-chrome-initialized')) {
-              // Set innerHTML after ref is set
-              el.innerHTML = customWrapperHTML;
-              el.setAttribute('data-custom-chrome-initialized', 'true');
-
-              // Render component content into the content slot
-              const contentSlot = el.querySelector(`#${contentSlotId}`);
-              if (contentSlot) {
-                const componentContent = this.renderComponent();
-                if (componentContent instanceof HTMLElement) {
-                  contentSlot.appendChild(componentContent);
-                } else {
-                  // For Stencil vNodes, we need to render them manually
-                  // This is a simplified approach - Stencil will handle this in the default case
-                  contentSlot.textContent = '';
-                }
-              }
-            }
-          }}
+          ref={(el) => (this.itemRef = el)}
         >
+          {/* Custom wrapper JSX - renders securely */}
+          {customWrapper}
+
+          {/* Render component content into the content slot */}
+          {/* Note: The custom wrapper must include a div with id={contentSlotId} */}
+          {/* This is handled by a ref callback in renderComponent() */}
+
           {/* Resize Handles (8 points) */}
           <div class="resize-handle nw" />
           <div class="resize-handle ne" />

@@ -68,20 +68,22 @@ export const contentComponents: ComponentDefinition[] = [
     minSize: { width: 20, height: 3 },
     maxSize: { width: 50, height: 10 },
     selectionColor: '#3b82f6',
-    renderPaletteItem: ({ componentType, name, icon }) =>
-      `<custom-palette-item
-        component-type="${componentType}"
-        name="${name}"
-        icon="${icon}">
-      </custom-palette-item>`,
-    renderDragClone: ({ componentType, name, icon, width, height }) =>
-      `<custom-drag-clone
-        component-type="${componentType}"
-        name="${name}"
-        icon="${icon}"
-        width="${width}"
-        height="${height}">
-      </custom-drag-clone>`,
+    renderPaletteItem: ({ componentType, name, icon }) => (
+      <custom-palette-item
+        componentType={componentType}
+        name={name}
+        icon={icon}
+      />
+    ),
+    renderDragClone: ({ componentType, name, icon, width, height}) => (
+      <custom-drag-clone
+        componentType={componentType}
+        name={name}
+        icon={icon}
+        width={width}
+        height={height}
+      />
+    ),
     render: ({ config }) => (
       <blog-header
         headerTitle={config?.title || 'Default Header'}
@@ -95,20 +97,22 @@ export const contentComponents: ComponentDefinition[] = [
     icon: '📝',
     defaultSize: { width: 25, height: 10 },
     selectionColor: '#10b981',
-    renderPaletteItem: ({ componentType, name, icon }) =>
-      `<custom-palette-item
-        component-type="${componentType}"
-        name="${name}"
-        icon="${icon}">
-      </custom-palette-item>`,
-    renderDragClone: ({ componentType, name, icon, width, height }) =>
-      `<custom-drag-clone
-        component-type="${componentType}"
-        name="${name}"
-        icon="${icon}"
-        width="${width}"
-        height="${height}">
-      </custom-drag-clone>`,
+    renderPaletteItem: ({ componentType, name, icon }) => (
+      <custom-palette-item
+        componentType={componentType}
+        name={name}
+        icon={icon}
+      />
+    ),
+    renderDragClone: ({ componentType, name, icon, width, height}) => (
+      <custom-drag-clone
+        componentType={componentType}
+        name={name}
+        icon={icon}
+        width={width}
+        height={height}
+      />
+    ),
     render: ({ config }) => (
       <blog-article
         content={config?.content || 'Article content goes here'}
@@ -124,20 +128,22 @@ export const contentComponents: ComponentDefinition[] = [
     defaultSize: { width: 45, height: 20 },
     minSize: { width: 10, height: 8 },
     selectionColor: '#8b5cf6',
-    renderPaletteItem: ({ componentType, name, icon }) =>
-      `<custom-palette-item
-        component-type="${componentType}"
-        name="${name}"
-        icon="${icon}">
-      </custom-palette-item>`,
-    renderDragClone: ({ componentType, name, icon, width, height }) =>
-      `<custom-drag-clone
-        component-type="${componentType}"
-        name="${name}"
-        icon="${icon}"
-        width="${width}"
-        height="${height}">
-      </custom-drag-clone>`,
+    renderPaletteItem: ({ componentType, name, icon }) => (
+      <custom-palette-item
+        componentType={componentType}
+        name={name}
+        icon={icon}
+      />
+    ),
+    renderDragClone: ({ componentType, name, icon, width, height}) => (
+      <custom-drag-clone
+        componentType={componentType}
+        name={name}
+        icon={icon}
+        width={width}
+        height={height}
+      />
+    ),
     configSchema: [
       {
         name: 'src',
@@ -192,20 +198,22 @@ export const interactiveComponents: ComponentDefinition[] = [
     minSize: { width: 10, height: 2 },
     maxSize: { width: 30, height: 5 },
     selectionColor: '#ef4444',
-    renderPaletteItem: ({ componentType, name, icon }) =>
-      `<custom-palette-item
-        component-type="${componentType}"
-        name="${name}"
-        icon="${icon}">
-      </custom-palette-item>`,
-    renderDragClone: ({ componentType, name, icon, width, height }) =>
-      `<custom-drag-clone
-        component-type="${componentType}"
-        name="${name}"
-        icon="${icon}"
-        width="${width}"
-        height="${height}">
-      </custom-drag-clone>`,
+    renderPaletteItem: ({ componentType, name, icon }) => (
+      <custom-palette-item
+        componentType={componentType}
+        name={name}
+        icon={icon}
+      />
+    ),
+    renderDragClone: ({ componentType, name, icon, width, height}) => (
+      <custom-drag-clone
+        componentType={componentType}
+        name={name}
+        icon={icon}
+        width={width}
+        height={height}
+      />
+    ),
     render: ({ config }) => (
       <blog-button
         label={config?.label || 'Click me!'}
@@ -225,20 +233,22 @@ export const mediaComponents: ComponentDefinition[] = [
     defaultSize: { width: 30, height: 12 },
     minSize: { width: 15, height: 8 },
     selectionColor: '#8b5cf6',
-    renderPaletteItem: ({ componentType, name, icon }) =>
-      `<custom-palette-item
-        component-type="${componentType}"
-        name="${name}"
-        icon="${icon}">
-      </custom-palette-item>`,
-    renderDragClone: ({ componentType, name, icon, width, height }) =>
-      `<custom-drag-clone
-        component-type="${componentType}"
-        name="${name}"
-        icon="${icon}"
-        width="${width}"
-        height="${height}">
-      </custom-drag-clone>`,
+    renderPaletteItem: ({ componentType, name, icon }) => (
+      <custom-palette-item
+        componentType={componentType}
+        name={name}
+        icon={icon}
+      />
+    ),
+    renderDragClone: ({ componentType, name, icon, width, height}) => (
+      <custom-drag-clone
+        componentType={componentType}
+        name={name}
+        icon={icon}
+        width={width}
+        height={height}
+      />
+    ),
     configSchema: [
       {
         name: 'imageCount',
@@ -264,20 +274,22 @@ export const mediaComponents: ComponentDefinition[] = [
     defaultSize: { width: 25, height: 10 },
     minSize: { width: 15, height: 8 },
     selectionColor: '#ec4899',
-    renderPaletteItem: ({ componentType, name, icon }) =>
-      `<custom-palette-item
-        component-type="${componentType}"
-        name="${name}"
-        icon="${icon}">
-      </custom-palette-item>`,
-    renderDragClone: ({ componentType, name, icon, width, height }) =>
-      `<custom-drag-clone
-        component-type="${componentType}"
-        name="${name}"
-        icon="${icon}"
-        width="${width}"
-        height="${height}">
-      </custom-drag-clone>`,
+    renderPaletteItem: ({ componentType, name, icon }) => (
+      <custom-palette-item
+        componentType={componentType}
+        name={name}
+        icon={icon}
+      />
+    ),
+    renderDragClone: ({ componentType, name, icon, width, height}) => (
+      <custom-drag-clone
+        componentType={componentType}
+        name={name}
+        icon={icon}
+        width={width}
+        height={height}
+      />
+    ),
     render: () => <dashboard-widget />,
   },
   {
@@ -287,20 +299,22 @@ export const mediaComponents: ComponentDefinition[] = [
     defaultSize: { width: 20, height: 10 },
     minSize: { width: 15, height: 8 },
     selectionColor: '#06b6d4',
-    renderPaletteItem: ({ componentType, name, icon }) =>
-      `<custom-palette-item
-        component-type="${componentType}"
-        name="${name}"
-        icon="${icon}">
-      </custom-palette-item>`,
-    renderDragClone: ({ componentType, name, icon, width, height }) =>
-      `<custom-drag-clone
-        component-type="${componentType}"
-        name="${name}"
-        icon="${icon}"
-        width="${width}"
-        height="${height}">
-      </custom-drag-clone>`,
+    renderPaletteItem: ({ componentType, name, icon }) => (
+      <custom-palette-item
+        componentType={componentType}
+        name={name}
+        icon={icon}
+      />
+    ),
+    renderDragClone: ({ componentType, name, icon, width, height}) => (
+      <custom-drag-clone
+        componentType={componentType}
+        name={name}
+        icon={icon}
+        width={width}
+        height={height}
+      />
+    ),
     render: () => <live-data />,
   },
 ];

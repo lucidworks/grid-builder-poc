@@ -484,8 +484,7 @@ export interface ComponentDefinition {
   /**
    * Optional: Custom palette item renderer
    *
-   * **When provided**: Returns HTML string with a Stencil web component tag
-   * that will be rendered as the palette item.
+   * **When provided**: Returns JSX element for custom palette item.
    *
    * **When NOT provided**: Library uses default palette item (icon + name).
    *
@@ -499,32 +498,34 @@ export interface ComponentDefinition {
    * - `name`: Component display name
    * - `icon`: Component icon/emoji
    *
-   * **Return value**: HTML string with custom element tag
+   * **Return value**: JSX element (StencilJS vNode)
+   *
+   * **Security**: Using JSX instead of HTML strings prevents XSS vulnerabilities
    *
    * @param props - Palette item rendering context
-   * @returns HTML string with web component tag
+   * @returns JSX element
    *
    * @example
    * ```typescript
-   * renderPaletteItem: ({ componentType, name, icon }) =>
-   *   `<custom-palette-item
-   *      component-type="${componentType}"
-   *      name="${name}"
-   *      icon="${icon}">
-   *    </custom-palette-item>`
+   * renderPaletteItem: ({ componentType, name, icon }) => (
+   *   <custom-palette-item
+   *     component-type={componentType}
+   *     name={name}
+   *     icon={icon}
+   *   />
+   * )
    * ```
    */
   renderPaletteItem?: (props: {
     componentType: string;
     name: string;
     icon: string;
-  }) => string;
+  }) => any;
 
   /**
    * Optional: Custom drag clone renderer
    *
-   * **When provided**: Returns HTML string with a Stencil web component tag
-   * that will be rendered as the drag clone.
+   * **When provided**: Returns JSX element for custom drag clone.
    *
    * **When NOT provided**: Library uses default drag clone styling.
    *
@@ -540,25 +541,28 @@ export interface ComponentDefinition {
    * - `width`: Calculated width in pixels (from defaultSize)
    * - `height`: Calculated height in pixels (from defaultSize)
    *
-   * **Return value**: HTML string with custom element tag
+   * **Return value**: JSX element (StencilJS vNode)
+   *
+   * **Security**: Using JSX instead of HTML strings prevents XSS vulnerabilities
    *
    * **Note**: The library automatically positions and manages the drag clone.
-   * You only need to provide the HTML tag string.
+   * You only need to provide the JSX element.
    *
    * @param props - Drag clone rendering context
-   * @returns HTML string with web component tag
+   * @returns JSX element
    *
    * @example
    * ```typescript
    * // Custom Stencil component for drag clone
-   * renderDragClone: ({ componentType, name, icon, width, height }) =>
-   *   `<custom-drag-clone
-   *      component-type="${componentType}"
-   *      name="${name}"
-   *      icon="${icon}"
-   *      width="${width}"
-   *      height="${height}">
-   *    </custom-drag-clone>`
+   * renderDragClone: ({ componentType, name, icon, width, height }) => (
+   *   <custom-drag-clone
+   *     component-type={componentType}
+   *     name={name}
+   *     icon={icon}
+   *     width={width}
+   *     height={height}
+   *   />
+   * )
    * ```
    */
   renderDragClone?: (props: {
@@ -567,12 +571,12 @@ export interface ComponentDefinition {
     icon: string;
     width: number;
     height: number;
-  }) => string;
+  }) => any;
 
   /**
    * Optional: Custom item wrapper/chrome renderer
    *
-   * **When provided**: Returns HTML string with a Stencil web component tag
+   * **When provided**: Returns JSX element for custom grid item wrapper
    * that will replace the default grid item chrome (drag handle, header, controls).
    *
    * **When NOT provided**: Library uses default grid item wrapper.
@@ -591,18 +595,20 @@ export interface ComponentDefinition {
    * - `isSelected`: Whether the item is currently selected
    * - `contentSlotId`: ID for the content container (your component renders here)
    *
-   * **Return value**: HTML string with custom element tag
+   * **Return value**: JSX element (StencilJS vNode)
+   *
+   * **Security**: Using JSX instead of HTML strings prevents XSS vulnerabilities
    *
    * **IMPORTANT REQUIREMENTS**:
    * Your custom wrapper component MUST include:
    *
-   * 1. **Content Slot**: A container with `id="${contentSlotId}"` where the actual component will render
-   *    ```html
-   *    <div id="${contentSlotId}" class="component-content"></div>
+   * 1. **Content Slot**: A container with `id={contentSlotId}` where the actual component will render
+   *    ```jsx
+   *    <div id={contentSlotId} class="component-content"></div>
    *    ```
    *
    * 2. **Drag Handle**: An element with class `drag-handle` for dragging functionality
-   *    ```html
+   *    ```jsx
    *    <div class="drag-handle"></div>
    *    ```
    *
@@ -627,19 +633,20 @@ export interface ComponentDefinition {
    * The resize handles (8-point) are added automatically by the library outside your custom chrome.
    *
    * @param props - Item wrapper rendering context
-   * @returns HTML string with web component tag
+   * @returns JSX element
    *
    * @example
    * ```typescript
-   * renderItemWrapper: ({ itemId, componentType, name, icon, isSelected, contentSlotId }) =>
-   *   `<custom-item-wrapper
-   *      item-id="${itemId}"
-   *      component-type="${componentType}"
-   *      name="${name}"
-   *      icon="${icon}"
-   *      is-selected="${isSelected}"
-   *      content-slot-id="${contentSlotId}">
-   *    </custom-item-wrapper>`
+   * renderItemWrapper: ({ itemId, componentType, name, icon, isSelected, contentSlotId }) => (
+   *   <custom-item-wrapper
+   *     item-id={itemId}
+   *     component-type={componentType}
+   *     name={name}
+   *     icon={icon}
+   *     is-selected={isSelected}
+   *     content-slot-id={contentSlotId}
+   *   />
+   * )
    * ```
    *
    * Example custom wrapper component:
@@ -656,5 +663,5 @@ export interface ComponentDefinition {
     icon: string;
     isSelected: boolean;
     contentSlotId: string;
-  }) => string;
+  }) => any;
 }
