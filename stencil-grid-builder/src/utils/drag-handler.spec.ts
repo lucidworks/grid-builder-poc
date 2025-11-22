@@ -52,12 +52,17 @@ describe('DragHandler - Active Canvas', () => {
     interact.mockClear();
     interact.mockInteractable.draggable.mockClear();
     interact.mockInteractable.on.mockClear();
+
+    // Make interact available on window (drag-handler checks window.interact)
+    window.interact = interact;
   });
 
   afterEach(() => {
     if (handler) {
       handler.destroy();
     }
+    // Cleanup window.interact
+    delete window.interact;
   });
 
   describe('Constructor and Initialization', () => {

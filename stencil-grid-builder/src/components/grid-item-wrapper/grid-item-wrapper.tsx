@@ -693,11 +693,6 @@ export class GridItemWrapper {
    * Handle click event (selection and config panel)
    */
   private handleClick = (e: MouseEvent) => {
-    console.log('🖱️ grid-item-wrapper handleClick called', {
-      itemId: this.item.id,
-      viewerMode: this.viewerMode,
-      wasDragged: this.wasDragged,
-    });
 
     // Skip click handling in viewer mode
     if (this.viewerMode) {

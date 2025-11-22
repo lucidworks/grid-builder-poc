@@ -301,6 +301,12 @@ export class CanvasSection {
       // Recalculate height for new viewport layout
       this.calculatedHeight = calculateCanvasHeight(this.canvasId, this.config);
     });
+
+    // Subscribe to grid visibility changes
+    onChange('showGrid', () => {
+      // Force re-render to update grid visibility class
+      this.renderVersion++;
+    });
   }
 
   /**

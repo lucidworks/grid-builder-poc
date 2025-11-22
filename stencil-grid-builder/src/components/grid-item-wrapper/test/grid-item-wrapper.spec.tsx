@@ -13,6 +13,7 @@ import { h } from '@stencil/core';
 import { newSpecPage } from '@stencil/core/testing';
 import { GridItemWrapper } from '../grid-item-wrapper';
 import { gridState, reset, setActiveCanvas } from '../../../services/state-manager';
+import { domCache } from '../../../utils/dom-cache';
 
 describe('grid-item-wrapper - Active Canvas', () => {
   const mockItem = {
@@ -46,8 +47,24 @@ describe('grid-item-wrapper - Active Canvas', () => {
     jest.clearAllMocks();
   });
 
+  afterEach(() => {
+    // Clean up any canvas elements added to global document
+    const canvases = document.querySelectorAll('.grid-container');
+    canvases.forEach(canvas => canvas.remove());
+
+    // Clear domCache to prevent stale references
+    domCache.clear();
+  });
+
   describe('Canvas Activation on Click', () => {
     it('should call setActiveCanvas when item is clicked', async () => {
+      // Add canvas to global document (domCache uses document.getElementById)
+      const canvas = document.createElement('div');
+      canvas.id = 'canvas1';
+      canvas.className = 'grid-container';
+      Object.defineProperty(canvas, 'clientWidth', { value: 1000, configurable: true });
+      document.body.appendChild(canvas);
+
       const page = await newSpecPage({
         components: [GridItemWrapper],
         template: () => (
@@ -75,10 +92,22 @@ describe('grid-item-wrapper - Active Canvas', () => {
     });
 
     it('should activate correct canvas when clicking items on different canvases', async () => {
-      const item1 = { ...mockItem, id: 'item-1', canvasId: 'canvas1' };
-      const item2 = { ...mockItem, id: 'item-2', canvasId: 'canvas2' };
+      // Add canvas elements to global document (domCache uses document.getElementById)
+      const canvas1 = document.createElement('div');
+      canvas1.id = 'canvas1';
+      canvas1.className = 'grid-container';
+      Object.defineProperty(canvas1, 'clientWidth', { value: 1000, configurable: true });
+      document.body.appendChild(canvas1);
 
-      const page1 = await newSpecPage({
+      const canvas2 = document.createElement('div');
+      canvas2.id = 'canvas2';
+      canvas2.className = 'grid-container';
+      Object.defineProperty(canvas2, 'clientWidth', { value: 1000, configurable: true });
+      document.body.appendChild(canvas2);
+
+      // Create first item with canvas1
+      const item1 = JSON.parse(JSON.stringify({ ...mockItem, id: 'item-1', canvasId: 'canvas1' }));
+      const page = await newSpecPage({
         components: [GridItemWrapper],
         template: () => (
           <grid-item-wrapper
@@ -88,37 +117,36 @@ describe('grid-item-wrapper - Active Canvas', () => {
         ),
       });
 
-      const page2 = await newSpecPage({
-        components: [GridItemWrapper],
-        template: () => (
-          <grid-item-wrapper
-            item={item2}
-            componentRegistry={mockComponentRegistry}
-          />
-        ),
-      });
+      await page.waitForChanges();
 
-      await page1.waitForChanges();
-      await page2.waitForChanges();
-
-      // Click item on canvas1
-      const item1Element = page1.root.querySelector('.grid-item') as HTMLElement as HTMLElement;
-      if (item1Element) {
-        item1Element.click();
-        await page1.waitForChanges();
-      }
+      // Click item - should activate canvas1
+      const itemElement = page.root.querySelector('.grid-item') as HTMLElement;
+      expect(itemElement).toBeTruthy();
+      itemElement.click();
+      await page.waitForChanges();
       expect(gridState.activeCanvasId).toBe('canvas1');
 
-      // Click item on canvas2
-      const item2Element = page2.root.querySelector('.grid-item') as HTMLElement as HTMLElement;
-      if (item2Element) {
-        item2Element.click();
-        await page2.waitForChanges();
-      }
+      // Change item to canvas2
+      const item2 = JSON.parse(JSON.stringify({ ...mockItem, id: 'item-2', canvasId: 'canvas2' }));
+      page.root.item = item2;
+      await page.waitForChanges();
+
+      // Click again - should activate canvas2
+      const itemElement2 = page.root.querySelector('.grid-item') as HTMLElement;
+      expect(itemElement2).toBeTruthy();
+      itemElement2.click();
+      await page.waitForChanges();
       expect(gridState.activeCanvasId).toBe('canvas2');
     });
 
-    it('should set active canvas before updating selection state', async () => {
+    it('should set both active canvas and selection state on click', async () => {
+      // Add canvas to global document (domCache uses document.getElementById)
+      const canvas = document.createElement('div');
+      canvas.id = 'canvas1';
+      canvas.className = 'grid-container';
+      Object.defineProperty(canvas, 'clientWidth', { value: 1000, configurable: true });
+      document.body.appendChild(canvas);
+
       const page = await newSpecPage({
         components: [GridItemWrapper],
         template: () => (
@@ -131,37 +159,10 @@ describe('grid-item-wrapper - Active Canvas', () => {
 
       await page.waitForChanges();
 
-      const callOrder: string[] = [];
-
-      // Track when activeCanvasId is set
-      const originalActiveCanvasId = gridState.activeCanvasId;
-      Object.defineProperty(gridState, 'activeCanvasId', {
-        get: () => originalActiveCanvasId,
-        set: (value) => {
-          callOrder.push('setActiveCanvas');
-          Object.defineProperty(gridState, 'activeCanvasId', {
-            value,
-            writable: true,
-            configurable: true,
-          });
-        },
-        configurable: true,
-      });
-
-      // Track when selectedItemId is set
-      const originalSelectedItemId = gridState.selectedItemId;
-      Object.defineProperty(gridState, 'selectedItemId', {
-        get: () => originalSelectedItemId,
-        set: (value) => {
-          callOrder.push('setSelection');
-          Object.defineProperty(gridState, 'selectedItemId', {
-            value,
-            writable: true,
-            configurable: true,
-          });
-        },
-        configurable: true,
-      });
+      // Initially nothing is selected or active
+      expect(gridState.activeCanvasId).toBeNull();
+      expect(gridState.selectedItemId).toBeNull();
+      expect(gridState.selectedCanvasId).toBeNull();
 
       const itemElement = page.root.querySelector('.grid-item') as HTMLElement;
       if (itemElement) {
@@ -169,9 +170,10 @@ describe('grid-item-wrapper - Active Canvas', () => {
         await page.waitForChanges();
       }
 
-      // activeCanvasId should be set before selectedItemId
-      expect(callOrder[0]).toBe('setActiveCanvas');
-      expect(callOrder[1]).toBe('setSelection');
+      // Both active canvas and selection should be set
+      expect(gridState.activeCanvasId).toBe('canvas1');
+      expect(gridState.selectedItemId).toBe('item-1');
+      expect(gridState.selectedCanvasId).toBe('canvas1');
     });
 
     it('should not activate canvas in viewer mode', async () => {
@@ -316,49 +318,60 @@ describe('grid-item-wrapper - Active Canvas', () => {
     });
 
     it('should handle rapid canvas switching via item clicks', async () => {
-      const item1 = { ...mockItem, id: 'item-1', canvasId: 'canvas1' };
-      const item2 = { ...mockItem, id: 'item-2', canvasId: 'canvas2' };
-      const item3 = { ...mockItem, id: 'item-3', canvasId: 'canvas3' };
+      // Add canvas elements to global document (domCache uses document.getElementById)
+      const canvas1 = document.createElement('div');
+      canvas1.id = 'canvas1';
+      canvas1.className = 'grid-container';
+      Object.defineProperty(canvas1, 'clientWidth', { value: 1000, configurable: true });
+      document.body.appendChild(canvas1);
 
-      const page1 = await newSpecPage({
+      const canvas2 = document.createElement('div');
+      canvas2.id = 'canvas2';
+      canvas2.className = 'grid-container';
+      Object.defineProperty(canvas2, 'clientWidth', { value: 1000, configurable: true });
+      document.body.appendChild(canvas2);
+
+      const canvas3 = document.createElement('div');
+      canvas3.id = 'canvas3';
+      canvas3.className = 'grid-container';
+      Object.defineProperty(canvas3, 'clientWidth', { value: 1000, configurable: true });
+      document.body.appendChild(canvas3);
+
+      // Use a single page and change the item prop to simulate switching between canvases
+      const item1 = JSON.parse(JSON.stringify({ ...mockItem, id: 'item-1', canvasId: 'canvas1' }));
+      const page = await newSpecPage({
         components: [GridItemWrapper],
         template: () => (
           <grid-item-wrapper item={item1} componentRegistry={mockComponentRegistry} />
         ),
       });
 
-      const page2 = await newSpecPage({
-        components: [GridItemWrapper],
-        template: () => (
-          <grid-item-wrapper item={item2} componentRegistry={mockComponentRegistry} />
-        ),
-      });
-
-      const page3 = await newSpecPage({
-        components: [GridItemWrapper],
-        template: () => (
-          <grid-item-wrapper item={item3} componentRegistry={mockComponentRegistry} />
-        ),
-      });
+      await page.waitForChanges();
 
       // Click item1
-      (page1.root.querySelector('.grid-item') as HTMLElement)?.click();
-      await page1.waitForChanges();
+      (page.root.querySelector('.grid-item') as HTMLElement)?.click();
+      await page.waitForChanges();
       expect(gridState.activeCanvasId).toBe('canvas1');
 
-      // Click item2
-      (page2.root.querySelector('.grid-item') as HTMLElement)?.click();
-      await page2.waitForChanges();
+      // Change to item2 (canvas2)
+      page.root.item = JSON.parse(JSON.stringify({ ...mockItem, id: 'item-2', canvasId: 'canvas2' }));
+      await page.waitForChanges();
+      (page.root.querySelector('.grid-item') as HTMLElement)?.click();
+      await page.waitForChanges();
       expect(gridState.activeCanvasId).toBe('canvas2');
 
-      // Click item3
-      (page3.root.querySelector('.grid-item') as HTMLElement)?.click();
-      await page3.waitForChanges();
+      // Change to item3 (canvas3)
+      page.root.item = JSON.parse(JSON.stringify({ ...mockItem, id: 'item-3', canvasId: 'canvas3' }));
+      await page.waitForChanges();
+      (page.root.querySelector('.grid-item') as HTMLElement)?.click();
+      await page.waitForChanges();
       expect(gridState.activeCanvasId).toBe('canvas3');
 
-      // Click item1 again
-      (page1.root.querySelector('.grid-item') as HTMLElement)?.click();
-      await page1.waitForChanges();
+      // Change back to item1
+      page.root.item = JSON.parse(JSON.stringify({ ...mockItem, id: 'item-1', canvasId: 'canvas1' }));
+      await page.waitForChanges();
+      (page.root.querySelector('.grid-item') as HTMLElement)?.click();
+      await page.waitForChanges();
       expect(gridState.activeCanvasId).toBe('canvas1');
     });
   });

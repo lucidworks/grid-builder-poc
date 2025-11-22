@@ -198,12 +198,8 @@ describe('canvas-section - Active Canvas', () => {
       gridContainer.appendChild(childElement);
 
       // Click the child element (not the grid container itself)
-      const clickEvent = new MouseEvent('click', { bubbles: true });
-      Object.defineProperty(clickEvent, 'target', {
-        value: childElement,
-        enumerable: true,
-      });
-      gridContainer.dispatchEvent(clickEvent);
+      // The click will bubble up, but event.target will be the child
+      childElement.click();
       await page.waitForChanges();
 
       expect(activatedEventSpy).not.toHaveBeenCalled();
@@ -211,45 +207,35 @@ describe('canvas-section - Active Canvas', () => {
     });
 
     it('should emit events with correct canvasId for different canvases', async () => {
-      const page1 = await newSpecPage({
+      const page = await newSpecPage({
         components: [CanvasSection],
         html: `<canvas-section canvas-id="canvas1"></canvas-section>`,
       });
 
-      const page2 = await newSpecPage({
-        components: [CanvasSection],
-        html: `<canvas-section canvas-id="canvas3"></canvas-section>`,
-      });
+      await page.waitForChanges();
 
-      await page1.waitForChanges();
-      await page2.waitForChanges();
+      const eventSpy = jest.fn();
+      const container = page.root.querySelector('.grid-container');
+      container.addEventListener('canvas-activated', eventSpy);
 
-      const eventSpy1 = jest.fn();
-      const eventSpy2 = jest.fn();
+      // Click canvas1 directly
+      container.click();
+      await page.waitForChanges();
 
-      const container1 = page1.root.querySelector('.grid-container');
-      const container2 = page2.root.querySelector('.grid-container');
+      expect(eventSpy).toHaveBeenCalledTimes(1);
+      expect(eventSpy.mock.calls[0][0].detail.canvasId).toBe('canvas1');
 
-      container1.addEventListener('canvas-activated', eventSpy1);
-      container2.addEventListener('canvas-activated', eventSpy2);
+      // Change to canvas3
+      page.root.canvasId = 'canvas3';
+      await page.waitForChanges();
 
-      // Click canvas1
-      const click1 = new MouseEvent('click', { bubbles: true });
-      Object.defineProperty(click1, 'target', { value: container1, enumerable: true });
-      container1.dispatchEvent(click1);
-      await page1.waitForChanges();
+      // Click again (same container, just changed canvasId)
+      eventSpy.mockClear();
+      container.click();
+      await page.waitForChanges();
 
-      expect(eventSpy1).toHaveBeenCalledTimes(1);
-      expect(eventSpy1.mock.calls[0][0].detail.canvasId).toBe('canvas1');
-
-      // Click canvas3
-      const click2 = new MouseEvent('click', { bubbles: true });
-      Object.defineProperty(click2, 'target', { value: container2, enumerable: true });
-      container2.dispatchEvent(click2);
-      await page2.waitForChanges();
-
-      expect(eventSpy2).toHaveBeenCalledTimes(1);
-      expect(eventSpy2.mock.calls[0][0].detail.canvasId).toBe('canvas3');
+      expect(eventSpy).toHaveBeenCalledTimes(1);
+      expect(eventSpy.mock.calls[0][0].detail.canvasId).toBe('canvas3');
     });
   });
 
