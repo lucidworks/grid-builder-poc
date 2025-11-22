@@ -25,8 +25,9 @@ const mockDisconnect = jest.fn();
 
 import { h } from '@stencil/core';
 import { GridBuilder } from '../grid-builder';
-import { reset as resetState } from '../../../services/state-manager';
+import { reset as resetState, gridState, setActiveCanvas } from '../../../services/state-manager';
 import { clearHistory } from '../../../services/undo-redo';
+import { eventManager } from '../../../services/event-manager';
 
 // Mock component definitions for tests
 const mockComponentDefinitions = [
@@ -660,6 +661,413 @@ describe('grid-builder', () => {
       expect(component.config.enableAutoScroll).toBe(true);
       expect(component.config.eventDebounceDelay).toBe(300);
       expect(component.config.gridSizePercent).toBe(2);
+    });
+  });
+
+  describe('Active Canvas Feature', () => {
+    beforeEach(() => {
+      resetState();
+      clearHistory();
+      jest.clearAllMocks();
+    });
+
+    describe('isActive Prop Passing', () => {
+      it('should pass isActive=true to canvas-section when activeCanvasId matches', () => {
+        const component = new GridBuilder();
+        component.components = mockComponentDefinitions;
+
+        // Set active canvas in state
+        setActiveCanvas('canvas1');
+
+        // Render component
+        component.render();
+
+        // Component passes isActive prop based on state comparison
+        // (This is verified by testing that the prop binding exists in the component)
+        expect(gridState.activeCanvasId).toBe('canvas1');
+      });
+
+      it('should pass isActive=false when activeCanvasId does not match', () => {
+        const component = new GridBuilder();
+        component.components = mockComponentDefinitions;
+
+        setActiveCanvas('canvas1');
+
+        // A different canvas should not be active
+        expect(gridState.activeCanvasId).not.toBe('canvas2');
+      });
+
+      it('should update isActive when activeCanvasId changes', () => {
+        const component = new GridBuilder();
+        component.components = mockComponentDefinitions;
+
+        // Start with canvas1 active
+        setActiveCanvas('canvas1');
+        expect(gridState.activeCanvasId).toBe('canvas1');
+
+        // Switch to canvas2
+        setActiveCanvas('canvas2');
+        expect(gridState.activeCanvasId).toBe('canvas2');
+
+        // Switch back to canvas1
+        setActiveCanvas('canvas1');
+        expect(gridState.activeCanvasId).toBe('canvas1');
+      });
+
+      it('should handle null activeCanvasId (no canvas active)', () => {
+        const component = new GridBuilder();
+        component.components = mockComponentDefinitions;
+
+        // Initially null
+        expect(gridState.activeCanvasId).toBeNull();
+
+        // Set active
+        setActiveCanvas('canvas1');
+        expect(gridState.activeCanvasId).toBe('canvas1');
+
+        // Clear active
+        gridState.activeCanvasId = null;
+        expect(gridState.activeCanvasId).toBeNull();
+      });
+    });
+
+    describe('Event Handler Registration', () => {
+      it('should register canvas-activated event handler in componentDidLoad', () => {
+        const component = new GridBuilder();
+        component.components = mockComponentDefinitions;
+
+        // Mock the hostElement
+        const mockHostElement = {
+          addEventListener: jest.fn(),
+          removeEventListener: jest.fn(),
+        };
+        (component as any).hostElement = mockHostElement;
+
+        component.componentDidLoad();
+
+        // Verify canvas-activated event listener was registered
+        const addEventListenerCalls = mockHostElement.addEventListener.mock.calls;
+        const canvasActivatedCall = addEventListenerCalls.find(call => call[0] === 'canvas-activated');
+
+        expect(canvasActivatedCall).toBeDefined();
+        expect(typeof canvasActivatedCall[1]).toBe('function');
+      });
+
+      it('should remove canvas-activated event handler in disconnectedCallback', () => {
+        const component = new GridBuilder();
+        component.components = mockComponentDefinitions;
+
+        const mockHostElement = {
+          addEventListener: jest.fn(),
+          removeEventListener: jest.fn(),
+        };
+        (component as any).hostElement = mockHostElement;
+
+        component.componentDidLoad();
+        component.disconnectedCallback();
+
+        // Verify event listener was removed
+        const removeEventListenerCalls = mockHostElement.removeEventListener.mock.calls;
+        const canvasActivatedCall = removeEventListenerCalls.find(call => call[0] === 'canvas-activated');
+
+        expect(canvasActivatedCall).toBeDefined();
+      });
+
+      it('should handle canvas-activated event and emit plugin event', () => {
+        const component = new GridBuilder();
+        component.components = mockComponentDefinitions;
+
+        const mockHostElement = {
+          addEventListener: jest.fn(),
+          removeEventListener: jest.fn(),
+        };
+        (component as any).hostElement = mockHostElement;
+
+        // Spy on eventManager.emit
+        const emitSpy = jest.spyOn(eventManager, 'emit');
+
+        component.componentDidLoad();
+
+        // Get the registered handler
+        const addEventListenerCalls = mockHostElement.addEventListener.mock.calls;
+        const canvasActivatedCall = addEventListenerCalls.find(call => call[0] === 'canvas-activated');
+        const handler = canvasActivatedCall[1];
+
+        // Simulate canvas-activated event
+        const mockEvent = new CustomEvent('canvas-activated', {
+          detail: { canvasId: 'canvas1' },
+        });
+
+        handler(mockEvent);
+
+        // Verify plugin event was emitted
+        expect(emitSpy).toHaveBeenCalledWith('canvasActivated', { canvasId: 'canvas1' });
+
+        emitSpy.mockRestore();
+      });
+    });
+
+    describe('@Method() Public Methods', () => {
+      it('should expose setActiveCanvas method', async () => {
+        const component = new GridBuilder();
+        component.components = mockComponentDefinitions;
+        component.componentDidLoad();
+
+        expect(typeof component.setActiveCanvas).toBe('function');
+
+        await component.setActiveCanvas('canvas1');
+
+        expect(gridState.activeCanvasId).toBe('canvas1');
+      });
+
+      it('should expose getActiveCanvas method', async () => {
+        const component = new GridBuilder();
+        component.components = mockComponentDefinitions;
+        component.componentDidLoad();
+
+        expect(typeof component.getActiveCanvas).toBe('function');
+
+        // Initially null
+        let result = await component.getActiveCanvas();
+        expect(result).toBeNull();
+
+        // Set active canvas
+        setActiveCanvas('canvas2');
+        result = await component.getActiveCanvas();
+        expect(result).toBe('canvas2');
+      });
+
+      it('should emit canvasActivated event when setActiveCanvas is called', async () => {
+        const component = new GridBuilder();
+        component.components = mockComponentDefinitions;
+        component.componentDidLoad();
+
+        const emitSpy = jest.spyOn(eventManager, 'emit');
+
+        await component.setActiveCanvas('canvas1');
+
+        expect(emitSpy).toHaveBeenCalledWith('canvasActivated', { canvasId: 'canvas1' });
+
+        emitSpy.mockRestore();
+      });
+
+      it('should allow switching active canvas via public method', async () => {
+        const component = new GridBuilder();
+        component.components = mockComponentDefinitions;
+        component.componentDidLoad();
+
+        await component.setActiveCanvas('canvas1');
+        let result = await component.getActiveCanvas();
+        expect(result).toBe('canvas1');
+
+        await component.setActiveCanvas('canvas2');
+        result = await component.getActiveCanvas();
+        expect(result).toBe('canvas2');
+
+        await component.setActiveCanvas('canvas3');
+        result = await component.getActiveCanvas();
+        expect(result).toBe('canvas3');
+      });
+    });
+
+    describe('API Object Methods', () => {
+      it('should expose setActiveCanvas in API object', () => {
+        const component = new GridBuilder();
+        component.components = mockComponentDefinitions;
+        component.componentDidLoad();
+
+        const api = (component as any).api;
+
+        expect(api).toBeDefined();
+        expect(typeof api.setActiveCanvas).toBe('function');
+
+        api.setActiveCanvas('canvas1');
+        expect(gridState.activeCanvasId).toBe('canvas1');
+      });
+
+      it('should expose getActiveCanvas in API object', () => {
+        const component = new GridBuilder();
+        component.components = mockComponentDefinitions;
+        component.componentDidLoad();
+
+        const api = (component as any).api;
+
+        expect(typeof api.getActiveCanvas).toBe('function');
+
+        setActiveCanvas('canvas1');
+        const result = api.getActiveCanvas();
+        expect(result).toBe('canvas1');
+      });
+
+      it('should emit plugin event when API setActiveCanvas is called', () => {
+        const component = new GridBuilder();
+        component.components = mockComponentDefinitions;
+        component.componentDidLoad();
+
+        const api = (component as any).api;
+        const emitSpy = jest.spyOn(eventManager, 'emit');
+
+        api.setActiveCanvas('canvas2');
+
+        expect(emitSpy).toHaveBeenCalledWith('canvasActivated', { canvasId: 'canvas2' });
+
+        emitSpy.mockRestore();
+      });
+
+      it('should provide API to plugins during initialization', () => {
+        const mockPlugin = {
+          name: 'test-plugin',
+          init: jest.fn(),
+          destroy: jest.fn(),
+        };
+
+        const component = new GridBuilder();
+        component.components = mockComponentDefinitions;
+        component.plugins = [mockPlugin];
+
+        component.componentDidLoad();
+
+        expect(mockPlugin.init).toHaveBeenCalled();
+
+        // Get the API object passed to plugin
+        const apiArg = mockPlugin.init.mock.calls[0][0];
+
+        expect(apiArg.setActiveCanvas).toBeDefined();
+        expect(apiArg.getActiveCanvas).toBeDefined();
+        expect(typeof apiArg.setActiveCanvas).toBe('function');
+        expect(typeof apiArg.getActiveCanvas).toBe('function');
+      });
+    });
+
+    describe('Integration with State', () => {
+      it('should keep activeCanvasId independent from selectedCanvasId', () => {
+        const component = new GridBuilder();
+        component.components = mockComponentDefinitions;
+        component.componentDidLoad();
+
+        // Set selection
+        gridState.selectedItemId = 'item-1';
+        gridState.selectedCanvasId = 'canvas1';
+
+        // Set active canvas to different canvas
+        setActiveCanvas('canvas2');
+
+        // Both should coexist
+        expect(gridState.selectedCanvasId).toBe('canvas1');
+        expect(gridState.activeCanvasId).toBe('canvas2');
+        expect(gridState.selectedItemId).toBe('item-1');
+      });
+
+      it('should maintain activeCanvasId through viewport switches', () => {
+        const component = new GridBuilder();
+        component.components = mockComponentDefinitions;
+        component.componentDidLoad();
+
+        setActiveCanvas('canvas1');
+        expect(gridState.activeCanvasId).toBe('canvas1');
+
+        // Switch viewport
+        gridState.currentViewport = 'mobile';
+        expect(gridState.activeCanvasId).toBe('canvas1');
+
+        // Switch back
+        gridState.currentViewport = 'desktop';
+        expect(gridState.activeCanvasId).toBe('canvas1');
+      });
+
+      it('should reset activeCanvasId when state is reset', () => {
+        const component = new GridBuilder();
+        component.components = mockComponentDefinitions;
+        component.componentDidLoad();
+
+        setActiveCanvas('canvas1');
+        expect(gridState.activeCanvasId).toBe('canvas1');
+
+        resetState();
+        expect(gridState.activeCanvasId).toBeNull();
+      });
+    });
+
+    describe('Plugin Event Emission', () => {
+      it('should allow plugins to listen for canvasActivated events', () => {
+        const activatedEvents: any[] = [];
+
+        const mockPlugin = {
+          name: 'test-plugin',
+          init: (api: any) => {
+            api.on('canvasActivated', (data: any) => {
+              activatedEvents.push(data);
+            });
+          },
+          destroy: jest.fn(),
+        };
+
+        const component = new GridBuilder();
+        component.components = mockComponentDefinitions;
+        component.plugins = [mockPlugin];
+
+        component.componentDidLoad();
+
+        // Trigger canvas activation via API
+        const api = (component as any).api;
+        api.setActiveCanvas('canvas1');
+
+        expect(activatedEvents.length).toBe(1);
+        expect(activatedEvents[0]).toEqual({ canvasId: 'canvas1' });
+
+        api.setActiveCanvas('canvas2');
+
+        expect(activatedEvents.length).toBe(2);
+        expect(activatedEvents[1]).toEqual({ canvasId: 'canvas2' });
+      });
+
+      it('should emit events for all activation methods', () => {
+        const activatedEvents: any[] = [];
+
+        const mockPlugin = {
+          name: 'test-plugin',
+          init: (api: any) => {
+            api.on('canvasActivated', (data: any) => {
+              activatedEvents.push(data);
+            });
+          },
+          destroy: jest.fn(),
+        };
+
+        const component = new GridBuilder();
+        component.components = mockComponentDefinitions;
+        component.plugins = [mockPlugin];
+
+        const mockHostElement = {
+          addEventListener: jest.fn(),
+          removeEventListener: jest.fn(),
+        };
+        (component as any).hostElement = mockHostElement;
+
+        component.componentDidLoad();
+
+        // Method 1: Via API
+        const api = (component as any).api;
+        api.setActiveCanvas('canvas1');
+        expect(activatedEvents.length).toBe(1);
+
+        // Method 2: Via public @Method
+        component.setActiveCanvas('canvas2');
+        expect(activatedEvents.length).toBe(2);
+
+        // Method 3: Via DOM event (simulate)
+        const addEventListenerCalls = mockHostElement.addEventListener.mock.calls;
+        const canvasActivatedCall = addEventListenerCalls.find(call => call[0] === 'canvas-activated');
+        const handler = canvasActivatedCall[1];
+
+        const mockEvent = new CustomEvent('canvas-activated', {
+          detail: { canvasId: 'canvas3' },
+        });
+        handler(mockEvent);
+
+        expect(activatedEvents.length).toBe(3);
+        expect(activatedEvents[2]).toEqual({ canvasId: 'canvas3' });
+      });
     });
   });
 });

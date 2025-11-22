@@ -12,7 +12,7 @@
 
 import { h } from '@stencil/core';
 import { ResizeHandler } from './resize-handler';
-import { GridItem } from '../services/state-manager';
+import { GridItem, gridState, reset, setActiveCanvas } from '../services/state-manager';
 import { ComponentDefinition } from '../types/component-definition';
 import { domCache } from './dom-cache';
 
@@ -453,6 +453,261 @@ describe('ResizeHandler', () => {
       expect(resizeConfig.listeners.end).toBeDefined();
 
       handler.destroy();
+    });
+  });
+
+  describe('Active Canvas on Resize', () => {
+    beforeEach(() => {
+      reset();
+      // Reset mock calls
+      (window as any).interact.mockClear();
+      domCache.clear();
+    });
+
+    it('should set active canvas when resize starts', () => {
+      const canvas = createMockCanvas('canvas1', 1000);
+      document.body.appendChild(canvas);
+
+      const mockElement = document.createElement('div');
+      mockElement.id = 'item-1';
+      mockElement.style.width = '200px';
+      mockElement.style.height = '120px';
+      mockElement.style.transform = 'translate(100px, 100px)';
+
+      const mockItem: GridItem = {
+        id: 'item-1',
+        canvasId: 'canvas1',
+        type: 'header',
+        name: 'Header Item',
+        layouts: {
+          desktop: { x: 5, y: 5, width: 10, height: 6 },
+          mobile: { x: 1, y: 1, width: 14, height: 5, customized: false },
+        },
+        config: {},
+        zIndex: 1,
+      };
+
+      const handler = new ResizeHandler(mockElement, mockItem, onUpdate);
+
+      expect(gridState.activeCanvasId).toBeNull();
+
+      // Simulate resize start
+      const mockEvent = {
+        target: mockElement,
+        rect: { width: 200, height: 120, left: 100, top: 100 },
+      };
+
+      handler['handleResizeStart'](mockEvent);
+
+      expect(gridState.activeCanvasId).toBe('canvas1');
+
+      handler.destroy();
+      document.body.removeChild(canvas);
+    });
+
+    it('should activate correct canvas for different items', () => {
+      const canvas1 = createMockCanvas('canvas1', 1000);
+      const canvas2 = createMockCanvas('canvas2', 1000);
+      document.body.appendChild(canvas1);
+      document.body.appendChild(canvas2);
+
+      const element1 = document.createElement('div');
+      element1.id = 'item-1';
+      element1.style.width = '200px';
+      element1.style.height = '120px';
+      element1.style.transform = 'translate(0px, 0px)';
+
+      const element2 = document.createElement('div');
+      element2.id = 'item-2';
+      element2.style.width = '200px';
+      element2.style.height = '120px';
+      element2.style.transform = 'translate(0px, 0px)';
+
+      const item1: GridItem = {
+        id: 'item-1',
+        canvasId: 'canvas1',
+        type: 'header',
+        name: 'Header Item',
+        layouts: {
+          desktop: { x: 1, y: 1, width: 10, height: 6 },
+          mobile: { x: 1, y: 1, width: 14, height: 5, customized: false },
+        },
+        config: {},
+        zIndex: 1,
+      };
+
+      const item2: GridItem = {
+        id: 'item-2',
+        canvasId: 'canvas2',
+        type: 'text',
+        name: 'Text Item',
+        layouts: {
+          desktop: { x: 1, y: 1, width: 10, height: 4 },
+          mobile: { x: 1, y: 1, width: 14, height: 3, customized: false },
+        },
+        config: {},
+        zIndex: 1,
+      };
+
+      const handler1 = new ResizeHandler(element1, item1, jest.fn());
+      const handler2 = new ResizeHandler(element2, item2, jest.fn());
+
+      // Resize item1
+      handler1['handleResizeStart']({
+        target: element1,
+        rect: { width: 200, height: 120, left: 0, top: 0 },
+      });
+      expect(gridState.activeCanvasId).toBe('canvas1');
+
+      // Resize item2
+      handler2['handleResizeStart']({
+        target: element2,
+        rect: { width: 200, height: 120, left: 0, top: 0 },
+      });
+      expect(gridState.activeCanvasId).toBe('canvas2');
+
+      handler1.destroy();
+      handler2.destroy();
+      document.body.removeChild(canvas1);
+      document.body.removeChild(canvas2);
+    });
+
+    it('should add resizing class after setting active canvas', () => {
+      const canvas = createMockCanvas('canvas1', 1000);
+      document.body.appendChild(canvas);
+
+      const mockElement = document.createElement('div');
+      mockElement.id = 'item-1';
+      mockElement.style.width = '200px';
+      mockElement.style.height = '120px';
+      mockElement.style.transform = 'translate(0px, 0px)';
+
+      const mockItem: GridItem = {
+        id: 'item-1',
+        canvasId: 'canvas1',
+        type: 'header',
+        name: 'Header Item',
+        layouts: {
+          desktop: { x: 1, y: 1, width: 10, height: 6 },
+          mobile: { x: 1, y: 1, width: 14, height: 5, customized: false },
+        },
+        config: {},
+        zIndex: 1,
+      };
+
+      const handler = new ResizeHandler(mockElement, mockItem, onUpdate);
+
+      expect(mockElement.classList.contains('resizing')).toBe(false);
+
+      const mockEvent = {
+        target: mockElement,
+        rect: { width: 200, height: 120, left: 0, top: 0 },
+      };
+
+      handler['handleResizeStart'](mockEvent);
+
+      // Canvas should be activated
+      expect(gridState.activeCanvasId).toBe('canvas1');
+
+      // Resizing class should be added
+      expect(mockElement.classList.contains('resizing')).toBe(true);
+
+      handler.destroy();
+      document.body.removeChild(canvas);
+    });
+
+    it('should switch active canvas when resizing item from different canvas', () => {
+      const canvas1 = createMockCanvas('canvas1', 1000);
+      const canvas2 = createMockCanvas('canvas2', 1000);
+      document.body.appendChild(canvas1);
+      document.body.appendChild(canvas2);
+
+      // Activate canvas2
+      setActiveCanvas('canvas2');
+      expect(gridState.activeCanvasId).toBe('canvas2');
+
+      // Start resizing item on canvas1
+      const mockElement = document.createElement('div');
+      mockElement.id = 'item-1';
+      mockElement.style.width = '200px';
+      mockElement.style.height = '120px';
+      mockElement.style.transform = 'translate(0px, 0px)';
+
+      const mockItem: GridItem = {
+        id: 'item-1',
+        canvasId: 'canvas1',
+        type: 'header',
+        name: 'Header Item',
+        layouts: {
+          desktop: { x: 1, y: 1, width: 10, height: 6 },
+          mobile: { x: 1, y: 1, width: 14, height: 5, customized: false },
+        },
+        config: {},
+        zIndex: 1,
+      };
+
+      const handler = new ResizeHandler(mockElement, mockItem, onUpdate);
+
+      const mockEvent = {
+        target: mockElement,
+        rect: { width: 200, height: 120, left: 0, top: 0 },
+      };
+
+      handler['handleResizeStart'](mockEvent);
+
+      // Should switch to canvas1
+      expect(gridState.activeCanvasId).toBe('canvas1');
+
+      handler.destroy();
+      document.body.removeChild(canvas1);
+      document.body.removeChild(canvas2);
+    });
+
+    it('should not affect selection state when setting active canvas', () => {
+      const canvas = createMockCanvas('canvas1', 1000);
+      document.body.appendChild(canvas);
+
+      // Set selection on different canvas
+      gridState.selectedItemId = 'item-2';
+      gridState.selectedCanvasId = 'canvas2';
+
+      const mockElement = document.createElement('div');
+      mockElement.id = 'item-1';
+      mockElement.style.width = '200px';
+      mockElement.style.height = '120px';
+      mockElement.style.transform = 'translate(0px, 0px)';
+
+      const mockItem: GridItem = {
+        id: 'item-1',
+        canvasId: 'canvas1',
+        type: 'header',
+        name: 'Header Item',
+        layouts: {
+          desktop: { x: 1, y: 1, width: 10, height: 6 },
+          mobile: { x: 1, y: 1, width: 14, height: 5, customized: false },
+        },
+        config: {},
+        zIndex: 1,
+      };
+
+      const handler = new ResizeHandler(mockElement, mockItem, onUpdate);
+
+      const mockEvent = {
+        target: mockElement,
+        rect: { width: 200, height: 120, left: 0, top: 0 },
+      };
+
+      handler['handleResizeStart'](mockEvent);
+
+      // Active canvas should change
+      expect(gridState.activeCanvasId).toBe('canvas1');
+
+      // Selection should remain unchanged
+      expect(gridState.selectedItemId).toBe('item-2');
+      expect(gridState.selectedCanvasId).toBe('canvas2');
+
+      handler.destroy();
+      document.body.removeChild(canvas);
     });
   });
 });

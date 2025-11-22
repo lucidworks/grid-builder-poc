@@ -12,6 +12,8 @@ import {
   addItemsBatch,
   deleteItemsBatch,
   updateItemsBatch,
+  setActiveCanvas,
+  clearActiveCanvas,
 } from './state-manager';
 
 describe('state-manager', () => {
@@ -39,6 +41,10 @@ describe('state-manager', () => {
     it('should have no item selected', () => {
       expect(gridState.selectedItemId).toBeNull();
       expect(gridState.selectedCanvasId).toBeNull();
+    });
+
+    it('should have no active canvas', () => {
+      expect(gridState.activeCanvasId).toBeNull();
     });
 
     it('should have empty canvases (library starts empty)', () => {
@@ -576,6 +582,140 @@ describe('state-manager', () => {
 
         expect(gridState.canvases.canvas1.items).toHaveLength(2);
       });
+    });
+  });
+
+  describe('Active Canvas State Management', () => {
+    it('should initialize activeCanvasId to null', () => {
+      expect(gridState.activeCanvasId).toBeNull();
+    });
+
+    it('should set active canvas via setActiveCanvas()', () => {
+      setActiveCanvas('canvas1');
+      expect(gridState.activeCanvasId).toBe('canvas1');
+    });
+
+    it('should update active canvas when calling setActiveCanvas() multiple times', () => {
+      setActiveCanvas('canvas1');
+      expect(gridState.activeCanvasId).toBe('canvas1');
+
+      setActiveCanvas('canvas2');
+      expect(gridState.activeCanvasId).toBe('canvas2');
+    });
+
+    it('should allow setting same canvas as active multiple times', () => {
+      setActiveCanvas('canvas1');
+      setActiveCanvas('canvas1');
+      expect(gridState.activeCanvasId).toBe('canvas1');
+    });
+
+    it('should clear active canvas via clearActiveCanvas()', () => {
+      setActiveCanvas('canvas1');
+      clearActiveCanvas();
+      expect(gridState.activeCanvasId).toBeNull();
+    });
+
+    it('should handle clearActiveCanvas() when no canvas is active', () => {
+      expect(gridState.activeCanvasId).toBeNull();
+      expect(() => clearActiveCanvas()).not.toThrow();
+      expect(gridState.activeCanvasId).toBeNull();
+    });
+
+    it('should reset activeCanvasId when reset() is called', () => {
+      setActiveCanvas('canvas2');
+      expect(gridState.activeCanvasId).toBe('canvas2');
+
+      reset();
+
+      expect(gridState.activeCanvasId).toBeNull();
+    });
+
+    it('should handle switching between multiple canvases', () => {
+      setActiveCanvas('canvas1');
+      expect(gridState.activeCanvasId).toBe('canvas1');
+
+      setActiveCanvas('canvas2');
+      expect(gridState.activeCanvasId).toBe('canvas2');
+
+      setActiveCanvas('canvas3');
+      expect(gridState.activeCanvasId).toBe('canvas3');
+
+      setActiveCanvas('canvas1');
+      expect(gridState.activeCanvasId).toBe('canvas1');
+    });
+
+    it('should allow activeCanvasId to be set independently of selectedCanvasId', () => {
+      // Set selection
+      const item = {
+        id: 'item-1',
+        canvasId: 'canvas1',
+        type: 'header',
+        name: 'Header Item',
+        layouts: {
+          desktop: { x: 1, y: 1, width: 10, height: 6 },
+          mobile: { x: 1, y: 1, width: 14, height: 5, customized: false },
+        },
+        config: {},
+        zIndex: 1,
+      };
+      addItemToCanvas('canvas1', item);
+      selectItem('item-1', 'canvas1');
+
+      // Activate different canvas
+      setActiveCanvas('canvas2');
+
+      // Both should be independently set
+      expect(gridState.selectedCanvasId).toBe('canvas1');
+      expect(gridState.activeCanvasId).toBe('canvas2');
+    });
+
+    it('should not affect selection state when setting active canvas', () => {
+      const item = {
+        id: 'item-1',
+        canvasId: 'canvas1',
+        type: 'header',
+        name: 'Header Item',
+        layouts: {
+          desktop: { x: 1, y: 1, width: 10, height: 6 },
+          mobile: { x: 1, y: 1, width: 14, height: 5, customized: false },
+        },
+        config: {},
+        zIndex: 1,
+      };
+      addItemToCanvas('canvas1', item);
+      selectItem('item-1', 'canvas1');
+
+      expect(gridState.selectedItemId).toBe('item-1');
+      expect(gridState.selectedCanvasId).toBe('canvas1');
+
+      setActiveCanvas('canvas2');
+
+      expect(gridState.selectedItemId).toBe('item-1');
+      expect(gridState.selectedCanvasId).toBe('canvas1');
+      expect(gridState.activeCanvasId).toBe('canvas2');
+    });
+
+    it('should not affect active canvas when deselecting item', () => {
+      setActiveCanvas('canvas1');
+      expect(gridState.activeCanvasId).toBe('canvas1');
+
+      const item = {
+        id: 'item-1',
+        canvasId: 'canvas1',
+        type: 'header',
+        name: 'Header Item',
+        layouts: {
+          desktop: { x: 1, y: 1, width: 10, height: 6 },
+          mobile: { x: 1, y: 1, width: 14, height: 5, customized: false },
+        },
+        config: {},
+        zIndex: 1,
+      };
+      addItemToCanvas('canvas1', item);
+      selectItem('item-1', 'canvas1');
+      deselectItem();
+
+      expect(gridState.activeCanvasId).toBe('canvas1');
     });
   });
 });
