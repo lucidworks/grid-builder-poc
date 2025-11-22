@@ -335,29 +335,6 @@ export class GridBuilder {
   @Prop() onBeforeDelete?: DeletionHook;
 
   /**
-   * Show the default configuration panel
-   *
-   * **Optional prop**: Controls whether the default config panel is rendered
-   * **Default**: true (show the config panel)
-   * **Purpose**: Allow host apps to use custom config panels instead
-   *
-   * **Example - Custom config panel**:
-   * ```typescript
-   * // Hide default config panel to use custom one
-   * <grid-builder showConfigPanel={false} ... />
-   *
-   * // Then implement your own config panel that listens to item-click events:
-   * document.addEventListener('item-click', (event) => {
-   *   const { itemId, canvasId } = event.detail;
-   *   // Show your custom config panel
-   * });
-   * ```
-   *
-   * **See**: custom-config-panel component in demo for full example
-   */
-  @Prop() showConfigPanel: boolean = true;
-
-  /**
    * Custom API exposure configuration
    *
    * **Optional prop**: Control where and how the Grid Builder API is exposed
@@ -1565,12 +1542,14 @@ export class GridBuilder {
    * - Host element with theme classes
    * - Component palette (sidebar or custom)
    * - Canvas area with sections
-   * - Config panel (bottom or custom)
    *
    * **Note**: Actual rendering delegates to child components:
    * - <component-palette> or custom ComponentPalette
    * - <canvas-section> for each canvas
-   * - <config-panel> or custom ConfigPanel
+   *
+   * **Config Panel**: Users should implement their own config panels
+   * - See custom-config-panel in demo for reference implementation
+   * - Listen to 'item-click' events to show your config UI
    */
   render() {
     const canvasIds = Object.keys(gridState.canvases);
@@ -1601,9 +1580,6 @@ export class GridBuilder {
               ))}
             </div>
           </div>
-
-          {/* Config Panel (conditionally rendered) */}
-          {this.showConfigPanel && <config-panel componentRegistry={this.componentRegistry} />}
         </div>
       </Host>
     );

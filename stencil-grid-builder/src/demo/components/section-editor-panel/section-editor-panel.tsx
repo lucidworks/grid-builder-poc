@@ -1,17 +1,5 @@
 import { Component, h, Prop, Event, EventEmitter, State, Watch } from '@stencil/core';
-
-/**
- * Section Editor Data Interface
- * ------------------------------
- *
- * Data structure for section/canvas metadata being edited.
- * This is demo-specific - NOT part of the library.
- */
-export interface SectionEditorData {
-  canvasId: string;
-  title: string;
-  backgroundColor: string;
-}
+import { SectionEditorData } from '../../types/section-editor-data';
 
 /**
  * Section Editor Panel Component

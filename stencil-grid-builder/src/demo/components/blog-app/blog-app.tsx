@@ -1,8 +1,8 @@
 import { Component, h, State } from '@stencil/core';
 import { blogComponentDefinitions, contentComponents, interactiveComponents, mediaComponents } from '../../component-definitions';
 import { GridBuilderAPI } from '../../../types/api';
-import { SectionEditorData } from '../section-editor-panel/section-editor-panel';
-import { ConfirmationModalData } from '../confirmation-modal/confirmation-modal';
+import { SectionEditorData } from '../../types/section-editor-data';
+import { ConfirmationModalData } from '../../types/confirmation-modal-data';
 import { DeletionHookContext } from '../../../types/deletion-hook';
 import { getGridSizeVertical, clearGridSizeCache } from '../../../utils/grid-calculations';
 import { domCache } from '../../../utils/dom-cache';
@@ -1163,7 +1163,6 @@ export class BlogApp {
                 initialState={this.initialState}
                 canvasMetadata={this.canvasMetadata}
                 onBeforeDelete={this.handleBeforeDelete}
-                showConfigPanel={false}
               />
             )}
           </div>

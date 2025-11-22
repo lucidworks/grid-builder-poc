@@ -1,16 +1,5 @@
 import { Component, h, Prop, Event, EventEmitter } from '@stencil/core';
-
-/**
- * Confirmation Modal Data Interface
- * ----------------------------------
- *
- * Data structure for confirmation modal content.
- * This is demo-specific - NOT part of the library.
- */
-export interface ConfirmationModalData {
-  title: string;
-  message: string;
-}
+import { ConfirmationModalData } from '../../types/confirmation-modal-data';
 
 /**
  * Confirmation Modal Component
