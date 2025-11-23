@@ -1779,4 +1779,206 @@ describe('grid-builder', () => {
       expect(result).toBeDefined();
     });
   });
+
+  describe('Auto-Activation on Drop', () => {
+    beforeEach(() => {
+      resetState();
+      clearHistory();
+      jest.clearAllMocks();
+    });
+
+    it('should set canvas as active when component is dropped from palette', () => {
+      const component = new GridBuilder();
+      component.components = mockComponentDefinitions;
+      component.initialState = {
+        canvases: {
+          canvas1: { items: [], zIndexCounter: 0 },
+          canvas2: { items: [], zIndexCounter: 0 },
+        },
+      };
+
+      const mockHostElement = {
+        addEventListener: jest.fn(),
+        removeEventListener: jest.fn(),
+      };
+      Object.defineProperty(component, 'hostElement', {
+        value: mockHostElement,
+        writable: true,
+      });
+
+      component.componentWillLoad();
+      component.componentDidLoad();
+
+      // Get the registered canvas-drop handler
+      const addEventListenerCalls = mockHostElement.addEventListener.mock.calls;
+      const canvasDropCall = addEventListenerCalls.find(call => call[0] === 'canvas-drop');
+      expect(canvasDropCall).toBeDefined();
+
+      const handler = canvasDropCall[1];
+
+      // Initially no canvas is active
+      expect(gridState.activeCanvasId).toBeNull();
+
+      // Simulate dropping a component into canvas2
+      const mockEvent = new CustomEvent('canvas-drop', {
+        detail: {
+          canvasId: 'canvas2',
+          componentType: 'header',
+          x: 100,
+          y: 50,
+        },
+      });
+
+      handler(mockEvent);
+
+      // Verify canvas2 is now active
+      expect(gridState.activeCanvasId).toBe('canvas2');
+    });
+
+    it('should emit canvasActivated event when component is dropped', () => {
+      const component = new GridBuilder();
+      component.components = mockComponentDefinitions;
+      component.initialState = {
+        canvases: {
+          canvas1: { items: [], zIndexCounter: 0 },
+        },
+      };
+
+      const mockHostElement = {
+        addEventListener: jest.fn(),
+        removeEventListener: jest.fn(),
+      };
+      Object.defineProperty(component, 'hostElement', {
+        value: mockHostElement,
+        writable: true,
+      });
+
+      component.componentWillLoad();
+      component.componentDidLoad();
+
+      const emitSpy = jest.spyOn(eventManager, 'emit');
+
+      // Get the registered canvas-drop handler
+      const addEventListenerCalls = mockHostElement.addEventListener.mock.calls;
+      const canvasDropCall = addEventListenerCalls.find(call => call[0] === 'canvas-drop');
+      const handler = canvasDropCall[1];
+
+      // Trigger canvas-drop event
+      const mockEvent = new CustomEvent('canvas-drop', {
+        detail: {
+          canvasId: 'canvas1',
+          componentType: 'header',
+          x: 50,
+          y: 50,
+        },
+      });
+
+      handler(mockEvent);
+
+      // Verify canvasActivated event was emitted
+      expect(emitSpy).toHaveBeenCalledWith('canvasActivated', { canvasId: 'canvas1' });
+
+      emitSpy.mockRestore();
+    });
+
+    it('should switch active canvas when dropping into different canvas', () => {
+      const component = new GridBuilder();
+      component.components = mockComponentDefinitions;
+      component.initialState = {
+        canvases: {
+          canvas1: { items: [], zIndexCounter: 0 },
+          canvas2: { items: [], zIndexCounter: 0 },
+          canvas3: { items: [], zIndexCounter: 0 },
+        },
+      };
+
+      const mockHostElement = {
+        addEventListener: jest.fn(),
+        removeEventListener: jest.fn(),
+      };
+      Object.defineProperty(component, 'hostElement', {
+        value: mockHostElement,
+        writable: true,
+      });
+
+      component.componentWillLoad();
+      component.componentDidLoad();
+
+      // Get the registered canvas-drop handler
+      const addEventListenerCalls = mockHostElement.addEventListener.mock.calls;
+      const canvasDropCall = addEventListenerCalls.find(call => call[0] === 'canvas-drop');
+      const handler = canvasDropCall[1];
+
+      // Drop into canvas1
+      handler(new CustomEvent('canvas-drop', {
+        detail: { canvasId: 'canvas1', componentType: 'header', x: 50, y: 50 },
+      }));
+      expect(gridState.activeCanvasId).toBe('canvas1');
+
+      // Drop into canvas2
+      handler(new CustomEvent('canvas-drop', {
+        detail: { canvasId: 'canvas2', componentType: 'text', x: 100, y: 100 },
+      }));
+      expect(gridState.activeCanvasId).toBe('canvas2');
+
+      // Drop into canvas3
+      handler(new CustomEvent('canvas-drop', {
+        detail: { canvasId: 'canvas3', componentType: 'header', x: 25, y: 25 },
+      }));
+      expect(gridState.activeCanvasId).toBe('canvas3');
+    });
+
+    it('should activate canvas even when dropping same component type multiple times', () => {
+      const component = new GridBuilder();
+      component.components = mockComponentDefinitions;
+      component.initialState = {
+        canvases: {
+          canvas1: { items: [], zIndexCounter: 0 },
+        },
+      };
+
+      const mockHostElement = {
+        addEventListener: jest.fn(),
+        removeEventListener: jest.fn(),
+      };
+      Object.defineProperty(component, 'hostElement', {
+        value: mockHostElement,
+        writable: true,
+      });
+
+      component.componentWillLoad();
+      component.componentDidLoad();
+
+      const emitSpy = jest.spyOn(eventManager, 'emit');
+
+      // Get the registered canvas-drop handler
+      const addEventListenerCalls = mockHostElement.addEventListener.mock.calls;
+      const canvasDropCall = addEventListenerCalls.find(call => call[0] === 'canvas-drop');
+      const handler = canvasDropCall[1];
+
+      // Drop multiple headers into same canvas
+      handler(new CustomEvent('canvas-drop', {
+        detail: { canvasId: 'canvas1', componentType: 'header', x: 10, y: 10 },
+      }));
+
+      handler(new CustomEvent('canvas-drop', {
+        detail: { canvasId: 'canvas1', componentType: 'header', x: 20, y: 10 },
+      }));
+
+      handler(new CustomEvent('canvas-drop', {
+        detail: { canvasId: 'canvas1', componentType: 'header', x: 30, y: 10 },
+      }));
+
+      // Verify canvas1 is active
+      expect(gridState.activeCanvasId).toBe('canvas1');
+
+      // Verify canvasActivated event was emitted 3 times
+      const activatedCalls = emitSpy.mock.calls.filter(
+        call => call[0] === 'canvasActivated' && call[1].canvasId === 'canvas1'
+      );
+      expect(activatedCalls.length).toBe(3);
+
+      emitSpy.mockRestore();
+    });
+  });
 });
