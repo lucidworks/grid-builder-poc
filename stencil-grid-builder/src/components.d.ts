@@ -196,6 +196,8 @@ export namespace Components {
         "content": string;
         "date"?: string;
     }
+    interface BlogArticleDragClone {
+    }
     interface BlogButton {
         "href"?: string;
         /**
@@ -207,12 +209,16 @@ export namespace Components {
          */
         "variant": 'primary' | 'secondary';
     }
+    interface BlogButtonDragClone {
+    }
     interface BlogHeader {
         /**
           * @default 'Default Header'
          */
         "headerTitle": string;
         "subtitle"?: string;
+    }
+    interface BlogHeaderDragClone {
     }
     interface BlogImage {
         /**
@@ -228,6 +234,8 @@ export namespace Components {
           * @default 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&h=600&fit=crop'
          */
         "src": string;
+    }
+    interface BlogImageDragClone {
     }
     /**
      * CanvasHeader Component
@@ -535,6 +543,8 @@ export namespace Components {
     }
     interface DashboardWidget {
     }
+    interface DashboardWidgetDragClone {
+    }
     /**
      * GridBuilder Component
      * ======================
@@ -743,7 +753,11 @@ export namespace Components {
          */
         "imageCount": number;
     }
+    interface ImageGalleryDragClone {
+    }
     interface LiveData {
+    }
+    interface LiveDataDragClone {
     }
     /**
      * Section Editor Panel Component
@@ -975,6 +989,12 @@ declare global {
         prototype: HTMLBlogArticleElement;
         new (): HTMLBlogArticleElement;
     };
+    interface HTMLBlogArticleDragCloneElement extends Components.BlogArticleDragClone, HTMLStencilElement {
+    }
+    var HTMLBlogArticleDragCloneElement: {
+        prototype: HTMLBlogArticleDragCloneElement;
+        new (): HTMLBlogArticleDragCloneElement;
+    };
     interface HTMLBlogButtonElementEventMap {
         "buttonClick": void;
     }
@@ -992,17 +1012,35 @@ declare global {
         prototype: HTMLBlogButtonElement;
         new (): HTMLBlogButtonElement;
     };
+    interface HTMLBlogButtonDragCloneElement extends Components.BlogButtonDragClone, HTMLStencilElement {
+    }
+    var HTMLBlogButtonDragCloneElement: {
+        prototype: HTMLBlogButtonDragCloneElement;
+        new (): HTMLBlogButtonDragCloneElement;
+    };
     interface HTMLBlogHeaderElement extends Components.BlogHeader, HTMLStencilElement {
     }
     var HTMLBlogHeaderElement: {
         prototype: HTMLBlogHeaderElement;
         new (): HTMLBlogHeaderElement;
     };
+    interface HTMLBlogHeaderDragCloneElement extends Components.BlogHeaderDragClone, HTMLStencilElement {
+    }
+    var HTMLBlogHeaderDragCloneElement: {
+        prototype: HTMLBlogHeaderDragCloneElement;
+        new (): HTMLBlogHeaderDragCloneElement;
+    };
     interface HTMLBlogImageElement extends Components.BlogImage, HTMLStencilElement {
     }
     var HTMLBlogImageElement: {
         prototype: HTMLBlogImageElement;
         new (): HTMLBlogImageElement;
+    };
+    interface HTMLBlogImageDragCloneElement extends Components.BlogImageDragClone, HTMLStencilElement {
+    }
+    var HTMLBlogImageDragCloneElement: {
+        prototype: HTMLBlogImageDragCloneElement;
+        new (): HTMLBlogImageDragCloneElement;
     };
     interface HTMLCanvasHeaderElementEventMap {
         "headerClick": { canvasId: string };
@@ -1242,6 +1280,12 @@ declare global {
         prototype: HTMLDashboardWidgetElement;
         new (): HTMLDashboardWidgetElement;
     };
+    interface HTMLDashboardWidgetDragCloneElement extends Components.DashboardWidgetDragClone, HTMLStencilElement {
+    }
+    var HTMLDashboardWidgetDragCloneElement: {
+        prototype: HTMLDashboardWidgetDragCloneElement;
+        new (): HTMLDashboardWidgetDragCloneElement;
+    };
     /**
      * GridBuilder Component
      * ======================
@@ -1295,11 +1339,23 @@ declare global {
         prototype: HTMLImageGalleryElement;
         new (): HTMLImageGalleryElement;
     };
+    interface HTMLImageGalleryDragCloneElement extends Components.ImageGalleryDragClone, HTMLStencilElement {
+    }
+    var HTMLImageGalleryDragCloneElement: {
+        prototype: HTMLImageGalleryDragCloneElement;
+        new (): HTMLImageGalleryDragCloneElement;
+    };
     interface HTMLLiveDataElement extends Components.LiveData, HTMLStencilElement {
     }
     var HTMLLiveDataElement: {
         prototype: HTMLLiveDataElement;
         new (): HTMLLiveDataElement;
+    };
+    interface HTMLLiveDataDragCloneElement extends Components.LiveDataDragClone, HTMLStencilElement {
+    }
+    var HTMLLiveDataDragCloneElement: {
+        prototype: HTMLLiveDataDragCloneElement;
+        new (): HTMLLiveDataDragCloneElement;
     };
     interface HTMLSectionEditorPanelElementEventMap {
         "closePanel": void;
@@ -1355,9 +1411,13 @@ declare global {
     interface HTMLElementTagNameMap {
         "blog-app": HTMLBlogAppElement;
         "blog-article": HTMLBlogArticleElement;
+        "blog-article-drag-clone": HTMLBlogArticleDragCloneElement;
         "blog-button": HTMLBlogButtonElement;
+        "blog-button-drag-clone": HTMLBlogButtonDragCloneElement;
         "blog-header": HTMLBlogHeaderElement;
+        "blog-header-drag-clone": HTMLBlogHeaderDragCloneElement;
         "blog-image": HTMLBlogImageElement;
+        "blog-image-drag-clone": HTMLBlogImageDragCloneElement;
         "canvas-header": HTMLCanvasHeaderElement;
         "canvas-section": HTMLCanvasSectionElement;
         "canvas-section-viewer": HTMLCanvasSectionViewerElement;
@@ -1368,11 +1428,14 @@ declare global {
         "custom-drag-clone": HTMLCustomDragCloneElement;
         "custom-palette-item": HTMLCustomPaletteItemElement;
         "dashboard-widget": HTMLDashboardWidgetElement;
+        "dashboard-widget-drag-clone": HTMLDashboardWidgetDragCloneElement;
         "grid-builder": HTMLGridBuilderElement;
         "grid-item-wrapper": HTMLGridItemWrapperElement;
         "grid-viewer": HTMLGridViewerElement;
         "image-gallery": HTMLImageGalleryElement;
+        "image-gallery-drag-clone": HTMLImageGalleryDragCloneElement;
         "live-data": HTMLLiveDataElement;
+        "live-data-drag-clone": HTMLLiveDataDragCloneElement;
         "section-editor-panel": HTMLSectionEditorPanelElement;
     }
 }
@@ -1545,6 +1608,8 @@ declare namespace LocalJSX {
         "content"?: string;
         "date"?: string;
     }
+    interface BlogArticleDragClone {
+    }
     interface BlogButton {
         "href"?: string;
         /**
@@ -1557,12 +1622,16 @@ declare namespace LocalJSX {
          */
         "variant"?: 'primary' | 'secondary';
     }
+    interface BlogButtonDragClone {
+    }
     interface BlogHeader {
         /**
           * @default 'Default Header'
          */
         "headerTitle"?: string;
         "subtitle"?: string;
+    }
+    interface BlogHeaderDragClone {
     }
     interface BlogImage {
         /**
@@ -1578,6 +1647,8 @@ declare namespace LocalJSX {
           * @default 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&h=600&fit=crop'
          */
         "src"?: string;
+    }
+    interface BlogImageDragClone {
     }
     /**
      * CanvasHeader Component
@@ -1901,6 +1972,8 @@ declare namespace LocalJSX {
     }
     interface DashboardWidget {
     }
+    interface DashboardWidgetDragClone {
+    }
     /**
      * GridBuilder Component
      * ======================
@@ -2032,7 +2105,11 @@ declare namespace LocalJSX {
          */
         "imageCount"?: number;
     }
+    interface ImageGalleryDragClone {
+    }
     interface LiveData {
+    }
+    interface LiveDataDragClone {
     }
     /**
      * Section Editor Panel Component
@@ -2099,9 +2176,13 @@ declare namespace LocalJSX {
     interface IntrinsicElements {
         "blog-app": BlogApp;
         "blog-article": BlogArticle;
+        "blog-article-drag-clone": BlogArticleDragClone;
         "blog-button": BlogButton;
+        "blog-button-drag-clone": BlogButtonDragClone;
         "blog-header": BlogHeader;
+        "blog-header-drag-clone": BlogHeaderDragClone;
         "blog-image": BlogImage;
+        "blog-image-drag-clone": BlogImageDragClone;
         "canvas-header": CanvasHeader;
         "canvas-section": CanvasSection;
         "canvas-section-viewer": CanvasSectionViewer;
@@ -2112,11 +2193,14 @@ declare namespace LocalJSX {
         "custom-drag-clone": CustomDragClone;
         "custom-palette-item": CustomPaletteItem;
         "dashboard-widget": DashboardWidget;
+        "dashboard-widget-drag-clone": DashboardWidgetDragClone;
         "grid-builder": GridBuilder;
         "grid-item-wrapper": GridItemWrapper;
         "grid-viewer": GridViewer;
         "image-gallery": ImageGallery;
+        "image-gallery-drag-clone": ImageGalleryDragClone;
         "live-data": LiveData;
+        "live-data-drag-clone": LiveDataDragClone;
         "section-editor-panel": SectionEditorPanel;
     }
 }
@@ -2284,9 +2368,13 @@ declare module "@stencil/core" {
              */
             "blog-app": LocalJSX.BlogApp & JSXBase.HTMLAttributes<HTMLBlogAppElement>;
             "blog-article": LocalJSX.BlogArticle & JSXBase.HTMLAttributes<HTMLBlogArticleElement>;
+            "blog-article-drag-clone": LocalJSX.BlogArticleDragClone & JSXBase.HTMLAttributes<HTMLBlogArticleDragCloneElement>;
             "blog-button": LocalJSX.BlogButton & JSXBase.HTMLAttributes<HTMLBlogButtonElement>;
+            "blog-button-drag-clone": LocalJSX.BlogButtonDragClone & JSXBase.HTMLAttributes<HTMLBlogButtonDragCloneElement>;
             "blog-header": LocalJSX.BlogHeader & JSXBase.HTMLAttributes<HTMLBlogHeaderElement>;
+            "blog-header-drag-clone": LocalJSX.BlogHeaderDragClone & JSXBase.HTMLAttributes<HTMLBlogHeaderDragCloneElement>;
             "blog-image": LocalJSX.BlogImage & JSXBase.HTMLAttributes<HTMLBlogImageElement>;
+            "blog-image-drag-clone": LocalJSX.BlogImageDragClone & JSXBase.HTMLAttributes<HTMLBlogImageDragCloneElement>;
             /**
              * CanvasHeader Component
              * ======================
@@ -2451,6 +2539,7 @@ declare module "@stencil/core" {
              */
             "custom-palette-item": LocalJSX.CustomPaletteItem & JSXBase.HTMLAttributes<HTMLCustomPaletteItemElement>;
             "dashboard-widget": LocalJSX.DashboardWidget & JSXBase.HTMLAttributes<HTMLDashboardWidgetElement>;
+            "dashboard-widget-drag-clone": LocalJSX.DashboardWidgetDragClone & JSXBase.HTMLAttributes<HTMLDashboardWidgetDragCloneElement>;
             /**
              * GridBuilder Component
              * ======================
@@ -2484,7 +2573,9 @@ declare module "@stencil/core" {
              */
             "grid-viewer": LocalJSX.GridViewer & JSXBase.HTMLAttributes<HTMLGridViewerElement>;
             "image-gallery": LocalJSX.ImageGallery & JSXBase.HTMLAttributes<HTMLImageGalleryElement>;
+            "image-gallery-drag-clone": LocalJSX.ImageGalleryDragClone & JSXBase.HTMLAttributes<HTMLImageGalleryDragCloneElement>;
             "live-data": LocalJSX.LiveData & JSXBase.HTMLAttributes<HTMLLiveDataElement>;
+            "live-data-drag-clone": LocalJSX.LiveDataDragClone & JSXBase.HTMLAttributes<HTMLLiveDataDragCloneElement>;
             /**
              * Section Editor Panel Component
              * ===============================
