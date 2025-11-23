@@ -761,6 +761,8 @@ export class CanvasSection {
             "drop-target": this.isDropTarget,
           }}
           id={this.canvasId}
+          role="region"
+          aria-label={this.canvasTitle || `Canvas ${this.canvasId}`}
           data-canvas-id={this.canvasId}
           style={{
             backgroundColor: this.backgroundColor || "#ffffff",

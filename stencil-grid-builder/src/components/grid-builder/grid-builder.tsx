@@ -1794,7 +1794,7 @@ export class GridBuilder {
 
     return (
       <Host ref={(el) => (this.el = el)}>
-        <div class="grid-builder-container">
+        <div class="grid-builder-container" role="application" aria-label="Grid builder">
           {/* Component Palette */}
           <div class="palette-area">
             <component-palette

@@ -381,7 +381,7 @@ export class ComponentPalette {
     }
 
     return (
-      <div class={paletteClasses}>
+      <div class={paletteClasses} role="region" aria-label="Component palette">
         {this.showHeader && <h2>Components</h2>}
 
         {this.components.map((component) => {
@@ -397,6 +397,8 @@ export class ComponentPalette {
               class={itemClasses}
               data-component-type={component.type}
               key={component.type}
+              role="button"
+              aria-label={`Add ${component.name} component to canvas`}
             >
               {component.renderPaletteItem
                 ? (() => {

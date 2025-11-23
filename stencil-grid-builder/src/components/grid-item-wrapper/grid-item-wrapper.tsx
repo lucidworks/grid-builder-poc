@@ -779,6 +779,8 @@ export class GridItemWrapper {
       <div
         class={itemClasses}
         id={this.item.id}
+        role="group"
+        aria-label={`${displayName} component`}
         data-canvas-id={this.item.canvasId}
         data-component-name={displayName}
         data-viewer-mode={this.viewerMode ? "true" : "false"}
@@ -789,10 +791,20 @@ export class GridItemWrapper {
         {/* Editing UI (hidden in viewer mode) */}
         {!this.viewerMode && [
           /* Drag Handle */
-          <div class="drag-handle" key="drag-handle" />,
+          <div
+            class="drag-handle"
+            key="drag-handle"
+            aria-label={`Drag ${displayName}`}
+            role="button"
+            aria-grabbed={false}
+          />,
 
           /* Item Header */
-          <div class="grid-item-header" key="header">
+          <div
+            class="grid-item-header"
+            key="header"
+            aria-label={`${displayName} component header`}
+          >
             {icon} {displayName}
           </div>,
 
@@ -800,6 +812,7 @@ export class GridItemWrapper {
           <div class="grid-item-controls" key="controls">
             <button
               class="grid-item-delete"
+              aria-label={`Delete ${displayName} component`}
               onClick={() => this.handleDelete(itemIdForDelete, canvasIdForDelete)}
             >
               ×
@@ -818,14 +831,62 @@ export class GridItemWrapper {
 
         {/* Resize Handles (hidden in viewer mode) */}
         {!this.viewerMode && [
-          <div class="resize-handle nw" key="resize-nw" />,
-          <div class="resize-handle ne" key="resize-ne" />,
-          <div class="resize-handle sw" key="resize-sw" />,
-          <div class="resize-handle se" key="resize-se" />,
-          <div class="resize-handle n" key="resize-n" />,
-          <div class="resize-handle s" key="resize-s" />,
-          <div class="resize-handle e" key="resize-e" />,
-          <div class="resize-handle w" key="resize-w" />,
+          <div
+            class="resize-handle nw"
+            key="resize-nw"
+            role="slider"
+            aria-label="Resize top-left corner"
+            tabindex={-1}
+          />,
+          <div
+            class="resize-handle ne"
+            key="resize-ne"
+            role="slider"
+            aria-label="Resize top-right corner"
+            tabindex={-1}
+          />,
+          <div
+            class="resize-handle sw"
+            key="resize-sw"
+            role="slider"
+            aria-label="Resize bottom-left corner"
+            tabindex={-1}
+          />,
+          <div
+            class="resize-handle se"
+            key="resize-se"
+            role="slider"
+            aria-label="Resize bottom-right corner"
+            tabindex={-1}
+          />,
+          <div
+            class="resize-handle n"
+            key="resize-n"
+            role="slider"
+            aria-label="Resize top edge"
+            tabindex={-1}
+          />,
+          <div
+            class="resize-handle s"
+            key="resize-s"
+            role="slider"
+            aria-label="Resize bottom edge"
+            tabindex={-1}
+          />,
+          <div
+            class="resize-handle e"
+            key="resize-e"
+            role="slider"
+            aria-label="Resize right edge"
+            tabindex={-1}
+          />,
+          <div
+            class="resize-handle w"
+            key="resize-w"
+            role="slider"
+            aria-label="Resize left edge"
+            tabindex={-1}
+          />,
         ]}
       </div>
     );
