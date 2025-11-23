@@ -1,4 +1,5 @@
 import { html } from "lit-html";
+import { reset } from "../../../services/state-manager";
 
 export default {
   title: "Components/Grid Viewer",
@@ -12,6 +13,7 @@ const sharedComponents = [
     icon: "📄",
     defaultSize: { width: 30, height: 4 },
     minSize: { width: 15, height: 3 },
+    // @ts-expect-error - itemId unused in simple demo component
     render: ({ itemId, config }) => {
       const div = document.createElement("div");
       div.style.cssText =
@@ -39,6 +41,7 @@ const sharedComponents = [
     icon: "📝",
     defaultSize: { width: 20, height: 6 },
     minSize: { width: 10, height: 4 },
+    // @ts-expect-error - itemId unused in simple demo component
     render: ({ itemId, config }) => {
       const div = document.createElement("div");
       div.style.cssText =
@@ -66,6 +69,7 @@ const sharedComponents = [
     icon: "🔘",
     defaultSize: { width: 12, height: 4 },
     minSize: { width: 8, height: 3 },
+    // @ts-expect-error - itemId unused in simple demo component
     render: ({ itemId, config }) => {
       const button = document.createElement("button");
       button.style.cssText =
@@ -163,6 +167,8 @@ const sampleExportedLayout = {
  * Notice there are NO editing controls - no drag handles, no resize handles, no delete buttons.
  */
 export const BasicViewer = (args) => {
+  // Reset state to clear any cached data from previous stories
+  reset();
   const viewerEl = document.createElement("grid-viewer");
   viewerEl.components = sharedComponents;
   viewerEl.initialState = sampleExportedLayout;
@@ -242,6 +248,8 @@ BasicViewer.argTypes = {
  * 3. Import to grid-viewer for display
  */
 export const ExportImportWorkflow = () => {
+  // Reset state to clear any cached data from previous stories
+  reset();
   // Unique ID for this story instance (prevents duplicates on hot reload)
   const storyId = `story-${Date.now()}`;
 
@@ -467,6 +475,8 @@ export const ExportImportWorkflow = () => {
  * Shows how the viewer handles responsive layouts with container-based viewport switching.
  */
 export const ResponsiveViewer = (args) => {
+  // Reset state to clear any cached data from previous stories
+  reset();
   const createViewer = (width, label) => {
     const viewerEl = document.createElement("grid-viewer");
     viewerEl.components = sharedComponents;
@@ -564,6 +574,8 @@ ResponsiveViewer.argTypes = {
  * Shows the absolute minimal viewer setup - just components, no extras.
  */
 export const MinimalViewer = (args) => {
+  // Reset state to clear any cached data from previous stories
+  reset();
   const viewerEl = document.createElement("grid-viewer");
   viewerEl.components = sharedComponents;
   viewerEl.initialState = sampleExportedLayout;
@@ -598,6 +610,8 @@ MinimalViewer.argTypes = {
  * Each section can have its own background color and components.
  */
 export const MultipleSections = () => {
+  // Reset state to clear any cached data from previous stories
+  reset();
   // Multi-section layout data
   const multiSectionLayout = {
     version: "1.0.0",
