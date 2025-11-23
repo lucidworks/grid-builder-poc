@@ -13,6 +13,7 @@
   "scripts": {
     "prebuild": "node -e \"const fs=require('fs');const ts=new Date().toISOString();fs.writeFileSync('src/utils/version.ts','export const BUILD_TIMESTAMP = \\'' + ts + '\\';\\n')\"",
     "build": "stencil build",
+    "postbuild": "node scripts/clean-demo-from-dist.js",
     "build:demo": "BUILD_DEMO=true stencil build --dev",
     "start": "stencil build --dev --watch --serve",
     "start:demo": "BUILD_DEMO=true stencil build --dev --watch --serve",
