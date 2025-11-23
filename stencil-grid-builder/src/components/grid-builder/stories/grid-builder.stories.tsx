@@ -1115,3 +1115,486 @@ export const UndoRedoDemo = () => {
     </div>
   `;
 };
+
+export const PluginSystemDemo = () => {
+  const builderEl = document.createElement('grid-builder');
+  builderEl.components = simpleComponents;
+
+  builderEl.initialState = {
+    canvases: {
+      'canvas-1': {
+        items: [
+          {
+            id: 'item-1',
+            canvasId: 'canvas-1',
+            type: 'header',
+            name: 'Header',
+            layouts: {
+              desktop: { x: 0, y: 0, width: 20, height: 4 },
+              mobile: { x: null, y: null, width: null, height: null, customized: false },
+            },
+            zIndex: 1,
+            config: { title: 'Plugin Demo' },
+          },
+        ],
+        zIndexCounter: 2,
+      },
+    },
+  };
+
+  // Activity log display
+  const logDiv = document.createElement('div');
+  logDiv.style.cssText = `
+    padding: 15px;
+    background: #f8f9fa;
+    border-radius: 4px;
+    margin: 20px 0;
+    font-family: monospace;
+    font-size: 12px;
+    max-height: 200px;
+    overflow-y: auto;
+  `;
+  logDiv.innerHTML = '<strong>Plugin Activity Log:</strong><br/>';
+
+  const addLog = (message: string) => {
+    const timestamp = new Date().toLocaleTimeString();
+    logDiv.innerHTML += `[${timestamp}] ${message}<br/>`;
+    logDiv.scrollTop = logDiv.scrollHeight;
+  };
+
+  // Example plugin that logs all events
+  const loggingPlugin = {
+    name: 'logging-plugin',
+    init: (api: any) => {
+      addLog('✅ Plugin initialized');
+
+      // Listen to various events
+      api.on('componentAdded', (data: any) => {
+        addLog(`➕ Component added: ${data.item.type} (${data.item.id})`);
+      });
+
+      api.on('componentDeleted', (data: any) => {
+        addLog(`🗑️ Component deleted: ${data.itemId}`);
+      });
+
+      api.on('componentDragged', (data: any) => {
+        addLog(`🔄 Component moved: ${data.item.id} to (${data.newPosition.x}, ${data.newPosition.y})`);
+      });
+
+      api.on('componentResized', (data: any) => {
+        addLog(`↔️ Component resized: ${data.item.id} to ${data.newSize.width}×${data.newSize.height}`);
+      });
+
+      api.on('canvasActivated', (data: any) => {
+        addLog(`🎯 Canvas activated: ${data.canvasId}`);
+      });
+
+      api.on('undoExecuted', () => {
+        addLog('⏪ Undo executed');
+      });
+
+      api.on('redoExecuted', () => {
+        addLog('⏩ Redo executed');
+      });
+    },
+    destroy: () => {
+      addLog('❌ Plugin destroyed');
+    },
+  };
+
+  builderEl.plugins = [loggingPlugin];
+
+  return html`
+    <div style="font-family: system-ui, -apple-system, sans-serif; padding: 20px;">
+      <h2 style="margin-top: 0; color: #333;">Plugin System Demo</h2>
+      <p style="color: #666; margin-bottom: 20px;">
+        Demonstrates the plugin system. The logging plugin below tracks all builder events.
+        <br />
+        Try adding, moving, resizing, or deleting components to see the plugin in action!
+      </p>
+
+      ${logDiv}
+
+      <div style="width: 100%; height: 500px; border: 2px solid #17a2b8; border-radius: 8px; overflow: hidden;">
+        ${builderEl}
+      </div>
+
+      <div style="margin-top: 20px; padding: 20px; background: #e1f5fe; border-radius: 8px; border-left: 4px solid #0288d1;">
+        <h4 style="margin-top: 0; color: #01579b;">🔌 Plugin System Features</h4>
+        <ul style="margin-bottom: 0; padding-left: 20px; line-height: 1.8;">
+          <li><strong>Event Listening:</strong> Plugins can subscribe to builder events</li>
+          <li><strong>API Access:</strong> Full access to GridBuilderAPI methods</li>
+          <li><strong>Lifecycle Hooks:</strong> init() on mount, destroy() on unmount</li>
+          <li><strong>Multiple Plugins:</strong> Run multiple plugins simultaneously</li>
+          <li><strong>Use Cases:</strong> Analytics, auto-save, validation, AI assistance</li>
+        </ul>
+      </div>
+
+      <div style="margin-top: 20px; padding: 20px; background: #f3e5f5; border-radius: 8px; border-left: 4px solid #9c27b0;">
+        <h4 style="margin-top: 0; color: #4a148c;">💡 Plugin Implementation Pattern</h4>
+        <pre style="background: white; padding: 15px; border-radius: 4px; overflow-x: auto; font-size: 12px; line-height: 1.4; margin: 0;">
+const myPlugin = {
+  name: 'my-plugin',
+  init: (api) => {
+    // Subscribe to events
+    api.on('componentAdded', (data) => {
+      console.log('New component:', data.item);
+    });
+
+    // Access state
+    const state = api.getState();
+
+    // Programmatic control
+    api.setActiveCanvas('canvas-1');
+  },
+  destroy: () => {
+    // Cleanup resources
+  }
+};</pre>
+      </div>
+    </div>
+  `;
+};
+
+export const APIIntegrationDemo = () => {
+  const builderEl = document.createElement('grid-builder');
+  builderEl.components = simpleComponents;
+
+  builderEl.initialState = {
+    canvases: {
+      'canvas-1': {
+        items: [],
+        zIndexCounter: 0,
+      },
+    },
+  };
+
+  // Status display
+  const statusDiv = document.createElement('div');
+  statusDiv.style.cssText = `
+    padding: 15px;
+    background: #e7f3ff;
+    border-radius: 4px;
+    margin: 20px 0;
+    font-family: monospace;
+    font-size: 13px;
+  `;
+  statusDiv.innerHTML = 'API Status: Ready';
+
+  // Control buttons
+  const controlsDiv = document.createElement('div');
+  controlsDiv.style.cssText = 'margin: 20px 0;';
+
+  const addHeaderBtn = document.createElement('button');
+  addHeaderBtn.textContent = '➕ Add Header';
+  addHeaderBtn.style.cssText = `
+    background: #28a745;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 4px;
+    cursor: pointer;
+    margin: 5px;
+  `;
+  addHeaderBtn.onclick = async () => {
+    const api = (window as any).gridBuilderAPI;
+    if (api) {
+      const itemId = await api.addComponent('canvas-1', 'header', {
+        x: Math.floor(Math.random() * 30),
+        y: Math.floor(Math.random() * 20),
+        width: 20,
+        height: 4,
+      }, { title: 'Programmatically Added' });
+      statusDiv.innerHTML = `✅ Added header with ID: ${itemId}`;
+    }
+  };
+
+  const getStateBtn = document.createElement('button');
+  getStateBtn.textContent = '📊 Get State';
+  getStateBtn.style.cssText = addHeaderBtn.style.cssText.replace('#28a745', '#007bff');
+  getStateBtn.onclick = async () => {
+    const api = (window as any).gridBuilderAPI;
+    if (api) {
+      const state = api.getState();
+      const itemCount = state.canvases['canvas-1']?.items.length || 0;
+      statusDiv.innerHTML = `📊 Current state: ${itemCount} items in canvas`;
+    }
+  };
+
+  const undoBtn = document.createElement('button');
+  undoBtn.textContent = '⏪ Undo';
+  undoBtn.style.cssText = addHeaderBtn.style.cssText.replace('#28a745', '#ffc107');
+  undoBtn.onclick = async () => {
+    const api = (window as any).gridBuilderAPI;
+    if (api) {
+      await api.undo();
+      statusDiv.innerHTML = '⏪ Undo executed';
+    }
+  };
+
+  const clearBtn = document.createElement('button');
+  clearBtn.textContent = '🗑️ Clear All';
+  clearBtn.style.cssText = addHeaderBtn.style.cssText.replace('#28a745', '#dc3545');
+  clearBtn.onclick = async () => {
+    const api = (window as any).gridBuilderAPI;
+    if (api) {
+      const state = api.getState();
+      const itemIds = state.canvases['canvas-1']?.items.map(item => item.id) || [];
+      if (itemIds.length > 0) {
+        await api.deleteComponentsBatch(itemIds);
+        statusDiv.innerHTML = `🗑️ Cleared ${itemIds.length} items`;
+      }
+    }
+  };
+
+  controlsDiv.appendChild(addHeaderBtn);
+  controlsDiv.appendChild(getStateBtn);
+  controlsDiv.appendChild(undoBtn);
+  controlsDiv.appendChild(clearBtn);
+
+  return html`
+    <div style="font-family: system-ui, -apple-system, sans-serif; padding: 20px;">
+      <h2 style="margin-top: 0; color: #333;">API Integration Demo</h2>
+      <p style="color: #666; margin-bottom: 20px;">
+        Demonstrates programmatic control via the GridBuilderAPI.
+        <br />
+        The grid-builder exposes its API at <code>window.gridBuilderAPI</code> for external control.
+      </p>
+
+      ${statusDiv}
+      ${controlsDiv}
+
+      <div style="width: 100%; height: 500px; border: 2px solid #007bff; border-radius: 8px; overflow: hidden;">
+        ${builderEl}
+      </div>
+
+      <div style="margin-top: 20px; padding: 20px; background: #d1ecf1; border-radius: 8px; border-left: 4px solid #0c5460;">
+        <h4 style="margin-top: 0; color: #0c5460;">🔗 API Access Methods</h4>
+        <ul style="margin-bottom: 0; padding-left: 20px; line-height: 1.8;">
+          <li><strong>Default:</strong> <code>window.gridBuilderAPI</code> (automatic)</li>
+          <li><strong>Custom:</strong> Set via <code>apiRef</code> prop: <code>&lt;grid-builder apiRef={{ target: myObject, key: 'api' }}&gt;</code></li>
+          <li><strong>Plugin:</strong> Receive API object in plugin's <code>init(api)</code> method</li>
+        </ul>
+      </div>
+
+      <div style="margin-top: 20px; padding: 20px; background: #fff3cd; border-radius: 8px; border-left: 4px solid #856404;">
+        <h4 style="margin-top: 0; color: #856404;">📋 Available API Methods</h4>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 13px;">
+          <div>
+            <strong>Component Management:</strong>
+            <ul style="margin: 5px 0; padding-left: 20px;">
+              <li><code>addComponent()</code></li>
+              <li><code>deleteComponent()</code></li>
+              <li><code>updateConfig()</code></li>
+              <li><code>addComponentsBatch()</code></li>
+              <li><code>deleteComponentsBatch()</code></li>
+            </ul>
+          </div>
+          <div>
+            <strong>State & Canvas:</strong>
+            <ul style="margin: 5px 0; padding-left: 20px;">
+              <li><code>getState()</code></li>
+              <li><code>addCanvas()</code></li>
+              <li><code>removeCanvas()</code></li>
+              <li><code>setActiveCanvas()</code></li>
+              <li><code>getActiveCanvas()</code></li>
+            </ul>
+          </div>
+          <div>
+            <strong>History:</strong>
+            <ul style="margin: 5px 0; padding-left: 20px;">
+              <li><code>undo()</code></li>
+              <li><code>redo()</code></li>
+              <li><code>canUndo()</code></li>
+              <li><code>canRedo()</code></li>
+            </ul>
+          </div>
+          <div>
+            <strong>Events:</strong>
+            <ul style="margin: 5px 0; padding-left: 20px;">
+              <li><code>on(event, callback)</code></li>
+              <li><code>off(event, callback)</code></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+};
+
+export const ExportImportWorkflow = () => {
+  const builderEl = document.createElement('grid-builder');
+  builderEl.components = simpleComponents;
+
+  builderEl.initialState = {
+    canvases: {
+      'canvas-1': {
+        items: [
+          {
+            id: 'sample-1',
+            canvasId: 'canvas-1',
+            type: 'header',
+            name: 'Header',
+            layouts: {
+              desktop: { x: 0, y: 0, width: 30, height: 4 },
+              mobile: { x: null, y: null, width: null, height: null, customized: false },
+            },
+            zIndex: 1,
+            config: { title: 'Sample Layout' },
+          },
+          {
+            id: 'sample-2',
+            canvasId: 'canvas-1',
+            type: 'text',
+            name: 'Text',
+            layouts: {
+              desktop: { x: 0, y: 5, width: 20, height: 6 },
+              mobile: { x: null, y: null, width: null, height: null, customized: false },
+            },
+            zIndex: 2,
+            config: { text: 'Export this layout to JSON and reload it later!' },
+          },
+        ],
+        zIndexCounter: 3,
+      },
+    },
+  };
+
+  // Export display
+  const exportDiv = document.createElement('div');
+  exportDiv.style.cssText = `
+    padding: 15px;
+    background: #f8f9fa;
+    border-radius: 4px;
+    margin: 20px 0;
+    font-family: monospace;
+    font-size: 11px;
+    max-height: 200px;
+    overflow-y: auto;
+    white-space: pre-wrap;
+    word-break: break-all;
+  `;
+  exportDiv.textContent = 'Click "Export State" to see JSON output...';
+
+  // Status display
+  const statusDiv = document.createElement('div');
+  statusDiv.style.cssText = `
+    padding: 10px;
+    background: #e7f3ff;
+    border-radius: 4px;
+    margin: 10px 0;
+    font-size: 13px;
+  `;
+  statusDiv.textContent = 'Ready to export/import';
+
+  // Control buttons
+  const exportBtn = document.createElement('button');
+  exportBtn.textContent = '📤 Export State';
+  exportBtn.style.cssText = `
+    background: #28a745;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 4px;
+    cursor: pointer;
+    margin: 5px;
+  `;
+  exportBtn.onclick = async () => {
+    const api = (window as any).gridBuilderAPI;
+    if (api) {
+      const exported = await builderEl.exportState();
+      exportDiv.textContent = JSON.stringify(exported, null, 2);
+      statusDiv.textContent = '✅ State exported successfully';
+      statusDiv.style.background = '#d4edda';
+    }
+  };
+
+  const importBtn = document.createElement('button');
+  importBtn.textContent = '📥 Re-Import State';
+  importBtn.style.cssText = exportBtn.style.cssText.replace('#28a745', '#007bff');
+  importBtn.onclick = async () => {
+    try {
+      const exported = JSON.parse(exportDiv.textContent);
+      await builderEl.importState(exported);
+      statusDiv.textContent = '✅ State imported successfully';
+      statusDiv.style.background = '#d4edda';
+    } catch (e) {
+      statusDiv.textContent = '❌ Import failed: Invalid JSON';
+      statusDiv.style.background = '#f8d7da';
+    }
+  };
+
+  const clearBtn = document.createElement('button');
+  clearBtn.textContent = '🗑️ Clear Canvas';
+  clearBtn.style.cssText = exportBtn.style.cssText.replace('#28a745', '#dc3545');
+  clearBtn.onclick = async () => {
+    const api = (window as any).gridBuilderAPI;
+    if (api) {
+      const state = api.getState();
+      const itemIds = state.canvases['canvas-1']?.items.map(item => item.id) || [];
+      await api.deleteComponentsBatch(itemIds);
+      statusDiv.textContent = '🗑️ Canvas cleared - now try re-importing!';
+      statusDiv.style.background = '#fff3cd';
+    }
+  };
+
+  const copyBtn = document.createElement('button');
+  copyBtn.textContent = '📋 Copy to Clipboard';
+  copyBtn.style.cssText = exportBtn.style.cssText.replace('#28a745', '#6c757d');
+  copyBtn.onclick = () => {
+    navigator.clipboard.writeText(exportDiv.textContent);
+    statusDiv.textContent = '📋 Copied to clipboard!';
+    statusDiv.style.background = '#d1ecf1';
+  };
+
+  return html`
+    <div style="font-family: system-ui, -apple-system, sans-serif; padding: 20px;">
+      <h2 style="margin-top: 0; color: #333;">Export/Import Workflow</h2>
+      <p style="color: #666; margin-bottom: 20px;">
+        Demonstrates persisting and restoring layouts. Build a layout, export it as JSON, then re-import it later.
+        <br />
+        <strong>Try it:</strong> Add/modify components, export, clear canvas, then re-import!
+      </p>
+
+      ${statusDiv}
+
+      <div style="margin: 10px 0;">
+        ${exportBtn}
+        ${importBtn}
+        ${clearBtn}
+        ${copyBtn}
+      </div>
+
+      <div style="width: 100%; height: 400px; border: 2px solid #28a745; border-radius: 8px; overflow: hidden; margin: 20px 0;">
+        ${builderEl}
+      </div>
+
+      <div style="margin-top: 10px;">
+        <strong style="display: block; margin-bottom: 10px;">Exported JSON:</strong>
+        ${exportDiv}
+      </div>
+
+      <div style="margin-top: 20px; padding: 20px; background: #d4edda; border-radius: 8px; border-left: 4px solid #28a745;">
+        <h4 style="margin-top: 0; color: #155724;">💾 Export Format</h4>
+        <ul style="margin-bottom: 0; padding-left: 20px; line-height: 1.8;">
+          <li><strong>Version:</strong> Schema version for forward compatibility</li>
+          <li><strong>Canvases:</strong> All canvas sections with items</li>
+          <li><strong>Viewport:</strong> Current desktop/mobile view</li>
+          <li><strong>Metadata:</strong> Optional name, description, timestamps</li>
+          <li><strong>Portable:</strong> JSON format works across different instances</li>
+        </ul>
+      </div>
+
+      <div style="margin-top: 20px; padding: 20px; background: #cfe2ff; border-radius: 8px; border-left: 4px solid #0d6efd;">
+        <h4 style="margin-top: 0; color: #084298;">🔄 Use Cases</h4>
+        <ul style="margin-bottom: 0; padding-left: 20px; line-height: 1.8;">
+          <li><strong>Persistence:</strong> Save layouts to database/localStorage</li>
+          <li><strong>Templates:</strong> Pre-built layouts users can import</li>
+          <li><strong>Versioning:</strong> Track layout changes over time</li>
+          <li><strong>Duplication:</strong> Clone layouts between projects</li>
+          <li><strong>Migration:</strong> Move layouts between environments</li>
+        </ul>
+      </div>
+    </div>
+  `;
+};
