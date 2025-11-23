@@ -19,6 +19,11 @@ const sampleComponents = [
         <h3 style={{ margin: '0', fontSize: '16px' }}>Header Component</h3>
       </div>
     ),
+    renderDragClone: () => (
+      <div style={{ padding: '12px', background: '#f0f0f0', borderRadius: '4px', height: '100%', opacity: '0.8' }}>
+        <h3 style={{ margin: '0', fontSize: '16px' }}>📄 Header</h3>
+      </div>
+    ),
   },
   {
     type: 'text',
@@ -29,6 +34,11 @@ const sampleComponents = [
     render: () => (
       <div style={{ padding: '10px', background: '#fff', border: '1px solid #ddd', borderRadius: '4px', height: '100%' }}>
         <p style={{ margin: '0', fontSize: '13px', lineHeight: '1.4' }}>Text Component</p>
+      </div>
+    ),
+    renderDragClone: () => (
+      <div style={{ padding: '10px', background: '#fff', border: '1px solid #ddd', borderRadius: '4px', height: '100%', opacity: '0.8' }}>
+        <p style={{ margin: '0', fontSize: '13px', lineHeight: '1.4' }}>📝 Text Block</p>
       </div>
     ),
   },
@@ -53,22 +63,71 @@ const sampleComponents = [
         Button Component
       </button>
     ),
+    renderDragClone: () => (
+      <button style={{
+        padding: '8px 16px',
+        background: '#007bff',
+        color: 'white',
+        border: 'none',
+        borderRadius: '4px',
+        cursor: 'pointer',
+        fontSize: '14px',
+        width: '100%',
+        height: '100%',
+        opacity: '0.8',
+      }}>
+        🔘 Button
+      </button>
+    ),
   },
 ];
 
-export const BasicPalette = () => {
+export const BasicPalette = (args) => {
   // Create element and set props
   const paletteEl = document.createElement('component-palette');
   paletteEl.components = sampleComponents;
 
   return html`
-    <div style="padding: 20px; height: 500px;">
+    <div style="padding: ${args.padding}; height: ${args.height}; background: ${args.backgroundColor};">
       ${paletteEl}
     </div>
   `;
 };
 
-export const WithCustomComponents = () => {
+BasicPalette.args = {
+  padding: '20px',
+  height: '500px',
+  backgroundColor: 'transparent',
+};
+
+BasicPalette.argTypes = {
+  padding: {
+    control: 'text',
+    description: 'Container padding',
+    table: {
+      category: 'Container',
+      defaultValue: { summary: '20px' },
+    },
+  },
+  height: {
+    control: 'text',
+    description: 'Container height',
+    table: {
+      category: 'Container',
+      defaultValue: { summary: '500px' },
+    },
+  },
+  backgroundColor: {
+    control: 'color',
+    description: 'Container background color',
+    table: {
+      category: 'Container',
+      defaultValue: { summary: 'transparent' },
+    },
+  },
+};
+
+export const WithCustomComponents = (args) => {
   const customComponents = [
     {
       type: 'hero',
@@ -97,8 +156,41 @@ export const WithCustomComponents = () => {
   paletteEl.components = customComponents;
 
   return html`
-    <div style="padding: 20px; height: 500px;">
+    <div style="padding: ${args.padding}; height: ${args.height}; background: ${args.backgroundColor};">
       ${paletteEl}
     </div>
   `;
+};
+
+WithCustomComponents.args = {
+  padding: '20px',
+  height: '500px',
+  backgroundColor: '#f8f9fa',
+};
+
+WithCustomComponents.argTypes = {
+  padding: {
+    control: 'text',
+    description: 'Container padding',
+    table: {
+      category: 'Container',
+      defaultValue: { summary: '20px' },
+    },
+  },
+  height: {
+    control: 'text',
+    description: 'Container height',
+    table: {
+      category: 'Container',
+      defaultValue: { summary: '500px' },
+    },
+  },
+  backgroundColor: {
+    control: 'color',
+    description: 'Container background color',
+    table: {
+      category: 'Container',
+      defaultValue: { summary: '#f8f9fa' },
+    },
+  },
 };

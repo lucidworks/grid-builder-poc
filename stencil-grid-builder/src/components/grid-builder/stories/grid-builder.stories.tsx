@@ -21,6 +21,12 @@ const simpleComponents = [
         <h3 style={{ margin: '0', fontSize: '16px' }}>{config?.title || 'Header'}</h3>
       </div>
     ),
+    // Drag clone shows simplified preview during drag
+    renderDragClone: () => (
+      <div style={{ padding: '12px', background: '#f0f0f0', borderRadius: '4px', height: '100%', opacity: '0.8' }}>
+        <h3 style={{ margin: '0', fontSize: '16px' }}>📄 Header</h3>
+      </div>
+    ),
   },
   {
     type: 'text',
@@ -32,6 +38,12 @@ const simpleComponents = [
     render: ({ config }) => (
       <div style={{ padding: '10px', background: '#fff', border: '1px solid #ddd', borderRadius: '4px', height: '100%' }}>
         <p style={{ margin: '0', fontSize: '13px', lineHeight: '1.4' }}>{config?.text || 'Sample text content.'}</p>
+      </div>
+    ),
+    // Drag clone shows simplified preview during drag
+    renderDragClone: () => (
+      <div style={{ padding: '10px', background: '#fff', border: '1px solid #ddd', borderRadius: '4px', height: '100%', opacity: '0.8' }}>
+        <p style={{ margin: '0', fontSize: '13px', lineHeight: '1.4' }}>📝 Text Block</p>
       </div>
     ),
   },
@@ -59,27 +71,97 @@ const simpleComponents = [
         {config?.label || 'Click Me'}
       </button>
     ),
+    // Drag clone shows simplified preview during drag
+    renderDragClone: () => (
+      <button
+        style={{
+          padding: '8px 16px',
+          background: '#007bff',
+          color: 'white',
+          border: 'none',
+          borderRadius: '4px',
+          cursor: 'pointer',
+          fontSize: '14px',
+          width: '100%',
+          height: '100%',
+          opacity: '0.8',
+        }}
+      >
+        🔘 Button
+      </button>
+    ),
   },
 ];
 
-export const BasicBuilder = () => {
+export const BasicBuilder = (args) => {
   const builderEl = document.createElement('grid-builder');
   builderEl.components = simpleComponents;
 
+  // Apply config from controls
+  if (args.gridSizePercent || args.snapToGrid !== undefined || args.showGridLines !== undefined) {
+    builderEl.config = {
+      gridSizePercent: args.gridSizePercent || 2,
+      snapToGrid: args.snapToGrid ?? true,
+      showGridLines: args.showGridLines ?? false,
+    };
+  }
+
   return html`
-    <div style="width: 100%; height: 600px;">
+    <div style="width: 100%; height: ${args.height || '600px'};">
       ${builderEl}
     </div>
   `;
 };
 
-export const WithCustomTheme = () => {
+BasicBuilder.args = {
+  height: '600px',
+  gridSizePercent: 2,
+  snapToGrid: true,
+  showGridLines: false,
+};
+
+BasicBuilder.argTypes = {
+  height: {
+    control: 'text',
+    description: 'Container height',
+    table: {
+      category: 'Container',
+      defaultValue: { summary: '600px' },
+    },
+  },
+  gridSizePercent: {
+    control: { type: 'range', min: 1, max: 5, step: 0.5 },
+    description: 'Grid size as percentage of canvas width (2% = 50 units)',
+    table: {
+      category: 'Grid Config',
+      defaultValue: { summary: 2 },
+    },
+  },
+  snapToGrid: {
+    control: 'boolean',
+    description: 'Enable snap-to-grid during drag and resize',
+    table: {
+      category: 'Grid Config',
+      defaultValue: { summary: true },
+    },
+  },
+  showGridLines: {
+    control: 'boolean',
+    description: 'Show visual grid lines on canvas',
+    table: {
+      category: 'Grid Config',
+      defaultValue: { summary: false },
+    },
+  },
+};
+
+export const WithCustomTheme = (args) => {
   const builderEl = document.createElement('grid-builder');
   builderEl.components = simpleComponents;
   builderEl.theme = {
-    primaryColor: '#ff6b6b',
-    paletteBackground: '#fff5f5',
-    selectionColor: '#ff6b6b',
+    primaryColor: args.primaryColor,
+    paletteBackground: args.paletteBackground,
+    selectionColor: args.selectionColor,
   };
 
   return html`
@@ -89,15 +171,48 @@ export const WithCustomTheme = () => {
   `;
 };
 
-export const WithCustomGridConfig = () => {
+WithCustomTheme.args = {
+  primaryColor: '#ff6b6b',
+  paletteBackground: '#fff5f5',
+  selectionColor: '#ff6b6b',
+};
+
+WithCustomTheme.argTypes = {
+  primaryColor: {
+    control: 'color',
+    description: 'Primary theme color for UI elements',
+    table: {
+      category: 'Theme',
+      defaultValue: { summary: '#ff6b6b' },
+    },
+  },
+  paletteBackground: {
+    control: 'color',
+    description: 'Background color for component palette',
+    table: {
+      category: 'Theme',
+      defaultValue: { summary: '#fff5f5' },
+    },
+  },
+  selectionColor: {
+    control: 'color',
+    description: 'Color for selected item outline',
+    table: {
+      category: 'Theme',
+      defaultValue: { summary: '#ff6b6b' },
+    },
+  },
+};
+
+export const WithCustomGridConfig = (args) => {
   const builderEl = document.createElement('grid-builder');
   builderEl.components = simpleComponents;
   builderEl.config = {
-    gridSizePercent: 3, // 3% grid (33 units per 100%)
-    minGridSize: 15,
-    maxGridSize: 60,
-    snapToGrid: true,
-    showGridLines: true,
+    gridSizePercent: args.gridSizePercent,
+    minGridSize: args.minGridSize,
+    maxGridSize: args.maxGridSize,
+    snapToGrid: args.snapToGrid,
+    showGridLines: args.showGridLines,
   };
 
   return html`
@@ -105,6 +220,57 @@ export const WithCustomGridConfig = () => {
       ${builderEl}
     </div>
   `;
+};
+
+WithCustomGridConfig.args = {
+  gridSizePercent: 3,
+  minGridSize: 15,
+  maxGridSize: 60,
+  snapToGrid: true,
+  showGridLines: true,
+};
+
+WithCustomGridConfig.argTypes = {
+  gridSizePercent: {
+    control: { type: 'range', min: 1, max: 5, step: 0.5 },
+    description: 'Grid size as percentage of canvas width',
+    table: {
+      category: 'Grid Config',
+      defaultValue: { summary: 3 },
+    },
+  },
+  minGridSize: {
+    control: { type: 'range', min: 10, max: 30, step: 5 },
+    description: 'Minimum grid size in pixels (prevents too-small grids)',
+    table: {
+      category: 'Grid Config',
+      defaultValue: { summary: 15 },
+    },
+  },
+  maxGridSize: {
+    control: { type: 'range', min: 40, max: 100, step: 10 },
+    description: 'Maximum grid size in pixels (prevents too-large grids)',
+    table: {
+      category: 'Grid Config',
+      defaultValue: { summary: 60 },
+    },
+  },
+  snapToGrid: {
+    control: 'boolean',
+    description: 'Enable snap-to-grid during drag and resize',
+    table: {
+      category: 'Grid Config',
+      defaultValue: { summary: true },
+    },
+  },
+  showGridLines: {
+    control: 'boolean',
+    description: 'Show visual grid lines on canvas',
+    table: {
+      category: 'Grid Config',
+      defaultValue: { summary: true },
+    },
+  },
 };
 
 export const WithInitialState = () => {

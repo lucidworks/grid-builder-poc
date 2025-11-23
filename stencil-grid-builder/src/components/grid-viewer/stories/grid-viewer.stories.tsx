@@ -21,6 +21,15 @@ const sharedComponents = [
       div.appendChild(h3);
       return div;
     },
+    renderDragClone: () => {
+      const div = document.createElement('div');
+      div.style.cssText = 'padding: 12px; background: #f0f0f0; border-radius: 4px; height: 100%; opacity: 0.8;';
+      const h3 = document.createElement('h3');
+      h3.style.cssText = 'margin: 0; font-size: 16px;';
+      h3.textContent = '📄 Header';
+      div.appendChild(h3);
+      return div;
+    },
   },
   {
     type: 'text',
@@ -37,6 +46,15 @@ const sharedComponents = [
       div.appendChild(p);
       return div;
     },
+    renderDragClone: () => {
+      const div = document.createElement('div');
+      div.style.cssText = 'padding: 10px; background: #fff; border: 1px solid #ddd; border-radius: 4px; height: 100%; opacity: 0.8;';
+      const p = document.createElement('p');
+      p.style.cssText = 'margin: 0; font-size: 13px; line-height: 1.4;';
+      p.textContent = '📝 Text Block';
+      div.appendChild(p);
+      return div;
+    },
   },
   {
     type: 'button',
@@ -48,6 +66,12 @@ const sharedComponents = [
       const button = document.createElement('button');
       button.style.cssText = 'padding: 8px 16px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; width: 100%; height: 100%;';
       button.textContent = config?.label || 'Click Me';
+      return button;
+    },
+    renderDragClone: () => {
+      const button = document.createElement('button');
+      button.style.cssText = 'padding: 8px 16px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; width: 100%; height: 100%; opacity: 0.8;';
+      button.textContent = '🔘 Button';
       return button;
     },
   },
@@ -112,7 +136,7 @@ const sampleExportedLayout = {
  * This story demonstrates the grid-viewer component displaying a pre-exported layout.
  * Notice there are NO editing controls - no drag handles, no resize handles, no delete buttons.
  */
-export const BasicViewer = () => {
+export const BasicViewer = (args) => {
   const viewerEl = document.createElement('grid-viewer');
   viewerEl.components = sharedComponents;
   viewerEl.initialState = sampleExportedLayout;
@@ -125,11 +149,53 @@ export const BasicViewer = () => {
         <br />
         <strong>Bundle size:</strong> ~30KB (vs ~150KB for full builder with interact.js)
       </p>
-      <div style="width: 100%; height: 500px; border: 2px solid #007bff; border-radius: 8px; overflow: hidden;">
+      <div style="width: 100%; height: ${args.height}; border: ${args.borderWidth} solid ${args.borderColor}; border-radius: ${args.borderRadius}; overflow: hidden;">
         ${viewerEl}
       </div>
     </div>
   `;
+};
+
+BasicViewer.args = {
+  height: '500px',
+  borderWidth: '2px',
+  borderColor: '#007bff',
+  borderRadius: '8px',
+};
+
+BasicViewer.argTypes = {
+  height: {
+    control: 'text',
+    description: 'Container height',
+    table: {
+      category: 'Container',
+      defaultValue: { summary: '500px' },
+    },
+  },
+  borderWidth: {
+    control: 'text',
+    description: 'Border width',
+    table: {
+      category: 'Styling',
+      defaultValue: { summary: '2px' },
+    },
+  },
+  borderColor: {
+    control: 'color',
+    description: 'Border color',
+    table: {
+      category: 'Styling',
+      defaultValue: { summary: '#007bff' },
+    },
+  },
+  borderRadius: {
+    control: 'text',
+    description: 'Border radius',
+    table: {
+      category: 'Styling',
+      defaultValue: { summary: '8px' },
+    },
+  },
 };
 
 /**
@@ -327,7 +393,7 @@ export const ExportImportWorkflow = () => {
  *
  * Shows how the viewer handles responsive layouts with container-based viewport switching.
  */
-export const ResponsiveViewer = () => {
+export const ResponsiveViewer = (args) => {
   const createViewer = (width, label) => {
     const viewerEl = document.createElement('grid-viewer');
     viewerEl.components = sharedComponents;
@@ -357,8 +423,8 @@ export const ResponsiveViewer = () => {
         <strong>Breakpoint: 768px</strong> — Check the browser console for viewport switch messages!
       </p>
 
-      ${createViewer(900, '✅ Desktop Viewport (900px container)')}
-      ${createViewer(600, '📱 Mobile Viewport (600px container)')}
+      ${createViewer(args.desktopWidth, '✅ Desktop Viewport (900px container)')}
+      ${createViewer(args.mobileWidth, '📱 Mobile Viewport (600px container)')}
 
       <div style="padding: 20px; background: #f8f9fa; border-radius: 8px; border-left: 4px solid #17a2b8;">
         <h4 style="margin-top: 0; color: #17a2b8;">📊 Container-Based Responsive Design</h4>
@@ -373,21 +439,60 @@ export const ResponsiveViewer = () => {
   `;
 };
 
+ResponsiveViewer.args = {
+  desktopWidth: 900,
+  mobileWidth: 600,
+};
+
+ResponsiveViewer.argTypes = {
+  desktopWidth: {
+    control: { type: 'range', min: 768, max: 1200, step: 50 },
+    description: 'Desktop container width (≥768px triggers desktop viewport)',
+    table: {
+      category: 'Container Sizes',
+      defaultValue: { summary: 900 },
+    },
+  },
+  mobileWidth: {
+    control: { type: 'range', min: 320, max: 767, step: 50 },
+    description: 'Mobile container width (<768px triggers mobile viewport)',
+    table: {
+      category: 'Container Sizes',
+      defaultValue: { summary: 600 },
+    },
+  },
+};
+
 /**
  * Minimal Viewer - Just Components
  *
  * Shows the absolute minimal viewer setup - just components, no extras.
  */
-export const MinimalViewer = () => {
+export const MinimalViewer = (args) => {
   const viewerEl = document.createElement('grid-viewer');
   viewerEl.components = sharedComponents;
   viewerEl.initialState = sampleExportedLayout;
 
   return html`
-    <div style="width: 100%; height: 600px;">
+    <div style="width: 100%; height: ${args.height};">
       ${viewerEl}
     </div>
   `;
+};
+
+MinimalViewer.args = {
+  height: '600px',
+};
+
+MinimalViewer.argTypes = {
+  height: {
+    control: 'text',
+    description: 'Container height',
+    table: {
+      category: 'Container',
+      defaultValue: { summary: '600px' },
+    },
+  },
 };
 
 /**
