@@ -828,11 +828,18 @@ export class GridBuilder {
           });
           event.preventDefault();
 
+          // Capture the item ID and canvas ID before deletion
+          const deletedItemId = gridState.selectedItemId;
+          const deletedCanvasId = gridState.selectedCanvasId;
+
           // Delete the selected item (async - respects onBeforeDelete hook)
           this.api?.deleteComponent(gridState.selectedItemId).then((deleted) => {
             if (deleted) {
               // Announce deletion only if actually deleted (not cancelled by modal)
               this.announce("Component deleted");
+
+              // Move focus to next logical item for keyboard users
+              this.moveFocusAfterDeletion(deletedCanvasId, deletedItemId);
             }
           });
 
@@ -1557,13 +1564,19 @@ export class GridBuilder {
       this.announce(`Component moved to new canvas`);
     });
 
-    // Undo/Redo
+    // Undo/Redo with focus management
     eventManager.on("undoExecuted", () => {
       this.announce(`Undo action performed`);
+
+      // Restore focus to selected item after undo (if any)
+      this.restoreFocusToSelection();
     });
 
     eventManager.on("redoExecuted", () => {
       this.announce(`Redo action performed`);
+
+      // Restore focus to selected item after redo (if any)
+      this.restoreFocusToSelection();
     });
 
     // Canvas activated
@@ -1597,6 +1610,132 @@ export class GridBuilder {
     setTimeout(() => {
       this.announcement = "";
     }, 100);
+  };
+
+  /**
+   * Move focus to next logical item after deletion
+   *
+   * **Purpose**: Improve keyboard navigation by maintaining focus context after deletion
+   * **Non-visual**: Uses programmatic focus, no visual changes
+   *
+   * **Focus strategy**:
+   * 1. Try to focus the next item in the same canvas (by y position, then x)
+   * 2. If no next item, try to focus the previous item
+   * 3. If no items left in canvas, focus the canvas container
+   * 4. If canvas not found, focus the component palette
+   *
+   * **WCAG Compliance**: 2.4.3 Focus Order (Level A)
+   *
+   * @param canvasId - Canvas that contained the deleted item
+   * @param deletedItemId - ID of the item that was deleted
+   */
+  private moveFocusAfterDeletion = (
+    canvasId: string,
+    deletedItemId: string,
+  ) => {
+    // Get the canvas that contained the deleted item
+    const canvas = gridState.canvases[canvasId];
+    if (!canvas) {
+      debug.log("⌨️ Focus: Canvas not found, focusing palette");
+      // Focus the component palette as fallback
+      const paletteElement = this.hostElement.querySelector(
+        "component-palette",
+      ) as HTMLElement;
+      if (paletteElement) {
+        paletteElement.focus();
+      }
+      return;
+    }
+
+    // Get remaining items in the canvas
+    const remainingItems = canvas.items;
+
+    if (remainingItems.length === 0) {
+      debug.log("⌨️ Focus: No items left, focusing canvas");
+      // No items left in canvas - focus the canvas container
+      const canvasElement = this.hostElement.querySelector(
+        `canvas-section[canvas-id="${canvasId}"]`,
+      ) as HTMLElement;
+      if (canvasElement) {
+        canvasElement.focus();
+      } else {
+        // Fallback to component palette
+        const paletteElement = this.hostElement.querySelector(
+          "component-palette",
+        ) as HTMLElement;
+        if (paletteElement) {
+          paletteElement.focus();
+        }
+      }
+      return;
+    }
+
+    // Sort items by position (top-to-bottom, left-to-right) to find next logical item
+    const sortedItems = [...remainingItems].sort((a, b) => {
+      const aLayout = a.layouts.desktop;
+      const bLayout = b.layouts.desktop;
+
+      // Sort by y position first (top to bottom)
+      if (aLayout.y !== bLayout.y) {
+        return aLayout.y - bLayout.y;
+      }
+
+      // If same y, sort by x position (left to right)
+      return aLayout.x - bLayout.x;
+    });
+
+    // Focus the first item in the sorted list
+    const nextItem = sortedItems[0];
+    debug.log("⌨️ Focus: Focusing next item", {
+      itemId: nextItem.id,
+      position: { x: nextItem.layouts.desktop.x, y: nextItem.layouts.desktop.y },
+    });
+
+    // Find the DOM element for the next item
+    const nextItemElement = this.hostElement.querySelector(
+      `#${nextItem.id}`,
+    ) as HTMLElement;
+    if (nextItemElement) {
+      // Focus the item element
+      nextItemElement.focus();
+
+      // Also select it in the state
+      gridState.selectedItemId = nextItem.id;
+      gridState.selectedCanvasId = nextItem.canvasId;
+    }
+  };
+
+  /**
+   * Restore focus to currently selected item (for undo/redo)
+   *
+   * **Purpose**: Maintain focus context after undo/redo operations
+   * **Non-visual**: Uses programmatic focus, no visual changes
+   *
+   * **Implementation**:
+   * - Check if an item is selected in state
+   * - Find the DOM element for that item
+   * - Focus it programmatically
+   * - Use setTimeout to ensure DOM has updated after state change
+   *
+   * **WCAG Compliance**: 2.4.3 Focus Order (Level A)
+   */
+  private restoreFocusToSelection = () => {
+    // Wait for DOM to update after state change
+    setTimeout(() => {
+      if (gridState.selectedItemId) {
+        debug.log("⌨️ Focus: Restoring focus to selected item", {
+          itemId: gridState.selectedItemId,
+        });
+
+        const selectedElement = this.hostElement.querySelector(
+          `#${gridState.selectedItemId}`,
+        ) as HTMLElement;
+
+        if (selectedElement) {
+          selectedElement.focus();
+        }
+      }
+    }, 10);
   };
 
   /**

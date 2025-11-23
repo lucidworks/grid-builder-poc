@@ -759,6 +759,7 @@ export class GridItemWrapper {
         <div
           class={itemClasses}
           id={this.item.id}
+          tabindex={this.viewerMode ? undefined : 0}
           aria-selected={isSelected ? "true" : "false"}
           aria-describedby={ariaDescription ? descriptionId : undefined}
           data-canvas-id={this.item.canvasId}
@@ -802,6 +803,7 @@ export class GridItemWrapper {
         id={this.item.id}
         role="group"
         aria-label={`${displayName} component`}
+        tabindex={this.viewerMode ? undefined : 0}
         aria-selected={isSelected ? "true" : "false"}
         aria-describedby={ariaDescription ? descriptionId : undefined}
         data-canvas-id={this.item.canvasId}
