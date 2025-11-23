@@ -1,4 +1,5 @@
 import { html } from "lit-html";
+import { action } from "@storybook/addon-actions";
 import { reset } from "../../../services/state-manager";
 
 export default {
@@ -1878,6 +1879,157 @@ const myPlugin = {
   },
   destroy: () => {
     // Cleanup resources
+  }
+};</pre
+        >
+      </div>
+    </div>
+  `;
+};
+
+export const EventsDemo = () => {
+  // Reset state to clear any cached data from previous stories
+  reset();
+  const builderEl = document.createElement("grid-builder");
+  builderEl.components = simpleComponents;
+
+  builderEl.initialState = {
+    canvases: {
+      "canvas-1": {
+        items: [
+          {
+            id: "item-1",
+            canvasId: "canvas-1",
+            type: "header",
+            name: "Header",
+            layouts: {
+              desktop: { x: 0, y: 0, width: 20, height: 4 },
+              mobile: {
+                x: null,
+                y: null,
+                width: null,
+                height: null,
+                customized: false,
+              },
+            },
+            zIndex: 1,
+            config: { title: "Events Demo" },
+          },
+        ],
+        zIndexCounter: 2,
+      },
+    },
+  };
+
+  builderEl.config = {
+    enableVirtualRendering: false, // Disable for Storybook iframe compatibility
+  };
+
+  // Plugin that forwards all events to Storybook Actions panel
+  const actionsPlugin = {
+    name: "storybook-actions-logger",
+    init: (api: any) => {
+      // Log all events to Storybook Actions panel
+      api.on("componentAdded", action("componentAdded"));
+      api.on("componentDeleted", action("componentDeleted"));
+      api.on("componentDragged", action("componentDragged"));
+      api.on("componentResized", action("componentResized"));
+      api.on("canvasActivated", action("canvasActivated"));
+      api.on("undoExecuted", action("undoExecuted"));
+      api.on("redoExecuted", action("redoExecuted"));
+      api.on("viewportSwitched", action("viewportSwitched"));
+    },
+  };
+
+  builderEl.plugins = [actionsPlugin];
+
+  return html`
+    <div
+      style="font-family: system-ui, -apple-system, sans-serif; padding: 20px;"
+    >
+      <h2 style="margin-top: 0; color: #333;">Events Demo</h2>
+      <p style="color: #666; margin-bottom: 20px;">
+        Demonstrates the event system using Storybook Actions. Open the
+        <strong>Actions</strong> panel at the bottom of Storybook to see events
+        in real-time!
+        <br />
+        Try adding, moving, resizing, or deleting components to see events fire.
+      </p>
+
+      <div
+        style="width: 100%; height: 500px; border: 2px solid #17a2b8; border-radius: 8px; overflow: hidden;"
+      >
+        ${builderEl}
+      </div>
+
+      <div
+        style="margin-top: 20px; padding: 20px; background: #e7f3ff; border-radius: 8px; border-left: 4px solid #007bff;"
+      >
+        <h4 style="margin-top: 0; color: #004085;">📡 Available Events</h4>
+        <div
+          style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 13px;"
+        >
+          <div>
+            <strong>Component Events:</strong>
+            <ul style="margin: 5px 0; padding-left: 20px;">
+              <li><code>componentAdded</code></li>
+              <li><code>componentDeleted</code></li>
+              <li><code>componentDragged</code></li>
+              <li><code>componentResized</code></li>
+            </ul>
+          </div>
+          <div>
+            <strong>Builder Events:</strong>
+            <ul style="margin: 5px 0; padding-left: 20px;">
+              <li><code>canvasActivated</code></li>
+              <li><code>viewportSwitched</code></li>
+              <li><code>undoExecuted</code></li>
+              <li><code>redoExecuted</code></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div
+        style="margin-top: 20px; padding: 20px; background: #fff3cd; border-radius: 8px; border-left: 4px solid #ffc107;"
+      >
+        <h4 style="margin-top: 0; color: #856404;">💡 How to Use</h4>
+        <ol style="margin-bottom: 0; padding-left: 20px; line-height: 1.8;">
+          <li>Open the <strong>Actions</strong> panel at the bottom of Storybook</li>
+          <li>Interact with the grid builder (drag, resize, add, delete components)</li>
+          <li>Watch the Actions panel populate with event data in real-time</li>
+          <li>Click on any action to see the full event payload (data structure)</li>
+          <li>Use this to understand what data is passed with each event</li>
+        </ol>
+      </div>
+
+      <div
+        style="margin-top: 20px; padding: 20px; background: #d1ecf1; border-radius: 8px; border-left: 4px solid #0c5460;"
+      >
+        <h4 style="margin-top: 0; color: #0c5460;">
+          🔧 Integration Example
+        </h4>
+        <pre
+          style="background: white; padding: 15px; border-radius: 4px; overflow-x: auto; font-size: 12px; line-height: 1.4; margin: 0;"
+        >
+const analyticsPlugin = {
+  name: 'analytics-plugin',
+  init: (api) => {
+    // Track all component additions
+    api.on('componentAdded', (data) => {
+      analytics.track('Component Added', {
+        type: data.item.type,
+        canvasId: data.canvasId
+      });
+    });
+
+    // Track viewport switches
+    api.on('viewportSwitched', (data) => {
+      analytics.track('Viewport Changed', {
+        from: data.oldViewport,
+        to: data.newViewport
+      });
+    });
   }
 };</pre
         >
