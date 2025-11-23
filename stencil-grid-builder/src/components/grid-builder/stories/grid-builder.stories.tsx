@@ -1,12 +1,12 @@
 import { html } from "lit-html";
-import { h } from "@stencil/core";
+import { reset } from "../../../services/state-manager";
 
 export default {
   title: "Components/Grid Builder",
 };
 
-// Simple component definitions using JSX
-// This demonstrates the recommended approach for Stencil applications
+// Simple component definitions using document.createElement()
+// This returns actual DOM elements that can be appended directly
 // Sizes are optimized for Storybook's smaller viewport
 const simpleComponents = [
   {
@@ -15,35 +15,29 @@ const simpleComponents = [
     icon: "📄",
     defaultSize: { width: 30, height: 4 },
     minSize: { width: 15, height: 3 },
-    // Render function using JSX - typical Stencil pattern
-    render: ({ itemId, config }) => (
-      <div
-        style={{
-          padding: "12px",
-          background: "#f0f0f0",
-          borderRadius: "4px",
-          height: "100%",
-        }}
-      >
-        <h3 style={{ margin: "0", fontSize: "16px" }}>
-          {config?.title || "Header"}
-        </h3>
-      </div>
-    ),
+    // Render function using document.createElement() - returns real DOM elements
+    // @ts-expect-error - itemId unused in simple demo component
+    render: ({ itemId, config }) => {
+      const div = document.createElement("div");
+      div.style.cssText =
+        "padding: 12px; background: #f0f0f0; border-radius: 4px; height: 100%;";
+      const h3 = document.createElement("h3");
+      h3.style.cssText = "margin: 0; font-size: 16px;";
+      h3.textContent = config?.title || "Header";
+      div.appendChild(h3);
+      return div;
+    },
     // Drag clone shows simplified preview during drag
-    renderDragClone: () => (
-      <div
-        style={{
-          padding: "12px",
-          background: "#f0f0f0",
-          borderRadius: "4px",
-          height: "100%",
-          opacity: "0.8",
-        }}
-      >
-        <h3 style={{ margin: "0", fontSize: "16px" }}>📄 Header</h3>
-      </div>
-    ),
+    renderDragClone: () => {
+      const div = document.createElement("div");
+      div.style.cssText =
+        "padding: 12px; background: #f0f0f0; border-radius: 4px; height: 100%; opacity: 0.8;";
+      const h3 = document.createElement("h3");
+      h3.style.cssText = "margin: 0; font-size: 16px;";
+      h3.textContent = "📄 Header";
+      div.appendChild(h3);
+      return div;
+    },
   },
   {
     type: "text",
@@ -51,39 +45,29 @@ const simpleComponents = [
     icon: "📝",
     defaultSize: { width: 20, height: 6 },
     minSize: { width: 10, height: 4 },
-    // JSX syntax is clean and readable
-    render: ({ itemId, config }) => (
-      <div
-        style={{
-          padding: "10px",
-          background: "#fff",
-          border: "1px solid #ddd",
-          borderRadius: "4px",
-          height: "100%",
-        }}
-      >
-        <p style={{ margin: "0", fontSize: "13px", lineHeight: "1.4" }}>
-          {config?.text || "Sample text content."}
-        </p>
-      </div>
-    ),
+    // document.createElement() returns actual DOM elements
+    // @ts-expect-error - itemId unused in simple demo component
+    render: ({ itemId, config }) => {
+      const div = document.createElement("div");
+      div.style.cssText =
+        "padding: 10px; background: #fff; border: 1px solid #ddd; border-radius: 4px; height: 100%;";
+      const p = document.createElement("p");
+      p.style.cssText = "margin: 0; font-size: 13px; line-height: 1.4;";
+      p.textContent = config?.text || "Sample text content.";
+      div.appendChild(p);
+      return div;
+    },
     // Drag clone shows simplified preview during drag
-    renderDragClone: () => (
-      <div
-        style={{
-          padding: "10px",
-          background: "#fff",
-          border: "1px solid #ddd",
-          borderRadius: "4px",
-          height: "100%",
-          opacity: "0.8",
-        }}
-      >
-        <p style={{ margin: "0", fontSize: "13px", lineHeight: "1.4" }}>
-          📝 Text Block
-        </p>
-      </div>
-    ),
+    renderDragClone: () => {
+      const div = document.createElement("div");
+      div.style.cssText =
+        "padding: 10px; background: #fff; border: 1px solid #ddd; border-radius: 4px; height: 100%; opacity: 0.8;";
+      const p = document.createElement("p");
+      p.style.cssText = "margin: 0; font-size: 13px; line-height: 1.4;";
+      p.textContent = "📝 Text Block";
+      div.appendChild(p);
+      return div;
+    },
   },
   {
     type: "button",
@@ -91,47 +75,29 @@ const simpleComponents = [
     icon: "🔘",
     defaultSize: { width: 12, height: 4 },
     minSize: { width: 8, height: 3 },
-    // JSX works for any HTML element
-    render: ({ itemId, config }) => (
-      <button
-        style={{
-          padding: "8px 16px",
-          background: "#007bff",
-          color: "white",
-          border: "none",
-          borderRadius: "4px",
-          cursor: "pointer",
-          fontSize: "14px",
-          width: "100%",
-          height: "100%",
-        }}
-      >
-        {config?.label || "Click Me"}
-      </button>
-    ),
+    // document.createElement() works for any HTML element
+    // @ts-expect-error - itemId unused in simple demo component
+    render: ({ itemId, config }) => {
+      const button = document.createElement("button");
+      button.style.cssText =
+        "padding: 8px 16px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; width: 100%; height: 100%;";
+      button.textContent = config?.label || "Click Me";
+      return button;
+    },
     // Drag clone shows simplified preview during drag
-    renderDragClone: () => (
-      <button
-        style={{
-          padding: "8px 16px",
-          background: "#007bff",
-          color: "white",
-          border: "none",
-          borderRadius: "4px",
-          cursor: "pointer",
-          fontSize: "14px",
-          width: "100%",
-          height: "100%",
-          opacity: "0.8",
-        }}
-      >
-        🔘 Button
-      </button>
-    ),
+    renderDragClone: () => {
+      const button = document.createElement("button");
+      button.style.cssText =
+        "padding: 8px 16px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; width: 100%; height: 100%; opacity: 0.8;";
+      button.textContent = "🔘 Button";
+      return button;
+    },
   },
 ];
 
 export const BasicBuilder = (args) => {
+  // Reset state to clear any cached data from previous stories
+  reset();
   const builderEl = document.createElement("grid-builder");
   builderEl.components = simpleComponents;
 
@@ -199,54 +165,169 @@ BasicBuilder.argTypes = {
 };
 
 export const WithCustomTheme = (args) => {
+  // Reset state to clear any cached data from previous stories
+  reset();
   const builderEl = document.createElement("grid-builder");
   builderEl.components = simpleComponents;
+
+  // Apply custom theme colors
   builderEl.theme = {
     primaryColor: args.primaryColor,
     paletteBackground: args.paletteBackground,
     selectionColor: args.selectionColor,
   };
+
+  // Add initial state with components to showcase theme colors
+  builderEl.initialState = {
+    canvases: {
+      "canvas-1": {
+        items: [
+          {
+            id: "theme-demo-1",
+            canvasId: "canvas-1",
+            type: "header",
+            name: "Header",
+            layouts: {
+              desktop: { x: 0, y: 0, width: 25, height: 4 },
+              mobile: {
+                x: null,
+                y: null,
+                width: null,
+                height: null,
+                customized: false,
+              },
+            },
+            zIndex: 1,
+            config: { title: "Custom Theme Demo" },
+          },
+          {
+            id: "theme-demo-2",
+            canvasId: "canvas-1",
+            type: "text",
+            name: "Text",
+            layouts: {
+              desktop: { x: 0, y: 5, width: 20, height: 6 },
+              mobile: {
+                x: null,
+                y: null,
+                width: null,
+                height: null,
+                customized: false,
+              },
+            },
+            zIndex: 2,
+            config: {
+              text: "Click components to see the custom selection color. Check the palette on the left for the custom background!"
+            },
+          },
+          {
+            id: "theme-demo-3",
+            canvasId: "canvas-1",
+            type: "button",
+            name: "Button",
+            layouts: {
+              desktop: { x: 21, y: 5, width: 12, height: 4 },
+              mobile: {
+                x: null,
+                y: null,
+                width: null,
+                height: null,
+                customized: false,
+              },
+            },
+            zIndex: 3,
+            config: { label: "Try Me" },
+          },
+        ],
+        zIndexCounter: 4,
+      },
+    },
+  };
+
   builderEl.config = {
     enableVirtualRendering: false, // Disable for Storybook iframe compatibility
   };
 
-  return html` <div style="width: 100%; height: 600px;">${builderEl}</div> `;
+  return html`
+    <div style="font-family: system-ui, -apple-system, sans-serif; padding: 20px;">
+      <h2 style="margin-top: 0; color: #333;">Custom Theme Demo</h2>
+      <p style="color: #666; margin-bottom: 20px;">
+        Customize the grid builder's appearance to match your brand or application design.
+        <br />
+        <strong>Try it:</strong> Use the controls below to change colors in real-time!
+      </p>
+
+      <div style="width: 100%; height: 600px; border: 2px solid ${args.primaryColor}; border-radius: 8px; overflow: hidden;">
+        ${builderEl}
+      </div>
+
+      <div style="margin-top: 20px; padding: 20px; background: #f8f9fa; border-radius: 8px; border-left: 4px solid ${args.primaryColor};">
+        <h4 style="margin-top: 0; color: ${args.primaryColor};">🎨 What Each Color Controls</h4>
+        <ul style="margin-bottom: 0; padding-left: 20px; line-height: 1.8;">
+          <li>
+            <strong style="color: ${args.primaryColor};">Primary Color</strong>
+            → Controls UI accents, buttons, and active states throughout the builder
+          </li>
+          <li>
+            <strong style="background: ${args.paletteBackground}; padding: 2px 8px; border-radius: 3px;">Palette Background</strong>
+            → The background color of the component palette sidebar (left side)
+          </li>
+          <li>
+            <strong style="color: ${args.selectionColor};">Selection Color</strong>
+            → The outline color when components are selected (click a component to see it!)
+          </li>
+        </ul>
+      </div>
+
+      <div style="margin-top: 20px; padding: 20px; background: #e7f3ff; border-radius: 8px; border-left: 4px solid #0288d1;">
+        <h4 style="margin-top: 0; color: #01579b;">💼 Real-World Use Cases</h4>
+        <ul style="margin-bottom: 0; padding-left: 20px; line-height: 1.8;">
+          <li><strong>White-labeling:</strong> Match your client's brand colors</li>
+          <li><strong>Multi-tenant apps:</strong> Different themes for different customers</li>
+          <li><strong>Dark mode:</strong> Provide alternative color schemes</li>
+          <li><strong>Brand consistency:</strong> Align with your design system</li>
+        </ul>
+      </div>
+    </div>
+  `;
 };
 
 WithCustomTheme.args = {
-  primaryColor: "#ff6b6b",
-  paletteBackground: "#fff5f5",
-  selectionColor: "#ff6b6b",
+  primaryColor: "#9c27b0",      // Vibrant purple (was subtle red)
+  paletteBackground: "#f3e5f5",  // Light purple (was barely visible pink)
+  selectionColor: "#ff6f00",     // Bright orange (was same as primary)
 };
 
 WithCustomTheme.argTypes = {
   primaryColor: {
     control: "color",
-    description: "Primary theme color for UI elements",
+    description: "Primary theme color for UI elements (buttons, accents, active states)",
     table: {
       category: "Theme",
-      defaultValue: { summary: "#ff6b6b" },
+      defaultValue: { summary: "#9c27b0" },
     },
   },
   paletteBackground: {
     control: "color",
-    description: "Background color for component palette",
+    description: "Background color for component palette sidebar",
     table: {
       category: "Theme",
-      defaultValue: { summary: "#fff5f5" },
+      defaultValue: { summary: "#f3e5f5" },
     },
   },
   selectionColor: {
     control: "color",
-    description: "Color for selected item outline",
+    description: "Color for selected component outline (click a component to see it)",
     table: {
       category: "Theme",
-      defaultValue: { summary: "#ff6b6b" },
+      defaultValue: { summary: "#ff6f00" },
     },
   },
 };
 
 export const WithCustomGridConfig = (args) => {
+  // Reset state to clear any cached data from previous stories
+  reset();
   const builderEl = document.createElement("grid-builder");
   builderEl.components = simpleComponents;
   builderEl.config = {
@@ -313,6 +394,8 @@ WithCustomGridConfig.argTypes = {
 };
 
 export const WithInitialState = () => {
+  // Reset state to clear any cached data from previous stories
+  reset();
   const builderEl = document.createElement("grid-builder");
   builderEl.components = simpleComponents;
   builderEl.initialState = {
@@ -387,6 +470,8 @@ export const WithInitialState = () => {
 };
 
 export const ResponsiveViewportDemo = () => {
+  // Reset state to clear any cached data from previous stories
+  reset();
   // Create builders at different container widths to show viewport switching
   const createBuilder = (width) => {
     const builderEl = document.createElement("grid-builder");
@@ -541,6 +626,8 @@ export const ResponsiveViewportDemo = () => {
 };
 
 export const WithCanvasMetadataAndCustomHeaders = () => {
+  // Reset state to clear any cached data from previous stories
+  reset();
   const builderEl = document.createElement("grid-builder");
   builderEl.components = simpleComponents;
 
@@ -613,6 +700,9 @@ export const WithCanvasMetadataAndCustomHeaders = () => {
   // Custom canvas header component
   builderEl.uiOverrides = {
     CanvasHeader: ({ canvasId, metadata, isActive }) => {
+      // Debug logging
+      console.log('CanvasHeader called with:', { canvasId, metadata, isActive });
+
       const headerDiv = document.createElement("div");
       headerDiv.style.cssText = `
         padding: 12px 20px;
@@ -638,7 +728,10 @@ export const WithCanvasMetadataAndCustomHeaders = () => {
       badge.textContent = isActive ? "✓ Active" : "Inactive";
 
       const title = document.createElement("span");
-      title.textContent = metadata.title || canvasId;
+      // More defensive: handle all edge cases
+      const titleText = (metadata && metadata.title) || canvasId || 'Unknown Canvas';
+      title.textContent = titleText;
+      console.log('Setting title to:', titleText);
 
       headerDiv.appendChild(badge);
       headerDiv.appendChild(title);
@@ -650,6 +743,14 @@ export const WithCanvasMetadataAndCustomHeaders = () => {
   builderEl.config = {
     enableVirtualRendering: false, // Disable for Storybook iframe compatibility
   };
+
+  // Set initial active canvas
+  setTimeout(() => {
+    const api = (window as any).gridBuilderAPI;
+    if (api) {
+      api.setActiveCanvas('hero-section');
+    }
+  }, 500);
 
   return html`
     <div
@@ -700,6 +801,8 @@ export const WithCanvasMetadataAndCustomHeaders = () => {
 };
 
 export const WithDeletionHook = () => {
+  // Reset state to clear any cached data from previous stories
+  reset();
   const builderEl = document.createElement("grid-builder");
   builderEl.components = simpleComponents;
 
@@ -794,7 +897,7 @@ export const WithDeletionHook = () => {
             'builderEl.onBeforeDelete = async (context) => {\n' +
             '  const confirmed = await showCustomModal({\n' +
             '    title: \'Delete Component?\',\n' +
-            '    message: &#96;Delete "\\${context.item.name}"?&#96;,\n' +
+            '    message: &#96;Delete "\\\\$' + '{context.item.name}"?&#96;,\n' +
             '    confirmText: \'Delete\',\n' +
             '    cancelText: \'Cancel\'\n' +
             '  });\n' +
@@ -816,6 +919,8 @@ export const WithDeletionHook = () => {
 };
 
 export const BatchOperationsPerformance = () => {
+  // Reset state to clear any cached data from previous stories
+  reset();
   const builderEl = document.createElement("grid-builder");
   builderEl.components = simpleComponents;
 
@@ -1019,6 +1124,8 @@ export const BatchOperationsPerformance = () => {
 };
 
 export const MultipleSectionsBuilder = () => {
+  // Reset state to clear any cached data from previous stories
+  reset();
   const builderEl = document.createElement("grid-builder");
   builderEl.components = simpleComponents;
 
@@ -1181,6 +1288,8 @@ export const MultipleSectionsBuilder = () => {
 };
 
 export const ActiveCanvasManagement = () => {
+  // Reset state to clear any cached data from previous stories
+  reset();
   const builderEl = document.createElement("grid-builder");
   builderEl.components = simpleComponents;
 
@@ -1393,6 +1502,8 @@ export const ActiveCanvasManagement = () => {
 };
 
 export const UndoRedoDemo = () => {
+  // Reset state to clear any cached data from previous stories
+  reset();
   const builderEl = document.createElement("grid-builder");
   builderEl.components = simpleComponents;
 
@@ -1589,6 +1700,8 @@ export const UndoRedoDemo = () => {
 };
 
 export const PluginSystemDemo = () => {
+  // Reset state to clear any cached data from previous stories
+  reset();
   const builderEl = document.createElement("grid-builder");
   builderEl.components = simpleComponents;
 
@@ -1774,6 +1887,8 @@ const myPlugin = {
 };
 
 export const APIIntegrationDemo = () => {
+  // Reset state to clear any cached data from previous stories
+  reset();
   const builderEl = document.createElement("grid-builder");
   builderEl.components = simpleComponents;
 
@@ -1981,6 +2096,8 @@ export const APIIntegrationDemo = () => {
 };
 
 export const ExportImportWorkflow = () => {
+  // Reset state to clear any cached data from previous stories
+  reset();
   const builderEl = document.createElement("grid-builder");
   builderEl.components = simpleComponents;
 
