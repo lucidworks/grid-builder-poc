@@ -24,6 +24,7 @@ module.exports = {
       ...options,
       presets: [
         ...(options.presets || []),
+        '@babel/preset-typescript',
         '@babel/preset-react',
       ],
     };
@@ -36,7 +37,7 @@ module.exports = {
       include: path.resolve(__dirname, '../'),
     });
 
-    // Find and modify all babel-loader rules to include preset-react
+    // Find and modify all babel-loader rules to include preset-typescript and preset-react
     config.module.rules.forEach((rule) => {
       if (rule.use) {
         const uses = Array.isArray(rule.use) ? rule.use : [rule.use];
@@ -44,6 +45,16 @@ module.exports = {
           if (use.loader && use.loader.includes('babel-loader')) {
             use.options = use.options || {};
             use.options.presets = use.options.presets || [];
+
+            // Add preset-typescript if not already present
+            const hasTypescriptPreset = use.options.presets.some(preset =>
+              (Array.isArray(preset) && preset[0].includes('preset-typescript')) ||
+              (typeof preset === 'string' && preset.includes('preset-typescript'))
+            );
+            if (!hasTypescriptPreset) {
+              use.options.presets.push(require.resolve('@babel/preset-typescript'));
+            }
+
             // Add preset-react if not already present
             const hasReactPreset = use.options.presets.some(preset =>
               (Array.isArray(preset) && preset[0].includes('preset-react')) ||
