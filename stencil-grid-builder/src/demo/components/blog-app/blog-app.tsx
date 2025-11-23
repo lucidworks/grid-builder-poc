@@ -8,6 +8,15 @@ import { getGridSizeVertical, clearGridSizeCache } from '../../../utils/grid-cal
 import { domCache } from '../../../utils/dom-cache';
 import { setActiveCanvas } from '../../../services/state-manager';
 
+// Pre-import drag clone components to ensure they're eagerly loaded (not lazy)
+import '../blog-header-drag-clone/blog-header-drag-clone';
+import '../blog-article-drag-clone/blog-article-drag-clone';
+import '../blog-button-drag-clone/blog-button-drag-clone';
+import '../blog-image-drag-clone/blog-image-drag-clone';
+import '../image-gallery-drag-clone/image-gallery-drag-clone';
+import '../dashboard-widget-drag-clone/dashboard-widget-drag-clone';
+import '../live-data-drag-clone/live-data-drag-clone';
+
 /**
  * Blog App Demo - Host Application for grid-builder Library
  * ==========================================================
