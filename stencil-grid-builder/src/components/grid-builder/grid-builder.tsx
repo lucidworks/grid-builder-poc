@@ -604,6 +604,10 @@ export class GridBuilder {
       });
 
       debug.log('  Created item:', newItem);
+
+      // Set the target canvas as active when item is dropped
+      setActiveCanvas(canvasId);
+      eventManager.emit('canvasActivated', { canvasId });
     };
 
     this.hostElement.addEventListener('canvas-drop', this.canvasDropHandler);
@@ -1653,18 +1657,32 @@ export class GridBuilder {
           <div class="canvas-area">
             {/* Canvases */}
             <div class="canvases-container">
-              {canvasIds.map((canvasId) => (
-                <canvas-section
-                  key={canvasId}
-                  canvasId={canvasId}
-                  isActive={gridState.activeCanvasId === canvasId}
-                  config={this.config}
-                  componentRegistry={this.componentRegistry}
-                  backgroundColor={this.canvasMetadata?.[canvasId]?.backgroundColor}
-                  canvasTitle={this.canvasMetadata?.[canvasId]?.title}
-                  onBeforeDelete={this.onBeforeDelete}
-                />
-              ))}
+              {canvasIds.map((canvasId) => {
+                const isActive = gridState.activeCanvasId === canvasId;
+                const metadata = this.canvasMetadata?.[canvasId] || {};
+
+                // Render custom canvas header if provided
+                const headerElement = this.uiOverrides?.CanvasHeader?.({
+                  canvasId,
+                  metadata,
+                  isActive
+                });
+
+                return (
+                  <div key={canvasId} class="canvas-wrapper">
+                    {headerElement}
+                    <canvas-section
+                      canvasId={canvasId}
+                      isActive={isActive}
+                      config={this.config}
+                      componentRegistry={this.componentRegistry}
+                      backgroundColor={metadata.backgroundColor}
+                      canvasTitle={metadata.title}
+                      onBeforeDelete={this.onBeforeDelete}
+                    />
+                  </div>
+                );
+              })}
             </div>
           </div>
         </div>
