@@ -1,8 +1,8 @@
-import { Component, h, Prop } from '@stencil/core';
+import { Component, h, Prop } from "@stencil/core";
 
 @Component({
-  tag: 'image-gallery',
-  styleUrl: 'image-gallery.scss',
+  tag: "image-gallery",
+  styleUrl: "image-gallery.scss",
   shadow: false,
 })
 export class ImageGallery {
@@ -13,7 +13,9 @@ export class ImageGallery {
   }
 
   render() {
-    const images = Array.from({ length: this.imageCount }, () => this.getRandomImageUrl());
+    const images = Array.from({ length: this.imageCount }, () =>
+      this.getRandomImageUrl(),
+    );
 
     return (
       <div class="image-gallery">

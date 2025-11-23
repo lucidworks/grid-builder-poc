@@ -64,13 +64,21 @@
  */
 function isDebugEnabled(): boolean {
   // Check if we're in development mode
-  if (typeof process !== 'undefined' && process.env && process.env.NODE_ENV === 'development') {
+  if (
+    typeof process !== "undefined" &&
+    process.env &&
+    process.env.NODE_ENV === "development"
+  ) {
     return true;
   }
 
   // Allow test logs if explicitly enabled
-  if (typeof process !== 'undefined' && process.env && process.env.NODE_ENV === 'test') {
-    return process.env.ENABLE_TEST_LOGS === 'true';
+  if (
+    typeof process !== "undefined" &&
+    process.env &&
+    process.env.NODE_ENV === "test"
+  ) {
+    return process.env.ENABLE_TEST_LOGS === "true";
   }
 
   // Disable in production

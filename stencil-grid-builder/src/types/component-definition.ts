@@ -17,7 +17,7 @@ export interface ConfigField {
   label: string;
 
   /** Input type */
-  type: 'text' | 'number' | 'color' | 'select' | 'checkbox' | 'textarea';
+  type: "text" | "number" | "color" | "select" | "checkbox" | "textarea";
 
   /** Default value when component is created */
   defaultValue?: any;
@@ -391,7 +391,10 @@ export interface ComponentDefinition {
    * }
    * ```
    */
-  validatePlacement?: (canvasId: string, position: { x: number; y: number }) => boolean;
+  validatePlacement?: (
+    canvasId: string,
+    position: { x: number; y: number },
+  ) => boolean;
 
   /**
    * Validation function for resize

@@ -191,7 +191,7 @@ export namespace Components {
     interface BlogArticle {
         "author"?: string;
         /**
-          * @default 'Article content goes here'
+          * @default "Article content goes here"
          */
         "content": string;
         "date"?: string;
@@ -201,19 +201,19 @@ export namespace Components {
     interface BlogButton {
         "href"?: string;
         /**
-          * @default 'Click me!'
+          * @default "Click me!"
          */
         "label": string;
         /**
-          * @default 'primary'
+          * @default "primary"
          */
-        "variant": 'primary' | 'secondary';
+        "variant": "primary" | "secondary";
     }
     interface BlogButtonDragClone {
     }
     interface BlogHeader {
         /**
-          * @default 'Default Header'
+          * @default "Default Header"
          */
         "headerTitle": string;
         "subtitle"?: string;
@@ -222,16 +222,16 @@ export namespace Components {
     }
     interface BlogImage {
         /**
-          * @default 'Placeholder image'
+          * @default "Placeholder image"
          */
         "alt": string;
         "caption"?: string;
         /**
-          * @default 'contain'
+          * @default "contain"
          */
-        "objectFit": 'contain' | 'cover';
+        "objectFit": "contain" | "cover";
         /**
-          * @default 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&h=600&fit=crop'
+          * @default "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&h=600&fit=crop"
          */
         "src": string;
     }
@@ -334,7 +334,7 @@ export namespace Components {
         /**
           * Current viewport mode  **Required**: 'desktop' | 'mobile' **Source**: Passed from grid-viewer component  **Purpose**: Determines which layout to render for each item
          */
-        "currentViewport": 'desktop' | 'mobile';
+        "currentViewport": "desktop" | "mobile";
         /**
           * Items to render in this canvas  **Required**: Array of GridItem objects **Source**: Passed from grid-viewer component  **Unlike canvas-section**: Items passed via props, not from global state
          */
@@ -575,7 +575,7 @@ export namespace Components {
         "addComponent": (canvasId: string, componentType: string, position: { x: number; y: number; width: number; height: number; }, config?: Record<string, any>) => Promise<string | null>;
         /**
           * Custom API exposure configuration  **Optional prop**: Control where and how the Grid Builder API is exposed **Default**: `{ target: window, key: 'gridBuilderAPI' }` **Purpose**: Allows multiple grid-builder instances and flexible API access patterns  **Options**: 1. **Custom key on window** (multiple instances): ```typescript <grid-builder api-ref={{ key: 'gridAPI1' }}></grid-builder> <grid-builder api-ref={{ key: 'gridAPI2' }}></grid-builder> // Access: window.gridAPI1, window.gridAPI2 ```  2. **Custom storage object**: ```typescript const myStore = {}; <grid-builder api-ref={{ target: myStore, key: 'api' }}></grid-builder> // Access: myStore.api ```  3. **Disable automatic exposure** (use ref instead): ```typescript <grid-builder api-ref={null}></grid-builder> // Access via ref: <grid-builder ref={el => this.api = el?.api}></grid-builder> ```
-          * @default { target: undefined, key: 'gridBuilderAPI' }
+          * @default {     target: undefined,     key: "gridBuilderAPI",   }
          */
         "apiRef"?: { target?: any; key?: string } | null;
         /**
@@ -698,7 +698,7 @@ export namespace Components {
         /**
           * Current viewport (for viewer mode)  **Purpose**: Determine which layout to render (desktop or mobile) **Source**: grid-viewer → canvas-section-viewer → grid-item-wrapper **Used by**: render() to select appropriate layout  **Note**: When in builder mode (viewerMode=false), this is ignored and gridState.currentViewport is used instead. When in viewer mode (viewerMode=true), this prop is required.
          */
-        "currentViewport"?: 'desktop' | 'mobile';
+        "currentViewport"?: "desktop" | "mobile";
         /**
           * Grid item data (position, size, type, etc.)  **Source**: Parent canvas-section component **Contains**: id, canvasId, type, name, layouts (desktop/mobile), zIndex, config
          */
@@ -1364,9 +1364,19 @@ declare global {
     };
     interface HTMLSectionEditorPanelElementEventMap {
         "closePanel": void;
-        "updateSection": { canvasId: string; title: string; backgroundColor: string };
-        "previewColorChange": { canvasId: string; backgroundColor: string };
-        "previewTitleChange": { canvasId: string; title: string };
+        "updateSection": {
+    canvasId: string;
+    title: string;
+    backgroundColor: string;
+  };
+        "previewColorChange": {
+    canvasId: string;
+    backgroundColor: string;
+  };
+        "previewTitleChange": {
+    canvasId: string;
+    title: string;
+  };
         "deleteSection": { canvasId: string };
     }
     /**
@@ -1608,7 +1618,7 @@ declare namespace LocalJSX {
     interface BlogArticle {
         "author"?: string;
         /**
-          * @default 'Article content goes here'
+          * @default "Article content goes here"
          */
         "content"?: string;
         "date"?: string;
@@ -1618,20 +1628,20 @@ declare namespace LocalJSX {
     interface BlogButton {
         "href"?: string;
         /**
-          * @default 'Click me!'
+          * @default "Click me!"
          */
         "label"?: string;
         "onButtonClick"?: (event: BlogButtonCustomEvent<void>) => void;
         /**
-          * @default 'primary'
+          * @default "primary"
          */
-        "variant"?: 'primary' | 'secondary';
+        "variant"?: "primary" | "secondary";
     }
     interface BlogButtonDragClone {
     }
     interface BlogHeader {
         /**
-          * @default 'Default Header'
+          * @default "Default Header"
          */
         "headerTitle"?: string;
         "subtitle"?: string;
@@ -1640,16 +1650,16 @@ declare namespace LocalJSX {
     }
     interface BlogImage {
         /**
-          * @default 'Placeholder image'
+          * @default "Placeholder image"
          */
         "alt"?: string;
         "caption"?: string;
         /**
-          * @default 'contain'
+          * @default "contain"
          */
-        "objectFit"?: 'contain' | 'cover';
+        "objectFit"?: "contain" | "cover";
         /**
-          * @default 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&h=600&fit=crop'
+          * @default "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&h=600&fit=crop"
          */
         "src"?: string;
     }
@@ -1760,7 +1770,7 @@ declare namespace LocalJSX {
         /**
           * Current viewport mode  **Required**: 'desktop' | 'mobile' **Source**: Passed from grid-viewer component  **Purpose**: Determines which layout to render for each item
          */
-        "currentViewport": 'desktop' | 'mobile';
+        "currentViewport": "desktop" | "mobile";
         /**
           * Items to render in this canvas  **Required**: Array of GridItem objects **Source**: Passed from grid-viewer component  **Unlike canvas-section**: Items passed via props, not from global state
          */
@@ -1995,7 +2005,7 @@ declare namespace LocalJSX {
     interface GridBuilder {
         /**
           * Custom API exposure configuration  **Optional prop**: Control where and how the Grid Builder API is exposed **Default**: `{ target: window, key: 'gridBuilderAPI' }` **Purpose**: Allows multiple grid-builder instances and flexible API access patterns  **Options**: 1. **Custom key on window** (multiple instances): ```typescript <grid-builder api-ref={{ key: 'gridAPI1' }}></grid-builder> <grid-builder api-ref={{ key: 'gridAPI2' }}></grid-builder> // Access: window.gridAPI1, window.gridAPI2 ```  2. **Custom storage object**: ```typescript const myStore = {}; <grid-builder api-ref={{ target: myStore, key: 'api' }}></grid-builder> // Access: myStore.api ```  3. **Disable automatic exposure** (use ref instead): ```typescript <grid-builder api-ref={null}></grid-builder> // Access via ref: <grid-builder ref={el => this.api = el?.api}></grid-builder> ```
-          * @default { target: undefined, key: 'gridBuilderAPI' }
+          * @default {     target: undefined,     key: "gridBuilderAPI",   }
          */
         "apiRef"?: { target?: any; key?: string } | null;
         /**
@@ -2055,7 +2065,7 @@ declare namespace LocalJSX {
         /**
           * Current viewport (for viewer mode)  **Purpose**: Determine which layout to render (desktop or mobile) **Source**: grid-viewer → canvas-section-viewer → grid-item-wrapper **Used by**: render() to select appropriate layout  **Note**: When in builder mode (viewerMode=false), this is ignored and gridState.currentViewport is used instead. When in viewer mode (viewerMode=true), this prop is required.
          */
-        "currentViewport"?: 'desktop' | 'mobile';
+        "currentViewport"?: "desktop" | "mobile";
         /**
           * Grid item data (position, size, type, etc.)  **Source**: Parent canvas-section component **Contains**: id, canvasId, type, name, layouts (desktop/mobile), zIndex, config
          */
@@ -2168,15 +2178,25 @@ declare namespace LocalJSX {
         /**
           * Event: Preview color change Fired when user changes color picker (live preview) Parent temporarily updates canvas background
          */
-        "onPreviewColorChange"?: (event: SectionEditorPanelCustomEvent<{ canvasId: string; backgroundColor: string }>) => void;
+        "onPreviewColorChange"?: (event: SectionEditorPanelCustomEvent<{
+    canvasId: string;
+    backgroundColor: string;
+  }>) => void;
         /**
           * Event: Preview title change Fired when user types in title input (live preview) Parent temporarily updates canvas title
          */
-        "onPreviewTitleChange"?: (event: SectionEditorPanelCustomEvent<{ canvasId: string; title: string }>) => void;
+        "onPreviewTitleChange"?: (event: SectionEditorPanelCustomEvent<{
+    canvasId: string;
+    title: string;
+  }>) => void;
         /**
           * Event: Update section Fired when user clicks Save with edited values Parent updates canvasMetadata state in response
          */
-        "onUpdateSection"?: (event: SectionEditorPanelCustomEvent<{ canvasId: string; title: string; backgroundColor: string }>) => void;
+        "onUpdateSection"?: (event: SectionEditorPanelCustomEvent<{
+    canvasId: string;
+    title: string;
+    backgroundColor: string;
+  }>) => void;
         /**
           * Section data being edited Passed from parent when user clicks section header
           * @default null

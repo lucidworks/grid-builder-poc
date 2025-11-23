@@ -1,4 +1,13 @@
-import { canRedo, canUndo, clearHistory, Command, pushCommand, redo, undo, undoRedoState } from './undo-redo';
+import {
+  canRedo,
+  canUndo,
+  clearHistory,
+  Command,
+  pushCommand,
+  redo,
+  undo,
+  undoRedoState,
+} from "./undo-redo";
 
 // Mock command for testing
 class MockCommand implements Command {
@@ -25,26 +34,26 @@ class MockCommand implements Command {
   }
 }
 
-describe('undo-redo', () => {
+describe("undo-redo", () => {
   beforeEach(() => {
     // Clear history before each test
     clearHistory();
   });
 
-  describe('Initial State', () => {
-    it('should have no undo available', () => {
+  describe("Initial State", () => {
+    it("should have no undo available", () => {
       expect(canUndo()).toBe(false);
       expect(undoRedoState.canUndo).toBe(false);
     });
 
-    it('should have no redo available', () => {
+    it("should have no redo available", () => {
       expect(canRedo()).toBe(false);
       expect(undoRedoState.canRedo).toBe(false);
     });
   });
 
-  describe('pushCommand', () => {
-    it('should add command to history', () => {
+  describe("pushCommand", () => {
+    it("should add command to history", () => {
       const command = new MockCommand();
       pushCommand(command);
 
@@ -52,7 +61,7 @@ describe('undo-redo', () => {
       expect(undoRedoState.canUndo).toBe(true);
     });
 
-    it('should update button states after push', () => {
+    it("should update button states after push", () => {
       const command = new MockCommand();
       pushCommand(command);
 
@@ -60,7 +69,7 @@ describe('undo-redo', () => {
       expect(undoRedoState.canRedo).toBe(false);
     });
 
-    it('should allow multiple commands to be pushed', () => {
+    it("should allow multiple commands to be pushed", () => {
       const command1 = new MockCommand();
       const command2 = new MockCommand();
       const command3 = new MockCommand();
@@ -73,7 +82,7 @@ describe('undo-redo', () => {
       expect(canRedo()).toBe(false);
     });
 
-    it('should remove forward history when pushing after undo', () => {
+    it("should remove forward history when pushing after undo", () => {
       const command1 = new MockCommand();
       const command2 = new MockCommand();
       const command3 = new MockCommand();
@@ -102,7 +111,7 @@ describe('undo-redo', () => {
       expect(canUndo()).toBe(false);
     });
 
-    it('should limit history to 50 commands', () => {
+    it("should limit history to 50 commands", () => {
       // Push 60 commands
       for (let i = 0; i < 60; i++) {
         pushCommand(new MockCommand());
@@ -119,8 +128,8 @@ describe('undo-redo', () => {
     });
   });
 
-  describe('undo', () => {
-    it('should call command.undo()', () => {
+  describe("undo", () => {
+    it("should call command.undo()", () => {
       const command = new MockCommand();
       pushCommand(command);
 
@@ -130,7 +139,7 @@ describe('undo-redo', () => {
       expect(command.undoCount).toBe(1);
     });
 
-    it('should update button states after undo', () => {
+    it("should update button states after undo", () => {
       const command = new MockCommand();
       pushCommand(command);
 
@@ -143,7 +152,7 @@ describe('undo-redo', () => {
       expect(undoRedoState.canRedo).toBe(true);
     });
 
-    it('should handle multiple undos', () => {
+    it("should handle multiple undos", () => {
       const command1 = new MockCommand();
       const command2 = new MockCommand();
       const command3 = new MockCommand();
@@ -168,7 +177,7 @@ describe('undo-redo', () => {
       expect(canRedo()).toBe(true);
     });
 
-    it('should do nothing when no commands to undo', () => {
+    it("should do nothing when no commands to undo", () => {
       // Try to undo with empty history
       undo();
 
@@ -176,7 +185,7 @@ describe('undo-redo', () => {
       expect(canUndo()).toBe(false);
     });
 
-    it('should not undo beyond history start', () => {
+    it("should not undo beyond history start", () => {
       const command = new MockCommand();
       pushCommand(command);
 
@@ -191,8 +200,8 @@ describe('undo-redo', () => {
     });
   });
 
-  describe('redo', () => {
-    it('should call command.redo()', () => {
+  describe("redo", () => {
+    it("should call command.redo()", () => {
       const command = new MockCommand();
       pushCommand(command);
       undo();
@@ -203,7 +212,7 @@ describe('undo-redo', () => {
       expect(command.redoCount).toBe(1);
     });
 
-    it('should update button states after redo', () => {
+    it("should update button states after redo", () => {
       const command = new MockCommand();
       pushCommand(command);
       undo();
@@ -217,7 +226,7 @@ describe('undo-redo', () => {
       expect(undoRedoState.canRedo).toBe(false);
     });
 
-    it('should handle multiple redos', () => {
+    it("should handle multiple redos", () => {
       const command1 = new MockCommand();
       const command2 = new MockCommand();
       const command3 = new MockCommand();
@@ -248,7 +257,7 @@ describe('undo-redo', () => {
       expect(canRedo()).toBe(false);
     });
 
-    it('should do nothing when no commands to redo', () => {
+    it("should do nothing when no commands to redo", () => {
       const command = new MockCommand();
       pushCommand(command);
 
@@ -260,7 +269,7 @@ describe('undo-redo', () => {
       expect(canRedo()).toBe(false);
     });
 
-    it('should not redo beyond history end', () => {
+    it("should not redo beyond history end", () => {
       const command = new MockCommand();
       pushCommand(command);
       undo();
@@ -276,19 +285,19 @@ describe('undo-redo', () => {
     });
   });
 
-  describe('canUndo', () => {
-    it('should return true when commands are available', () => {
+  describe("canUndo", () => {
+    it("should return true when commands are available", () => {
       const command = new MockCommand();
       pushCommand(command);
 
       expect(canUndo()).toBe(true);
     });
 
-    it('should return false when no commands available', () => {
+    it("should return false when no commands available", () => {
       expect(canUndo()).toBe(false);
     });
 
-    it('should return false after undoing all commands', () => {
+    it("should return false after undoing all commands", () => {
       const command = new MockCommand();
       pushCommand(command);
       undo();
@@ -297,8 +306,8 @@ describe('undo-redo', () => {
     });
   });
 
-  describe('canRedo', () => {
-    it('should return true after undo', () => {
+  describe("canRedo", () => {
+    it("should return true after undo", () => {
       const command = new MockCommand();
       pushCommand(command);
       undo();
@@ -306,14 +315,14 @@ describe('undo-redo', () => {
       expect(canRedo()).toBe(true);
     });
 
-    it('should return false when no undos performed', () => {
+    it("should return false when no undos performed", () => {
       const command = new MockCommand();
       pushCommand(command);
 
       expect(canRedo()).toBe(false);
     });
 
-    it('should return false after redoing all commands', () => {
+    it("should return false after redoing all commands", () => {
       const command = new MockCommand();
       pushCommand(command);
       undo();
@@ -323,8 +332,8 @@ describe('undo-redo', () => {
     });
   });
 
-  describe('clearHistory', () => {
-    it('should clear all commands', () => {
+  describe("clearHistory", () => {
+    it("should clear all commands", () => {
       const command1 = new MockCommand();
       const command2 = new MockCommand();
 
@@ -337,7 +346,7 @@ describe('undo-redo', () => {
       expect(canRedo()).toBe(false);
     });
 
-    it('should update button states', () => {
+    it("should update button states", () => {
       const command = new MockCommand();
       pushCommand(command);
 
@@ -347,7 +356,7 @@ describe('undo-redo', () => {
       expect(undoRedoState.canRedo).toBe(false);
     });
 
-    it('should allow new commands after clear', () => {
+    it("should allow new commands after clear", () => {
       const command1 = new MockCommand();
       const command2 = new MockCommand();
 
@@ -363,8 +372,8 @@ describe('undo-redo', () => {
     });
   });
 
-  describe('Complex Scenarios', () => {
-    it('should handle undo, redo, undo sequence', () => {
+  describe("Complex Scenarios", () => {
+    it("should handle undo, redo, undo sequence", () => {
       const command = new MockCommand();
       pushCommand(command);
 
@@ -381,7 +390,7 @@ describe('undo-redo', () => {
       expect(command.redoCount).toBe(1);
     });
 
-    it('should handle push after partial undo', () => {
+    it("should handle push after partial undo", () => {
       const command1 = new MockCommand();
       const command2 = new MockCommand();
       const command3 = new MockCommand();
@@ -414,7 +423,7 @@ describe('undo-redo', () => {
       expect(command3.undoCount).toBe(1); // But not undone again
     });
 
-    it('should maintain correct state through mixed operations', () => {
+    it("should maintain correct state through mixed operations", () => {
       const commands = Array.from({ length: 5 }, () => new MockCommand());
 
       // Push 5 commands

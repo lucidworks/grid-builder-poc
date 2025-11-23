@@ -22,7 +22,7 @@
  * @module boundary-constraints
  */
 
-import { ComponentDefinition } from '../types/component-definition';
+import { ComponentDefinition } from "../types/component-definition";
 
 /**
  * Canvas dimensions in grid units
@@ -88,7 +88,7 @@ export interface ConstrainedPlacement {
  */
 export function canComponentFitCanvas(
   definition: ComponentDefinition,
-  canvasWidth: number = CANVAS_WIDTH_UNITS
+  canvasWidth: number = CANVAS_WIDTH_UNITS,
 ): boolean {
   // Get minimum size (or use default minimums if not specified)
   const minWidth = definition.minSize?.width || 0;
@@ -131,7 +131,7 @@ export function canComponentFitCanvas(
  */
 export function constrainSizeToCanvas(
   definition: ComponentDefinition,
-  canvasWidth: number = CANVAS_WIDTH_UNITS
+  canvasWidth: number = CANVAS_WIDTH_UNITS,
 ): ConstrainedSize {
   const defaultWidth = definition.defaultSize.width;
   const defaultHeight = definition.defaultSize.height;
@@ -206,7 +206,7 @@ export function constrainPositionToCanvas(
   y: number,
   width: number,
   height: number,
-  canvasWidth: number = CANVAS_WIDTH_UNITS
+  canvasWidth: number = CANVAS_WIDTH_UNITS,
 ): ConstrainedPlacement {
   let newX = x;
   let newY = y;
@@ -285,13 +285,13 @@ export function applyBoundaryConstraints(
   definition: ComponentDefinition,
   x: number,
   y: number,
-  canvasWidth: number = CANVAS_WIDTH_UNITS
+  canvasWidth: number = CANVAS_WIDTH_UNITS,
 ): ConstrainedPlacement | null {
   // 1. Validate component can fit
   if (!canComponentFitCanvas(definition, canvasWidth)) {
     console.warn(
       `Component "${definition.name}" minSize (${definition.minSize?.width}) ` +
-      `exceeds canvas width (${canvasWidth}). Placement rejected.`
+        `exceeds canvas width (${canvasWidth}). Placement rejected.`,
     );
     return null;
   }
@@ -305,7 +305,7 @@ export function applyBoundaryConstraints(
     y,
     constrainedSize.width,
     constrainedSize.height,
-    canvasWidth
+    canvasWidth,
   );
 
   // Combine size and position adjustments

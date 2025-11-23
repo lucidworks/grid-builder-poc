@@ -60,8 +60,8 @@
  * @module grid-calculations
  */
 
-import { domCache } from './dom-cache';
-import { GridConfig } from '../types/grid-config';
+import { domCache } from "./dom-cache";
+import { GridConfig } from "../types/grid-config";
 
 /** Fixed vertical grid size in pixels - provides consistent vertical spacing */
 const GRID_SIZE_VERTICAL = 20;
@@ -166,7 +166,7 @@ export function clearGridSizeCache() {
 export function getGridSizeHorizontal(
   canvasId: string,
   config?: GridConfig,
-  forceRecalc: boolean = false
+  forceRecalc: boolean = false,
 ): number {
   const cacheKey = `${canvasId}-h`;
 
@@ -183,7 +183,9 @@ export function getGridSizeHorizontal(
 
   // Get grid size percent from config or use default
   // Config gridSizePercent is whole number (2 = 2%), default is already decimal (0.02)
-  const gridSizePercent = config?.gridSizePercent ? config.gridSizePercent / 100 : GRID_SIZE_HORIZONTAL_PERCENT;
+  const gridSizePercent = config?.gridSizePercent
+    ? config.gridSizePercent / 100
+    : GRID_SIZE_HORIZONTAL_PERCENT;
 
   // Calculate raw grid size
   const rawSize = container.clientWidth * gridSizePercent;
@@ -248,7 +250,11 @@ export function getGridSizeVertical(config?: GridConfig): number {
  * const widthPx = gridToPixelsX(15, 'canvas1', { gridSizePercent: 3 }); // → 450px
  * ```
  */
-export function gridToPixelsX(gridUnits: number, canvasId: string, config?: GridConfig): number {
+export function gridToPixelsX(
+  gridUnits: number,
+  canvasId: string,
+  config?: GridConfig,
+): number {
   // Use cached grid size for better performance
   const gridSize = getGridSizeHorizontal(canvasId, config);
   return Math.round(gridUnits * gridSize);
@@ -310,7 +316,11 @@ export function gridToPixelsY(gridUnits: number, config?: GridConfig): number {
  * const snappedX = pixelsToGridX(371, 'canvas1', { gridSizePercent: 3 }); // → 12
  * ```
  */
-export function pixelsToGridX(pixels: number, canvasId: string, config?: GridConfig): number {
+export function pixelsToGridX(
+  pixels: number,
+  canvasId: string,
+  config?: GridConfig,
+): number {
   // Use cached grid size for better performance
   const gridSize = getGridSizeHorizontal(canvasId, config);
   if (gridSize === 0) {

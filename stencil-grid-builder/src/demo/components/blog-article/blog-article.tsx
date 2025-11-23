@@ -1,12 +1,12 @@
-import { Component, h, Prop } from '@stencil/core';
+import { Component, h, Prop } from "@stencil/core";
 
 @Component({
-  tag: 'blog-article',
-  styleUrl: 'blog-article.scss',
+  tag: "blog-article",
+  styleUrl: "blog-article.scss",
   shadow: false,
 })
 export class BlogArticle {
-  @Prop() content: string = 'Article content goes here';
+  @Prop() content: string = "Article content goes here";
   @Prop() author?: string;
   @Prop() date?: string;
 

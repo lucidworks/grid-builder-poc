@@ -195,16 +195,23 @@
  * @module resize-handler
  */
 
-import type { InteractResizeEvent, Interactable } from 'interactjs';
-import { GridItem, setActiveCanvas } from '../services/state-manager';
-import { ComponentDefinition } from '../types/component-definition';
-import { GridConfig } from '../types/grid-config';
-import { domCache } from './dom-cache';
-import { getGridSizeHorizontal, getGridSizeVertical, pixelsToGridX, pixelsToGridY, gridToPixelsX, gridToPixelsY } from './grid-calculations';
-import { BUILD_TIMESTAMP } from './version';
-import { createDebugLogger } from './debug';
+import type { InteractResizeEvent, Interactable } from "interactjs";
+import { GridItem, setActiveCanvas } from "../services/state-manager";
+import { ComponentDefinition } from "../types/component-definition";
+import { GridConfig } from "../types/grid-config";
+import { domCache } from "./dom-cache";
+import {
+  getGridSizeHorizontal,
+  getGridSizeVertical,
+  pixelsToGridX,
+  pixelsToGridY,
+  gridToPixelsX,
+  gridToPixelsY,
+} from "./grid-calculations";
+import { BUILD_TIMESTAMP } from "./version";
+import { createDebugLogger } from "./debug";
 
-const debug = createDebugLogger('resize-handler');
+const debug = createDebugLogger("resize-handler");
 
 /**
  * Extract current transform position from element's inline style
@@ -323,7 +330,12 @@ export class ResizeHandler {
   };
 
   /** Last calculated position and size from handleResizeMove (for handleResizeEnd) */
-  private lastCalculated: { x: number; y: number; width: number; height: number } = {
+  private lastCalculated: {
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+  } = {
     x: 0,
     y: 0,
     width: 0,
@@ -375,7 +387,13 @@ export class ResizeHandler {
    * }
    * ```
    */
-  constructor(element: HTMLElement, item: GridItem, onUpdate: (item: GridItem) => void, componentDefinition?: ComponentDefinition, config?: GridConfig) {
+  constructor(
+    element: HTMLElement,
+    item: GridItem,
+    onUpdate: (item: GridItem) => void,
+    componentDefinition?: ComponentDefinition,
+    config?: GridConfig,
+  ) {
     this.element = element;
     this.item = item;
     this.onUpdate = onUpdate;
@@ -385,7 +403,9 @@ export class ResizeHandler {
     // Ensure element has width/height before initializing interact.js
     // StencilJS might not have applied styles yet
     if (!element.style.width || !element.style.height) {
-      console.warn('Element missing width/height styles, waiting for next frame');
+      console.warn(
+        "Element missing width/height styles, waiting for next frame",
+      );
       requestAnimationFrame(() => this.initialize());
     } else {
       this.initialize();
@@ -494,12 +514,14 @@ export class ResizeHandler {
    */
   private initialize(): void {
     // Log build timestamp and version info (only in development)
-    debug.log('📦 resize-handler.ts build:', BUILD_TIMESTAMP);
-    debug.log('🔧 Grid config fix applied - resize handler now uses same grid calculations as render');
+    debug.log("📦 resize-handler.ts build:", BUILD_TIMESTAMP);
+    debug.log(
+      "🔧 Grid config fix applied - resize handler now uses same grid calculations as render",
+    );
 
     const interact = window.interact;
     if (!interact) {
-      console.warn('interact.js not loaded');
+      console.warn("interact.js not loaded");
       return;
     }
 
@@ -523,10 +545,12 @@ export class ResizeHandler {
 
     // Determine which edges should be enabled based on min/max constraints
     // If min == max for a dimension, disable resizing on that dimension
-    const canResizeWidth = this.maxWidth === Infinity || this.maxWidth > this.minWidth;
-    const canResizeHeight = this.maxHeight === Infinity || this.maxHeight > this.minHeight;
+    const canResizeWidth =
+      this.maxWidth === Infinity || this.maxWidth > this.minWidth;
+    const canResizeHeight =
+      this.maxHeight === Infinity || this.maxHeight > this.minHeight;
 
-    debug.log('🔧 ResizeHandler init for', this.item.id, {
+    debug.log("🔧 ResizeHandler init for", this.item.id, {
       minWidth: this.minWidth,
       maxWidth: this.maxWidth,
       minHeight: this.minHeight,
@@ -538,12 +562,12 @@ export class ResizeHandler {
 
     // Apply disabled class to element to control handle visibility via CSS
     if (!canResizeWidth) {
-      debug.log('  ❌ Disabling width resize');
-      this.element.classList.add('resize-width-disabled');
+      debug.log("  ❌ Disabling width resize");
+      this.element.classList.add("resize-width-disabled");
     }
     if (!canResizeHeight) {
-      debug.log('  ❌ Disabling height resize');
-      this.element.classList.add('resize-height-disabled');
+      debug.log("  ❌ Disabling height resize");
+      this.element.classList.add("resize-height-disabled");
     }
 
     this.interactInstance = interact(this.element).resizable({
@@ -551,11 +575,11 @@ export class ResizeHandler {
         left: canResizeWidth,
         right: canResizeWidth,
         bottom: canResizeHeight,
-        top: canResizeHeight
+        top: canResizeHeight,
       },
 
       // Ignore resize from the drag handle header
-      ignoreFrom: '.grid-item-header',
+      ignoreFrom: ".grid-item-header",
 
       // No modifiers - we handle all constraints manually in handleResizeMove
       // This prevents fighting between interact.js modifiers and our RAF-batched updates
@@ -614,10 +638,10 @@ export class ResizeHandler {
   private handleResizeStart(event: InteractResizeEvent): void {
     // Start performance tracking
     if (window.perfMonitor) {
-      window.perfMonitor.startOperation('resize');
+      window.perfMonitor.startOperation("resize");
     }
 
-    event.target.classList.add('resizing');
+    event.target.classList.add("resizing");
 
     // Set this canvas as active
     setActiveCanvas(this.item.canvasId);
@@ -630,12 +654,12 @@ export class ResizeHandler {
     this.startRect.height = parseFloat(event.target.style.height) || 0;
 
     // Reset data attributes for tracking cumulative deltas (like drag-handler)
-    event.target.setAttribute('data-x', '0');
-    event.target.setAttribute('data-y', '0');
-    event.target.setAttribute('data-width', '0');
-    event.target.setAttribute('data-height', '0');
+    event.target.setAttribute("data-x", "0");
+    event.target.setAttribute("data-y", "0");
+    event.target.setAttribute("data-width", "0");
+    event.target.setAttribute("data-height", "0");
 
-    debug.log('🟢 RESIZE START:', {
+    debug.log("🟢 RESIZE START:", {
       edges: event.edges,
       startRect: { ...this.startRect },
       itemId: this.item.id,
@@ -732,16 +756,24 @@ export class ResizeHandler {
   private handleResizeMove(event: InteractResizeEvent): void {
     // Use data attributes to track cumulative deltas (same pattern as drag-handler)
     // This prevents interact.js from getting confused about element position
-    const deltaX = (parseFloat(event.target.getAttribute('data-x')) || 0) + event.deltaRect.left;
-    const deltaY = (parseFloat(event.target.getAttribute('data-y')) || 0) + event.deltaRect.top;
-    const deltaWidth = (parseFloat(event.target.getAttribute('data-width')) || 0) + event.deltaRect.width;
-    const deltaHeight = (parseFloat(event.target.getAttribute('data-height')) || 0) + event.deltaRect.height;
+    const deltaX =
+      (parseFloat(event.target.getAttribute("data-x")) || 0) +
+      event.deltaRect.left;
+    const deltaY =
+      (parseFloat(event.target.getAttribute("data-y")) || 0) +
+      event.deltaRect.top;
+    const deltaWidth =
+      (parseFloat(event.target.getAttribute("data-width")) || 0) +
+      event.deltaRect.width;
+    const deltaHeight =
+      (parseFloat(event.target.getAttribute("data-height")) || 0) +
+      event.deltaRect.height;
 
     // Update data attributes immediately for next move event
-    event.target.setAttribute('data-x', deltaX.toString());
-    event.target.setAttribute('data-y', deltaY.toString());
-    event.target.setAttribute('data-width', deltaWidth.toString());
-    event.target.setAttribute('data-height', deltaHeight.toString());
+    event.target.setAttribute("data-x", deltaX.toString());
+    event.target.setAttribute("data-y", deltaY.toString());
+    event.target.setAttribute("data-width", deltaWidth.toString());
+    event.target.setAttribute("data-height", deltaHeight.toString());
 
     // Calculate new dimensions and position from base + deltas
     let newWidth = this.startRect.width + deltaWidth;
@@ -800,7 +832,7 @@ export class ResizeHandler {
 
     // Batch DOM updates with RAF (limits to ~60fps instead of ~200/sec)
     this.resizeRafId = requestAnimationFrame(() => {
-      debug.log('🔵 RESIZE MOVE (RAF):', {
+      debug.log("🔵 RESIZE MOVE (RAF):", {
         edges: event.edges,
         deltas: { deltaX, deltaY, deltaWidth, deltaHeight },
         startRect: { ...this.startRect },
@@ -809,8 +841,8 @@ export class ResizeHandler {
 
       // Apply styles - smooth free-form resizing at 60fps max
       event.target.style.transform = `translate(${newX}px, ${newY}px)`;
-      event.target.style.width = newWidth + 'px';
-      event.target.style.height = newHeight + 'px';
+      event.target.style.width = newWidth + "px";
+      event.target.style.height = newHeight + "px";
 
       // Clear RAF ID after execution
       this.resizeRafId = null;
@@ -931,7 +963,7 @@ export class ResizeHandler {
       this.resizeRafId = null;
     }
 
-    event.target.classList.remove('resizing');
+    event.target.classList.remove("resizing");
 
     // Get the container to calculate relative position
     const container = domCache.getCanvas(this.item.canvasId);
@@ -944,16 +976,17 @@ export class ResizeHandler {
     const gridSizeY = getGridSizeVertical();
 
     // Get final deltas from data attributes BEFORE cleaning them up (like drag-handler)
-    const deltaX = parseFloat(event.target.getAttribute('data-x')) || 0;
-    const deltaY = parseFloat(event.target.getAttribute('data-y')) || 0;
-    const deltaWidth = parseFloat(event.target.getAttribute('data-width')) || 0;
-    const deltaHeight = parseFloat(event.target.getAttribute('data-height')) || 0;
+    const deltaX = parseFloat(event.target.getAttribute("data-x")) || 0;
+    const deltaY = parseFloat(event.target.getAttribute("data-y")) || 0;
+    const deltaWidth = parseFloat(event.target.getAttribute("data-width")) || 0;
+    const deltaHeight =
+      parseFloat(event.target.getAttribute("data-height")) || 0;
 
     // Clean up data attributes AFTER reading them
-    event.target.removeAttribute('data-x');
-    event.target.removeAttribute('data-y');
-    event.target.removeAttribute('data-width');
-    event.target.removeAttribute('data-height');
+    event.target.removeAttribute("data-x");
+    event.target.removeAttribute("data-y");
+    event.target.removeAttribute("data-width");
+    event.target.removeAttribute("data-height");
 
     // Calculate final position and size from base + deltas
     let newX = this.startRect.x + deltaX;
@@ -961,9 +994,14 @@ export class ResizeHandler {
     let newWidth = this.startRect.width + deltaWidth;
     let newHeight = this.startRect.height + deltaHeight;
 
-    debug.log('🔴 RESIZE END:', {
+    debug.log("🔴 RESIZE END:", {
       edges: event.edges,
-      eventRect: { left: event.rect.left, top: event.rect.top, width: event.rect.width, height: event.rect.height },
+      eventRect: {
+        left: event.rect.left,
+        top: event.rect.top,
+        width: event.rect.width,
+        height: event.rect.height,
+      },
       containerRect: { left: containerRect.left, top: containerRect.top },
       beforeSnap: { newX, newY, newWidth, newHeight },
       gridSize: { gridSizeX, gridSizeY },
@@ -1024,7 +1062,7 @@ export class ResizeHandler {
       newY = Math.round(newY / gridSizeY) * gridSizeY;
     }
 
-    debug.log('  afterDirectionalSnap:', { newX, newY, newWidth, newHeight });
+    debug.log("  afterDirectionalSnap:", { newX, newY, newWidth, newHeight });
 
     // Apply min/max size constraints AFTER grid snapping
     // This ensures the final size respects component constraints
@@ -1047,7 +1085,7 @@ export class ResizeHandler {
       newY += heightDiff;
     }
 
-    debug.log('  afterMinMaxClamp:', { newX, newY, newWidth, newHeight });
+    debug.log("  afterMinMaxClamp:", { newX, newY, newWidth, newHeight });
 
     // COMPREHENSIVE BOUNDARY CONSTRAINT CHECK
     // =========================================
@@ -1057,19 +1095,28 @@ export class ResizeHandler {
     const canvasWidth = container.clientWidth;
     const canvasHeight = container.clientHeight;
 
-    debug.log('  canvasBounds:', { canvasWidth, canvasHeight });
+    debug.log("  canvasBounds:", { canvasWidth, canvasHeight });
 
     // 1. HORIZONTAL BOUNDS CHECK
     // ---------------------------
     // If component is wider than canvas, shrink it to fit
     if (newWidth > canvasWidth) {
-      debug.log('  ⚠️ Width exceeds canvas, shrinking from', newWidth, 'to', canvasWidth);
+      debug.log(
+        "  ⚠️ Width exceeds canvas, shrinking from",
+        newWidth,
+        "to",
+        canvasWidth,
+      );
       newWidth = canvasWidth;
     }
 
     // Ensure left edge is within bounds (x >= 0)
     if (newX < 0) {
-      debug.log('  ⚠️ Left edge outside canvas, moving from x =', newX, 'to x = 0');
+      debug.log(
+        "  ⚠️ Left edge outside canvas, moving from x =",
+        newX,
+        "to x = 0",
+      );
       newX = 0;
     }
 
@@ -1078,17 +1125,30 @@ export class ResizeHandler {
       if (event.edges && event.edges.right) {
         // Resizing from RIGHT edge: clamp width to fit, keep position
         const maxWidth = canvasWidth - newX;
-        debug.log('  ⚠️ Right edge overflow (resizing from right), clamping width from', newWidth, 'to', maxWidth);
+        debug.log(
+          "  ⚠️ Right edge overflow (resizing from right), clamping width from",
+          newWidth,
+          "to",
+          maxWidth,
+        );
         newWidth = Math.max(this.minWidth, maxWidth);
       } else {
         // Not resizing from right (dragging or resizing from left): move left to fit
         const requiredX = canvasWidth - newWidth;
-        debug.log('  ⚠️ Right edge outside canvas, moving from x =', newX, 'to x =', requiredX);
+        debug.log(
+          "  ⚠️ Right edge outside canvas, moving from x =",
+          newX,
+          "to x =",
+          requiredX,
+        );
         newX = requiredX;
 
         // If still doesn't fit (requiredX < 0), shrink width
         if (newX < 0) {
-          debug.log('  ⚠️ Cannot fit by moving, shrinking width to', canvasWidth);
+          debug.log(
+            "  ⚠️ Cannot fit by moving, shrinking width to",
+            canvasWidth,
+          );
           newWidth = canvasWidth;
           newX = 0;
         }
@@ -1099,13 +1159,22 @@ export class ResizeHandler {
     // -------------------------
     // If component is taller than canvas, shrink it to fit
     if (newHeight > canvasHeight) {
-      debug.log('  ⚠️ Height exceeds canvas, shrinking from', newHeight, 'to', canvasHeight);
+      debug.log(
+        "  ⚠️ Height exceeds canvas, shrinking from",
+        newHeight,
+        "to",
+        canvasHeight,
+      );
       newHeight = canvasHeight;
     }
 
     // Ensure top edge is within bounds (y >= 0)
     if (newY < 0) {
-      debug.log('  ⚠️ Top edge outside canvas, moving from y =', newY, 'to y = 0');
+      debug.log(
+        "  ⚠️ Top edge outside canvas, moving from y =",
+        newY,
+        "to y = 0",
+      );
       newY = 0;
     }
 
@@ -1114,61 +1183,74 @@ export class ResizeHandler {
       if (event.edges && event.edges.bottom) {
         // Resizing from BOTTOM edge: clamp height to fit, keep Y position
         const maxHeight = canvasHeight - newY;
-        debug.log('  ⚠️ Bottom edge overflow (resizing from bottom), clamping height from', newHeight, 'to', maxHeight);
+        debug.log(
+          "  ⚠️ Bottom edge overflow (resizing from bottom), clamping height from",
+          newHeight,
+          "to",
+          maxHeight,
+        );
         newHeight = Math.max(this.minHeight, maxHeight);
       } else {
         // Not resizing from bottom (dragging or resizing from top): move up to fit
         const requiredY = canvasHeight - newHeight;
-        debug.log('  ⚠️ Bottom edge outside canvas, moving from y =', newY, 'to y =', requiredY);
+        debug.log(
+          "  ⚠️ Bottom edge outside canvas, moving from y =",
+          newY,
+          "to y =",
+          requiredY,
+        );
         newY = requiredY;
 
         // If still doesn't fit (requiredY < 0), shrink height
         if (newY < 0) {
-          debug.log('  ⚠️ Cannot fit by moving, shrinking height to', canvasHeight);
+          debug.log(
+            "  ⚠️ Cannot fit by moving, shrinking height to",
+            canvasHeight,
+          );
           newHeight = canvasHeight;
           newY = 0;
         }
       }
     }
 
-    debug.log('  afterBoundaryCheck:', { newX, newY, newWidth, newHeight });
+    debug.log("  afterBoundaryCheck:", { newX, newY, newWidth, newHeight });
 
     // Apply final snapped position
     event.target.style.transform = `translate(${newX}px, ${newY}px)`;
-    event.target.style.width = newWidth + 'px';
-    event.target.style.height = newHeight + 'px';
+    event.target.style.width = newWidth + "px";
+    event.target.style.height = newHeight + "px";
 
-    debug.log('  appliedToDOM:', {
+    debug.log("  appliedToDOM:", {
       transform: `translate(${newX}px, ${newY}px)`,
       width: `${newWidth}px`,
       height: `${newHeight}px`,
     });
 
     // Update item size and position in current viewport's layout (convert to grid units)
-    const currentViewport = window.gridState?.currentViewport || 'desktop';
-    const layout = this.item.layouts[currentViewport as 'desktop' | 'mobile'];
+    const currentViewport = window.gridState?.currentViewport || "desktop";
+    const layout = this.item.layouts[currentViewport as "desktop" | "mobile"];
 
     layout.width = pixelsToGridX(newWidth, this.item.canvasId, this.config);
     layout.height = pixelsToGridY(newHeight, this.config);
     layout.x = pixelsToGridX(newX, this.item.canvasId, this.config);
     layout.y = pixelsToGridY(newY, this.config);
 
-    debug.log('  finalGridUnits:', {
+    debug.log("  finalGridUnits:", {
       x: layout.x,
       y: layout.y,
       width: layout.width,
       height: layout.height,
     });
-    debug.log('---');
+    debug.log("---");
 
     // If in mobile view, mark as customized
-    if (currentViewport === 'mobile') {
+    if (currentViewport === "mobile") {
       this.item.layouts.mobile.customized = true;
     }
 
     // End performance tracking
     if (window.perfMonitor) {
-      window.perfMonitor.endOperation('resize');
+      window.perfMonitor.endOperation("resize");
     }
 
     // Trigger StencilJS update (single re-render at end)

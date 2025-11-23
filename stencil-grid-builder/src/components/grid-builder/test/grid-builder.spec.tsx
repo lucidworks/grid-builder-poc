@@ -23,28 +23,32 @@ const mockDisconnect = jest.fn();
   disconnect: mockDisconnect,
 }));
 
-import { h } from '@stencil/core';
-import { GridBuilder } from '../grid-builder';
-import { reset as resetState, gridState, setActiveCanvas } from '../../../services/state-manager';
-import { clearHistory } from '../../../services/undo-redo';
-import { eventManager } from '../../../services/event-manager';
-import { mockDragClone } from '../../../utils/test-helpers';
+import { h } from "@stencil/core";
+import { GridBuilder } from "../grid-builder";
+import {
+  reset as resetState,
+  gridState,
+  setActiveCanvas,
+} from "../../../services/state-manager";
+import { clearHistory } from "../../../services/undo-redo";
+import { eventManager } from "../../../services/event-manager";
+import { mockDragClone } from "../../../utils/test-helpers";
 
 // Mock component definitions for tests
 const mockComponentDefinitions = [
   {
-    type: 'header',
-    name: 'Header',
-    icon: '📄',
+    type: "header",
+    name: "Header",
+    icon: "📄",
     defaultSize: { width: 50, height: 6 },
     minSize: { width: 10, height: 3 },
     renderDragClone: () => <div>Header Clone</div>,
     render: () => <div>Header</div>,
   },
   {
-    type: 'text',
-    name: 'Text Block',
-    icon: '📝',
+    type: "text",
+    name: "Text Block",
+    icon: "📝",
     defaultSize: { width: 25, height: 10 },
     minSize: { width: 10, height: 5 },
     renderDragClone: () => <div>Text Clone</div>,
@@ -52,7 +56,7 @@ const mockComponentDefinitions = [
   },
 ];
 
-describe('grid-builder', () => {
+describe("grid-builder", () => {
   beforeEach(() => {
     resetState();
     clearHistory();
@@ -60,55 +64,59 @@ describe('grid-builder', () => {
     jest.clearAllMocks();
   });
 
-  describe('Component Instantiation', () => {
-    it('should create component instance', () => {
+  describe("Component Instantiation", () => {
+    it("should create component instance", () => {
       const component = new GridBuilder();
       expect(component).toBeTruthy();
       expect(component).toBeInstanceOf(GridBuilder);
     });
 
-    it('should have required lifecycle methods', () => {
+    it("should have required lifecycle methods", () => {
       const component = new GridBuilder();
-      expect(typeof component.componentWillLoad).toBe('function');
-      expect(typeof component.componentDidLoad).toBe('function');
-      expect(typeof component.disconnectedCallback).toBe('function');
+      expect(typeof component.componentWillLoad).toBe("function");
+      expect(typeof component.componentDidLoad).toBe("function");
+      expect(typeof component.disconnectedCallback).toBe("function");
     });
   });
 
-  describe('Props Validation', () => {
-    it('should accept components prop', () => {
+  describe("Props Validation", () => {
+    it("should accept components prop", () => {
       const component = new GridBuilder();
       component.components = mockComponentDefinitions;
 
       expect(component.components).toBeDefined();
       expect(component.components.length).toBe(2);
-      expect(component.components[0].type).toBe('header');
+      expect(component.components[0].type).toBe("header");
     });
 
-    it('should log error when components prop is missing', () => {
-      const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
+    it("should log error when components prop is missing", () => {
+      const consoleErrorSpy = jest.spyOn(console, "error").mockImplementation();
 
       const component = new GridBuilder();
       component.componentWillLoad();
 
-      expect(consoleErrorSpy).toHaveBeenCalledWith('GridBuilder: components prop is required');
+      expect(consoleErrorSpy).toHaveBeenCalledWith(
+        "GridBuilder: components prop is required",
+      );
 
       consoleErrorSpy.mockRestore();
     });
 
-    it('should log error when components prop is empty array', () => {
-      const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
+    it("should log error when components prop is empty array", () => {
+      const consoleErrorSpy = jest.spyOn(console, "error").mockImplementation();
 
       const component = new GridBuilder();
       component.components = [];
       component.componentWillLoad();
 
-      expect(consoleErrorSpy).toHaveBeenCalledWith('GridBuilder: components prop is required');
+      expect(consoleErrorSpy).toHaveBeenCalledWith(
+        "GridBuilder: components prop is required",
+      );
 
       consoleErrorSpy.mockRestore();
     });
 
-    it('should accept optional config prop', () => {
+    it("should accept optional config prop", () => {
       const customConfig = {
         gridSizePercent: 3,
         minGridSize: 15,
@@ -121,9 +129,9 @@ describe('grid-builder', () => {
       expect(component.config).toEqual(customConfig);
     });
 
-    it('should accept optional plugins prop', () => {
+    it("should accept optional plugins prop", () => {
       const mockPlugin = {
-        name: 'test-plugin',
+        name: "test-plugin",
         init: jest.fn(),
         destroy: jest.fn(),
       };
@@ -136,10 +144,10 @@ describe('grid-builder', () => {
     });
   });
 
-  describe('Plugin Lifecycle', () => {
-    it('should initialize plugins on componentDidLoad', () => {
+  describe("Plugin Lifecycle", () => {
+    it("should initialize plugins on componentDidLoad", () => {
       const mockPlugin = {
-        name: 'test-plugin',
+        name: "test-plugin",
         init: jest.fn(),
         destroy: jest.fn(),
       };
@@ -157,13 +165,13 @@ describe('grid-builder', () => {
           on: expect.any(Function),
           off: expect.any(Function),
           getState: expect.any(Function),
-        })
+        }),
       );
     });
 
-    it('should destroy plugins on disconnectedCallback', () => {
+    it("should destroy plugins on disconnectedCallback", () => {
       const mockPlugin = {
-        name: 'test-plugin',
+        name: "test-plugin",
         init: jest.fn(),
         destroy: jest.fn(),
       };
@@ -178,15 +186,15 @@ describe('grid-builder', () => {
       expect(mockPlugin.destroy).toHaveBeenCalled();
     });
 
-    it('should handle multiple plugins', () => {
+    it("should handle multiple plugins", () => {
       const plugin1 = {
-        name: 'plugin-1',
+        name: "plugin-1",
         init: jest.fn(),
         destroy: jest.fn(),
       };
 
       const plugin2 = {
-        name: 'plugin-2',
+        name: "plugin-2",
         init: jest.fn(),
         destroy: jest.fn(),
       };
@@ -206,20 +214,20 @@ describe('grid-builder', () => {
       expect(plugin2.destroy).toHaveBeenCalled();
     });
 
-    it('should handle plugin init errors gracefully', () => {
-      const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
-      const consoleLogSpy = jest.spyOn(console, 'log').mockImplementation();
+    it("should handle plugin init errors gracefully", () => {
+      const consoleErrorSpy = jest.spyOn(console, "error").mockImplementation();
+      const consoleLogSpy = jest.spyOn(console, "log").mockImplementation();
 
       const failingPlugin = {
-        name: 'failing-plugin',
+        name: "failing-plugin",
         init: jest.fn(() => {
-          throw new Error('Init failed');
+          throw new Error("Init failed");
         }),
         destroy: jest.fn(),
       };
 
       const goodPlugin = {
-        name: 'good-plugin',
+        name: "good-plugin",
         init: jest.fn(),
         destroy: jest.fn(),
       };
@@ -241,8 +249,8 @@ describe('grid-builder', () => {
     });
   });
 
-  describe('Component Lifecycle', () => {
-    it('should call componentWillLoad before rendering', () => {
+  describe("Component Lifecycle", () => {
+    it("should call componentWillLoad before rendering", () => {
       const component = new GridBuilder();
       component.components = mockComponentDefinitions;
 
@@ -252,7 +260,7 @@ describe('grid-builder', () => {
       expect(component.components).toBeDefined();
     });
 
-    it('should work without plugins', () => {
+    it("should work without plugins", () => {
       const component = new GridBuilder();
       component.components = mockComponentDefinitions;
 
@@ -263,22 +271,28 @@ describe('grid-builder', () => {
     });
   });
 
-  describe('Custom Component Rendering', () => {
-    it('should support renderComponent returning custom elements', () => {
+  describe("Custom Component Rendering", () => {
+    it("should support renderComponent returning custom elements", () => {
       // Simulate a custom Stencil component definition
       const customComponentDef = [
         {
-          type: 'custom-card',
-          name: 'Custom Card',
-          icon: '🎴',
+          type: "custom-card",
+          name: "Custom Card",
+          icon: "🎴",
           defaultSize: { width: 20, height: 15 },
           minSize: { width: 10, height: 10 },
           render: () => <div>Custom Card</div>,
           renderComponent: (_item, config) => {
             // Simulate creating a custom element (like a Stencil component)
-            const customElement = document.createElement('custom-card');
-            customElement.setAttribute('title', config.title || 'Default Title');
-            customElement.setAttribute('content', config.content || 'Default Content');
+            const customElement = document.createElement("custom-card");
+            customElement.setAttribute(
+              "title",
+              config.title || "Default Title",
+            );
+            customElement.setAttribute(
+              "content",
+              config.content || "Default Content",
+            );
             return customElement;
           },
         },
@@ -288,37 +302,61 @@ describe('grid-builder', () => {
       component.components = customComponentDef as any;
 
       expect((customComponentDef[0] as any).renderComponent).toBeDefined();
-      expect(typeof (customComponentDef[0] as any).renderComponent).toBe('function');
+      expect(typeof (customComponentDef[0] as any).renderComponent).toBe(
+        "function",
+      );
 
       // Test the renderComponent function
-      const mockItem = { id: 'test-1', type: 'custom-card', canvasId: 'canvas1' };
-      const mockConfig = { title: 'Test Title', content: 'Test Content' };
-      const element = customComponentDef[0].renderComponent(mockItem, mockConfig);
+      const mockItem = {
+        id: "test-1",
+        type: "custom-card",
+        canvasId: "canvas1",
+      };
+      const mockConfig = { title: "Test Title", content: "Test Content" };
+      const element = customComponentDef[0].renderComponent(
+        mockItem,
+        mockConfig,
+      );
 
       expect(element).toBeTruthy();
-      expect(element.tagName.toLowerCase()).toBe('custom-card');
-      expect(element.getAttribute('title')).toBe('Test Title');
-      expect(element.getAttribute('content')).toBe('Test Content');
+      expect(element.tagName.toLowerCase()).toBe("custom-card");
+      expect(element.getAttribute("title")).toBe("Test Title");
+      expect(element.getAttribute("content")).toBe("Test Content");
     });
 
-    it('should support renderComponent with props assignment pattern', () => {
+    it("should support renderComponent with props assignment pattern", () => {
       // More realistic pattern for Stencil components with properties
       const stencilComponentDef = [
         {
-          type: 'article-card',
-          name: 'Article Card',
-          icon: '📰',
+          type: "article-card",
+          name: "Article Card",
+          icon: "📰",
           defaultSize: { width: 20, height: 18 },
           minSize: { width: 15, height: 15 },
           render: () => <div>Article Card</div>,
           configSchema: [
-            { name: 'title', label: 'Title', type: 'text', defaultValue: 'Article Title' },
-            { name: 'author', label: 'Author', type: 'text', defaultValue: 'John Doe' },
-            { name: 'imageUrl', label: 'Image', type: 'text', defaultValue: '' },
+            {
+              name: "title",
+              label: "Title",
+              type: "text",
+              defaultValue: "Article Title",
+            },
+            {
+              name: "author",
+              label: "Author",
+              type: "text",
+              defaultValue: "John Doe",
+            },
+            {
+              name: "imageUrl",
+              label: "Image",
+              type: "text",
+              defaultValue: "",
+            },
           ],
           renderComponent: (_item, config) => {
             // Pattern: Create custom element and assign props
-            const card = document.createElement('article-card') as any;
+            const card = document.createElement("article-card") as any;
             card.title = config.title;
             card.author = config.author;
             card.imageUrl = config.imageUrl;
@@ -335,38 +373,45 @@ describe('grid-builder', () => {
       expect(component.components[0].configSchema.length).toBe(3);
 
       // Test renderComponent creates proper element
-      const mockItem = { id: 'test-2', type: 'article-card', canvasId: 'canvas1' };
+      const mockItem = {
+        id: "test-2",
+        type: "article-card",
+        canvasId: "canvas1",
+      };
       const mockConfig = {
-        title: 'My Article',
-        author: 'Jane Smith',
-        imageUrl: 'https://example.com/image.jpg',
+        title: "My Article",
+        author: "Jane Smith",
+        imageUrl: "https://example.com/image.jpg",
       };
 
-      const element = stencilComponentDef[0].renderComponent(mockItem, mockConfig);
+      const element = stencilComponentDef[0].renderComponent(
+        mockItem,
+        mockConfig,
+      );
 
       expect(element).toBeTruthy();
-      expect(element.tagName.toLowerCase()).toBe('article-card');
-      expect((element as any).title).toBe('My Article');
-      expect((element as any).author).toBe('Jane Smith');
-      expect((element as any).imageUrl).toBe('https://example.com/image.jpg');
+      expect(element.tagName.toLowerCase()).toBe("article-card");
+      expect((element as any).title).toBe("My Article");
+      expect((element as any).author).toBe("Jane Smith");
+      expect((element as any).imageUrl).toBe("https://example.com/image.jpg");
     });
 
-    it('should support renderComponent with event listeners', () => {
+    it("should support renderComponent with event listeners", () => {
       // Pattern: Custom component with event handling
       const interactiveComponentDef = [
         {
-          type: 'newsletter-form',
-          name: 'Newsletter Form',
-          icon: '✉️',
+          type: "newsletter-form",
+          name: "Newsletter Form",
+          icon: "✉️",
           defaultSize: { width: 25, height: 12 },
           minSize: { width: 20, height: 10 },
           render: () => <div>Newsletter Form</div>,
           renderComponent: (_item, _config) => {
-            const form = document.createElement('newsletter-form') as any;
+            const form = document.createElement("newsletter-form") as any;
 
             // Simulate adding event listener for custom events
             const mockListener = jest.fn();
-            form.addEventListener('newsletterSubmit', mockListener);
+            form.addEventListener("newsletterSubmit", mockListener);
 
             // Store the listener for testing
             form.__mockListener = mockListener;
@@ -379,29 +424,35 @@ describe('grid-builder', () => {
       const component = new GridBuilder();
       component.components = interactiveComponentDef as any;
 
-      const mockItem = { id: 'test-3', type: 'newsletter-form', canvasId: 'canvas1' };
+      const mockItem = {
+        id: "test-3",
+        type: "newsletter-form",
+        canvasId: "canvas1",
+      };
       const element = interactiveComponentDef[0].renderComponent(mockItem, {});
 
       expect(element).toBeTruthy();
-      expect(element.tagName.toLowerCase()).toBe('newsletter-form');
+      expect(element.tagName.toLowerCase()).toBe("newsletter-form");
 
       // Simulate custom event dispatch
-      const mockEvent = new CustomEvent('newsletterSubmit', { detail: 'test@example.com' });
+      const mockEvent = new CustomEvent("newsletterSubmit", {
+        detail: "test@example.com",
+      });
       element.dispatchEvent(mockEvent);
 
       expect((element as any).__mockListener).toHaveBeenCalled();
     });
   });
 
-  describe('Custom Selection Colors', () => {
-    it('should support optional selectionColor in component definition', () => {
+  describe("Custom Selection Colors", () => {
+    it("should support optional selectionColor in component definition", () => {
       const customColorDef = [
         {
-          type: 'custom-header',
-          name: 'Custom Header',
-          icon: '📄',
+          type: "custom-header",
+          name: "Custom Header",
+          icon: "📄",
           defaultSize: { width: 20, height: 6 },
-          selectionColor: '#3b82f6', // Custom blue
+          selectionColor: "#3b82f6", // Custom blue
           renderDragClone: () => <div>Header Clone</div>,
           render: () => <div>Header</div>,
         },
@@ -410,15 +461,15 @@ describe('grid-builder', () => {
       const component = new GridBuilder();
       component.components = customColorDef;
 
-      expect(component.components[0].selectionColor).toBe('#3b82f6');
+      expect(component.components[0].selectionColor).toBe("#3b82f6");
     });
 
-    it('should work without selectionColor (using default)', () => {
+    it("should work without selectionColor (using default)", () => {
       const defaultColorDef = [
         {
-          type: 'default-header',
-          name: 'Default Header',
-          icon: '📄',
+          type: "default-header",
+          name: "Default Header",
+          icon: "📄",
           defaultSize: { width: 20, height: 6 },
           renderDragClone: () => <div>Header Clone</div>,
           render: () => <div>Header</div>,
@@ -431,32 +482,32 @@ describe('grid-builder', () => {
       expect(component.components[0].selectionColor).toBeUndefined();
     });
 
-    it('should support different colors for different component types', () => {
+    it("should support different colors for different component types", () => {
       const multiColorDefs = [
         {
-          type: 'header',
-          name: 'Header',
-          icon: '📄',
+          type: "header",
+          name: "Header",
+          icon: "📄",
           defaultSize: { width: 20, height: 6 },
-          selectionColor: '#3b82f6', // Blue
+          selectionColor: "#3b82f6", // Blue
           renderDragClone: () => <div>Header Clone</div>,
           render: () => <div>Header</div>,
         },
         {
-          type: 'article',
-          name: 'Article',
-          icon: '📝',
+          type: "article",
+          name: "Article",
+          icon: "📝",
           defaultSize: { width: 25, height: 10 },
-          selectionColor: '#10b981', // Green
+          selectionColor: "#10b981", // Green
           renderDragClone: () => <div>Article Clone</div>,
           render: () => <div>Article</div>,
         },
         {
-          type: 'button',
-          name: 'Button',
-          icon: '🔘',
+          type: "button",
+          name: "Button",
+          icon: "🔘",
           defaultSize: { width: 15, height: 5 },
-          selectionColor: '#ef4444', // Red
+          selectionColor: "#ef4444", // Red
           renderDragClone: () => <div>Button Clone</div>,
           render: () => <div>Button</div>,
         },
@@ -465,37 +516,37 @@ describe('grid-builder', () => {
       const component = new GridBuilder();
       component.components = multiColorDefs;
 
-      expect(component.components[0].selectionColor).toBe('#3b82f6');
-      expect(component.components[1].selectionColor).toBe('#10b981');
-      expect(component.components[2].selectionColor).toBe('#ef4444');
+      expect(component.components[0].selectionColor).toBe("#3b82f6");
+      expect(component.components[1].selectionColor).toBe("#10b981");
+      expect(component.components[2].selectionColor).toBe("#ef4444");
     });
 
-    it('should accept various color formats', () => {
+    it("should accept various color formats", () => {
       const colorFormatDefs = [
         {
-          type: 'hex-color',
-          name: 'Hex Color',
-          icon: '🎨',
+          type: "hex-color",
+          name: "Hex Color",
+          icon: "🎨",
           defaultSize: { width: 20, height: 6 },
-          selectionColor: '#ff5733', // 6-digit hex
+          selectionColor: "#ff5733", // 6-digit hex
           renderDragClone: mockDragClone,
           render: () => <div>Hex</div>,
         },
         {
-          type: 'rgb-color',
-          name: 'RGB Color',
-          icon: '🎨',
+          type: "rgb-color",
+          name: "RGB Color",
+          icon: "🎨",
           defaultSize: { width: 20, height: 6 },
-          selectionColor: 'rgb(255, 87, 51)', // RGB
+          selectionColor: "rgb(255, 87, 51)", // RGB
           renderDragClone: mockDragClone,
           render: () => <div>RGB</div>,
         },
         {
-          type: 'rgba-color',
-          name: 'RGBA Color',
-          icon: '🎨',
+          type: "rgba-color",
+          name: "RGBA Color",
+          icon: "🎨",
           defaultSize: { width: 20, height: 6 },
-          selectionColor: 'rgba(255, 87, 51, 0.8)', // RGBA
+          selectionColor: "rgba(255, 87, 51, 0.8)", // RGBA
           renderDragClone: mockDragClone,
           render: () => <div>RGBA</div>,
         },
@@ -504,33 +555,35 @@ describe('grid-builder', () => {
       const component = new GridBuilder();
       component.components = colorFormatDefs;
 
-      expect(component.components[0].selectionColor).toBe('#ff5733');
-      expect(component.components[1].selectionColor).toBe('rgb(255, 87, 51)');
-      expect(component.components[2].selectionColor).toBe('rgba(255, 87, 51, 0.8)');
+      expect(component.components[0].selectionColor).toBe("#ff5733");
+      expect(component.components[1].selectionColor).toBe("rgb(255, 87, 51)");
+      expect(component.components[2].selectionColor).toBe(
+        "rgba(255, 87, 51, 0.8)",
+      );
     });
   });
 
-  describe('@Method() Decorators', () => {
-    it('should expose exportState method', async () => {
+  describe("@Method() Decorators", () => {
+    it("should expose exportState method", async () => {
       const component = new GridBuilder();
       component.components = mockComponentDefinitions;
 
-      expect(typeof component.exportState).toBe('function');
+      expect(typeof component.exportState).toBe("function");
 
       const result = await component.exportState();
       expect(result).toBeDefined();
       expect(result.canvases).toBeDefined();
     });
 
-    it('should expose importState method', async () => {
+    it("should expose importState method", async () => {
       const component = new GridBuilder();
       component.components = mockComponentDefinitions;
 
-      expect(typeof component.importState).toBe('function');
+      expect(typeof component.importState).toBe("function");
 
       const mockState = {
         canvases: {
-          'canvas-1': {
+          "canvas-1": {
             zIndexCounter: 1,
             items: [],
           },
@@ -541,78 +594,78 @@ describe('grid-builder', () => {
       // Should not throw
     });
 
-    it('should expose getState method', async () => {
+    it("should expose getState method", async () => {
       const component = new GridBuilder();
       component.components = mockComponentDefinitions;
 
-      expect(typeof component.getState).toBe('function');
+      expect(typeof component.getState).toBe("function");
 
       const state = await component.getState();
       expect(state).toBeDefined();
       expect(state.canvases).toBeDefined();
     });
 
-    it('should expose addCanvas method', async () => {
+    it("should expose addCanvas method", async () => {
       const component = new GridBuilder();
       component.components = mockComponentDefinitions;
       component.componentDidLoad();
 
-      expect(typeof component.addCanvas).toBe('function');
+      expect(typeof component.addCanvas).toBe("function");
 
-      await component.addCanvas('test-canvas');
+      await component.addCanvas("test-canvas");
       // Should not throw
     });
 
-    it('should expose removeCanvas method', async () => {
+    it("should expose removeCanvas method", async () => {
       const component = new GridBuilder();
       component.components = mockComponentDefinitions;
       component.componentDidLoad();
 
-      expect(typeof component.removeCanvas).toBe('function');
+      expect(typeof component.removeCanvas).toBe("function");
 
-      await component.removeCanvas('test-canvas');
+      await component.removeCanvas("test-canvas");
       // Should not throw
     });
 
-    it('should expose undo/redo methods', async () => {
+    it("should expose undo/redo methods", async () => {
       const component = new GridBuilder();
       component.components = mockComponentDefinitions;
       component.componentDidLoad();
 
-      expect(typeof component.undo).toBe('function');
-      expect(typeof component.redo).toBe('function');
-      expect(typeof component.canUndo).toBe('function');
-      expect(typeof component.canRedo).toBe('function');
+      expect(typeof component.undo).toBe("function");
+      expect(typeof component.redo).toBe("function");
+      expect(typeof component.canUndo).toBe("function");
+      expect(typeof component.canRedo).toBe("function");
 
       const canUndoResult = await component.canUndo();
-      expect(typeof canUndoResult).toBe('boolean');
+      expect(typeof canUndoResult).toBe("boolean");
 
       const canRedoResult = await component.canRedo();
-      expect(typeof canRedoResult).toBe('boolean');
+      expect(typeof canRedoResult).toBe("boolean");
     });
 
-    it('should expose component manipulation methods', async () => {
+    it("should expose component manipulation methods", async () => {
       const component = new GridBuilder();
       component.components = mockComponentDefinitions;
       component.componentDidLoad();
 
-      expect(typeof component.addComponent).toBe('function');
-      expect(typeof component.deleteComponent).toBe('function');
-      expect(typeof component.updateConfig).toBe('function');
+      expect(typeof component.addComponent).toBe("function");
+      expect(typeof component.deleteComponent).toBe("function");
+      expect(typeof component.updateConfig).toBe("function");
 
       // Test addComponent
       const itemId = await component.addComponent(
-        'test-canvas',
-        'header',
+        "test-canvas",
+        "header",
         { x: 0, y: 0, width: 10, height: 5 },
-        { title: 'Test' }
+        { title: "Test" },
       );
       expect(itemId).toBeDefined();
     });
   });
 
-  describe('Configuration Options', () => {
-    it('should accept enableAnimations config', () => {
+  describe("Configuration Options", () => {
+    it("should accept enableAnimations config", () => {
       const customConfig = {
         enableAnimations: true,
         animationDuration: 200,
@@ -625,7 +678,7 @@ describe('grid-builder', () => {
       expect(component.config.animationDuration).toBe(200);
     });
 
-    it('should accept enableAutoScroll config', () => {
+    it("should accept enableAutoScroll config", () => {
       const customConfig = {
         enableAutoScroll: false,
       };
@@ -636,7 +689,7 @@ describe('grid-builder', () => {
       expect(component.config.enableAutoScroll).toBe(false);
     });
 
-    it('should accept eventDebounceDelay config', () => {
+    it("should accept eventDebounceDelay config", () => {
       const customConfig = {
         eventDebounceDelay: 500,
       };
@@ -647,7 +700,7 @@ describe('grid-builder', () => {
       expect(component.config.eventDebounceDelay).toBe(500);
     });
 
-    it('should work with default config values', () => {
+    it("should work with default config values", () => {
       const component = new GridBuilder();
       component.components = mockComponentDefinitions;
 
@@ -655,7 +708,7 @@ describe('grid-builder', () => {
       expect(component.config).toBeUndefined();
     });
 
-    it('should accept all new config options together', () => {
+    it("should accept all new config options together", () => {
       const customConfig = {
         enableAnimations: true,
         animationDuration: 150,
@@ -675,57 +728,57 @@ describe('grid-builder', () => {
     });
   });
 
-  describe('Active Canvas Feature', () => {
+  describe("Active Canvas Feature", () => {
     beforeEach(() => {
       resetState();
       clearHistory();
       jest.clearAllMocks();
     });
 
-    describe('isActive Prop Passing', () => {
-      it('should pass isActive=true to canvas-section when activeCanvasId matches', () => {
+    describe("isActive Prop Passing", () => {
+      it("should pass isActive=true to canvas-section when activeCanvasId matches", () => {
         const component = new GridBuilder();
         component.components = mockComponentDefinitions;
 
         // Set active canvas in state
-        setActiveCanvas('canvas1');
+        setActiveCanvas("canvas1");
 
         // Render component
         component.render();
 
         // Component passes isActive prop based on state comparison
         // (This is verified by testing that the prop binding exists in the component)
-        expect(gridState.activeCanvasId).toBe('canvas1');
+        expect(gridState.activeCanvasId).toBe("canvas1");
       });
 
-      it('should pass isActive=false when activeCanvasId does not match', () => {
+      it("should pass isActive=false when activeCanvasId does not match", () => {
         const component = new GridBuilder();
         component.components = mockComponentDefinitions;
 
-        setActiveCanvas('canvas1');
+        setActiveCanvas("canvas1");
 
         // A different canvas should not be active
-        expect(gridState.activeCanvasId).not.toBe('canvas2');
+        expect(gridState.activeCanvasId).not.toBe("canvas2");
       });
 
-      it('should update isActive when activeCanvasId changes', () => {
+      it("should update isActive when activeCanvasId changes", () => {
         const component = new GridBuilder();
         component.components = mockComponentDefinitions;
 
         // Start with canvas1 active
-        setActiveCanvas('canvas1');
-        expect(gridState.activeCanvasId).toBe('canvas1');
+        setActiveCanvas("canvas1");
+        expect(gridState.activeCanvasId).toBe("canvas1");
 
         // Switch to canvas2
-        setActiveCanvas('canvas2');
-        expect(gridState.activeCanvasId).toBe('canvas2');
+        setActiveCanvas("canvas2");
+        expect(gridState.activeCanvasId).toBe("canvas2");
 
         // Switch back to canvas1
-        setActiveCanvas('canvas1');
-        expect(gridState.activeCanvasId).toBe('canvas1');
+        setActiveCanvas("canvas1");
+        expect(gridState.activeCanvasId).toBe("canvas1");
       });
 
-      it('should handle null activeCanvasId (no canvas active)', () => {
+      it("should handle null activeCanvasId (no canvas active)", () => {
         const component = new GridBuilder();
         component.components = mockComponentDefinitions;
 
@@ -733,8 +786,8 @@ describe('grid-builder', () => {
         expect(gridState.activeCanvasId).toBeNull();
 
         // Set active
-        setActiveCanvas('canvas1');
-        expect(gridState.activeCanvasId).toBe('canvas1');
+        setActiveCanvas("canvas1");
+        expect(gridState.activeCanvasId).toBe("canvas1");
 
         // Clear active
         gridState.activeCanvasId = null;
@@ -742,8 +795,8 @@ describe('grid-builder', () => {
       });
     });
 
-    describe('Event Handler Registration', () => {
-      it('should register canvas-activated event handler in componentDidLoad', () => {
+    describe("Event Handler Registration", () => {
+      it("should register canvas-activated event handler in componentDidLoad", () => {
         const component = new GridBuilder();
         component.components = mockComponentDefinitions;
 
@@ -752,7 +805,7 @@ describe('grid-builder', () => {
           addEventListener: jest.fn(),
           removeEventListener: jest.fn(),
         };
-        Object.defineProperty(component, 'hostElement', {
+        Object.defineProperty(component, "hostElement", {
           value: mockHostElement,
           writable: true,
         });
@@ -760,14 +813,17 @@ describe('grid-builder', () => {
         component.componentDidLoad();
 
         // Verify canvas-activated event listener was registered
-        const addEventListenerCalls = mockHostElement.addEventListener.mock.calls;
-        const canvasActivatedCall = addEventListenerCalls.find(call => call[0] === 'canvas-activated');
+        const addEventListenerCalls =
+          mockHostElement.addEventListener.mock.calls;
+        const canvasActivatedCall = addEventListenerCalls.find(
+          (call) => call[0] === "canvas-activated",
+        );
 
         expect(canvasActivatedCall).toBeDefined();
-        expect(typeof canvasActivatedCall[1]).toBe('function');
+        expect(typeof canvasActivatedCall[1]).toBe("function");
       });
 
-      it('should remove canvas-activated event handler in disconnectedCallback', () => {
+      it("should remove canvas-activated event handler in disconnectedCallback", () => {
         const component = new GridBuilder();
         component.components = mockComponentDefinitions;
 
@@ -775,7 +831,7 @@ describe('grid-builder', () => {
           addEventListener: jest.fn(),
           removeEventListener: jest.fn(),
         };
-        Object.defineProperty(component, 'hostElement', {
+        Object.defineProperty(component, "hostElement", {
           value: mockHostElement,
           writable: true,
         });
@@ -784,13 +840,16 @@ describe('grid-builder', () => {
         component.disconnectedCallback();
 
         // Verify event listener was removed
-        const removeEventListenerCalls = mockHostElement.removeEventListener.mock.calls;
-        const canvasActivatedCall = removeEventListenerCalls.find(call => call[0] === 'canvas-activated');
+        const removeEventListenerCalls =
+          mockHostElement.removeEventListener.mock.calls;
+        const canvasActivatedCall = removeEventListenerCalls.find(
+          (call) => call[0] === "canvas-activated",
+        );
 
         expect(canvasActivatedCall).toBeDefined();
       });
 
-      it('should handle canvas-activated event and emit plugin event', () => {
+      it("should handle canvas-activated event and emit plugin event", () => {
         const component = new GridBuilder();
         component.components = mockComponentDefinitions;
 
@@ -798,100 +857,107 @@ describe('grid-builder', () => {
           addEventListener: jest.fn(),
           removeEventListener: jest.fn(),
         };
-        Object.defineProperty(component, 'hostElement', {
+        Object.defineProperty(component, "hostElement", {
           value: mockHostElement,
           writable: true,
         });
 
         // Spy on eventManager.emit
-        const emitSpy = jest.spyOn(eventManager, 'emit');
+        const emitSpy = jest.spyOn(eventManager, "emit");
 
         component.componentDidLoad();
 
         // Get the registered handler
-        const addEventListenerCalls = mockHostElement.addEventListener.mock.calls;
-        const canvasActivatedCall = addEventListenerCalls.find(call => call[0] === 'canvas-activated');
+        const addEventListenerCalls =
+          mockHostElement.addEventListener.mock.calls;
+        const canvasActivatedCall = addEventListenerCalls.find(
+          (call) => call[0] === "canvas-activated",
+        );
         const handler = canvasActivatedCall[1];
 
         // Simulate canvas-activated event
-        const mockEvent = new CustomEvent('canvas-activated', {
-          detail: { canvasId: 'canvas1' },
+        const mockEvent = new CustomEvent("canvas-activated", {
+          detail: { canvasId: "canvas1" },
         });
 
         handler(mockEvent);
 
         // Verify plugin event was emitted
-        expect(emitSpy).toHaveBeenCalledWith('canvasActivated', { canvasId: 'canvas1' });
+        expect(emitSpy).toHaveBeenCalledWith("canvasActivated", {
+          canvasId: "canvas1",
+        });
 
         emitSpy.mockRestore();
       });
     });
 
-    describe('@Method() Public Methods', () => {
-      it('should expose setActiveCanvas method', async () => {
+    describe("@Method() Public Methods", () => {
+      it("should expose setActiveCanvas method", async () => {
         const component = new GridBuilder();
         component.components = mockComponentDefinitions;
         component.componentDidLoad();
 
-        expect(typeof component.setActiveCanvas).toBe('function');
+        expect(typeof component.setActiveCanvas).toBe("function");
 
-        await component.setActiveCanvas('canvas1');
+        await component.setActiveCanvas("canvas1");
 
-        expect(gridState.activeCanvasId).toBe('canvas1');
+        expect(gridState.activeCanvasId).toBe("canvas1");
       });
 
-      it('should expose getActiveCanvas method', async () => {
+      it("should expose getActiveCanvas method", async () => {
         const component = new GridBuilder();
         component.components = mockComponentDefinitions;
         component.componentDidLoad();
 
-        expect(typeof component.getActiveCanvas).toBe('function');
+        expect(typeof component.getActiveCanvas).toBe("function");
 
         // Initially null
         let result = await component.getActiveCanvas();
         expect(result).toBeNull();
 
         // Set active canvas
-        setActiveCanvas('canvas2');
+        setActiveCanvas("canvas2");
         result = await component.getActiveCanvas();
-        expect(result).toBe('canvas2');
+        expect(result).toBe("canvas2");
       });
 
-      it('should emit canvasActivated event when setActiveCanvas is called', async () => {
+      it("should emit canvasActivated event when setActiveCanvas is called", async () => {
         const component = new GridBuilder();
         component.components = mockComponentDefinitions;
         component.componentDidLoad();
 
-        const emitSpy = jest.spyOn(eventManager, 'emit');
+        const emitSpy = jest.spyOn(eventManager, "emit");
 
-        await component.setActiveCanvas('canvas1');
+        await component.setActiveCanvas("canvas1");
 
-        expect(emitSpy).toHaveBeenCalledWith('canvasActivated', { canvasId: 'canvas1' });
+        expect(emitSpy).toHaveBeenCalledWith("canvasActivated", {
+          canvasId: "canvas1",
+        });
 
         emitSpy.mockRestore();
       });
 
-      it('should allow switching active canvas via public method', async () => {
+      it("should allow switching active canvas via public method", async () => {
         const component = new GridBuilder();
         component.components = mockComponentDefinitions;
         component.componentDidLoad();
 
-        await component.setActiveCanvas('canvas1');
+        await component.setActiveCanvas("canvas1");
         let result = await component.getActiveCanvas();
-        expect(result).toBe('canvas1');
+        expect(result).toBe("canvas1");
 
-        await component.setActiveCanvas('canvas2');
+        await component.setActiveCanvas("canvas2");
         result = await component.getActiveCanvas();
-        expect(result).toBe('canvas2');
+        expect(result).toBe("canvas2");
 
-        await component.setActiveCanvas('canvas3');
+        await component.setActiveCanvas("canvas3");
         result = await component.getActiveCanvas();
-        expect(result).toBe('canvas3');
+        expect(result).toBe("canvas3");
       });
     });
 
-    describe('API Object Methods', () => {
-      it('should expose setActiveCanvas in API object', () => {
+    describe("API Object Methods", () => {
+      it("should expose setActiveCanvas in API object", () => {
         const component = new GridBuilder();
         component.components = mockComponentDefinitions;
         component.componentDidLoad();
@@ -899,44 +965,46 @@ describe('grid-builder', () => {
         const api = (component as any).api;
 
         expect(api).toBeDefined();
-        expect(typeof api.setActiveCanvas).toBe('function');
+        expect(typeof api.setActiveCanvas).toBe("function");
 
-        api.setActiveCanvas('canvas1');
-        expect(gridState.activeCanvasId).toBe('canvas1');
+        api.setActiveCanvas("canvas1");
+        expect(gridState.activeCanvasId).toBe("canvas1");
       });
 
-      it('should expose getActiveCanvas in API object', () => {
+      it("should expose getActiveCanvas in API object", () => {
         const component = new GridBuilder();
         component.components = mockComponentDefinitions;
         component.componentDidLoad();
 
         const api = (component as any).api;
 
-        expect(typeof api.getActiveCanvas).toBe('function');
+        expect(typeof api.getActiveCanvas).toBe("function");
 
-        setActiveCanvas('canvas1');
+        setActiveCanvas("canvas1");
         const result = api.getActiveCanvas();
-        expect(result).toBe('canvas1');
+        expect(result).toBe("canvas1");
       });
 
-      it('should emit plugin event when API setActiveCanvas is called', () => {
+      it("should emit plugin event when API setActiveCanvas is called", () => {
         const component = new GridBuilder();
         component.components = mockComponentDefinitions;
         component.componentDidLoad();
 
         const api = (component as any).api;
-        const emitSpy = jest.spyOn(eventManager, 'emit');
+        const emitSpy = jest.spyOn(eventManager, "emit");
 
-        api.setActiveCanvas('canvas2');
+        api.setActiveCanvas("canvas2");
 
-        expect(emitSpy).toHaveBeenCalledWith('canvasActivated', { canvasId: 'canvas2' });
+        expect(emitSpy).toHaveBeenCalledWith("canvasActivated", {
+          canvasId: "canvas2",
+        });
 
         emitSpy.mockRestore();
       });
 
-      it('should provide API to plugins during initialization', () => {
+      it("should provide API to plugins during initialization", () => {
         const mockPlugin = {
-          name: 'test-plugin',
+          name: "test-plugin",
           init: jest.fn(),
           destroy: jest.fn(),
         };
@@ -954,68 +1022,68 @@ describe('grid-builder', () => {
 
         expect(apiArg.setActiveCanvas).toBeDefined();
         expect(apiArg.getActiveCanvas).toBeDefined();
-        expect(typeof apiArg.setActiveCanvas).toBe('function');
-        expect(typeof apiArg.getActiveCanvas).toBe('function');
+        expect(typeof apiArg.setActiveCanvas).toBe("function");
+        expect(typeof apiArg.getActiveCanvas).toBe("function");
       });
     });
 
-    describe('Integration with State', () => {
-      it('should keep activeCanvasId independent from selectedCanvasId', () => {
+    describe("Integration with State", () => {
+      it("should keep activeCanvasId independent from selectedCanvasId", () => {
         const component = new GridBuilder();
         component.components = mockComponentDefinitions;
         component.componentDidLoad();
 
         // Set selection
-        gridState.selectedItemId = 'item-1';
-        gridState.selectedCanvasId = 'canvas1';
+        gridState.selectedItemId = "item-1";
+        gridState.selectedCanvasId = "canvas1";
 
         // Set active canvas to different canvas
-        setActiveCanvas('canvas2');
+        setActiveCanvas("canvas2");
 
         // Both should coexist
-        expect(gridState.selectedCanvasId).toBe('canvas1');
-        expect(gridState.activeCanvasId).toBe('canvas2');
-        expect(gridState.selectedItemId).toBe('item-1');
+        expect(gridState.selectedCanvasId).toBe("canvas1");
+        expect(gridState.activeCanvasId).toBe("canvas2");
+        expect(gridState.selectedItemId).toBe("item-1");
       });
 
-      it('should maintain activeCanvasId through viewport switches', () => {
+      it("should maintain activeCanvasId through viewport switches", () => {
         const component = new GridBuilder();
         component.components = mockComponentDefinitions;
         component.componentDidLoad();
 
-        setActiveCanvas('canvas1');
-        expect(gridState.activeCanvasId).toBe('canvas1');
+        setActiveCanvas("canvas1");
+        expect(gridState.activeCanvasId).toBe("canvas1");
 
         // Switch viewport
-        gridState.currentViewport = 'mobile';
-        expect(gridState.activeCanvasId).toBe('canvas1');
+        gridState.currentViewport = "mobile";
+        expect(gridState.activeCanvasId).toBe("canvas1");
 
         // Switch back
-        gridState.currentViewport = 'desktop';
-        expect(gridState.activeCanvasId).toBe('canvas1');
+        gridState.currentViewport = "desktop";
+        expect(gridState.activeCanvasId).toBe("canvas1");
       });
 
-      it('should reset activeCanvasId when state is reset', () => {
+      it("should reset activeCanvasId when state is reset", () => {
         const component = new GridBuilder();
         component.components = mockComponentDefinitions;
         component.componentDidLoad();
 
-        setActiveCanvas('canvas1');
-        expect(gridState.activeCanvasId).toBe('canvas1');
+        setActiveCanvas("canvas1");
+        expect(gridState.activeCanvasId).toBe("canvas1");
 
         resetState();
         expect(gridState.activeCanvasId).toBeNull();
       });
     });
 
-    describe('Plugin Event Emission', () => {
-      it('should allow plugins to listen for canvasActivated events', () => {
+    describe("Plugin Event Emission", () => {
+      it("should allow plugins to listen for canvasActivated events", () => {
         const activatedEvents: any[] = [];
 
         const mockPlugin = {
-          name: 'test-plugin',
+          name: "test-plugin",
           init: (api: any) => {
-            api.on('canvasActivated', (data: any) => {
+            api.on("canvasActivated", (data: any) => {
               activatedEvents.push(data);
             });
           },
@@ -1030,24 +1098,24 @@ describe('grid-builder', () => {
 
         // Trigger canvas activation via API
         const api = (component as any).api;
-        api.setActiveCanvas('canvas1');
+        api.setActiveCanvas("canvas1");
 
         expect(activatedEvents.length).toBe(1);
-        expect(activatedEvents[0]).toEqual({ canvasId: 'canvas1' });
+        expect(activatedEvents[0]).toEqual({ canvasId: "canvas1" });
 
-        api.setActiveCanvas('canvas2');
+        api.setActiveCanvas("canvas2");
 
         expect(activatedEvents.length).toBe(2);
-        expect(activatedEvents[1]).toEqual({ canvasId: 'canvas2' });
+        expect(activatedEvents[1]).toEqual({ canvasId: "canvas2" });
       });
 
-      it('should emit events for all activation methods', () => {
+      it("should emit events for all activation methods", () => {
         const activatedEvents: any[] = [];
 
         const mockPlugin = {
-          name: 'test-plugin',
+          name: "test-plugin",
           init: (api: any) => {
-            api.on('canvasActivated', (data: any) => {
+            api.on("canvasActivated", (data: any) => {
               activatedEvents.push(data);
             });
           },
@@ -1062,7 +1130,7 @@ describe('grid-builder', () => {
           addEventListener: jest.fn(),
           removeEventListener: jest.fn(),
         };
-        Object.defineProperty(component, 'hostElement', {
+        Object.defineProperty(component, "hostElement", {
           value: mockHostElement,
           writable: true,
         });
@@ -1071,29 +1139,32 @@ describe('grid-builder', () => {
 
         // Method 1: Via API
         const api = (component as any).api;
-        api.setActiveCanvas('canvas1');
+        api.setActiveCanvas("canvas1");
         expect(activatedEvents.length).toBe(1);
 
         // Method 2: Via public @Method
-        component.setActiveCanvas('canvas2');
+        component.setActiveCanvas("canvas2");
         expect(activatedEvents.length).toBe(2);
 
         // Method 3: Via DOM event (simulate)
-        const addEventListenerCalls = mockHostElement.addEventListener.mock.calls;
-        const canvasActivatedCall = addEventListenerCalls.find(call => call[0] === 'canvas-activated');
+        const addEventListenerCalls =
+          mockHostElement.addEventListener.mock.calls;
+        const canvasActivatedCall = addEventListenerCalls.find(
+          (call) => call[0] === "canvas-activated",
+        );
         const handler = canvasActivatedCall[1];
 
-        const mockEvent = new CustomEvent('canvas-activated', {
-          detail: { canvasId: 'canvas3' },
+        const mockEvent = new CustomEvent("canvas-activated", {
+          detail: { canvasId: "canvas3" },
         });
         handler(mockEvent);
 
         expect(activatedEvents.length).toBe(3);
-        expect(activatedEvents[2]).toEqual({ canvasId: 'canvas3' });
+        expect(activatedEvents[2]).toEqual({ canvasId: "canvas3" });
       });
     });
 
-    describe('Cross-Canvas Move', () => {
+    describe("Cross-Canvas Move", () => {
       beforeEach(() => {
         // Reset grid state
         gridState.canvases = {
@@ -1105,7 +1176,7 @@ describe('grid-builder', () => {
         gridState.activeCanvasId = null;
       });
 
-      it('should register canvas-move event handler in componentDidLoad', () => {
+      it("should register canvas-move event handler in componentDidLoad", () => {
         const component = new GridBuilder();
         component.components = mockComponentDefinitions;
 
@@ -1113,7 +1184,7 @@ describe('grid-builder', () => {
           addEventListener: jest.fn(),
           removeEventListener: jest.fn(),
         };
-        Object.defineProperty(component, 'hostElement', {
+        Object.defineProperty(component, "hostElement", {
           value: mockHostElement,
           writable: true,
         });
@@ -1121,14 +1192,17 @@ describe('grid-builder', () => {
         component.componentDidLoad();
 
         // Verify canvas-move event listener was registered
-        const addEventListenerCalls = mockHostElement.addEventListener.mock.calls;
-        const canvasMoveCall = addEventListenerCalls.find(call => call[0] === 'canvas-move');
+        const addEventListenerCalls =
+          mockHostElement.addEventListener.mock.calls;
+        const canvasMoveCall = addEventListenerCalls.find(
+          (call) => call[0] === "canvas-move",
+        );
 
         expect(canvasMoveCall).toBeDefined();
-        expect(typeof canvasMoveCall[1]).toBe('function');
+        expect(typeof canvasMoveCall[1]).toBe("function");
       });
 
-      it('should remove canvas-move event handler in disconnectedCallback', () => {
+      it("should remove canvas-move event handler in disconnectedCallback", () => {
         const component = new GridBuilder();
         component.components = mockComponentDefinitions;
 
@@ -1136,7 +1210,7 @@ describe('grid-builder', () => {
           addEventListener: jest.fn(),
           removeEventListener: jest.fn(),
         };
-        Object.defineProperty(component, 'hostElement', {
+        Object.defineProperty(component, "hostElement", {
           value: mockHostElement,
           writable: true,
         });
@@ -1145,19 +1219,22 @@ describe('grid-builder', () => {
         component.disconnectedCallback();
 
         // Verify event listener was removed
-        const removeEventListenerCalls = mockHostElement.removeEventListener.mock.calls;
-        const canvasMoveCall = removeEventListenerCalls.find(call => call[0] === 'canvas-move');
+        const removeEventListenerCalls =
+          mockHostElement.removeEventListener.mock.calls;
+        const canvasMoveCall = removeEventListenerCalls.find(
+          (call) => call[0] === "canvas-move",
+        );
 
         expect(canvasMoveCall).toBeDefined();
       });
 
-      it('should move item from source to target canvas', () => {
+      it("should move item from source to target canvas", () => {
         // Setup: Add item to source canvas
         const testItem = {
-          id: 'test-item-1',
-          canvasId: 'canvas1',
-          type: 'header',
-          name: 'Test Header',
+          id: "test-item-1",
+          canvasId: "canvas1",
+          type: "header",
+          name: "Test Header",
           zIndex: 1,
           layouts: {
             desktop: { x: 10, y: 10, width: 20, height: 6 },
@@ -1175,7 +1252,7 @@ describe('grid-builder', () => {
           addEventListener: jest.fn(),
           removeEventListener: jest.fn(),
         };
-        Object.defineProperty(component, 'hostElement', {
+        Object.defineProperty(component, "hostElement", {
           value: mockHostElement,
           writable: true,
         });
@@ -1183,16 +1260,19 @@ describe('grid-builder', () => {
         component.componentDidLoad();
 
         // Get the registered handler
-        const addEventListenerCalls = mockHostElement.addEventListener.mock.calls;
-        const canvasMoveCall = addEventListenerCalls.find(call => call[0] === 'canvas-move');
+        const addEventListenerCalls =
+          mockHostElement.addEventListener.mock.calls;
+        const canvasMoveCall = addEventListenerCalls.find(
+          (call) => call[0] === "canvas-move",
+        );
         const handler = canvasMoveCall[1];
 
         // Simulate canvas-move event
-        const mockEvent = new CustomEvent('canvas-move', {
+        const mockEvent = new CustomEvent("canvas-move", {
           detail: {
-            itemId: 'test-item-1',
-            sourceCanvasId: 'canvas1',
-            targetCanvasId: 'canvas2',
+            itemId: "test-item-1",
+            sourceCanvasId: "canvas1",
+            targetCanvasId: "canvas2",
             x: 100, // pixels
             y: 50, // pixels
           },
@@ -1205,19 +1285,19 @@ describe('grid-builder', () => {
 
         // Verify item added to target canvas
         expect(gridState.canvases.canvas2.items.length).toBe(1);
-        expect(gridState.canvases.canvas2.items[0].id).toBe('test-item-1');
+        expect(gridState.canvases.canvas2.items[0].id).toBe("test-item-1");
 
         // Verify canvasId updated
-        expect(gridState.canvases.canvas2.items[0].canvasId).toBe('canvas2');
+        expect(gridState.canvases.canvas2.items[0].canvasId).toBe("canvas2");
       });
 
-      it('should update item position to grid coordinates', () => {
+      it("should update item position to grid coordinates", () => {
         // Setup: Add item to source canvas
         const testItem = {
-          id: 'test-item-1',
-          canvasId: 'canvas1',
-          type: 'header',
-          name: 'Test Header',
+          id: "test-item-1",
+          canvasId: "canvas1",
+          type: "header",
+          name: "Test Header",
           zIndex: 1,
           layouts: {
             desktop: { x: 10, y: 10, width: 20, height: 6 },
@@ -1234,7 +1314,7 @@ describe('grid-builder', () => {
           addEventListener: jest.fn(),
           removeEventListener: jest.fn(),
         };
-        Object.defineProperty(component, 'hostElement', {
+        Object.defineProperty(component, "hostElement", {
           value: mockHostElement,
           writable: true,
         });
@@ -1242,16 +1322,19 @@ describe('grid-builder', () => {
         component.componentDidLoad();
 
         // Get the registered handler
-        const addEventListenerCalls = mockHostElement.addEventListener.mock.calls;
-        const canvasMoveCall = addEventListenerCalls.find(call => call[0] === 'canvas-move');
+        const addEventListenerCalls =
+          mockHostElement.addEventListener.mock.calls;
+        const canvasMoveCall = addEventListenerCalls.find(
+          (call) => call[0] === "canvas-move",
+        );
         const handler = canvasMoveCall[1];
 
         // Simulate canvas-move event (drop at specific pixel position)
-        const mockEvent = new CustomEvent('canvas-move', {
+        const mockEvent = new CustomEvent("canvas-move", {
           detail: {
-            itemId: 'test-item-1',
-            sourceCanvasId: 'canvas1',
-            targetCanvasId: 'canvas2',
+            itemId: "test-item-1",
+            sourceCanvasId: "canvas1",
+            targetCanvasId: "canvas2",
             x: 200, // pixels
             y: 100, // pixels
           },
@@ -1262,19 +1345,19 @@ describe('grid-builder', () => {
         const movedItem = gridState.canvases.canvas2.items[0];
 
         // Verify position was converted to grid units (not pixels)
-        expect(typeof movedItem.layouts.desktop.x).toBe('number');
-        expect(typeof movedItem.layouts.desktop.y).toBe('number');
+        expect(typeof movedItem.layouts.desktop.x).toBe("number");
+        expect(typeof movedItem.layouts.desktop.y).toBe("number");
         expect(movedItem.layouts.desktop.x).toBeGreaterThanOrEqual(0);
         expect(movedItem.layouts.desktop.y).toBeGreaterThanOrEqual(0);
       });
 
-      it('should assign new z-index in target canvas', () => {
+      it("should assign new z-index in target canvas", () => {
         // Setup: Add item to source canvas
         const testItem = {
-          id: 'test-item-1',
-          canvasId: 'canvas1',
-          type: 'header',
-          name: 'Test Header',
+          id: "test-item-1",
+          canvasId: "canvas1",
+          type: "header",
+          name: "Test Header",
           zIndex: 5, // Has z-index 5 in source
           layouts: {
             desktop: { x: 10, y: 10, width: 20, height: 6 },
@@ -1295,7 +1378,7 @@ describe('grid-builder', () => {
           addEventListener: jest.fn(),
           removeEventListener: jest.fn(),
         };
-        Object.defineProperty(component, 'hostElement', {
+        Object.defineProperty(component, "hostElement", {
           value: mockHostElement,
           writable: true,
         });
@@ -1303,16 +1386,19 @@ describe('grid-builder', () => {
         component.componentDidLoad();
 
         // Get the registered handler
-        const addEventListenerCalls = mockHostElement.addEventListener.mock.calls;
-        const canvasMoveCall = addEventListenerCalls.find(call => call[0] === 'canvas-move');
+        const addEventListenerCalls =
+          mockHostElement.addEventListener.mock.calls;
+        const canvasMoveCall = addEventListenerCalls.find(
+          (call) => call[0] === "canvas-move",
+        );
         const handler = canvasMoveCall[1];
 
         // Simulate canvas-move event
-        const mockEvent = new CustomEvent('canvas-move', {
+        const mockEvent = new CustomEvent("canvas-move", {
           detail: {
-            itemId: 'test-item-1',
-            sourceCanvasId: 'canvas1',
-            targetCanvasId: 'canvas2',
+            itemId: "test-item-1",
+            sourceCanvasId: "canvas1",
+            targetCanvasId: "canvas2",
             x: 100,
             y: 50,
           },
@@ -1329,13 +1415,13 @@ describe('grid-builder', () => {
         expect(gridState.canvases.canvas2.zIndexCounter).toBe(4);
       });
 
-      it('should set target canvas as active', () => {
+      it("should set target canvas as active", () => {
         // Setup: Add item to source canvas
         const testItem = {
-          id: 'test-item-1',
-          canvasId: 'canvas1',
-          type: 'header',
-          name: 'Test Header',
+          id: "test-item-1",
+          canvasId: "canvas1",
+          type: "header",
+          name: "Test Header",
           zIndex: 1,
           layouts: {
             desktop: { x: 10, y: 10, width: 20, height: 6 },
@@ -1346,7 +1432,7 @@ describe('grid-builder', () => {
         gridState.canvases.canvas1.items.push(testItem);
 
         // Initially canvas1 is active
-        gridState.activeCanvasId = 'canvas1';
+        gridState.activeCanvasId = "canvas1";
 
         const component = new GridBuilder();
         component.components = mockComponentDefinitions;
@@ -1355,7 +1441,7 @@ describe('grid-builder', () => {
           addEventListener: jest.fn(),
           removeEventListener: jest.fn(),
         };
-        Object.defineProperty(component, 'hostElement', {
+        Object.defineProperty(component, "hostElement", {
           value: mockHostElement,
           writable: true,
         });
@@ -1363,16 +1449,19 @@ describe('grid-builder', () => {
         component.componentDidLoad();
 
         // Get the registered handler
-        const addEventListenerCalls = mockHostElement.addEventListener.mock.calls;
-        const canvasMoveCall = addEventListenerCalls.find(call => call[0] === 'canvas-move');
+        const addEventListenerCalls =
+          mockHostElement.addEventListener.mock.calls;
+        const canvasMoveCall = addEventListenerCalls.find(
+          (call) => call[0] === "canvas-move",
+        );
         const handler = canvasMoveCall[1];
 
         // Simulate canvas-move event
-        const mockEvent = new CustomEvent('canvas-move', {
+        const mockEvent = new CustomEvent("canvas-move", {
           detail: {
-            itemId: 'test-item-1',
-            sourceCanvasId: 'canvas1',
-            targetCanvasId: 'canvas2',
+            itemId: "test-item-1",
+            sourceCanvasId: "canvas1",
+            targetCanvasId: "canvas2",
             x: 100,
             y: 50,
           },
@@ -1381,16 +1470,16 @@ describe('grid-builder', () => {
         handler(mockEvent);
 
         // Verify active canvas updated to target
-        expect(gridState.activeCanvasId).toBe('canvas2');
+        expect(gridState.activeCanvasId).toBe("canvas2");
       });
 
-      it('should update selection state if moved item was selected', () => {
+      it("should update selection state if moved item was selected", () => {
         // Setup: Add item to source canvas and select it
         const testItem = {
-          id: 'test-item-1',
-          canvasId: 'canvas1',
-          type: 'header',
-          name: 'Test Header',
+          id: "test-item-1",
+          canvasId: "canvas1",
+          type: "header",
+          name: "Test Header",
           zIndex: 1,
           layouts: {
             desktop: { x: 10, y: 10, width: 20, height: 6 },
@@ -1399,8 +1488,8 @@ describe('grid-builder', () => {
           config: {},
         };
         gridState.canvases.canvas1.items.push(testItem);
-        gridState.selectedItemId = 'test-item-1';
-        gridState.selectedCanvasId = 'canvas1';
+        gridState.selectedItemId = "test-item-1";
+        gridState.selectedCanvasId = "canvas1";
 
         const component = new GridBuilder();
         component.components = mockComponentDefinitions;
@@ -1409,7 +1498,7 @@ describe('grid-builder', () => {
           addEventListener: jest.fn(),
           removeEventListener: jest.fn(),
         };
-        Object.defineProperty(component, 'hostElement', {
+        Object.defineProperty(component, "hostElement", {
           value: mockHostElement,
           writable: true,
         });
@@ -1417,16 +1506,19 @@ describe('grid-builder', () => {
         component.componentDidLoad();
 
         // Get the registered handler
-        const addEventListenerCalls = mockHostElement.addEventListener.mock.calls;
-        const canvasMoveCall = addEventListenerCalls.find(call => call[0] === 'canvas-move');
+        const addEventListenerCalls =
+          mockHostElement.addEventListener.mock.calls;
+        const canvasMoveCall = addEventListenerCalls.find(
+          (call) => call[0] === "canvas-move",
+        );
         const handler = canvasMoveCall[1];
 
         // Simulate canvas-move event
-        const mockEvent = new CustomEvent('canvas-move', {
+        const mockEvent = new CustomEvent("canvas-move", {
           detail: {
-            itemId: 'test-item-1',
-            sourceCanvasId: 'canvas1',
-            targetCanvasId: 'canvas2',
+            itemId: "test-item-1",
+            sourceCanvasId: "canvas1",
+            targetCanvasId: "canvas2",
             x: 100,
             y: 50,
           },
@@ -1435,17 +1527,17 @@ describe('grid-builder', () => {
         handler(mockEvent);
 
         // Verify selectedCanvasId updated to target
-        expect(gridState.selectedCanvasId).toBe('canvas2');
-        expect(gridState.selectedItemId).toBe('test-item-1'); // Still selected
+        expect(gridState.selectedCanvasId).toBe("canvas2");
+        expect(gridState.selectedItemId).toBe("test-item-1"); // Still selected
       });
 
-      it('should emit componentMoved and canvasActivated events', () => {
+      it("should emit componentMoved and canvasActivated events", () => {
         // Setup: Add item to source canvas
         const testItem = {
-          id: 'test-item-1',
-          canvasId: 'canvas1',
-          type: 'header',
-          name: 'Test Header',
+          id: "test-item-1",
+          canvasId: "canvas1",
+          type: "header",
+          name: "Test Header",
           zIndex: 1,
           layouts: {
             desktop: { x: 10, y: 10, width: 20, height: 6 },
@@ -1462,27 +1554,30 @@ describe('grid-builder', () => {
           addEventListener: jest.fn(),
           removeEventListener: jest.fn(),
         };
-        Object.defineProperty(component, 'hostElement', {
+        Object.defineProperty(component, "hostElement", {
           value: mockHostElement,
           writable: true,
         });
 
         // Spy on eventManager.emit
-        const emitSpy = jest.spyOn(eventManager, 'emit');
+        const emitSpy = jest.spyOn(eventManager, "emit");
 
         component.componentDidLoad();
 
         // Get the registered handler
-        const addEventListenerCalls = mockHostElement.addEventListener.mock.calls;
-        const canvasMoveCall = addEventListenerCalls.find(call => call[0] === 'canvas-move');
+        const addEventListenerCalls =
+          mockHostElement.addEventListener.mock.calls;
+        const canvasMoveCall = addEventListenerCalls.find(
+          (call) => call[0] === "canvas-move",
+        );
         const handler = canvasMoveCall[1];
 
         // Simulate canvas-move event
-        const mockEvent = new CustomEvent('canvas-move', {
+        const mockEvent = new CustomEvent("canvas-move", {
           detail: {
-            itemId: 'test-item-1',
-            sourceCanvasId: 'canvas1',
-            targetCanvasId: 'canvas2',
+            itemId: "test-item-1",
+            sourceCanvasId: "canvas1",
+            targetCanvasId: "canvas2",
             x: 100,
             y: 50,
           },
@@ -1492,20 +1587,22 @@ describe('grid-builder', () => {
 
         // Verify componentMoved event emitted
         expect(emitSpy).toHaveBeenCalledWith(
-          'componentMoved',
+          "componentMoved",
           expect.objectContaining({
-            sourceCanvasId: 'canvas1',
-            targetCanvasId: 'canvas2',
-          })
+            sourceCanvasId: "canvas1",
+            targetCanvasId: "canvas2",
+          }),
         );
 
         // Verify canvasActivated event emitted
-        expect(emitSpy).toHaveBeenCalledWith('canvasActivated', { canvasId: 'canvas2' });
+        expect(emitSpy).toHaveBeenCalledWith("canvasActivated", {
+          canvasId: "canvas2",
+        });
 
         emitSpy.mockRestore();
       });
 
-      it('should handle missing source canvas gracefully', () => {
+      it("should handle missing source canvas gracefully", () => {
         const component = new GridBuilder();
         component.components = mockComponentDefinitions;
 
@@ -1513,27 +1610,32 @@ describe('grid-builder', () => {
           addEventListener: jest.fn(),
           removeEventListener: jest.fn(),
         };
-        Object.defineProperty(component, 'hostElement', {
+        Object.defineProperty(component, "hostElement", {
           value: mockHostElement,
           writable: true,
         });
 
         // Spy on console.error
-        const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
+        const consoleErrorSpy = jest
+          .spyOn(console, "error")
+          .mockImplementation();
 
         component.componentDidLoad();
 
         // Get the registered handler
-        const addEventListenerCalls = mockHostElement.addEventListener.mock.calls;
-        const canvasMoveCall = addEventListenerCalls.find(call => call[0] === 'canvas-move');
+        const addEventListenerCalls =
+          mockHostElement.addEventListener.mock.calls;
+        const canvasMoveCall = addEventListenerCalls.find(
+          (call) => call[0] === "canvas-move",
+        );
         const handler = canvasMoveCall[1];
 
         // Simulate canvas-move event with non-existent source canvas
-        const mockEvent = new CustomEvent('canvas-move', {
+        const mockEvent = new CustomEvent("canvas-move", {
           detail: {
-            itemId: 'test-item-1',
-            sourceCanvasId: 'non-existent',
-            targetCanvasId: 'canvas2',
+            itemId: "test-item-1",
+            sourceCanvasId: "non-existent",
+            targetCanvasId: "canvas2",
             x: 100,
             y: 50,
           },
@@ -1542,12 +1644,15 @@ describe('grid-builder', () => {
         handler(mockEvent);
 
         // Verify error was logged
-        expect(consoleErrorSpy).toHaveBeenCalledWith('Source canvas not found:', 'non-existent');
+        expect(consoleErrorSpy).toHaveBeenCalledWith(
+          "Source canvas not found:",
+          "non-existent",
+        );
 
         consoleErrorSpy.mockRestore();
       });
 
-      it('should handle missing item gracefully', () => {
+      it("should handle missing item gracefully", () => {
         const component = new GridBuilder();
         component.components = mockComponentDefinitions;
 
@@ -1555,27 +1660,32 @@ describe('grid-builder', () => {
           addEventListener: jest.fn(),
           removeEventListener: jest.fn(),
         };
-        Object.defineProperty(component, 'hostElement', {
+        Object.defineProperty(component, "hostElement", {
           value: mockHostElement,
           writable: true,
         });
 
         // Spy on console.error
-        const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
+        const consoleErrorSpy = jest
+          .spyOn(console, "error")
+          .mockImplementation();
 
         component.componentDidLoad();
 
         // Get the registered handler
-        const addEventListenerCalls = mockHostElement.addEventListener.mock.calls;
-        const canvasMoveCall = addEventListenerCalls.find(call => call[0] === 'canvas-move');
+        const addEventListenerCalls =
+          mockHostElement.addEventListener.mock.calls;
+        const canvasMoveCall = addEventListenerCalls.find(
+          (call) => call[0] === "canvas-move",
+        );
         const handler = canvasMoveCall[1];
 
         // Simulate canvas-move event with non-existent item
-        const mockEvent = new CustomEvent('canvas-move', {
+        const mockEvent = new CustomEvent("canvas-move", {
           detail: {
-            itemId: 'non-existent-item',
-            sourceCanvasId: 'canvas1',
-            targetCanvasId: 'canvas2',
+            itemId: "non-existent-item",
+            sourceCanvasId: "canvas1",
+            targetCanvasId: "canvas2",
             x: 100,
             y: 50,
           },
@@ -1584,18 +1694,21 @@ describe('grid-builder', () => {
         handler(mockEvent);
 
         // Verify error was logged
-        expect(consoleErrorSpy).toHaveBeenCalledWith('Item not found in source canvas:', 'non-existent-item');
+        expect(consoleErrorSpy).toHaveBeenCalledWith(
+          "Item not found in source canvas:",
+          "non-existent-item",
+        );
 
         consoleErrorSpy.mockRestore();
       });
 
-      it('should constrain position to target canvas boundaries', () => {
+      it("should constrain position to target canvas boundaries", () => {
         // Setup: Add item to source canvas with large width
         const testItem = {
-          id: 'test-item-1',
-          canvasId: 'canvas1',
-          type: 'header',
-          name: 'Test Header',
+          id: "test-item-1",
+          canvasId: "canvas1",
+          type: "header",
+          name: "Test Header",
           zIndex: 1,
           layouts: {
             desktop: { x: 10, y: 10, width: 40, height: 6 }, // 40 units wide
@@ -1612,7 +1725,7 @@ describe('grid-builder', () => {
           addEventListener: jest.fn(),
           removeEventListener: jest.fn(),
         };
-        Object.defineProperty(component, 'hostElement', {
+        Object.defineProperty(component, "hostElement", {
           value: mockHostElement,
           writable: true,
         });
@@ -1620,16 +1733,19 @@ describe('grid-builder', () => {
         component.componentDidLoad();
 
         // Get the registered handler
-        const addEventListenerCalls = mockHostElement.addEventListener.mock.calls;
-        const canvasMoveCall = addEventListenerCalls.find(call => call[0] === 'canvas-move');
+        const addEventListenerCalls =
+          mockHostElement.addEventListener.mock.calls;
+        const canvasMoveCall = addEventListenerCalls.find(
+          (call) => call[0] === "canvas-move",
+        );
         const handler = canvasMoveCall[1];
 
         // Simulate canvas-move event with position that would overflow
-        const mockEvent = new CustomEvent('canvas-move', {
+        const mockEvent = new CustomEvent("canvas-move", {
           detail: {
-            itemId: 'test-item-1',
-            sourceCanvasId: 'canvas1',
-            targetCanvasId: 'canvas2',
+            itemId: "test-item-1",
+            sourceCanvasId: "canvas1",
+            targetCanvasId: "canvas2",
             x: 9999, // Very far right (will be constrained)
             y: 50,
           },
@@ -1641,13 +1757,15 @@ describe('grid-builder', () => {
 
         // Verify position was constrained (x + width should not exceed canvas width)
         // Canvas width is 50 grid units (CANVAS_WIDTH_UNITS)
-        expect(movedItem.layouts.desktop.x + movedItem.layouts.desktop.width).toBeLessThanOrEqual(50);
+        expect(
+          movedItem.layouts.desktop.x + movedItem.layouts.desktop.width,
+        ).toBeLessThanOrEqual(50);
       });
     });
   });
 
-  describe('UI Overrides - CanvasHeader', () => {
-    it('should not render custom canvas header when uiOverrides.CanvasHeader is not provided', () => {
+  describe("UI Overrides - CanvasHeader", () => {
+    it("should not render custom canvas header when uiOverrides.CanvasHeader is not provided", () => {
       const component = new GridBuilder();
       component.components = mockComponentDefinitions;
       component.initialState = {
@@ -1663,8 +1781,10 @@ describe('grid-builder', () => {
       expect(result).toBeDefined();
     });
 
-    it('should render custom canvas header when uiOverrides.CanvasHeader is provided', () => {
-      const mockHeaderRender = jest.fn(({ canvasId }) => <div class="custom-header">{canvasId}</div>);
+    it("should render custom canvas header when uiOverrides.CanvasHeader is provided", () => {
+      const mockHeaderRender = jest.fn(({ canvasId }) => (
+        <div class="custom-header">{canvasId}</div>
+      ));
 
       const component = new GridBuilder();
       component.components = mockComponentDefinitions;
@@ -1674,24 +1794,24 @@ describe('grid-builder', () => {
         },
       };
       component.canvasMetadata = {
-        canvas1: { title: 'Test Canvas', backgroundColor: '#ffffff' },
+        canvas1: { title: "Test Canvas", backgroundColor: "#ffffff" },
       };
       component.uiOverrides = {
         CanvasHeader: mockHeaderRender,
       };
 
       component.componentWillLoad();
-       component.render();
+      component.render();
 
       // Verify header render function was called with correct props
       expect(mockHeaderRender).toHaveBeenCalledWith({
-        canvasId: 'canvas1',
-        metadata: { title: 'Test Canvas', backgroundColor: '#ffffff' },
+        canvasId: "canvas1",
+        metadata: { title: "Test Canvas", backgroundColor: "#ffffff" },
         isActive: false,
       });
     });
 
-    it('should pass correct isActive prop when canvas is active', () => {
+    it("should pass correct isActive prop when canvas is active", () => {
       const mockHeaderRender = jest.fn(() => <div>Header</div>);
 
       const component = new GridBuilder();
@@ -1703,15 +1823,15 @@ describe('grid-builder', () => {
         },
       };
       component.canvasMetadata = {
-        canvas1: { title: 'Canvas 1' },
-        canvas2: { title: 'Canvas 2' },
+        canvas1: { title: "Canvas 1" },
+        canvas2: { title: "Canvas 2" },
       };
       component.uiOverrides = {
         CanvasHeader: mockHeaderRender,
       };
 
       // Set canvas2 as active
-      setActiveCanvas('canvas2');
+      setActiveCanvas("canvas2");
 
       component.componentWillLoad();
       component.render();
@@ -1719,21 +1839,21 @@ describe('grid-builder', () => {
       // Verify canvas1 header was called with isActive: false
       expect(mockHeaderRender).toHaveBeenCalledWith(
         expect.objectContaining({
-          canvasId: 'canvas1',
+          canvasId: "canvas1",
           isActive: false,
-        })
+        }),
       );
 
       // Verify canvas2 header was called with isActive: true
       expect(mockHeaderRender).toHaveBeenCalledWith(
         expect.objectContaining({
-          canvasId: 'canvas2',
+          canvasId: "canvas2",
           isActive: true,
-        })
+        }),
       );
     });
 
-    it('should handle missing canvas metadata gracefully', () => {
+    it("should handle missing canvas metadata gracefully", () => {
       const mockHeaderRender = jest.fn(() => <div>Header</div>);
 
       const component = new GridBuilder();
@@ -1753,13 +1873,13 @@ describe('grid-builder', () => {
 
       // Verify header was called with empty metadata object
       expect(mockHeaderRender).toHaveBeenCalledWith({
-        canvasId: 'canvas1',
+        canvasId: "canvas1",
         metadata: {},
         isActive: false,
       });
     });
 
-    it('should wrap each canvas in canvas-wrapper div', () => {
+    it("should wrap each canvas in canvas-wrapper div", () => {
       const component = new GridBuilder();
       component.components = mockComponentDefinitions;
       component.initialState = {
@@ -1780,14 +1900,14 @@ describe('grid-builder', () => {
     });
   });
 
-  describe('Auto-Activation on Drop', () => {
+  describe("Auto-Activation on Drop", () => {
     beforeEach(() => {
       resetState();
       clearHistory();
       jest.clearAllMocks();
     });
 
-    it('should set canvas as active when component is dropped from palette', () => {
+    it("should set canvas as active when component is dropped from palette", () => {
       const component = new GridBuilder();
       component.components = mockComponentDefinitions;
       component.initialState = {
@@ -1801,7 +1921,7 @@ describe('grid-builder', () => {
         addEventListener: jest.fn(),
         removeEventListener: jest.fn(),
       };
-      Object.defineProperty(component, 'hostElement', {
+      Object.defineProperty(component, "hostElement", {
         value: mockHostElement,
         writable: true,
       });
@@ -1811,7 +1931,9 @@ describe('grid-builder', () => {
 
       // Get the registered canvas-drop handler
       const addEventListenerCalls = mockHostElement.addEventListener.mock.calls;
-      const canvasDropCall = addEventListenerCalls.find(call => call[0] === 'canvas-drop');
+      const canvasDropCall = addEventListenerCalls.find(
+        (call) => call[0] === "canvas-drop",
+      );
       expect(canvasDropCall).toBeDefined();
 
       const handler = canvasDropCall[1];
@@ -1820,10 +1942,10 @@ describe('grid-builder', () => {
       expect(gridState.activeCanvasId).toBeNull();
 
       // Simulate dropping a component into canvas2
-      const mockEvent = new CustomEvent('canvas-drop', {
+      const mockEvent = new CustomEvent("canvas-drop", {
         detail: {
-          canvasId: 'canvas2',
-          componentType: 'header',
+          canvasId: "canvas2",
+          componentType: "header",
           x: 100,
           y: 50,
         },
@@ -1832,10 +1954,10 @@ describe('grid-builder', () => {
       handler(mockEvent);
 
       // Verify canvas2 is now active
-      expect(gridState.activeCanvasId).toBe('canvas2');
+      expect(gridState.activeCanvasId).toBe("canvas2");
     });
 
-    it('should emit canvasActivated event when component is dropped', () => {
+    it("should emit canvasActivated event when component is dropped", () => {
       const component = new GridBuilder();
       component.components = mockComponentDefinitions;
       component.initialState = {
@@ -1848,7 +1970,7 @@ describe('grid-builder', () => {
         addEventListener: jest.fn(),
         removeEventListener: jest.fn(),
       };
-      Object.defineProperty(component, 'hostElement', {
+      Object.defineProperty(component, "hostElement", {
         value: mockHostElement,
         writable: true,
       });
@@ -1856,18 +1978,20 @@ describe('grid-builder', () => {
       component.componentWillLoad();
       component.componentDidLoad();
 
-      const emitSpy = jest.spyOn(eventManager, 'emit');
+      const emitSpy = jest.spyOn(eventManager, "emit");
 
       // Get the registered canvas-drop handler
       const addEventListenerCalls = mockHostElement.addEventListener.mock.calls;
-      const canvasDropCall = addEventListenerCalls.find(call => call[0] === 'canvas-drop');
+      const canvasDropCall = addEventListenerCalls.find(
+        (call) => call[0] === "canvas-drop",
+      );
       const handler = canvasDropCall[1];
 
       // Trigger canvas-drop event
-      const mockEvent = new CustomEvent('canvas-drop', {
+      const mockEvent = new CustomEvent("canvas-drop", {
         detail: {
-          canvasId: 'canvas1',
-          componentType: 'header',
+          canvasId: "canvas1",
+          componentType: "header",
           x: 50,
           y: 50,
         },
@@ -1876,12 +2000,14 @@ describe('grid-builder', () => {
       handler(mockEvent);
 
       // Verify canvasActivated event was emitted
-      expect(emitSpy).toHaveBeenCalledWith('canvasActivated', { canvasId: 'canvas1' });
+      expect(emitSpy).toHaveBeenCalledWith("canvasActivated", {
+        canvasId: "canvas1",
+      });
 
       emitSpy.mockRestore();
     });
 
-    it('should switch active canvas when dropping into different canvas', () => {
+    it("should switch active canvas when dropping into different canvas", () => {
       const component = new GridBuilder();
       component.components = mockComponentDefinitions;
       component.initialState = {
@@ -1896,7 +2022,7 @@ describe('grid-builder', () => {
         addEventListener: jest.fn(),
         removeEventListener: jest.fn(),
       };
-      Object.defineProperty(component, 'hostElement', {
+      Object.defineProperty(component, "hostElement", {
         value: mockHostElement,
         writable: true,
       });
@@ -1906,29 +2032,52 @@ describe('grid-builder', () => {
 
       // Get the registered canvas-drop handler
       const addEventListenerCalls = mockHostElement.addEventListener.mock.calls;
-      const canvasDropCall = addEventListenerCalls.find(call => call[0] === 'canvas-drop');
+      const canvasDropCall = addEventListenerCalls.find(
+        (call) => call[0] === "canvas-drop",
+      );
       const handler = canvasDropCall[1];
 
       // Drop into canvas1
-      handler(new CustomEvent('canvas-drop', {
-        detail: { canvasId: 'canvas1', componentType: 'header', x: 50, y: 50 },
-      }));
-      expect(gridState.activeCanvasId).toBe('canvas1');
+      handler(
+        new CustomEvent("canvas-drop", {
+          detail: {
+            canvasId: "canvas1",
+            componentType: "header",
+            x: 50,
+            y: 50,
+          },
+        }),
+      );
+      expect(gridState.activeCanvasId).toBe("canvas1");
 
       // Drop into canvas2
-      handler(new CustomEvent('canvas-drop', {
-        detail: { canvasId: 'canvas2', componentType: 'text', x: 100, y: 100 },
-      }));
-      expect(gridState.activeCanvasId).toBe('canvas2');
+      handler(
+        new CustomEvent("canvas-drop", {
+          detail: {
+            canvasId: "canvas2",
+            componentType: "text",
+            x: 100,
+            y: 100,
+          },
+        }),
+      );
+      expect(gridState.activeCanvasId).toBe("canvas2");
 
       // Drop into canvas3
-      handler(new CustomEvent('canvas-drop', {
-        detail: { canvasId: 'canvas3', componentType: 'header', x: 25, y: 25 },
-      }));
-      expect(gridState.activeCanvasId).toBe('canvas3');
+      handler(
+        new CustomEvent("canvas-drop", {
+          detail: {
+            canvasId: "canvas3",
+            componentType: "header",
+            x: 25,
+            y: 25,
+          },
+        }),
+      );
+      expect(gridState.activeCanvasId).toBe("canvas3");
     });
 
-    it('should activate canvas even when dropping same component type multiple times', () => {
+    it("should activate canvas even when dropping same component type multiple times", () => {
       const component = new GridBuilder();
       component.components = mockComponentDefinitions;
       component.initialState = {
@@ -1941,7 +2090,7 @@ describe('grid-builder', () => {
         addEventListener: jest.fn(),
         removeEventListener: jest.fn(),
       };
-      Object.defineProperty(component, 'hostElement', {
+      Object.defineProperty(component, "hostElement", {
         value: mockHostElement,
         writable: true,
       });
@@ -1949,32 +2098,57 @@ describe('grid-builder', () => {
       component.componentWillLoad();
       component.componentDidLoad();
 
-      const emitSpy = jest.spyOn(eventManager, 'emit');
+      const emitSpy = jest.spyOn(eventManager, "emit");
 
       // Get the registered canvas-drop handler
       const addEventListenerCalls = mockHostElement.addEventListener.mock.calls;
-      const canvasDropCall = addEventListenerCalls.find(call => call[0] === 'canvas-drop');
+      const canvasDropCall = addEventListenerCalls.find(
+        (call) => call[0] === "canvas-drop",
+      );
       const handler = canvasDropCall[1];
 
       // Drop multiple headers into same canvas
-      handler(new CustomEvent('canvas-drop', {
-        detail: { canvasId: 'canvas1', componentType: 'header', x: 10, y: 10 },
-      }));
+      handler(
+        new CustomEvent("canvas-drop", {
+          detail: {
+            canvasId: "canvas1",
+            componentType: "header",
+            x: 10,
+            y: 10,
+          },
+        }),
+      );
 
-      handler(new CustomEvent('canvas-drop', {
-        detail: { canvasId: 'canvas1', componentType: 'header', x: 20, y: 10 },
-      }));
+      handler(
+        new CustomEvent("canvas-drop", {
+          detail: {
+            canvasId: "canvas1",
+            componentType: "header",
+            x: 20,
+            y: 10,
+          },
+        }),
+      );
 
-      handler(new CustomEvent('canvas-drop', {
-        detail: { canvasId: 'canvas1', componentType: 'header', x: 30, y: 10 },
-      }));
+      handler(
+        new CustomEvent("canvas-drop", {
+          detail: {
+            canvasId: "canvas1",
+            componentType: "header",
+            x: 30,
+            y: 10,
+          },
+        }),
+      );
 
       // Verify canvas1 is active
-      expect(gridState.activeCanvasId).toBe('canvas1');
+      expect(gridState.activeCanvasId).toBe("canvas1");
 
       // Verify canvasActivated event was emitted 3 times
       const activatedCalls = emitSpy.mock.calls.filter(
-        call => call[0] === 'canvasActivated' && (call[1] as any).canvasId === 'canvas1'
+        (call) =>
+          call[0] === "canvasActivated" &&
+          (call[1] as any).canvasId === "canvas1",
       );
       expect(activatedCalls.length).toBe(3);
 

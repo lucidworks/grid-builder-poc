@@ -1,8 +1,8 @@
-import { Component, h } from '@stencil/core';
+import { Component, h } from "@stencil/core";
 
 @Component({
-  tag: 'image-gallery-drag-clone',
-  styleUrl: 'image-gallery-drag-clone.scss',
+  tag: "image-gallery-drag-clone",
+  styleUrl: "image-gallery-drag-clone.scss",
   shadow: false,
 })
 export class ImageGalleryDragClone {

@@ -18,13 +18,13 @@
  * - This allows multiple grid-builder instances without window pollution
  */
 
-import { Component, h, State, Prop, Watch } from '@stencil/core';
-import { blogComponentDefinitions } from '../../component-definitions';
-import { GridBuilderAPI } from '../../../types/api';
+import { Component, h, State, Prop, Watch } from "@stencil/core";
+import { blogComponentDefinitions } from "../../component-definitions";
+import { GridBuilderAPI } from "../../../types/api";
 
 @Component({
-  tag: 'custom-config-panel',
-  styleUrl: 'custom-config-panel.scss',
+  tag: "custom-config-panel",
+  styleUrl: "custom-config-panel.scss",
   shadow: false,
 })
 export class CustomConfigPanel {
@@ -60,7 +60,7 @@ export class CustomConfigPanel {
   /**
    * Component name (temporary edit state)
    */
-  @State() componentName: string = '';
+  @State() componentName: string = "";
 
   /**
    * Original state for cancel functionality
@@ -85,15 +85,21 @@ export class CustomConfigPanel {
    * Callback for itemRemoved event (stored for unsubscribe)
    */
   private handleItemRemoved = (event: { itemId: string; canvasId: string }) => {
-    console.log('🎨 custom-config-panel received itemRemoved event', {
+    console.log("🎨 custom-config-panel received itemRemoved event", {
       eventItemId: event.itemId,
       selectedItemId: this.selectedItemId,
       isOpen: this.isOpen,
     });
 
     // Close panel if the deleted item is the currently selected one
-    if (this.isOpen && this.selectedItemId && event.itemId === this.selectedItemId) {
-      console.log('  ✅ Custom panel: Closing because selected item was deleted');
+    if (
+      this.isOpen &&
+      this.selectedItemId &&
+      event.itemId === this.selectedItemId
+    ) {
+      console.log(
+        "  ✅ Custom panel: Closing because selected item was deleted",
+      );
       this.closePanel();
     }
   };
@@ -120,17 +126,17 @@ export class CustomConfigPanel {
     }
 
     // Subscribe to itemRemoved events via API
-    api.on('itemRemoved', this.handleItemRemoved);
+    api.on("itemRemoved", this.handleItemRemoved);
     this.eventsSubscribed = true;
-    console.log('  ✅ Custom panel: Subscribed to itemRemoved event');
+    console.log("  ✅ Custom panel: Subscribed to itemRemoved event");
   }
 
   /**
    * Watch for API prop changes
    */
-  @Watch('api')
+  @Watch("api")
   handleApiChange(newApi: GridBuilderAPI, oldApi: GridBuilderAPI) {
-    console.log('🎨 custom-config-panel API prop changed', {
+    console.log("🎨 custom-config-panel API prop changed", {
       hadOldApi: !!oldApi,
       hasNewApi: !!newApi,
       newApiType: typeof newApi,
@@ -143,9 +149,11 @@ export class CustomConfigPanel {
   }
 
   componentDidLoad() {
-    console.log('🎨 custom-config-panel componentDidLoad - setting up component registry');
+    console.log(
+      "🎨 custom-config-panel componentDidLoad - setting up component registry",
+    );
     const api = this.getAPI();
-    console.log('  🔧 API status:', {
+    console.log("  🔧 API status:", {
       apiExists: !!api,
       apiType: typeof api,
       fromProp: !!this.api,
@@ -155,7 +163,7 @@ export class CustomConfigPanel {
     // Build component registry from blog component definitions
     // This doesn't depend on the API being available
     this.componentRegistry = new Map(
-      blogComponentDefinitions.map(def => [def.type, def])
+      blogComponentDefinitions.map((def) => [def.type, def]),
     );
 
     // Try to subscribe to events (will retry on first item click if API not ready)
@@ -164,29 +172,35 @@ export class CustomConfigPanel {
     // Listen for item-click events
     // Note: Stencil's @Listen decorator doesn't work reliably for custom events on document
     // so we use manual event listeners instead
-    document.addEventListener('item-click', this.handleItemClick as EventListener);
-    console.log('  ✅ Custom panel: Listening for item-click events');
+    document.addEventListener(
+      "item-click",
+      this.handleItemClick as EventListener,
+    );
+    console.log("  ✅ Custom panel: Listening for item-click events");
   }
 
   disconnectedCallback() {
-    console.log('🎨 custom-config-panel disconnectedCallback - cleaning up');
+    console.log("🎨 custom-config-panel disconnectedCallback - cleaning up");
 
     // Unsubscribe from itemRemoved events
     const api = this.getAPI();
     if (api && this.eventsSubscribed) {
-      api.off('itemRemoved', this.handleItemRemoved);
+      api.off("itemRemoved", this.handleItemRemoved);
       this.eventsSubscribed = false;
     }
 
     // Remove item-click event listener
-    document.removeEventListener('item-click', this.handleItemClick as EventListener);
+    document.removeEventListener(
+      "item-click",
+      this.handleItemClick as EventListener,
+    );
   }
 
   /**
    * Handle item-click events from the document
    */
   private handleItemClick = (event: CustomEvent) => {
-    console.log('🎨 custom-config-panel handleItemClick called', event.detail);
+    console.log("🎨 custom-config-panel handleItemClick called", event.detail);
 
     // Ensure event subscription is set up (retry if it failed in componentDidLoad)
     this.ensureEventSubscription();
@@ -197,19 +211,19 @@ export class CustomConfigPanel {
 
     // Get item from API
     const api = this.getAPI();
-    console.log('  🔧 API exists:', !!api);
+    console.log("  🔧 API exists:", !!api);
 
     const item = api?.getItem(itemId);
-    console.log('  🔧 Item retrieved:', !!item, item);
+    console.log("  🔧 Item retrieved:", !!item, item);
 
     if (!item) {
-      console.log('  ❌ No item found - exiting');
+      console.log("  ❌ No item found - exiting");
       return;
     }
 
     // Get component definition
     const definition = this.componentRegistry.get(item.type);
-    console.log('  🔧 Definition found:', !!definition, definition?.name);
+    console.log("  🔧 Definition found:", !!definition, definition?.name);
 
     // Save original state for cancel functionality
     this.originalState = {
@@ -223,10 +237,10 @@ export class CustomConfigPanel {
     this.componentConfig = { ...this.originalState.config };
 
     // Open panel
-    console.log('  🚪 Opening panel - setting isOpen = true');
+    console.log("  🚪 Opening panel - setting isOpen = true");
     this.isOpen = true;
-    console.log('  ✅ Panel should now be open, isOpen =', this.isOpen);
-  }
+    console.log("  ✅ Panel should now be open, isOpen =", this.isOpen);
+  };
 
   /**
    * Close panel and revert changes
@@ -234,7 +248,12 @@ export class CustomConfigPanel {
   private closePanel = () => {
     // Revert changes on cancel by restoring original state
     const api = this.getAPI();
-    if (this.selectedItemId && this.selectedCanvasId && this.originalState && api) {
+    if (
+      this.selectedItemId &&
+      this.selectedCanvasId &&
+      this.originalState &&
+      api
+    ) {
       // Revert config changes
       api.updateConfig(this.selectedItemId, this.originalState.config);
 
@@ -242,11 +261,13 @@ export class CustomConfigPanel {
       const state = api.getState();
       for (const canvasId in state.canvases) {
         const canvas = state.canvases[canvasId];
-        const itemIndex = canvas.items.findIndex(i => i.id === this.selectedItemId);
+        const itemIndex = canvas.items.findIndex(
+          (i) => i.id === this.selectedItemId,
+        );
         if (itemIndex !== -1) {
           canvas.items[itemIndex] = {
             ...canvas.items[itemIndex],
-            name: this.originalState.name
+            name: this.originalState.name,
           };
           // Trigger reactivity
           state.canvases = { ...state.canvases };
@@ -258,7 +279,7 @@ export class CustomConfigPanel {
     this.isOpen = false;
     this.selectedItemId = null;
     this.selectedCanvasId = null;
-    this.componentName = '';
+    this.componentName = "";
     this.componentConfig = {};
     this.originalState = null;
   };
@@ -271,7 +292,7 @@ export class CustomConfigPanel {
     this.isOpen = false;
     this.selectedItemId = null;
     this.selectedCanvasId = null;
-    this.componentName = '';
+    this.componentName = "";
     this.componentConfig = {};
     this.originalState = null;
   };
@@ -292,12 +313,14 @@ export class CustomConfigPanel {
       // Find and update the item across all canvases
       for (const canvasId in state.canvases) {
         const canvas = state.canvases[canvasId];
-        const itemIndex = canvas.items.findIndex(i => i.id === this.selectedItemId);
+        const itemIndex = canvas.items.findIndex(
+          (i) => i.id === this.selectedItemId,
+        );
         if (itemIndex !== -1) {
           // Update the name property
           canvas.items[itemIndex] = {
             ...canvas.items[itemIndex],
-            name: value
+            name: value,
           };
           // Trigger reactivity by reassigning canvases object
           state.canvases = { ...state.canvases };
@@ -339,8 +362,8 @@ export class CustomConfigPanel {
     }
 
     const panelClasses = {
-      'custom-config-panel': true,
-      'panel-open': this.isOpen,
+      "custom-config-panel": true,
+      "panel-open": this.isOpen,
     };
 
     return (
@@ -405,16 +428,10 @@ export class CustomConfigPanel {
         </div>
 
         <div class="custom-panel-footer">
-          <button
-            class="btn btn-secondary"
-            onClick={() => this.closePanel()}
-          >
+          <button class="btn btn-secondary" onClick={() => this.closePanel()}>
             Cancel
           </button>
-          <button
-            class="btn btn-primary"
-            onClick={() => this.saveConfig()}
-          >
+          <button class="btn btn-primary" onClick={() => this.saveConfig()}>
             Save Changes
           </button>
         </div>
@@ -426,45 +443,66 @@ export class CustomConfigPanel {
    * Render a single config field
    */
   private renderConfigField(field: any) {
-    const value = this.componentConfig[field.name] ?? field.defaultValue ?? '';
+    const value = this.componentConfig[field.name] ?? field.defaultValue ?? "";
 
     switch (field.type) {
-      case 'text':
-      case 'textarea':
+      case "text":
+      case "textarea":
         return (
           <input
             type="text"
             class="text-input"
             value={value}
-            onInput={(e) => this.handleConfigChange(field.name, (e.target as HTMLInputElement).value)}
+            onInput={(e) =>
+              this.handleConfigChange(
+                field.name,
+                (e.target as HTMLInputElement).value,
+              )
+            }
             placeholder={field.placeholder}
           />
         );
 
-      case 'number':
+      case "number":
         return (
           <input
             type="number"
             class="text-input"
             value={value}
-            onInput={(e) => this.handleConfigChange(field.name, Number((e.target as HTMLInputElement).value))}
+            onInput={(e) =>
+              this.handleConfigChange(
+                field.name,
+                Number((e.target as HTMLInputElement).value),
+              )
+            }
             min={field.min}
             max={field.max}
             step={field.step}
           />
         );
 
-      case 'select':
+      case "select":
         return (
           <select
             class="select-input"
-            onChange={(e) => this.handleConfigChange(field.name, (e.target as HTMLSelectElement).value)}
+            onChange={(e) =>
+              this.handleConfigChange(
+                field.name,
+                (e.target as HTMLSelectElement).value,
+              )
+            }
           >
             {field.options?.map((option: any) => {
-              const optionValue = typeof option === 'string' ? option : option.value;
-              const optionLabel = typeof option === 'string' ? option : option.label;
+              const optionValue =
+                typeof option === "string" ? option : option.value;
+              const optionLabel =
+                typeof option === "string" ? option : option.label;
               return (
-                <option key={optionValue} value={optionValue} selected={value === optionValue}>
+                <option
+                  key={optionValue}
+                  value={optionValue}
+                  selected={value === optionValue}
+                >
                   {optionLabel}
                 </option>
               );
@@ -472,26 +510,36 @@ export class CustomConfigPanel {
           </select>
         );
 
-      case 'checkbox':
+      case "checkbox":
         return (
           <label class="checkbox-label">
             <input
               type="checkbox"
               checked={!!value}
-              onChange={(e) => this.handleConfigChange(field.name, (e.target as HTMLInputElement).checked)}
+              onChange={(e) =>
+                this.handleConfigChange(
+                  field.name,
+                  (e.target as HTMLInputElement).checked,
+                )
+              }
             />
             <span class="checkbox-text">{field.label}</span>
           </label>
         );
 
-      case 'color':
+      case "color":
         return (
           <div class="color-input-wrapper">
             <input
               type="color"
               class="color-input"
               value={value}
-              onInput={(e) => this.handleConfigChange(field.name, (e.target as HTMLInputElement).value)}
+              onInput={(e) =>
+                this.handleConfigChange(
+                  field.name,
+                  (e.target as HTMLInputElement).value,
+                )
+              }
             />
             <span class="color-value">{value}</span>
           </div>

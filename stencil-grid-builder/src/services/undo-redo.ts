@@ -216,10 +216,10 @@
  * @module undo-redo
  */
 
-import { createStore } from '@stencil/store';
-import { createDebugLogger } from '../utils/debug';
+import { createStore } from "@stencil/store";
+import { createDebugLogger } from "../utils/debug";
 
-const debug = createDebugLogger('undo-redo');
+const debug = createDebugLogger("undo-redo");
 
 /**
  * Command Interface
@@ -551,7 +551,10 @@ function updateButtonStates(): void {
  * ```
  */
 export function pushCommand(command: Command): void {
-  debug.log('➕ PUSH: Adding command to history:', (command as any).description || command);
+  debug.log(
+    "➕ PUSH: Adding command to history:",
+    (command as any).description || command,
+  );
 
   // Remove any commands after current position
   commandHistory.splice(historyPosition + 1);
@@ -566,7 +569,12 @@ export function pushCommand(command: Command): void {
     historyPosition++;
   }
 
-  debug.log('  History position now:', historyPosition, ', Total commands:', commandHistory.length);
+  debug.log(
+    "  History position now:",
+    historyPosition,
+    ", Total commands:",
+    commandHistory.length,
+  );
 
   // Update button states
   updateButtonStates();
@@ -623,11 +631,16 @@ export function undo(): void {
   }
 
   const command = commandHistory[historyPosition];
-  debug.log('🔙 UNDO: Executing command at position', historyPosition, ':', command);
-  debug.log('  Command description:', (command as any).description);
+  debug.log(
+    "🔙 UNDO: Executing command at position",
+    historyPosition,
+    ":",
+    command,
+  );
+  debug.log("  Command description:", (command as any).description);
   command.undo();
   historyPosition--;
-  debug.log('  New position after undo:', historyPosition);
+  debug.log("  New position after undo:", historyPosition);
 
   updateButtonStates();
 }

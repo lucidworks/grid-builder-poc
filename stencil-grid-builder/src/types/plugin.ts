@@ -5,7 +5,7 @@
  * Type definitions for creating plugins that extend grid builder functionality.
  */
 
-import { GridBuilderAPI } from './api';
+import { GridBuilderAPI } from "./api";
 
 /**
  * Grid Builder Plugin Interface

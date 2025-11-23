@@ -9,7 +9,7 @@
 
 | Property      | Attribute      | Description | Type     | Default            |
 | ------------- | -------------- | ----------- | -------- | ------------------ |
-| `headerTitle` | `header-title` |             | `string` | `'Default Header'` |
+| `headerTitle` | `header-title` |             | `string` | `"Default Header"` |
 | `subtitle`    | `subtitle`     |             | `string` | `undefined`        |
 
 

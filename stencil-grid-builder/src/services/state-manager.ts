@@ -230,7 +230,7 @@
  * @module state-manager
  */
 
-import { createStore } from '@stencil/store';
+import { createStore } from "@stencil/store";
 
 /**
  * Grid Item Interface
@@ -569,7 +569,7 @@ export interface GridState {
    *
    * **Toggle**: User clicks viewport switcher button
    */
-  currentViewport: 'desktop' | 'mobile';
+  currentViewport: "desktop" | "mobile";
 
   /**
    * Whether to show grid lines on canvases
@@ -752,7 +752,7 @@ export interface ViewerState {
    * **Auto-switching**: Can use ResizeObserver for container-based switching
    * **Manual override**: Can be set via props or API
    */
-  currentViewport: 'desktop' | 'mobile';
+  currentViewport: "desktop" | "mobile";
 }
 
 /**
@@ -779,7 +779,7 @@ const initialState: GridState = {
   selectedItemId: null,
   selectedCanvasId: null,
   activeCanvasId: null,
-  currentViewport: 'desktop',
+  currentViewport: "desktop",
   showGrid: true,
 };
 
@@ -846,7 +846,7 @@ export function reset() {
   state.selectedItemId = null;
   state.selectedCanvasId = null;
   state.activeCanvasId = null;
-  state.currentViewport = 'desktop';
+  state.currentViewport = "desktop";
   state.showGrid = true;
 }
 
@@ -996,7 +996,11 @@ export function removeItemFromCanvas(canvasId: string, itemId: string) {
  * }
  * ```
  */
-export function updateItem(canvasId: string, itemId: string, updates: Partial<GridItem>) {
+export function updateItem(
+  canvasId: string,
+  itemId: string,
+  updates: Partial<GridItem>,
+) {
   const canvas = state.canvases[canvasId];
   if (!canvas) {
     return;
@@ -1095,7 +1099,11 @@ export function getItem(canvasId: string, itemId: string): GridItem | null {
  * }
  * ```
  */
-export function moveItemToCanvas(fromCanvasId: string, toCanvasId: string, itemId: string) {
+export function moveItemToCanvas(
+  fromCanvasId: string,
+  toCanvasId: string,
+  itemId: string,
+) {
   const fromCanvas = state.canvases[fromCanvasId];
   const toCanvas = state.canvases[toCanvasId];
 
@@ -1385,11 +1393,17 @@ export function addItemsBatch(items: Partial<GridItem>[]): string[] {
     const newItem: GridItem = {
       id,
       canvasId,
-      type: itemData.type || 'unknown',
-      name: itemData.name || 'Unnamed',
+      type: itemData.type || "unknown",
+      name: itemData.name || "Unnamed",
       layouts: itemData.layouts || {
         desktop: { x: 0, y: 0, width: 20, height: 10 },
-        mobile: { x: null, y: null, width: null, height: null, customized: false },
+        mobile: {
+          x: null,
+          y: null,
+          width: null,
+          height: null,
+          customized: false,
+        },
       },
       zIndex: canvas.zIndexCounter++,
       config: itemData.config || {},
@@ -1442,7 +1456,9 @@ export function deleteItemsBatch(itemIds: string[]): void {
   for (const canvasId in updatedCanvases) {
     updatedCanvases[canvasId] = {
       ...updatedCanvases[canvasId],
-      items: updatedCanvases[canvasId].items.filter((item) => !itemIdSet.has(item.id)),
+      items: updatedCanvases[canvasId].items.filter(
+        (item) => !itemIdSet.has(item.id),
+      ),
     };
   }
 
@@ -1487,7 +1503,11 @@ export function deleteItemsBatch(itemIds: string[]): void {
  * ```
  */
 export function updateItemsBatch(
-  updates: Array<{ itemId: string; canvasId: string; updates: Partial<GridItem> }>
+  updates: Array<{
+    itemId: string;
+    canvasId: string;
+    updates: Partial<GridItem>;
+  }>,
 ): void {
   const updatedCanvases = { ...state.canvases };
 

@@ -25,7 +25,7 @@
  * @module canvas-header
  */
 
-import { Component, Event, EventEmitter, h, Prop } from '@stencil/core';
+import { Component, Event, EventEmitter, h, Prop } from "@stencil/core";
 
 /**
  * CanvasHeader Component
@@ -37,8 +37,8 @@ import { Component, Event, EventEmitter, h, Prop } from '@stencil/core';
  * **Shadow DOM**: Disabled (matches blog-app styling)
  */
 @Component({
-  tag: 'canvas-header',
-  styleUrl: 'canvas-header.scss',
+  tag: "canvas-header",
+  styleUrl: "canvas-header.scss",
   shadow: false,
 })
 export class CanvasHeader {
@@ -110,7 +110,7 @@ export class CanvasHeader {
    * Render component template
    */
   render() {
-    const headerClass = `canvas-header ${this.isActive ? 'is-active' : ''}`;
+    const headerClass = `canvas-header ${this.isActive ? "is-active" : ""}`;
 
     return (
       <div class={headerClass} data-canvas-id={this.canvasId}>

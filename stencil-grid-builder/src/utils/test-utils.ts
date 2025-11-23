@@ -1,8 +1,8 @@
 // External libraries (alphabetical)
-import { SpecPage } from '@stencil/core/testing';
+import { SpecPage } from "@stencil/core/testing";
 
 // Internal imports (alphabetical)
-import { GridItem, gridState } from '../services/state-manager';
+import { GridItem, gridState } from "../services/state-manager";
 
 /**
  * Mock global objects for testing
@@ -41,7 +41,7 @@ export function resetGridState(): void {
   };
   gridState.selectedItemId = null;
   gridState.selectedCanvasId = null;
-  gridState.currentViewport = 'desktop';
+  gridState.currentViewport = "desktop";
   gridState.showGrid = true;
 }
 
@@ -51,13 +51,19 @@ export function resetGridState(): void {
  */
 export function createTestItem(overrides?: Partial<GridItem>): GridItem {
   return {
-    id: 'item-1',
-    canvasId: 'canvas1',
-    type: 'header',
-    name: 'Test Header',
+    id: "item-1",
+    canvasId: "canvas1",
+    type: "header",
+    name: "Test Header",
     layouts: {
       desktop: { x: 100, y: 100, width: 200, height: 150 },
-      mobile: { x: null, y: null, width: null, height: null, customized: false },
+      mobile: {
+        x: null,
+        y: null,
+        width: null,
+        height: null,
+        customized: false,
+      },
     },
     zIndex: 1,
     ...overrides,
@@ -67,7 +73,10 @@ export function createTestItem(overrides?: Partial<GridItem>): GridItem {
 /**
  * Create multiple test items
  */
-export function createTestItems(count: number, baseOverrides?: Partial<GridItem>): GridItem[] {
+export function createTestItems(
+  count: number,
+  baseOverrides?: Partial<GridItem>,
+): GridItem[] {
   return Array.from({ length: count }, (_, index) =>
     createTestItem({
       id: `item-${index + 1}`,
@@ -80,10 +89,16 @@ export function createTestItems(count: number, baseOverrides?: Partial<GridItem>
           width: 200,
           height: 150,
         },
-        mobile: { x: null, y: null, width: null, height: null, customized: false },
+        mobile: {
+          x: null,
+          y: null,
+          width: null,
+          height: null,
+          customized: false,
+        },
       },
       ...baseOverrides,
-    })
+    }),
   );
 }
 
@@ -91,12 +106,16 @@ export function createTestItems(count: number, baseOverrides?: Partial<GridItem>
  * Create a mock canvas element with specified width
  * Returns the element so it can be appended to the test page
  */
-export function createMockCanvas(page: SpecPage, canvasId: string = 'canvas1', width: number = 1000): HTMLElement {
-  const mockCanvas = page.doc.createElement('div');
+export function createMockCanvas(
+  page: SpecPage,
+  canvasId: string = "canvas1",
+  width: number = 1000,
+): HTMLElement {
+  const mockCanvas = page.doc.createElement("div");
   mockCanvas.id = canvasId;
 
   // Mock clientWidth since JSDOM doesn't compute layout
-  Object.defineProperty(mockCanvas, 'clientWidth', {
+  Object.defineProperty(mockCanvas, "clientWidth", {
     value: width,
     writable: true,
     configurable: true,
@@ -117,22 +136,31 @@ export interface MockCanvasSetupOptions {
   componentTag?: string;
 }
 
-export async function setupSpecPageWithCanvas(page: SpecPage, options: MockCanvasSetupOptions): Promise<HTMLElement> {
-  const { canvasId = 'canvas1', canvasWidth = 1000, component, componentProps = {}, componentTag } = options;
+export async function setupSpecPageWithCanvas(
+  page: SpecPage,
+  options: MockCanvasSetupOptions,
+): Promise<HTMLElement> {
+  const {
+    canvasId = "canvas1",
+    canvasWidth = 1000,
+    component,
+    componentProps = {},
+    componentTag,
+  } = options;
 
   // Create and add mock canvas
   const mockCanvas = createMockCanvas(page, canvasId, canvasWidth);
   page.body.appendChild(mockCanvas);
 
   // Clear existing content
-  page.root.innerHTML = '';
+  page.root.innerHTML = "";
 
   // Create component element
   const tag =
     componentTag ||
     component.is ||
     `${component.name
-      .replace(/([A-Z])/g, '-$1')
+      .replace(/([A-Z])/g, "-$1")
       .toLowerCase()
       .slice(1)}`;
   const wrapper = page.doc.createElement(tag) as any;
@@ -156,7 +184,7 @@ export function dispatchCustomEvent<T = any>(
   element: Element | Document,
   eventName: string,
   detail: T,
-  options: { bubbles?: boolean; composed?: boolean } = {}
+  options: { bubbles?: boolean; composed?: boolean } = {},
 ): void {
   const event = new CustomEvent(eventName, {
     detail,
@@ -173,7 +201,7 @@ export function dispatchCustomEvent<T = any>(
 export async function waitFor(
   condition: () => boolean | Promise<boolean>,
   timeout: number = 1000,
-  interval: number = 50
+  interval: number = 50,
 ): Promise<void> {
   const startTime = Date.now();
 
@@ -192,7 +220,7 @@ export async function waitFor(
  * Get element text content trimmed
  */
 export function getTextContent(element: Element | null): string {
-  return element?.textContent?.trim() || '';
+  return element?.textContent?.trim() || "";
 }
 
 /**

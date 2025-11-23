@@ -7,7 +7,7 @@
  * modals, API calls, etc.).
  */
 
-import { GridItem } from '../services/state-manager';
+import { GridItem } from "../services/state-manager";
 
 /**
  * Result of a deletion hook

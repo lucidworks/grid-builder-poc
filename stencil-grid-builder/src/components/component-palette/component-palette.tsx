@@ -97,15 +97,15 @@
  * @module component-palette
  */
 
-import { Component, h, Prop, State, Watch, Element } from '@stencil/core';
-import interact from 'interactjs';
+import { Component, h, Prop, State, Watch, Element } from "@stencil/core";
+import interact from "interactjs";
 
 // Type imports
-import { ComponentDefinition } from '../../types/component-definition';
-import { GridConfig } from '../../types/grid-config';
+import { ComponentDefinition } from "../../types/component-definition";
+import { GridConfig } from "../../types/grid-config";
 
 // Utility imports
-import { gridToPixelsX, gridToPixelsY } from '../../utils/grid-calculations';
+import { gridToPixelsX, gridToPixelsY } from "../../utils/grid-calculations";
 
 /**
  * ComponentPalette Component
@@ -173,8 +173,8 @@ import { gridToPixelsX, gridToPixelsY } from '../../utils/grid-calculations';
  * - **Works across boundaries**: Drag from palette to any canvas-section
  */
 @Component({
-  tag: 'component-palette',
-  styleUrl: 'component-palette.scss',
+  tag: "component-palette",
+  styleUrl: "component-palette.scss",
   shadow: false,
 })
 export class ComponentPalette {
@@ -277,8 +277,11 @@ export class ComponentPalette {
    * - New items need drag handlers attached
    * - More efficient than componentDidUpdate (only runs on prop change)
    */
-  @Watch('components')
-  handleComponentsChange(newComponents: ComponentDefinition[], oldComponents: ComponentDefinition[]) {
+  @Watch("components")
+  handleComponentsChange(
+    newComponents: ComponentDefinition[],
+    oldComponents: ComponentDefinition[],
+  ) {
     // Skip if components reference hasn't changed
     if (newComponents === oldComponents) return;
 
@@ -301,7 +304,7 @@ export class ComponentPalette {
    * **Note**: Config stored in closure by initializePaletteItems
    * Will be used on next drag start, no immediate action needed
    */
-  @Watch('config')
+  @Watch("config")
   handleConfigChange(newConfig: GridConfig, oldConfig: GridConfig) {
     // Skip if config reference hasn't changed
     if (newConfig === oldConfig) return;
@@ -365,7 +368,7 @@ export class ComponentPalette {
   render() {
     const paletteClasses = {
       palette: true,
-      'palette-chromeless': !this.showHeader,
+      "palette-chromeless": !this.showHeader,
     };
 
     if (!this.components || this.components.length === 0) {
@@ -384,8 +387,8 @@ export class ComponentPalette {
         {this.components.map((component) => {
           // Class binding with reactive state
           const itemClasses = {
-            'palette-item': true,
-            'dragging-from-palette': this.draggingItemType === component.type,
+            "palette-item": true,
+            "dragging-from-palette": this.draggingItemType === component.type,
           };
 
           return (
@@ -454,7 +457,7 @@ export class ComponentPalette {
     // Multiple component-palette instances may exist (Content, Interactive, Media categories)
     // Using document.querySelectorAll would find ALL palette items, causing
     // drag handlers from one palette to try accessing component definitions from another
-    const paletteItems = this.hostElement.querySelectorAll('.palette-item');
+    const paletteItems = this.hostElement.querySelectorAll(".palette-item");
 
     paletteItems.forEach((element: HTMLElement) => {
       // Check if already initialized to prevent duplicate handlers
@@ -512,14 +515,16 @@ export class ComponentPalette {
            */
           start: (event: any) => {
             // Get the .palette-item element (in case event.target is a nested child)
-            const paletteItem = event.target.closest('.palette-item');
+            const paletteItem = event.target.closest(".palette-item");
             if (!paletteItem) {
-              console.warn('Could not find .palette-item element');
+              console.warn("Could not find .palette-item element");
               return;
             }
 
             // Get component type and find definition
-            const componentType = paletteItem.getAttribute('data-component-type');
+            const componentType = paletteItem.getAttribute(
+              "data-component-type",
+            );
 
             // Set dragging state (replaces classList.add)
             this.draggingItemType = componentType;
@@ -531,19 +536,28 @@ export class ComponentPalette {
               top: paletteRect.top,
             };
             (paletteItem as any)._dropWasValid = false; // Flag to track if drop occurred
-            const definition = this.components.find((c) => c.type === componentType);
+            const definition = this.components.find(
+              (c) => c.type === componentType,
+            );
 
             if (!definition) {
-              console.warn(`Component definition not found for type: ${componentType}`);
+              console.warn(
+                `Component definition not found for type: ${componentType}`,
+              );
               return;
             }
 
             // Calculate actual component size from definition (or use default)
-            const defaultSize = definition.defaultSize || { width: 10, height: 6 };
+            const defaultSize = definition.defaultSize || {
+              width: 10,
+              height: 6,
+            };
 
             // Get first available canvas ID from gridState for size calculation
             const gridState = (window as any).gridState;
-            const canvasIds = gridState?.canvases ? Object.keys(gridState.canvases) : [];
+            const canvasIds = gridState?.canvases
+              ? Object.keys(gridState.canvases)
+              : [];
             const canvasId = canvasIds.length > 0 ? canvasIds[0] : null;
 
             // Calculate size - if no canvas exists yet, use fallback calculation
@@ -565,20 +579,20 @@ export class ComponentPalette {
             const halfHeight = heightPx / 2;
 
             // Create drag clone container with base styling
-            const dragClone = document.createElement('div');
-            dragClone.className = 'dragging-clone';
-            dragClone.style.position = 'fixed';
-            dragClone.style.left = event.clientX - halfWidth + 'px';
-            dragClone.style.top = event.clientY - halfHeight + 'px';
-            dragClone.style.width = widthPx + 'px';
-            dragClone.style.height = heightPx + 'px';
-            dragClone.style.overflow = 'hidden'; // Clip content to size
-            dragClone.style.pointerEvents = 'none';
-            dragClone.style.zIndex = '10000';
-            dragClone.style.border = '2px solid rgba(74, 144, 226, 0.5)';
-            dragClone.style.borderRadius = '4px';
-            dragClone.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.2)';
-            dragClone.style.cursor = 'grabbing';
+            const dragClone = document.createElement("div");
+            dragClone.className = "dragging-clone";
+            dragClone.style.position = "fixed";
+            dragClone.style.left = event.clientX - halfWidth + "px";
+            dragClone.style.top = event.clientY - halfHeight + "px";
+            dragClone.style.width = widthPx + "px";
+            dragClone.style.height = heightPx + "px";
+            dragClone.style.overflow = "hidden"; // Clip content to size
+            dragClone.style.pointerEvents = "none";
+            dragClone.style.zIndex = "10000";
+            dragClone.style.border = "2px solid rgba(74, 144, 226, 0.5)";
+            dragClone.style.borderRadius = "4px";
+            dragClone.style.boxShadow = "0 4px 12px rgba(0, 0, 0, 0.2)";
+            dragClone.style.cursor = "grabbing";
 
             // Render custom drag clone JSX
             const vNode = definition.renderDragClone();
@@ -591,7 +605,7 @@ export class ComponentPalette {
 
             // Copy any props from vNode to element
             if (vNode.$attrs$) {
-              Object.keys(vNode.$attrs$).forEach(key => {
+              Object.keys(vNode.$attrs$).forEach((key) => {
                 contentElement.setAttribute(key, vNode.$attrs$[key]);
               });
             }
@@ -630,15 +644,15 @@ export class ComponentPalette {
            * @param event - interact.js drag move event
            */
           move: (event: any) => {
-            const paletteItem = event.target.closest('.palette-item');
+            const paletteItem = event.target.closest(".palette-item");
             if (!paletteItem) return;
 
             const dragClone = (paletteItem as any)._dragClone;
             const halfWidth = (paletteItem as any)._halfWidth;
             const halfHeight = (paletteItem as any)._halfHeight;
             if (dragClone) {
-              dragClone.style.left = event.clientX - halfWidth + 'px';
-              dragClone.style.top = event.clientY - halfHeight + 'px';
+              dragClone.style.left = event.clientX - halfWidth + "px";
+              dragClone.style.top = event.clientY - halfHeight + "px";
             }
           },
 
@@ -674,7 +688,7 @@ export class ComponentPalette {
             // Clear dragging state (replaces classList.remove)
             this.draggingItemType = null;
 
-            const paletteItem = event.target.closest('.palette-item');
+            const paletteItem = event.target.closest(".palette-item");
             if (!paletteItem) return;
 
             const dragClone = (paletteItem as any)._dragClone;
@@ -684,10 +698,11 @@ export class ComponentPalette {
             if (dragClone) {
               if (!dropWasValid && originalPos) {
                 // Invalid drop - animate back to palette
-                dragClone.style.transition = 'all 0.3s cubic-bezier(0.4, 0.0, 0.2, 1)';
-                dragClone.style.left = originalPos.left + 'px';
-                dragClone.style.top = originalPos.top + 'px';
-                dragClone.style.opacity = '0';
+                dragClone.style.transition =
+                  "all 0.3s cubic-bezier(0.4, 0.0, 0.2, 1)";
+                dragClone.style.left = originalPos.left + "px";
+                dragClone.style.top = originalPos.top + "px";
+                dragClone.style.opacity = "0";
 
                 // Remove after animation completes
                 setTimeout(() => {
@@ -746,7 +761,7 @@ export class ComponentPalette {
    */
   disconnectedCallback() {
     // Cleanup interact.js on all palette items (scoped to this instance)
-    const paletteItems = this.hostElement.querySelectorAll('.palette-item');
+    const paletteItems = this.hostElement.querySelectorAll(".palette-item");
     paletteItems.forEach((element: HTMLElement) => {
       if ((element as any)._dragInitialized) {
         interact(element).unset();

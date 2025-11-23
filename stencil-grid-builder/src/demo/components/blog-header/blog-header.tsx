@@ -1,12 +1,12 @@
-import { Component, h, Prop } from '@stencil/core';
+import { Component, h, Prop } from "@stencil/core";
 
 @Component({
-  tag: 'blog-header',
-  styleUrl: 'blog-header.scss',
+  tag: "blog-header",
+  styleUrl: "blog-header.scss",
   shadow: false,
 })
 export class BlogHeader {
-  @Prop() headerTitle: string = 'Default Header';
+  @Prop() headerTitle: string = "Default Header";
   @Prop() subtitle?: string;
 
   render() {

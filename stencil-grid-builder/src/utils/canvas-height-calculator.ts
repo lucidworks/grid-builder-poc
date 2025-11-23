@@ -38,9 +38,9 @@
  * @module canvas-height-calculator
  */
 
-import { gridState } from '../services/state-manager';
-import { gridToPixelsY } from './grid-calculations';
-import { GridConfig } from '../types/grid-config';
+import { gridState } from "../services/state-manager";
+import { gridToPixelsY } from "./grid-calculations";
+import { GridConfig } from "../types/grid-config";
 
 /**
  * Default bottom margin in grid units
@@ -91,8 +91,8 @@ const DEFAULT_BOTTOM_MARGIN_GRID_UNITS = 5;
  */
 export function calculateCanvasHeightFromItems(
   items: any[],
-  viewport: 'desktop' | 'mobile',
-  config?: GridConfig
+  viewport: "desktop" | "mobile",
+  config?: GridConfig,
 ): number {
   if (!items || items.length === 0) {
     // Empty canvas - return 0 (CSS min-height will apply)
@@ -116,7 +116,8 @@ export function calculateCanvasHeightFromItems(
   }
 
   // Get bottom margin from config or use default
-  const bottomMargin = config?.canvasBottomMargin ?? DEFAULT_BOTTOM_MARGIN_GRID_UNITS;
+  const bottomMargin =
+    config?.canvasBottomMargin ?? DEFAULT_BOTTOM_MARGIN_GRID_UNITS;
 
   // Add bottom margin in grid units
   const totalGridUnits = bottommostY + bottomMargin;
@@ -168,7 +169,10 @@ export function calculateCanvasHeightFromItems(
  * // Returns: 480 (if bottommost item at y=14, height=4, + 10 grid units margin)
  * ```
  */
-export function calculateCanvasHeight(canvasId: string, config?: GridConfig): number {
+export function calculateCanvasHeight(
+  canvasId: string,
+  config?: GridConfig,
+): number {
   // Get canvas from state
   const canvas = gridState.canvases[canvasId];
   if (!canvas || !canvas.items || canvas.items.length === 0) {
@@ -177,7 +181,7 @@ export function calculateCanvasHeight(canvasId: string, config?: GridConfig): nu
   }
 
   // Get current viewport
-  const viewport = gridState.currentViewport || 'desktop';
+  const viewport = gridState.currentViewport || "desktop";
 
   // Delegate to reusable function
   return calculateCanvasHeightFromItems(canvas.items, viewport, config);

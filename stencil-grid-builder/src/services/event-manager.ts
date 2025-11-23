@@ -47,7 +47,7 @@
  * @module event-manager
  */
 
-import { EventCallback } from '../types/api';
+import { EventCallback } from "../types/api";
 
 /**
  * EventManager Class
@@ -108,9 +108,9 @@ export class EventManager {
    * **Reason**: Fire on every pixel during drag/resize
    */
   private debouncedEvents: Set<string> = new Set([
-    'componentDragged',
-    'componentResized',
-    'stateChanged',
+    "componentDragged",
+    "componentResized",
+    "stateChanged",
   ]);
 
   /**

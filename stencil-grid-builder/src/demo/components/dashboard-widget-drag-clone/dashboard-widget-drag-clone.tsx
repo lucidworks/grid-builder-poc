@@ -1,8 +1,8 @@
-import { Component, h } from '@stencil/core';
+import { Component, h } from "@stencil/core";
 
 @Component({
-  tag: 'dashboard-widget-drag-clone',
-  styleUrl: 'dashboard-widget-drag-clone.scss',
+  tag: "dashboard-widget-drag-clone",
+  styleUrl: "dashboard-widget-drag-clone.scss",
   shadow: false,
 })
 export class DashboardWidgetDragClone {

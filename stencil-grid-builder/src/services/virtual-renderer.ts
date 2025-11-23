@@ -480,9 +480,9 @@ export class VirtualRendererService {
         });
       },
       {
-        rootMargin: '200px', // Start loading 200px before entering viewport
+        rootMargin: "200px", // Start loading 200px before entering viewport
         threshold: [0, 0.01], // Fire at 0% (just entered) AND 0.01% (already visible)
-      }
+      },
     );
   }
 
@@ -602,7 +602,11 @@ export class VirtualRendererService {
    * // → Component renders content instead of placeholder
    * ```
    */
-  observe(element: HTMLElement, elementId: string, callback: VisibilityCallback) {
+  observe(
+    element: HTMLElement,
+    elementId: string,
+    callback: VisibilityCallback,
+  ) {
     if (!this.observer || !element) {
       return;
     }

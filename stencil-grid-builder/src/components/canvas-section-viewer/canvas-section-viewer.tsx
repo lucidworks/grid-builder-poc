@@ -41,14 +41,17 @@
  * @module canvas-section-viewer
  */
 
-import { Component, h, Prop, State, Watch } from '@stencil/core';
+import { Component, h, Prop, State, Watch } from "@stencil/core";
 
 // Internal imports - no interact.js
-import { GridItem } from '../../services/state-manager';
-import { clearGridSizeCache, gridToPixelsY } from '../../utils/grid-calculations';
-import { calculateCanvasHeightFromItems } from '../../utils/canvas-height-calculator';
-import { GridConfig } from '../../types/grid-config';
-import { ComponentDefinition } from '../../types/component-definition';
+import { GridItem } from "../../services/state-manager";
+import {
+  clearGridSizeCache,
+  gridToPixelsY,
+} from "../../utils/grid-calculations";
+import { calculateCanvasHeightFromItems } from "../../utils/canvas-height-calculator";
+import { GridConfig } from "../../types/grid-config";
+import { ComponentDefinition } from "../../types/component-definition";
 
 /**
  * CanvasSectionViewer Component
@@ -61,8 +64,8 @@ import { ComponentDefinition } from '../../types/component-definition';
  * **Reactivity**: Props-based (no global state subscription)
  */
 @Component({
-  tag: 'canvas-section-viewer',
-  styleUrl: 'canvas-section-viewer.scss',
+  tag: "canvas-section-viewer",
+  styleUrl: "canvas-section-viewer.scss",
   shadow: false, // Light DOM for consistency
 })
 export class CanvasSectionViewer {
@@ -92,7 +95,7 @@ export class CanvasSectionViewer {
    *
    * **Purpose**: Determines which layout to render for each item
    */
-  @Prop() currentViewport!: 'desktop' | 'mobile';
+  @Prop() currentViewport!: "desktop" | "mobile";
 
   /**
    * Grid configuration options
@@ -196,7 +199,7 @@ export class CanvasSectionViewer {
    *
    * **Purpose**: Recalculate canvas height when items change
    */
-  @Watch('items')
+  @Watch("items")
   handleItemsChange() {
     this.updateCanvasHeight();
   }
@@ -206,7 +209,7 @@ export class CanvasSectionViewer {
    *
    * **Purpose**: Recalculate canvas height when viewport changes
    */
-  @Watch('currentViewport')
+  @Watch("currentViewport")
   handleViewportChange() {
     this.updateCanvasHeight();
   }
@@ -229,7 +232,7 @@ export class CanvasSectionViewer {
     this.calculatedHeight = calculateCanvasHeightFromItems(
       this.items,
       this.currentViewport,
-      this.config
+      this.config,
     );
   };
 
@@ -292,9 +295,12 @@ export class CanvasSectionViewer {
           id={this.canvasId}
           data-canvas-id={this.canvasId}
           style={{
-            backgroundColor: this.backgroundColor || '#ffffff',
+            backgroundColor: this.backgroundColor || "#ffffff",
             minHeight: `${minHeightPx}px`,
-            height: this.calculatedHeight > 0 ? `${this.calculatedHeight}px` : undefined,
+            height:
+              this.calculatedHeight > 0
+                ? `${this.calculatedHeight}px`
+                : undefined,
           }}
           ref={(el) => (this.gridContainerRef = el)}
         >

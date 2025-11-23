@@ -6,5 +6,5 @@
  * These are NOT part of the library - they are demo/example types only.
  */
 
-export { ConfirmationModalData } from './confirmation-modal-data';
-export { SectionEditorData } from './section-editor-data';
+export { ConfirmationModalData } from "./confirmation-modal-data";
+export { SectionEditorData } from "./section-editor-data";

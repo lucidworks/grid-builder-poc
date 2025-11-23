@@ -196,7 +196,7 @@ export interface GridExport {
    *
    * **Current version**: '1.0.0'
    */
-  version: '1.0.0';
+  version: "1.0.0";
 
   /**
    * Canvas sections with their items
@@ -214,7 +214,7 @@ export interface GridExport {
    *
    * **Note**: Viewer can override this via props
    */
-  viewport: 'desktop' | 'mobile';
+  viewport: "desktop" | "mobile";
 
   /**
    * Optional metadata
@@ -258,22 +258,22 @@ export interface GridExport {
  * ```
  */
 export function isValidGridExport(data: any): data is GridExport {
-  if (!data || typeof data !== 'object') {
+  if (!data || typeof data !== "object") {
     return false;
   }
 
   // Check version
-  if (data.version !== '1.0.0') {
+  if (data.version !== "1.0.0") {
     return false;
   }
 
   // Check canvases
-  if (!data.canvases || typeof data.canvases !== 'object') {
+  if (!data.canvases || typeof data.canvases !== "object") {
     return false;
   }
 
   // Check viewport
-  if (data.viewport !== 'desktop' && data.viewport !== 'mobile') {
+  if (data.viewport !== "desktop" && data.viewport !== "mobile") {
     return false;
   }
 
@@ -293,7 +293,7 @@ export function isValidGridExport(data: any): data is GridExport {
         !item.layouts ||
         !item.layouts.desktop ||
         !item.layouts.mobile ||
-        typeof item.zIndex !== 'number' ||
+        typeof item.zIndex !== "number" ||
         !item.config
       ) {
         return false;

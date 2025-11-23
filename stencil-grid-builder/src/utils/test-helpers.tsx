@@ -5,7 +5,7 @@
  * Shared utilities for test files
  */
 
-import { h } from '@stencil/core';
+import { h } from "@stencil/core";
 
 /**
  * Simple drag clone for test mocks

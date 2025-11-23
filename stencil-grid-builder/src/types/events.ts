@@ -6,7 +6,7 @@
  * Used for event subscriptions via GridBuilderAPI.on() / .off()
  */
 
-import { GridItem } from '../services/state-manager';
+import { GridItem } from "../services/state-manager";
 
 /**
  * Component Added Event
@@ -506,10 +506,10 @@ export interface ResizeEndEvent {
  */
 export interface ViewportChangedEvent {
   /** Viewport before change */
-  oldViewport: 'desktop' | 'mobile';
+  oldViewport: "desktop" | "mobile";
 
   /** Viewport after change */
-  newViewport: 'desktop' | 'mobile';
+  newViewport: "desktop" | "mobile";
 }
 
 /**

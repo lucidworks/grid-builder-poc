@@ -1,21 +1,29 @@
-import { Component, h, State, Watch } from '@stencil/core';
-import { blogComponentDefinitions, contentComponents, interactiveComponents, mediaComponents } from '../../component-definitions';
-import { GridBuilderAPI, CanvasHeaderProps } from '../../../types/api';
-import { SectionEditorData } from '../../types/section-editor-data';
-import { ConfirmationModalData } from '../../types/confirmation-modal-data';
-import { DeletionHookContext } from '../../../types/deletion-hook';
-import { getGridSizeVertical, clearGridSizeCache } from '../../../utils/grid-calculations';
-import { domCache } from '../../../utils/dom-cache';
-import { setActiveCanvas } from '../../../services/state-manager';
+import { Component, h, State, Watch } from "@stencil/core";
+import {
+  blogComponentDefinitions,
+  contentComponents,
+  interactiveComponents,
+  mediaComponents,
+} from "../../component-definitions";
+import { GridBuilderAPI, CanvasHeaderProps } from "../../../types/api";
+import { SectionEditorData } from "../../types/section-editor-data";
+import { ConfirmationModalData } from "../../types/confirmation-modal-data";
+import { DeletionHookContext } from "../../../types/deletion-hook";
+import {
+  getGridSizeVertical,
+  clearGridSizeCache,
+} from "../../../utils/grid-calculations";
+import { domCache } from "../../../utils/dom-cache";
+import { setActiveCanvas } from "../../../services/state-manager";
 
 // Pre-import drag clone components to ensure they're eagerly loaded (not lazy)
-import '../blog-header-drag-clone/blog-header-drag-clone';
-import '../blog-article-drag-clone/blog-article-drag-clone';
-import '../blog-button-drag-clone/blog-button-drag-clone';
-import '../blog-image-drag-clone/blog-image-drag-clone';
-import '../image-gallery-drag-clone/image-gallery-drag-clone';
-import '../dashboard-widget-drag-clone/dashboard-widget-drag-clone';
-import '../live-data-drag-clone/live-data-drag-clone';
+import "../blog-header-drag-clone/blog-header-drag-clone";
+import "../blog-article-drag-clone/blog-article-drag-clone";
+import "../blog-button-drag-clone/blog-button-drag-clone";
+import "../blog-image-drag-clone/blog-image-drag-clone";
+import "../image-gallery-drag-clone/image-gallery-drag-clone";
+import "../dashboard-widget-drag-clone/dashboard-widget-drag-clone";
+import "../live-data-drag-clone/live-data-drag-clone";
 
 /**
  * Blog App Demo - Host Application for grid-builder Library
@@ -213,8 +221,8 @@ import '../live-data-drag-clone/live-data-drag-clone';
  */
 
 @Component({
-  tag: 'blog-app',
-  styleUrl: 'blog-app.scss',
+  tag: "blog-app",
+  styleUrl: "blog-app.scss",
   shadow: false,
 })
 export class BlogApp {
@@ -236,10 +244,10 @@ export class BlogApp {
    *
    * Fires when: componentDidLoad assigns this.api = window.gridBuilderAPI
    */
-  @Watch('api')
+  @Watch("api")
   handleApiChange(newApi: GridBuilderAPI) {
     if (newApi) {
-      console.log('🔧 blog-app API watcher triggered, initializing...');
+      console.log("🔧 blog-app API watcher triggered, initializing...");
       this.setupGridBuilderIntegration();
     }
   }
@@ -271,16 +279,16 @@ export class BlogApp {
    */
   private gridBuilder: HTMLElement | null = null;
   private eventsToWatch = [
-    'componentAdded',
-    'componentDeleted',
-    'componentDragged',
-    'componentResized',
-    'componentsBatchAdded',
-    'componentsBatchDeleted',
-    'canvasAdded',
-    'canvasRemoved',
-    'undoExecuted',
-    'redoExecuted'
+    "componentAdded",
+    "componentDeleted",
+    "componentDragged",
+    "componentResized",
+    "componentsBatchAdded",
+    "componentsBatchDeleted",
+    "canvasAdded",
+    "canvasRemoved",
+    "undoExecuted",
+    "redoExecuted",
   ];
 
   /**
@@ -304,18 +312,21 @@ export class BlogApp {
    * - Canvas add/remove operations support undo/redo (handled by library)
    * - Color changes are immediate (no undo for now - could be added)
    */
-  @State() canvasMetadata: Record<string, { title: string; backgroundColor: string }> = {
-    'hero-section': {
-      title: 'Hero Section',
-      backgroundColor: '#f0f4f8',
+  @State() canvasMetadata: Record<
+    string,
+    { title: string; backgroundColor: string }
+  > = {
+    "hero-section": {
+      title: "Hero Section",
+      backgroundColor: "#f0f4f8",
     },
-    'articles-grid': {
-      title: 'Articles Grid',
-      backgroundColor: '#ffffff',
+    "articles-grid": {
+      title: "Articles Grid",
+      backgroundColor: "#ffffff",
     },
-    'footer-section': {
-      title: 'Footer Section',
-      backgroundColor: '#e8f0f2',
+    "footer-section": {
+      title: "Footer Section",
+      backgroundColor: "#e8f0f2",
     },
   };
 
@@ -407,17 +418,20 @@ export class BlogApp {
    * - Merged with canvasMetadata for rendering
    * - Cleared when panel closes
    */
-  @State() previewMetadata: Record<string, { title?: string; backgroundColor?: string }> = {};
+  @State() previewMetadata: Record<
+    string,
+    { title?: string; backgroundColor?: string }
+  > = {};
 
   componentDidLoad() {
     // Grid-builder exposes API on window after componentDidLoad
     // Use requestAnimationFrame to wait for next render cycle
     requestAnimationFrame(() => {
       if ((window as any).gridBuilderAPI) {
-        console.log('🔧 blog-app found API on window, assigning...');
+        console.log("🔧 blog-app found API on window, assigning...");
         this.api = (window as any).gridBuilderAPI;
       } else {
-        console.warn('⚠️ API not available on window.gridBuilderAPI');
+        console.warn("⚠️ API not available on window.gridBuilderAPI");
       }
     });
   }
@@ -436,30 +450,35 @@ export class BlogApp {
    * - API event listeners (canvasAdded, canvasRemoved, undo/redo events)
    */
   disconnectedCallback() {
-    console.log('🔧 blog-app disconnectedCallback - cleaning up event listeners');
+    console.log(
+      "🔧 blog-app disconnectedCallback - cleaning up event listeners",
+    );
 
     // Remove DOM event listener
     if (this.gridBuilder) {
-      this.gridBuilder.removeEventListener('canvas-click', this.handleCanvasClick as EventListener);
+      this.gridBuilder.removeEventListener(
+        "canvas-click",
+        this.handleCanvasClick as EventListener,
+      );
       this.gridBuilder = null;
     }
 
     // Remove API event listeners
     if (this.api) {
-      this.api.off('canvasAdded', this.handleCanvasAdded);
-      this.api.off('canvasRemoved', this.handleCanvasRemoved);
+      this.api.off("canvasAdded", this.handleCanvasAdded);
+      this.api.off("canvasRemoved", this.handleCanvasRemoved);
 
       // Remove undo/redo event listeners
-      this.eventsToWatch.forEach(eventName => {
+      this.eventsToWatch.forEach((eventName) => {
         this.api.off(eventName, this.syncUndoRedoState);
       });
     }
 
-    console.log('  ✅ Event listeners cleaned up');
+    console.log("  ✅ Event listeners cleaned up");
   }
 
   private setupGridBuilderIntegration() {
-    console.log('🔧 blog-app setupGridBuilderIntegration called');
+    console.log("🔧 blog-app setupGridBuilderIntegration called");
 
     /**
      * Listen to canvas-click Events
@@ -477,9 +496,12 @@ export class BlogApp {
      *
      * Note: Store grid-builder reference for cleanup in disconnectedCallback.
      */
-    this.gridBuilder = document.querySelector('grid-builder');
+    this.gridBuilder = document.querySelector("grid-builder");
     if (this.gridBuilder) {
-      this.gridBuilder.addEventListener('canvas-click', this.handleCanvasClick as EventListener);
+      this.gridBuilder.addEventListener(
+        "canvas-click",
+        this.handleCanvasClick as EventListener,
+      );
     }
 
     /**
@@ -503,8 +525,8 @@ export class BlogApp {
      *
      * Note: Use class method handlers for cleanup in disconnectedCallback.
      */
-    this.api.on('canvasAdded', this.handleCanvasAdded);
-    this.api.on('canvasRemoved', this.handleCanvasRemoved);
+    this.api.on("canvasAdded", this.handleCanvasAdded);
+    this.api.on("canvasRemoved", this.handleCanvasRemoved);
 
     /**
      * Sync undo/redo button state
@@ -527,7 +549,7 @@ export class BlogApp {
     this.syncUndoRedoState();
 
     // Listen to all events that modify history
-    this.eventsToWatch.forEach(eventName => {
+    this.eventsToWatch.forEach((eventName) => {
       this.api.on(eventName, this.syncUndoRedoState);
     });
   }
@@ -556,7 +578,7 @@ export class BlogApp {
    */
   private handleCanvasClick = (event: CustomEvent) => {
     const { canvasId } = event.detail;
-    console.log('Canvas clicked:', canvasId);
+    console.log("Canvas clicked:", canvasId);
     // In a real app, this would show a canvas settings panel
     // For now, we just log it to demonstrate the event
   };
@@ -577,7 +599,7 @@ export class BlogApp {
         ...this.canvasMetadata,
         [canvasId]: {
           title,
-          backgroundColor: '#f5f5f5',
+          backgroundColor: "#f5f5f5",
         },
       };
     }
@@ -592,7 +614,7 @@ export class BlogApp {
    */
   private handleCanvasRemoved = (event: any) => {
     const { canvasId } = event;
-    console.log('🗑️ canvasRemoved event received:', canvasId);
+    console.log("🗑️ canvasRemoved event received:", canvasId);
 
     // Remove metadata when canvas is removed
     // This keeps metadata in sync with library state
@@ -600,7 +622,7 @@ export class BlogApp {
     const updated = { ...this.canvasMetadata };
     delete updated[canvasId];
     this.canvasMetadata = updated;
-    console.log('  ✅ Metadata removed for:', canvasId);
+    console.log("  ✅ Metadata removed for:", canvasId);
   };
 
   private handleOpenSectionEditor = (canvasId: string) => {
@@ -622,7 +644,13 @@ export class BlogApp {
     this.previewMetadata = {};
   };
 
-  private handleUpdateSection = (event: CustomEvent<{ canvasId: string; title: string; backgroundColor: string }>) => {
+  private handleUpdateSection = (
+    event: CustomEvent<{
+      canvasId: string;
+      title: string;
+      backgroundColor: string;
+    }>,
+  ) => {
     const { canvasId, title, backgroundColor } = event.detail;
     this.canvasMetadata = {
       ...this.canvasMetadata,
@@ -644,15 +672,17 @@ export class BlogApp {
    * Updates preview state which triggers re-render with new color.
    * Allows real-time preview while editing, with revert on cancel.
    */
-  private handlePreviewColorChange = (event: CustomEvent<{ canvasId: string; backgroundColor: string }>) => {
+  private handlePreviewColorChange = (
+    event: CustomEvent<{ canvasId: string; backgroundColor: string }>,
+  ) => {
     const { canvasId, backgroundColor } = event.detail;
     // Update preview state (triggers re-render)
     this.previewMetadata = {
       ...this.previewMetadata,
       [canvasId]: {
         ...this.previewMetadata[canvasId],
-        backgroundColor
-      }
+        backgroundColor,
+      },
     };
   };
 
@@ -664,15 +694,17 @@ export class BlogApp {
    * Updates preview state which triggers re-render with new title.
    * Allows real-time preview while editing, with revert on cancel.
    */
-  private handlePreviewTitleChange = (event: CustomEvent<{ canvasId: string; title: string }>) => {
+  private handlePreviewTitleChange = (
+    event: CustomEvent<{ canvasId: string; title: string }>,
+  ) => {
     const { canvasId, title } = event.detail;
     // Update preview state (triggers re-render)
     this.previewMetadata = {
       ...this.previewMetadata,
       [canvasId]: {
         ...this.previewMetadata[canvasId],
-        title
-      }
+        title,
+      },
     };
   };
 
@@ -720,7 +752,9 @@ export class BlogApp {
    * - Validation logic
    * - Analytics tracking
    */
-  private handleBeforeDelete = (context: DeletionHookContext): Promise<boolean> => {
+  private handleBeforeDelete = (
+    context: DeletionHookContext,
+  ): Promise<boolean> => {
     return new Promise((resolve) => {
       // Store the Promise resolve function
       // We'll call this from the modal confirm/cancel handlers
@@ -734,7 +768,7 @@ export class BlogApp {
       // Show confirmation modal with component info
       // This is demo-specific - you can use any modal library
       this.confirmModalData = {
-        title: 'Delete Component?',
+        title: "Delete Component?",
         message: `Are you sure you want to delete "${componentName}"? This action cannot be undone.`,
       };
       this.isConfirmModalOpen = true;
@@ -778,7 +812,7 @@ export class BlogApp {
 
   private handleAddSection = () => {
     if (!this.api) {
-      console.error('API not ready');
+      console.error("API not ready");
       return;
     }
 
@@ -792,13 +826,15 @@ export class BlogApp {
 
   private handleDeleteSection = (canvasId: string) => {
     if (!this.api) {
-      console.error('API not ready');
+      console.error("API not ready");
       return;
     }
 
     // Prevent deleting initial sections
-    if (['hero-section', 'articles-grid', 'footer-section'].includes(canvasId)) {
-      alert('Cannot delete initial sections');
+    if (
+      ["hero-section", "articles-grid", "footer-section"].includes(canvasId)
+    ) {
+      alert("Cannot delete initial sections");
       return;
     }
 
@@ -812,7 +848,9 @@ export class BlogApp {
   /**
    * Handle section deletion from editor panel
    */
-  private handleDeleteSectionFromPanel = (event: CustomEvent<{ canvasId: string }>) => {
+  private handleDeleteSectionFromPanel = (
+    event: CustomEvent<{ canvasId: string }>,
+  ) => {
     const { canvasId } = event.detail;
     this.handleDeleteSection(canvasId);
     // Close the panel (already handled in section-editor-panel, but ensure it's closed)
@@ -874,142 +912,193 @@ export class BlogApp {
 
   @State() initialState = {
     canvases: {
-      'hero-section': {
+      "hero-section": {
         zIndexCounter: 2,
         items: [
           {
-            id: 'hero-header',
-            canvasId: 'hero-section',
-            type: 'blog-header',
-            name: 'Hero Header',
+            id: "hero-header",
+            canvasId: "hero-section",
+            type: "blog-header",
+            name: "Hero Header",
             layouts: {
               desktop: { x: 0, y: 0, width: 50, height: 6 },
-              mobile: { x: null, y: null, width: null, height: null, customized: false },
+              mobile: {
+                x: null,
+                y: null,
+                width: null,
+                height: null,
+                customized: false,
+              },
             },
             zIndex: 1,
             config: {
-              title: 'Welcome to My Blog',
-              subtitle: 'Exploring technology, design, and development',
+              title: "Welcome to My Blog",
+              subtitle: "Exploring technology, design, and development",
             },
           },
           {
-            id: 'hero-button',
-            canvasId: 'hero-section',
-            type: 'blog-button',
-            name: 'Hero CTA',
+            id: "hero-button",
+            canvasId: "hero-section",
+            type: "blog-button",
+            name: "Hero CTA",
             layouts: {
               desktop: { x: 15, y: 7, width: 20, height: 3 },
-              mobile: { x: null, y: null, width: null, height: null, customized: false },
+              mobile: {
+                x: null,
+                y: null,
+                width: null,
+                height: null,
+                customized: false,
+              },
             },
             zIndex: 2,
             config: {
-              label: 'Start Reading',
-              variant: 'primary',
+              label: "Start Reading",
+              variant: "primary",
             },
           },
         ],
       },
-      'articles-grid': {
+      "articles-grid": {
         zIndexCounter: 4,
         items: [
           {
-            id: 'article-1',
-            canvasId: 'articles-grid',
-            type: 'blog-article',
-            name: 'First Article',
+            id: "article-1",
+            canvasId: "articles-grid",
+            type: "blog-article",
+            name: "First Article",
             layouts: {
               desktop: { x: 0, y: 0, width: 25, height: 12 },
-              mobile: { x: null, y: null, width: null, height: null, customized: false },
+              mobile: {
+                x: null,
+                y: null,
+                width: null,
+                height: null,
+                customized: false,
+              },
             },
             zIndex: 1,
             config: {
-              content: 'This is my first blog post about using the grid-builder library!',
-              author: 'Jane Doe',
-              date: '2025-01-15',
+              content:
+                "This is my first blog post about using the grid-builder library!",
+              author: "Jane Doe",
+              date: "2025-01-15",
             },
           },
           {
-            id: 'article-2',
-            canvasId: 'articles-grid',
-            type: 'blog-article',
-            name: 'Second Article',
+            id: "article-2",
+            canvasId: "articles-grid",
+            type: "blog-article",
+            name: "Second Article",
             layouts: {
               desktop: { x: 25, y: 0, width: 25, height: 12 },
-              mobile: { x: null, y: null, width: null, height: null, customized: false },
+              mobile: {
+                x: null,
+                y: null,
+                width: null,
+                height: null,
+                customized: false,
+              },
             },
             zIndex: 2,
             config: {
-              content: 'Another interesting post about custom Stencil components.',
-              author: 'John Smith',
-              date: '2025-01-14',
+              content:
+                "Another interesting post about custom Stencil components.",
+              author: "John Smith",
+              date: "2025-01-14",
             },
           },
           {
-            id: 'featured-image',
-            canvasId: 'articles-grid',
-            type: 'blog-image',
-            name: 'Featured Image',
+            id: "featured-image",
+            canvasId: "articles-grid",
+            type: "blog-image",
+            name: "Featured Image",
             layouts: {
               desktop: { x: 0, y: 13, width: 12, height: 15 },
-              mobile: { x: null, y: null, width: null, height: null, customized: false },
+              mobile: {
+                x: null,
+                y: null,
+                width: null,
+                height: null,
+                customized: false,
+              },
             },
             zIndex: 3,
             config: {
-              src: 'https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=800&h=600&fit=crop',
-              alt: 'Developer workspace with laptop and code',
-              caption: 'A modern development environment',
-              objectFit: 'cover',
+              src: "https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=800&h=600&fit=crop",
+              alt: "Developer workspace with laptop and code",
+              caption: "A modern development environment",
+              objectFit: "cover",
             },
           },
           {
-            id: 'article-3',
-            canvasId: 'articles-grid',
-            type: 'blog-article',
-            name: 'Third Article',
+            id: "article-3",
+            canvasId: "articles-grid",
+            type: "blog-article",
+            name: "Third Article",
             layouts: {
               desktop: { x: 12, y: 13, width: 26, height: 12 },
-              mobile: { x: null, y: null, width: null, height: null, customized: false },
+              mobile: {
+                x: null,
+                y: null,
+                width: null,
+                height: null,
+                customized: false,
+              },
             },
             zIndex: 4,
             config: {
-              content: 'Learn how to build amazing layouts with drag-and-drop functionality.',
-              author: 'Alex Chen',
-              date: '2025-01-13',
+              content:
+                "Learn how to build amazing layouts with drag-and-drop functionality.",
+              author: "Alex Chen",
+              date: "2025-01-13",
             },
           },
         ],
       },
-      'footer-section': {
+      "footer-section": {
         zIndexCounter: 2,
         items: [
           {
-            id: 'footer-header',
-            canvasId: 'footer-section',
-            type: 'blog-header',
-            name: 'Footer Header',
+            id: "footer-header",
+            canvasId: "footer-section",
+            type: "blog-header",
+            name: "Footer Header",
             layouts: {
               desktop: { x: 0, y: 0, width: 50, height: 4 },
-              mobile: { x: null, y: null, width: null, height: null, customized: false },
+              mobile: {
+                x: null,
+                y: null,
+                width: null,
+                height: null,
+                customized: false,
+              },
             },
             zIndex: 1,
             config: {
-              title: 'Stay Connected',
-              subtitle: 'Subscribe for updates',
+              title: "Stay Connected",
+              subtitle: "Subscribe for updates",
             },
           },
           {
-            id: 'footer-button',
-            canvasId: 'footer-section',
-            type: 'blog-button',
-            name: 'Subscribe Button',
+            id: "footer-button",
+            canvasId: "footer-section",
+            type: "blog-button",
+            name: "Subscribe Button",
             layouts: {
               desktop: { x: 15, y: 5, width: 20, height: 3 },
-              mobile: { x: null, y: null, width: null, height: null, customized: false },
+              mobile: {
+                x: null,
+                y: null,
+                width: null,
+                height: null,
+                customized: false,
+              },
             },
             zIndex: 2,
             config: {
-              label: 'Subscribe Now',
-              variant: 'primary',
+              label: "Subscribe Now",
+              variant: "primary",
             },
           },
         ],
@@ -1028,12 +1117,18 @@ export class BlogApp {
    * @returns Merged metadata object with title and backgroundColor
    */
   private getMergedMetadata(canvasId: string) {
-    const baseMetadata = this.canvasMetadata[canvasId] || { title: canvasId, backgroundColor: '#ffffff' };
+    const baseMetadata = this.canvasMetadata[canvasId] || {
+      title: canvasId,
+      backgroundColor: "#ffffff",
+    };
     const preview = this.previewMetadata[canvasId] || {};
 
     return {
       title: preview.title !== undefined ? preview.title : baseMetadata.title,
-      backgroundColor: preview.backgroundColor !== undefined ? preview.backgroundColor : baseMetadata.backgroundColor
+      backgroundColor:
+        preview.backgroundColor !== undefined
+          ? preview.backgroundColor
+          : baseMetadata.backgroundColor,
     };
   }
 
@@ -1044,32 +1139,42 @@ export class BlogApp {
 
     // Build merged metadata (canvas metadata + preview state) for all canvases
     const canvasIds = Object.keys(this.canvasMetadata);
-    const mergedCanvasMetadata = canvasIds.reduce((acc, canvasId) => {
-      acc[canvasId] = this.getMergedMetadata(canvasId);
-      return acc;
-    }, {} as Record<string, { title: string; backgroundColor: string }>);
+    const mergedCanvasMetadata = canvasIds.reduce(
+      (acc, canvasId) => {
+        acc[canvasId] = this.getMergedMetadata(canvasId);
+        return acc;
+      },
+      {} as Record<string, { title: string; backgroundColor: string }>,
+    );
 
     return (
       <div
-        class={`blog-app-container ${this.isPreviewMode ? 'preview-mode' : ''}`}
-        style={{
-          '--canvas-header-overlay-margin': `${canvasHeaderOverlayMargin}px`,
-        } as any}
+        class={`blog-app-container ${this.isPreviewMode ? "preview-mode" : ""}`}
+        style={
+          {
+            "--canvas-header-overlay-margin": `${canvasHeaderOverlayMargin}px`,
+          } as any
+        }
       >
         <div class="app-header">
           <div class="app-header-content">
             <h1 class="app-title">Blog Layout Builder Demo</h1>
             <p class="app-subtitle">
-              Using custom Stencil components with @lucidworks/stencil-grid-builder
+              Using custom Stencil components with
+              @lucidworks/stencil-grid-builder
             </p>
           </div>
           <div class="global-controls">
             <button
               class="preview-toggle-btn"
               onClick={this.togglePreviewMode}
-              title={this.isPreviewMode ? 'Switch to Edit Mode' : 'Switch to Preview Mode'}
+              title={
+                this.isPreviewMode
+                  ? "Switch to Edit Mode"
+                  : "Switch to Preview Mode"
+              }
             >
-              {this.isPreviewMode ? '✏️ Edit Mode' : '👁️ Preview'}
+              {this.isPreviewMode ? "✏️ Edit Mode" : "👁️ Preview"}
             </button>
             {!this.isPreviewMode && (
               <div class="metadata-undo-redo">
@@ -1119,9 +1224,11 @@ export class BlogApp {
               <div class="palette-category">
                 <div
                   class="category-header"
-                  onClick={() => this.toggleCategory('content')}
+                  onClick={() => this.toggleCategory("content")}
                 >
-                  <span class="category-icon">{this.categoryStates.content ? '▼' : '▶'}</span>
+                  <span class="category-icon">
+                    {this.categoryStates.content ? "▼" : "▶"}
+                  </span>
                   <span class="category-name">Content</span>
                 </div>
                 {this.categoryStates.content && (
@@ -1136,9 +1243,11 @@ export class BlogApp {
               <div class="palette-category">
                 <div
                   class="category-header"
-                  onClick={() => this.toggleCategory('interactive')}
+                  onClick={() => this.toggleCategory("interactive")}
                 >
-                  <span class="category-icon">{this.categoryStates.interactive ? '▼' : '▶'}</span>
+                  <span class="category-icon">
+                    {this.categoryStates.interactive ? "▼" : "▶"}
+                  </span>
                   <span class="category-name">Interactive</span>
                 </div>
                 {this.categoryStates.interactive && (
@@ -1153,9 +1262,11 @@ export class BlogApp {
               <div class="palette-category">
                 <div
                   class="category-header"
-                  onClick={() => this.toggleCategory('media')}
+                  onClick={() => this.toggleCategory("media")}
                 >
-                  <span class="category-icon">{this.categoryStates.media ? '▼' : '▶'}</span>
+                  <span class="category-icon">
+                    {this.categoryStates.media ? "▼" : "▶"}
+                  </span>
                   <span class="category-name">Media</span>
                 </div>
                 {this.categoryStates.media && (
@@ -1200,8 +1311,16 @@ export class BlogApp {
                 canvasMetadata={mergedCanvasMetadata}
                 onBeforeDelete={this.handleBeforeDelete}
                 uiOverrides={{
-                  CanvasHeader: ({ canvasId, metadata, isActive }: CanvasHeaderProps) => {
-                    const isDeletable = !['hero-section', 'articles-grid', 'footer-section'].includes(canvasId);
+                  CanvasHeader: ({
+                    canvasId,
+                    metadata,
+                    isActive,
+                  }: CanvasHeaderProps) => {
+                    const isDeletable = ![
+                      "hero-section",
+                      "articles-grid",
+                      "footer-section",
+                    ].includes(canvasId);
 
                     return (
                       <canvas-header
@@ -1216,7 +1335,7 @@ export class BlogApp {
                         onDeleteClick={() => this.handleDeleteSection(canvasId)}
                       />
                     );
-                  }
+                  },
                 }}
               />
             )}

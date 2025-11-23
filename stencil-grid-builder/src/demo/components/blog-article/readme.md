@@ -10,7 +10,7 @@
 | Property  | Attribute | Description | Type     | Default                       |
 | --------- | --------- | ----------- | -------- | ----------------------------- |
 | `author`  | `author`  |             | `string` | `undefined`                   |
-| `content` | `content` |             | `string` | `'Article content goes here'` |
+| `content` | `content` |             | `string` | `"Article content goes here"` |
 | `date`    | `date`    |             | `string` | `undefined`                   |
 
 

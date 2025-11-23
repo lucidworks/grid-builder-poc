@@ -43,32 +43,62 @@
  * @module grid-builder
  */
 
-import { Component, Element, h, Host, Listen, Method, Prop, State, Watch } from '@stencil/core';
-import interact from 'interactjs';
+import {
+  Component,
+  Element,
+  h,
+  Host,
+  Listen,
+  Method,
+  Prop,
+  State,
+  Watch,
+} from "@stencil/core";
+import interact from "interactjs";
 
 // Type imports
-import { ComponentDefinition } from '../../types/component-definition';
-import { GridConfig } from '../../types/grid-config';
-import { GridBuilderTheme } from '../../types/theme';
-import { GridBuilderPlugin } from '../../types/plugin';
-import { UIComponentOverrides } from '../../types/ui-overrides';
-import { GridBuilderAPI } from '../../types/api';
-import { DeletionHook } from '../../types/deletion-hook';
-import { GridExport } from '../../types/grid-export';
+import { ComponentDefinition } from "../../types/component-definition";
+import { GridConfig } from "../../types/grid-config";
+import { GridBuilderTheme } from "../../types/theme";
+import { GridBuilderPlugin } from "../../types/plugin";
+import { UIComponentOverrides } from "../../types/ui-overrides";
+import { GridBuilderAPI } from "../../types/api";
+import { DeletionHook } from "../../types/deletion-hook";
+import { GridExport } from "../../types/grid-export";
 
 // Service imports
-import { gridState, GridState, generateItemId, deleteItemsBatch, addItemsBatch, updateItemsBatch, setActiveCanvas, moveItemToCanvas } from '../../services/state-manager';
-import { virtualRenderer } from '../../services/virtual-renderer';
-import { eventManager } from '../../services/event-manager';
-import { BatchAddCommand, BatchDeleteCommand, BatchUpdateConfigCommand, AddCanvasCommand, RemoveCanvasCommand, MoveItemCommand } from '../../services/undo-redo-commands';
-import { undoRedo, undoRedoState } from '../../services/undo-redo';
+import {
+  gridState,
+  GridState,
+  generateItemId,
+  deleteItemsBatch,
+  addItemsBatch,
+  updateItemsBatch,
+  setActiveCanvas,
+  moveItemToCanvas,
+} from "../../services/state-manager";
+import { virtualRenderer } from "../../services/virtual-renderer";
+import { eventManager } from "../../services/event-manager";
+import {
+  BatchAddCommand,
+  BatchDeleteCommand,
+  BatchUpdateConfigCommand,
+  AddCanvasCommand,
+  RemoveCanvasCommand,
+  MoveItemCommand,
+} from "../../services/undo-redo-commands";
+import { undoRedo, undoRedoState } from "../../services/undo-redo";
 
 // Utility imports
-import { pixelsToGridX, pixelsToGridY } from '../../utils/grid-calculations';
-import { applyBoundaryConstraints, constrainPositionToCanvas, CANVAS_WIDTH_UNITS } from '../../utils/boundary-constraints';
-import { createDebugLogger } from '../../utils/debug';
+import { pixelsToGridX, pixelsToGridY } from "../../utils/grid-calculations";
+import {
+  applyBoundaryConstraints,
+  constrainPositionToCanvas,
+  CANVAS_WIDTH_UNITS,
+} from "../../utils/boundary-constraints";
+import { createDebugLogger } from "../../utils/debug";
 
-const debug = createDebugLogger('grid-builder');
+const debug = createDebugLogger("grid-builder");
 
 /**
  * GridBuilder Component
@@ -81,8 +111,8 @@ const debug = createDebugLogger('grid-builder');
  * **Reactivity**: Listens to gridState changes via StencilJS store
  */
 @Component({
-  tag: 'grid-builder',
-  styleUrl: 'grid-builder.scss',
+  tag: "grid-builder",
+  styleUrl: "grid-builder.scss",
   shadow: false, // Light DOM required for interact.js
 })
 export class GridBuilder {
@@ -365,7 +395,10 @@ export class GridBuilder {
    * // Access via ref: <grid-builder ref={el => this.api = el?.api}></grid-builder>
    * ```
    */
-  @Prop() apiRef?: { target?: any; key?: string } | null = { target: undefined, key: 'gridBuilderAPI' };
+  @Prop() apiRef?: { target?: any; key?: string } | null = {
+    target: undefined,
+    key: "gridBuilderAPI",
+  };
 
   /**
    * Component registry (internal state)
@@ -376,7 +409,8 @@ export class GridBuilder {
    *
    * **Structure**: `{ 'header': ComponentDefinition, 'text': ComponentDefinition, ... }`
    */
-  @State() private componentRegistry: Map<string, ComponentDefinition> = new Map();
+  @State() private componentRegistry: Map<string, ComponentDefinition> =
+    new Map();
 
   /**
    * Initialized plugins (internal state)
@@ -441,15 +475,15 @@ export class GridBuilder {
    * Handle item deletion from grid-item-wrapper
    * Internal event dispatched by grid-item-wrapper after user clicks delete
    */
-  @Listen('grid-item:delete')
+  @Listen("grid-item:delete")
   handleGridItemDelete(event: CustomEvent) {
-    debug.log('🗑️ @Listen(grid-item:delete) in grid-builder', {
+    debug.log("🗑️ @Listen(grid-item:delete) in grid-builder", {
       detail: event.detail,
     });
 
     const { itemId } = event.detail;
     if (itemId) {
-      debug.log('  ✅ Deleting item via API (with undo support):', itemId);
+      debug.log("  ✅ Deleting item via API (with undo support):", itemId);
       // Use API method instead of direct deleteItemsBatch to enable undo/redo
       this.api?.deleteComponent(itemId);
     }
@@ -458,18 +492,18 @@ export class GridBuilder {
   componentWillLoad() {
     // Validate required props
     if (!this.components || this.components.length === 0) {
-      console.error('GridBuilder: components prop is required');
+      console.error("GridBuilder: components prop is required");
       return;
     }
 
     // Build component registry
     this.componentRegistry = new Map(
-      this.components.map(comp => [comp.type, comp])
+      this.components.map((comp) => [comp.type, comp]),
     );
 
     // Validate unique component types
     if (this.componentRegistry.size !== this.components.length) {
-      console.warn('GridBuilder: Duplicate component types detected');
+      console.warn("GridBuilder: Duplicate component types detected");
     }
 
     // Expose interact.js globally (required for drag/drop handlers)
@@ -501,7 +535,7 @@ export class GridBuilder {
     this.api = this.createAPI();
 
     // Expose API based on apiRef configuration
-    debug.log('🔧 grid-builder exposing API', {
+    debug.log("🔧 grid-builder exposing API", {
       hasApiRef: !!this.apiRef,
       apiRefKey: this.apiRef?.key,
       hasTarget: !!this.apiRef?.target,
@@ -511,13 +545,13 @@ export class GridBuilder {
 
     if (this.apiRef && this.apiRef.key) {
       const target = this.apiRef.target || window;
-      debug.log('  📤 Setting API on target', {
+      debug.log("  📤 Setting API on target", {
         key: this.apiRef.key,
         isWindow: target === window,
         targetKeys: Object.keys(target).slice(0, 10), // Show first 10 keys
       });
       target[this.apiRef.key] = this.api;
-      debug.log('  ✅ API set on target -', {
+      debug.log("  ✅ API set on target -", {
         key: this.apiRef.key,
         apiNowExists: !!target[this.apiRef.key],
       });
@@ -525,13 +559,16 @@ export class GridBuilder {
 
     // Initialize plugins
     if (this.plugins && this.plugins.length > 0) {
-      this.initializedPlugins = this.plugins.filter(plugin => {
+      this.initializedPlugins = this.plugins.filter((plugin) => {
         try {
           plugin.init(this.api!);
           debug.log(`GridBuilder: Initialized plugin "${plugin.name}"`);
           return true;
         } catch (e) {
-          console.error(`GridBuilder: Failed to initialize plugin "${plugin.name}":`, e);
+          console.error(
+            `GridBuilder: Failed to initialize plugin "${plugin.name}":`,
+            e,
+          );
           return false;
         }
       });
@@ -550,7 +587,7 @@ export class GridBuilder {
     // Debug helper
     (window as any).debugInteractables = () => {
       const interactables = (interact as any).interactables.list;
-      debug.log('Total interactables:', interactables.length);
+      debug.log("Total interactables:", interactables.length);
       interactables.forEach((interactable: any, index: number) => {
         debug.log(`Interactable ${index}:`, {
           target: interactable.target,
@@ -565,12 +602,19 @@ export class GridBuilder {
       const customEvent = event as CustomEvent;
       const { canvasId, componentType, x, y } = customEvent.detail;
 
-      debug.log('🎯 canvas-drop event received:', { canvasId, componentType, x, y });
+      debug.log("🎯 canvas-drop event received:", {
+        canvasId,
+        componentType,
+        x,
+        y,
+      });
 
       // Get component definition to determine default size
       const definition = this.componentRegistry.get(componentType);
       if (!definition) {
-        console.warn(`Component definition not found for type: ${componentType}`);
+        console.warn(
+          `Component definition not found for type: ${componentType}`,
+        );
         return;
       }
 
@@ -578,22 +622,24 @@ export class GridBuilder {
       const gridX = pixelsToGridX(x, canvasId, this.config);
       const gridY = pixelsToGridY(y, this.config);
 
-      debug.log('  Converting to grid units (before constraints):', {
+      debug.log("  Converting to grid units (before constraints):", {
         gridX,
         gridY,
         defaultWidth: definition.defaultSize.width,
-        defaultHeight: definition.defaultSize.height
+        defaultHeight: definition.defaultSize.height,
       });
 
       // Apply boundary constraints (validate, adjust size, constrain position)
       const constrained = applyBoundaryConstraints(definition, gridX, gridY);
 
       if (!constrained) {
-        console.warn(`Cannot place component "${definition.name}" - minimum size exceeds canvas width`);
+        console.warn(
+          `Cannot place component "${definition.name}" - minimum size exceeds canvas width`,
+        );
         return;
       }
 
-      debug.log('  After boundary constraints:', constrained);
+      debug.log("  After boundary constraints:", constrained);
 
       // Use existing addComponent API method with constrained values
       const newItem = this.api?.addComponent(canvasId, componentType, {
@@ -603,32 +649,39 @@ export class GridBuilder {
         height: constrained.height,
       });
 
-      debug.log('  Created item:', newItem);
+      debug.log("  Created item:", newItem);
 
       // Set the target canvas as active when item is dropped
       setActiveCanvas(canvasId);
-      eventManager.emit('canvasActivated', { canvasId });
+      eventManager.emit("canvasActivated", { canvasId });
     };
 
-    this.hostElement.addEventListener('canvas-drop', this.canvasDropHandler);
+    this.hostElement.addEventListener("canvas-drop", this.canvasDropHandler);
 
     // Setup canvas move event handler for cross-canvas moves
     this.canvasMoveHandler = (event: Event) => {
       const customEvent = event as CustomEvent;
-      const { itemId, sourceCanvasId, targetCanvasId, x, y } = customEvent.detail;
+      const { itemId, sourceCanvasId, targetCanvasId, x, y } =
+        customEvent.detail;
 
-      debug.log('🔄 canvas-move event received:', { itemId, sourceCanvasId, targetCanvasId, x, y });
+      debug.log("🔄 canvas-move event received:", {
+        itemId,
+        sourceCanvasId,
+        targetCanvasId,
+        x,
+        y,
+      });
 
       // 1. Get item from source canvas
       const sourceCanvas = gridState.canvases[sourceCanvasId];
       if (!sourceCanvas) {
-        console.error('Source canvas not found:', sourceCanvasId);
+        console.error("Source canvas not found:", sourceCanvasId);
         return;
       }
 
-      const itemIndex = sourceCanvas.items.findIndex(i => i.id === itemId);
+      const itemIndex = sourceCanvas.items.findIndex((i) => i.id === itemId);
       if (itemIndex === -1) {
-        console.error('Item not found in source canvas:', itemId);
+        console.error("Item not found in source canvas:", itemId);
         return;
       }
 
@@ -637,7 +690,7 @@ export class GridBuilder {
       // 2. Capture state BEFORE move (for undo)
       const sourcePosition = {
         x: item.layouts.desktop.x,
-        y: item.layouts.desktop.y
+        y: item.layouts.desktop.y,
       };
 
       // 3. Convert drop position (pixels) to grid units for target canvas
@@ -650,7 +703,7 @@ export class GridBuilder {
         gridY,
         item.layouts.desktop.width,
         item.layouts.desktop.height,
-        CANVAS_WIDTH_UNITS
+        CANVAS_WIDTH_UNITS,
       );
 
       gridX = constrained.x;
@@ -685,62 +738,68 @@ export class GridBuilder {
         targetCanvasId,
         sourcePosition,
         targetPosition,
-        itemIndex
+        itemIndex,
       );
       undoRedo.push(command);
 
       // 11. Emit events for plugins
-      eventManager.emit('componentMoved', {
+      eventManager.emit("componentMoved", {
         item,
         sourceCanvasId,
         targetCanvasId,
-        position: targetPosition
+        position: targetPosition,
       });
 
-      eventManager.emit('canvasActivated', { canvasId: targetCanvasId });
+      eventManager.emit("canvasActivated", { canvasId: targetCanvasId });
 
-      debug.log('✅ Cross-canvas move completed:', {
+      debug.log("✅ Cross-canvas move completed:", {
         itemId,
         from: sourceCanvasId,
         to: targetCanvasId,
-        position: targetPosition
+        position: targetPosition,
       });
     };
 
-    this.hostElement.addEventListener('canvas-move', this.canvasMoveHandler);
+    this.hostElement.addEventListener("canvas-move", this.canvasMoveHandler);
 
     // Setup canvas activated event handler
     this.canvasActivatedHandler = (event: Event) => {
       const customEvent = event as CustomEvent;
       const { canvasId } = customEvent.detail;
 
-      debug.log('🎨 canvas-activated event received:', { canvasId });
+      debug.log("🎨 canvas-activated event received:", { canvasId });
 
       // Emit plugin event
-      eventManager.emit('canvasActivated', { canvasId });
+      eventManager.emit("canvasActivated", { canvasId });
     };
 
-    this.hostElement.addEventListener('canvas-activated', this.canvasActivatedHandler);
+    this.hostElement.addEventListener(
+      "canvas-activated",
+      this.canvasActivatedHandler,
+    );
 
     // Setup keyboard shortcuts
     this.keyboardHandler = (event: KeyboardEvent) => {
       // Get modifier keys (Cmd on Mac, Ctrl on Windows/Linux)
-      const isUndo = (event.metaKey || event.ctrlKey) && event.key === 'z' && !event.shiftKey;
-      const isRedo = (event.metaKey || event.ctrlKey) && (
-        (event.key === 'z' && event.shiftKey) || // Ctrl/Cmd+Shift+Z
-        event.key === 'y' // Ctrl/Cmd+Y
-      );
+      const isUndo =
+        (event.metaKey || event.ctrlKey) &&
+        event.key === "z" &&
+        !event.shiftKey;
+      const isRedo =
+        (event.metaKey || event.ctrlKey) &&
+        ((event.key === "z" && event.shiftKey) || // Ctrl/Cmd+Shift+Z
+          event.key === "y"); // Ctrl/Cmd+Y
 
       // Handle undo/redo
       if (isUndo) {
-        debug.log('⌨️ Keyboard: Undo triggered');
+        debug.log("⌨️ Keyboard: Undo triggered");
         event.preventDefault();
         this.api?.undo();
         return;
       }
 
       if (isRedo) {
-        debug.log('⌨️ Keyboard: Redo triggered');
+        debug.log("⌨️ Keyboard: Redo triggered");
         event.preventDefault();
         this.api?.redo();
         return;
@@ -751,7 +810,12 @@ export class GridBuilder {
         return;
       }
 
-      const isArrowKey = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(event.key);
+      const isArrowKey = [
+        "ArrowUp",
+        "ArrowDown",
+        "ArrowLeft",
+        "ArrowRight",
+      ].includes(event.key);
       if (!isArrowKey) {
         return;
       }
@@ -764,7 +828,7 @@ export class GridBuilder {
         return;
       }
 
-      const item = canvas.items.find(i => i.id === gridState.selectedItemId);
+      const item = canvas.items.find((i) => i.id === gridState.selectedItemId);
       if (!item) {
         return;
       }
@@ -779,21 +843,21 @@ export class GridBuilder {
       let deltaY = 0;
 
       switch (event.key) {
-        case 'ArrowUp':
+        case "ArrowUp":
           deltaY = -nudgeAmount;
           break;
-        case 'ArrowDown':
+        case "ArrowDown":
           deltaY = nudgeAmount;
           break;
-        case 'ArrowLeft':
+        case "ArrowLeft":
           deltaX = -nudgeAmount;
           break;
-        case 'ArrowRight':
+        case "ArrowRight":
           deltaX = nudgeAmount;
           break;
       }
 
-      debug.log('⌨️ Keyboard: Nudging component', {
+      debug.log("⌨️ Keyboard: Nudging component", {
         key: event.key,
         deltaX,
         deltaY,
@@ -829,7 +893,7 @@ export class GridBuilder {
         gridState.selectedCanvasId,
         { x: oldX, y: oldY },
         { x: constrainedX, y: constrainedY },
-        canvas.items.findIndex(i => i.id === item.id)
+        canvas.items.findIndex((i) => i.id === item.id),
       );
       undoRedo.push(nudgeCommand);
 
@@ -837,14 +901,14 @@ export class GridBuilder {
       gridState.canvases = { ...gridState.canvases };
 
       // Emit event
-      eventManager.emit('componentDragged', {
+      eventManager.emit("componentDragged", {
         itemId: item.id,
         canvasId: gridState.selectedCanvasId,
         position: { x: constrainedX, y: constrainedY },
       });
     };
 
-    document.addEventListener('keydown', this.keyboardHandler);
+    document.addEventListener("keydown", this.keyboardHandler);
 
     // Setup container-based viewport switching
     this.setupViewportResizeObserver();
@@ -863,16 +927,25 @@ export class GridBuilder {
   disconnectedCallback() {
     // Remove event listeners
     if (this.canvasDropHandler) {
-      this.hostElement.removeEventListener('canvas-drop', this.canvasDropHandler);
+      this.hostElement.removeEventListener(
+        "canvas-drop",
+        this.canvasDropHandler,
+      );
     }
     if (this.canvasMoveHandler) {
-      this.hostElement.removeEventListener('canvas-move', this.canvasMoveHandler);
+      this.hostElement.removeEventListener(
+        "canvas-move",
+        this.canvasMoveHandler,
+      );
     }
     if (this.canvasActivatedHandler) {
-      this.hostElement.removeEventListener('canvas-activated', this.canvasActivatedHandler);
+      this.hostElement.removeEventListener(
+        "canvas-activated",
+        this.canvasActivatedHandler,
+      );
     }
     if (this.keyboardHandler) {
-      document.removeEventListener('keydown', this.keyboardHandler);
+      document.removeEventListener("keydown", this.keyboardHandler);
     }
 
     // Cleanup ResizeObserver
@@ -882,12 +955,15 @@ export class GridBuilder {
 
     // Destroy plugins
     if (this.initializedPlugins.length > 0) {
-      this.initializedPlugins.forEach(plugin => {
+      this.initializedPlugins.forEach((plugin) => {
         try {
           plugin.destroy();
           debug.log(`GridBuilder: Destroyed plugin "${plugin.name}"`);
         } catch (e) {
-          console.error(`GridBuilder: Failed to destroy plugin "${plugin.name}":`, e);
+          console.error(
+            `GridBuilder: Failed to destroy plugin "${plugin.name}":`,
+            e,
+          );
         }
       });
       this.initializedPlugins = [];
@@ -908,10 +984,10 @@ export class GridBuilder {
    *
    * **Purpose**: Rebuild component registry when components prop changes
    */
-  @Watch('components')
+  @Watch("components")
   handleComponentsChange(newComponents: ComponentDefinition[]) {
     this.componentRegistry = new Map(
-      newComponents.map(comp => [comp.type, comp])
+      newComponents.map((comp) => [comp.type, comp]),
     );
   }
 
@@ -929,11 +1005,11 @@ export class GridBuilder {
       // Event Subscriptions
       // ======================
 
-      on: <T = any>(eventName: string, callback: (data: T) => void) => {
+      on: <T = any,>(eventName: string, callback: (data: T) => void) => {
         eventManager.on(eventName, callback);
       },
 
-      off: <T = any>(eventName: string, callback: (data: T) => void) => {
+      off: <T = any,>(eventName: string, callback: (data: T) => void) => {
         eventManager.off(eventName, callback);
       },
 
@@ -963,7 +1039,12 @@ export class GridBuilder {
       // Programmatic Operations
       // ======================
 
-      addComponent: (canvasId: string, componentType: string, position: { x: number; y: number; width: number; height: number }, config?: Record<string, any>) => {
+      addComponent: (
+        canvasId: string,
+        componentType: string,
+        position: { x: number; y: number; width: number; height: number },
+        config?: Record<string, any>,
+      ) => {
         const canvas = gridState.canvases[canvasId];
         if (!canvas) {
           console.error(`Canvas not found: ${canvasId}`);
@@ -979,7 +1060,13 @@ export class GridBuilder {
           zIndex: ++canvas.zIndexCounter,
           layouts: {
             desktop: { ...position },
-            mobile: { x: 0, y: 0, width: 50, height: position.height, customized: false },
+            mobile: {
+              x: 0,
+              y: 0,
+              width: 50,
+              height: position.height,
+              customized: false,
+            },
           },
           config: config || {},
         };
@@ -992,7 +1079,7 @@ export class GridBuilder {
         undoRedo.push(new BatchAddCommand([newItem.id]));
 
         // Emit event
-        eventManager.emit('componentAdded', { item: newItem, canvasId });
+        eventManager.emit("componentAdded", { item: newItem, canvasId });
 
         return newItem.id;
       },
@@ -1017,7 +1104,7 @@ export class GridBuilder {
             }
 
             // Emit event
-            eventManager.emit('componentDeleted', { itemId, canvasId });
+            eventManager.emit("componentDeleted", { itemId, canvasId });
 
             return true;
           }
@@ -1035,11 +1122,13 @@ export class GridBuilder {
             const newConfig = { ...item.config, ...config };
 
             // Create undo command BEFORE making changes
-            const batchUpdate = [{
-              itemId,
-              canvasId,
-              updates: { config: newConfig },
-            }];
+            const batchUpdate = [
+              {
+                itemId,
+                canvasId,
+                updates: { config: newConfig },
+              },
+            ];
             undoRedo.push(new BatchUpdateConfigCommand(batchUpdate));
 
             // Merge config
@@ -1050,7 +1139,7 @@ export class GridBuilder {
             gridState.canvases = { ...gridState.canvases };
 
             // Emit event
-            eventManager.emit('configChanged', { itemId, canvasId, config });
+            eventManager.emit("configChanged", { itemId, canvasId, config });
 
             return true;
           }
@@ -1062,18 +1151,33 @@ export class GridBuilder {
       // Batch Operations
       // ======================
 
-      addComponentsBatch: (components: Array<{ canvasId: string; type: string; position: { x: number; y: number; width: number; height: number }; config?: Record<string, any> }>) => {
+      addComponentsBatch: (
+        components: Array<{
+          canvasId: string;
+          type: string;
+          position: { x: number; y: number; width: number; height: number };
+          config?: Record<string, any>;
+        }>,
+      ) => {
         // Convert API format to state-manager format
-        const partialItems = components.map(({ canvasId, type, position, config }) => ({
-          canvasId,
-          type,
-          name: type,
-          layouts: {
-            desktop: { ...position },
-            mobile: { x: 0, y: 0, width: 50, height: position.height, customized: false },
-          },
-          config: config || {},
-        }));
+        const partialItems = components.map(
+          ({ canvasId, type, position, config }) => ({
+            canvasId,
+            type,
+            name: type,
+            layouts: {
+              desktop: { ...position },
+              mobile: {
+                x: 0,
+                y: 0,
+                width: 50,
+                height: position.height,
+                customized: false,
+              },
+            },
+            config: config || {},
+          }),
+        );
 
         // Use state-manager batch operation (single state update)
         const itemIds = addItemsBatch(partialItems);
@@ -1082,21 +1186,25 @@ export class GridBuilder {
         undoRedo.push(new BatchAddCommand(itemIds));
 
         // Emit batch event
-        const createdItems = itemIds.map(id => {
-          const item = this.api?.getItem(id);
-          return item ? { item, canvasId: item.canvasId } : null;
-        }).filter(Boolean);
-        eventManager.emit('componentsBatchAdded', { items: createdItems });
+        const createdItems = itemIds
+          .map((id) => {
+            const item = this.api?.getItem(id);
+            return item ? { item, canvasId: item.canvasId } : null;
+          })
+          .filter(Boolean);
+        eventManager.emit("componentsBatchAdded", { items: createdItems });
 
         return itemIds;
       },
 
       deleteComponentsBatch: (itemIds: string[]) => {
         // Store deleted items for event
-        const deletedItems = itemIds.map(itemId => {
-          const item = this.api?.getItem(itemId);
-          return item ? { itemId, canvasId: item.canvasId } : null;
-        }).filter(Boolean);
+        const deletedItems = itemIds
+          .map((itemId) => {
+            const item = this.api?.getItem(itemId);
+            return item ? { itemId, canvasId: item.canvasId } : null;
+          })
+          .filter(Boolean);
 
         // Add to undo/redo history BEFORE deletion (need state for undo)
         undoRedo.push(new BatchDeleteCommand(itemIds));
@@ -1105,29 +1213,40 @@ export class GridBuilder {
         deleteItemsBatch(itemIds);
 
         // Clear selection if any deleted item was selected
-        if (gridState.selectedItemId && itemIds.includes(gridState.selectedItemId)) {
+        if (
+          gridState.selectedItemId &&
+          itemIds.includes(gridState.selectedItemId)
+        ) {
           gridState.selectedItemId = null;
           gridState.selectedCanvasId = null;
         }
 
         // Emit batch event
-        eventManager.emit('componentsBatchDeleted', { items: deletedItems });
+        eventManager.emit("componentsBatchDeleted", { items: deletedItems });
       },
 
-      updateConfigsBatch: (updates: Array<{ itemId: string; config: Record<string, any> }>) => {
+      updateConfigsBatch: (
+        updates: Array<{ itemId: string; config: Record<string, any> }>,
+      ) => {
         // Convert to state-manager format (need canvasId)
-        const batchUpdates = updates.map(({ itemId, config }) => {
-          const item = this.api?.getItem(itemId);
-          if (!item) {
-            console.warn(`Item ${itemId} not found for config update`);
-            return null;
-          }
-          return {
-            itemId,
-            canvasId: item.canvasId,
-            updates: { config: { ...item.config, ...config } },
-          };
-        }).filter(Boolean) as Array<{ itemId: string; canvasId: string; updates: Partial<any> }>;
+        const batchUpdates = updates
+          .map(({ itemId, config }) => {
+            const item = this.api?.getItem(itemId);
+            if (!item) {
+              console.warn(`Item ${itemId} not found for config update`);
+              return null;
+            }
+            return {
+              itemId,
+              canvasId: item.canvasId,
+              updates: { config: { ...item.config, ...config } },
+            };
+          })
+          .filter(Boolean) as Array<{
+          itemId: string;
+          canvasId: string;
+          updates: Partial<any>;
+        }>;
 
         // Add to undo/redo history
         undoRedo.push(new BatchUpdateConfigCommand(batchUpdates));
@@ -1136,12 +1255,14 @@ export class GridBuilder {
         updateItemsBatch(batchUpdates);
 
         // Emit batch event
-        const updatedItems = batchUpdates.map(({ itemId, canvasId, updates }) => ({
-          itemId,
-          canvasId,
-          config: updates.config,
-        }));
-        eventManager.emit('configsBatchChanged', { items: updatedItems });
+        const updatedItems = batchUpdates.map(
+          ({ itemId, canvasId, updates }) => ({
+            itemId,
+            canvasId,
+            config: updates.config,
+          }),
+        );
+        eventManager.emit("configsBatchChanged", { items: updatedItems });
       },
 
       // ======================
@@ -1159,13 +1280,13 @@ export class GridBuilder {
       undo: () => {
         undoRedo.undo();
         // Emit event after undo
-        eventManager.emit('undoExecuted', {});
+        eventManager.emit("undoExecuted", {});
       },
 
       redo: () => {
         undoRedo.redo();
         // Emit event after redo
-        eventManager.emit('redoExecuted', {});
+        eventManager.emit("redoExecuted", {});
       },
 
       canUndo: () => {
@@ -1198,7 +1319,7 @@ export class GridBuilder {
 
       setActiveCanvas: (canvasId: string) => {
         setActiveCanvas(canvasId);
-        eventManager.emit('canvasActivated', { canvasId });
+        eventManager.emit("canvasActivated", { canvasId });
       },
 
       getActiveCanvas: () => {
@@ -1219,25 +1340,43 @@ export class GridBuilder {
 
     // Apply predefined theme properties
     if (theme.primaryColor) {
-      host.style.setProperty('--grid-builder-primary-color', theme.primaryColor);
+      host.style.setProperty(
+        "--grid-builder-primary-color",
+        theme.primaryColor,
+      );
     }
     if (theme.paletteBackground) {
-      host.style.setProperty('--grid-builder-palette-bg', theme.paletteBackground);
+      host.style.setProperty(
+        "--grid-builder-palette-bg",
+        theme.paletteBackground,
+      );
     }
     if (theme.canvasBackground) {
-      host.style.setProperty('--grid-builder-canvas-bg', theme.canvasBackground);
+      host.style.setProperty(
+        "--grid-builder-canvas-bg",
+        theme.canvasBackground,
+      );
     }
     if (theme.gridLineColor) {
-      host.style.setProperty('--grid-builder-grid-line-color', theme.gridLineColor);
+      host.style.setProperty(
+        "--grid-builder-grid-line-color",
+        theme.gridLineColor,
+      );
     }
     if (theme.selectionColor) {
-      host.style.setProperty('--grid-builder-selection-color', theme.selectionColor);
+      host.style.setProperty(
+        "--grid-builder-selection-color",
+        theme.selectionColor,
+      );
     }
     if (theme.resizeHandleColor) {
-      host.style.setProperty('--grid-builder-resize-handle-color', theme.resizeHandleColor);
+      host.style.setProperty(
+        "--grid-builder-resize-handle-color",
+        theme.resizeHandleColor,
+      );
     }
     if (theme.fontFamily) {
-      host.style.setProperty('--grid-builder-font-family', theme.fontFamily);
+      host.style.setProperty("--grid-builder-font-family", theme.fontFamily);
     }
 
     // Apply custom properties
@@ -1275,14 +1414,17 @@ export class GridBuilder {
     this.viewportResizeObserver = new ResizeObserver((entries) => {
       for (const entry of entries) {
         // Get container width (use borderBoxSize for better accuracy)
-        const width = entry.borderBoxSize?.[0]?.inlineSize || entry.contentRect.width;
+        const width =
+          entry.borderBoxSize?.[0]?.inlineSize || entry.contentRect.width;
 
         // Determine target viewport based on container width
-        const targetViewport = width < 768 ? 'mobile' : 'desktop';
+        const targetViewport = width < 768 ? "mobile" : "desktop";
 
         // Only update if viewport changed
         if (gridState.currentViewport !== targetViewport) {
-          debug.log(`📱 Container-based viewport switch: ${gridState.currentViewport} → ${targetViewport} (width: ${Math.round(width)}px)`);
+          debug.log(
+            `📱 Container-based viewport switch: ${gridState.currentViewport} → ${targetViewport} (width: ${Math.round(width)}px)`,
+          );
           gridState.currentViewport = targetViewport;
         }
       }
@@ -1325,7 +1467,7 @@ export class GridBuilder {
   async exportState(): Promise<GridExport> {
     // Build export data from current gridState
     const exportData: GridExport = {
-      version: '1.0.0',
+      version: "1.0.0",
       canvases: {},
       viewport: gridState.currentViewport,
       metadata: {
@@ -1339,7 +1481,7 @@ export class GridBuilder {
       const canvas = gridState.canvases[canvasId];
 
       exportData.canvases[canvasId] = {
-        items: canvas.items.map(item => ({
+        items: canvas.items.map((item) => ({
           id: item.id,
           canvasId: item.canvasId,
           type: item.type,
@@ -1572,9 +1714,11 @@ export class GridBuilder {
     canvasId: string,
     componentType: string,
     position: { x: number; y: number; width: number; height: number },
-    config?: Record<string, any>
+    config?: Record<string, any>,
   ): Promise<string | null> {
-    return this.api?.addComponent(canvasId, componentType, position, config) || null;
+    return (
+      this.api?.addComponent(canvasId, componentType, position, config) || null
+    );
   }
 
   /**
@@ -1615,7 +1759,10 @@ export class GridBuilder {
    * @returns Promise<boolean> - True if updated successfully
    */
   @Method()
-  async updateConfig(itemId: string, config: Record<string, any>): Promise<boolean> {
+  async updateConfig(
+    itemId: string,
+    config: Record<string, any>,
+  ): Promise<boolean> {
     return this.api?.updateConfig(itemId, config) || false;
   }
 
@@ -1646,11 +1793,14 @@ export class GridBuilder {
     const canvasIds = Object.keys(gridState.canvases);
 
     return (
-      <Host ref={(el) => this.el = el}>
+      <Host ref={(el) => (this.el = el)}>
         <div class="grid-builder-container">
           {/* Component Palette */}
           <div class="palette-area">
-            <component-palette components={this.components} config={this.config} />
+            <component-palette
+              components={this.components}
+              config={this.config}
+            />
           </div>
 
           {/* Canvas Area */}
@@ -1665,7 +1815,7 @@ export class GridBuilder {
                 const headerElement = this.uiOverrides?.CanvasHeader?.({
                   canvasId,
                   metadata,
-                  isActive
+                  isActive,
                 });
 
                 return (

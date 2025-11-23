@@ -1,5 +1,5 @@
-import { h } from '@stencil/core';
-import { ComponentDefinition } from '../types/component-definition';
+import { h } from "@stencil/core";
+import { ComponentDefinition } from "../types/component-definition";
 
 /**
  * Component Definitions for Blog Layout Builder Demo
@@ -61,13 +61,13 @@ import { ComponentDefinition } from '../types/component-definition';
 // Content category - text-based components
 export const contentComponents: ComponentDefinition[] = [
   {
-    type: 'blog-header',
-    name: 'Blog Header',
-    icon: '📰',
+    type: "blog-header",
+    name: "Blog Header",
+    icon: "📰",
     defaultSize: { width: 50, height: 5 },
     minSize: { width: 20, height: 3 },
     maxSize: { width: 50, height: 10 },
-    selectionColor: '#3b82f6',
+    selectionColor: "#3b82f6",
     renderPaletteItem: ({ componentType, name, icon }) => (
       <custom-palette-item
         componentType={componentType}
@@ -78,17 +78,17 @@ export const contentComponents: ComponentDefinition[] = [
     renderDragClone: () => <blog-header-drag-clone />,
     render: ({ config }) => (
       <blog-header
-        headerTitle={config?.title || 'Default Header'}
+        headerTitle={config?.title || "Default Header"}
         subtitle={config?.subtitle}
       />
     ),
   },
   {
-    type: 'blog-article',
-    name: 'Blog Article',
-    icon: '📝',
+    type: "blog-article",
+    name: "Blog Article",
+    icon: "📝",
     defaultSize: { width: 25, height: 10 },
-    selectionColor: '#10b981',
+    selectionColor: "#10b981",
     renderPaletteItem: ({ componentType, name, icon }) => (
       <custom-palette-item
         componentType={componentType}
@@ -99,19 +99,19 @@ export const contentComponents: ComponentDefinition[] = [
     renderDragClone: () => <blog-article-drag-clone />,
     render: ({ config }) => (
       <blog-article
-        content={config?.content || 'Article content goes here'}
+        content={config?.content || "Article content goes here"}
         author={config?.author}
         date={config?.date}
       />
     ),
   },
   {
-    type: 'blog-image',
-    name: 'Blog Image',
-    icon: '🖼️',
+    type: "blog-image",
+    name: "Blog Image",
+    icon: "🖼️",
     defaultSize: { width: 45, height: 20 },
     minSize: { width: 10, height: 8 },
-    selectionColor: '#8b5cf6',
+    selectionColor: "#8b5cf6",
     renderPaletteItem: ({ componentType, name, icon }) => (
       <custom-palette-item
         componentType={componentType}
@@ -122,43 +122,47 @@ export const contentComponents: ComponentDefinition[] = [
     renderDragClone: () => <blog-image-drag-clone />,
     configSchema: [
       {
-        name: 'src',
-        label: 'Image URL',
-        type: 'text',
-        defaultValue: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&h=600&fit=crop',
-        placeholder: 'Enter image URL',
+        name: "src",
+        label: "Image URL",
+        type: "text",
+        defaultValue:
+          "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&h=600&fit=crop",
+        placeholder: "Enter image URL",
       },
       {
-        name: 'alt',
-        label: 'Alt Text',
-        type: 'text',
-        defaultValue: 'Placeholder image',
-        placeholder: 'Enter alt text for accessibility',
+        name: "alt",
+        label: "Alt Text",
+        type: "text",
+        defaultValue: "Placeholder image",
+        placeholder: "Enter alt text for accessibility",
       },
       {
-        name: 'caption',
-        label: 'Caption',
-        type: 'text',
-        defaultValue: '',
-        placeholder: 'Optional caption (max 2 lines)',
+        name: "caption",
+        label: "Caption",
+        type: "text",
+        defaultValue: "",
+        placeholder: "Optional caption (max 2 lines)",
       },
       {
-        name: 'objectFit',
-        label: 'Fit Mode',
-        type: 'select',
-        defaultValue: 'contain',
+        name: "objectFit",
+        label: "Fit Mode",
+        type: "select",
+        defaultValue: "contain",
         options: [
-          { value: 'contain', label: 'Contain (show all, no crop)' },
-          { value: 'cover', label: 'Cover (fill, may crop)' },
+          { value: "contain", label: "Contain (show all, no crop)" },
+          { value: "cover", label: "Cover (fill, may crop)" },
         ],
       },
     ],
     render: ({ config }) => (
       <blog-image
-        src={config?.src || 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&h=600&fit=crop'}
-        alt={config?.alt || 'Placeholder image'}
+        src={
+          config?.src ||
+          "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&h=600&fit=crop"
+        }
+        alt={config?.alt || "Placeholder image"}
         caption={config?.caption}
-        objectFit={config?.objectFit || 'contain'}
+        objectFit={config?.objectFit || "contain"}
       />
     ),
   },
@@ -167,13 +171,13 @@ export const contentComponents: ComponentDefinition[] = [
 // Interactive category - buttons and CTAs
 export const interactiveComponents: ComponentDefinition[] = [
   {
-    type: 'blog-button',
-    name: 'Blog Button',
-    icon: '🔘',
+    type: "blog-button",
+    name: "Blog Button",
+    icon: "🔘",
     defaultSize: { width: 20, height: 3 },
     minSize: { width: 10, height: 2 },
     maxSize: { width: 30, height: 5 },
-    selectionColor: '#ef4444',
+    selectionColor: "#ef4444",
     renderPaletteItem: ({ componentType, name, icon }) => (
       <custom-palette-item
         componentType={componentType}
@@ -184,8 +188,8 @@ export const interactiveComponents: ComponentDefinition[] = [
     renderDragClone: () => <blog-button-drag-clone />,
     render: ({ config }) => (
       <blog-button
-        label={config?.label || 'Click me!'}
-        variant={config?.variant || 'primary'}
+        label={config?.label || "Click me!"}
+        variant={config?.variant || "primary"}
         href={config?.href}
       />
     ),
@@ -195,12 +199,12 @@ export const interactiveComponents: ComponentDefinition[] = [
 // Media category - galleries, dashboards, and live data
 export const mediaComponents: ComponentDefinition[] = [
   {
-    type: 'image-gallery',
-    name: 'Image Gallery',
-    icon: '🖼️',
+    type: "image-gallery",
+    name: "Image Gallery",
+    icon: "🖼️",
     defaultSize: { width: 30, height: 12 },
     minSize: { width: 15, height: 8 },
-    selectionColor: '#8b5cf6',
+    selectionColor: "#8b5cf6",
     renderPaletteItem: ({ componentType, name, icon }) => (
       <custom-palette-item
         componentType={componentType}
@@ -211,29 +215,29 @@ export const mediaComponents: ComponentDefinition[] = [
     renderDragClone: () => <image-gallery-drag-clone />,
     configSchema: [
       {
-        name: 'imageCount',
-        label: 'Number of Images',
-        type: 'select',
-        defaultValue: '6',
+        name: "imageCount",
+        label: "Number of Images",
+        type: "select",
+        defaultValue: "6",
         options: [
-          { value: '3', label: '3 images' },
-          { value: '6', label: '6 images' },
-          { value: '9', label: '9 images' },
-          { value: '12', label: '12 images' },
+          { value: "3", label: "3 images" },
+          { value: "6", label: "6 images" },
+          { value: "9", label: "9 images" },
+          { value: "12", label: "12 images" },
         ],
       },
     ],
     render: ({ config }) => (
-      <image-gallery imageCount={parseInt(config?.imageCount || '6')} />
+      <image-gallery imageCount={parseInt(config?.imageCount || "6")} />
     ),
   },
   {
-    type: 'dashboard-widget',
-    name: 'Dashboard',
-    icon: '📊',
+    type: "dashboard-widget",
+    name: "Dashboard",
+    icon: "📊",
     defaultSize: { width: 25, height: 10 },
     minSize: { width: 15, height: 8 },
-    selectionColor: '#ec4899',
+    selectionColor: "#ec4899",
     renderPaletteItem: ({ componentType, name, icon }) => (
       <custom-palette-item
         componentType={componentType}
@@ -245,12 +249,12 @@ export const mediaComponents: ComponentDefinition[] = [
     render: () => <dashboard-widget />,
   },
   {
-    type: 'live-data',
-    name: 'Live Data',
-    icon: '📡',
+    type: "live-data",
+    name: "Live Data",
+    icon: "📡",
     defaultSize: { width: 20, height: 10 },
     minSize: { width: 15, height: 8 },
-    selectionColor: '#06b6d4',
+    selectionColor: "#06b6d4",
     renderPaletteItem: ({ componentType, name, icon }) => (
       <custom-palette-item
         componentType={componentType}
@@ -286,9 +290,9 @@ export const _blogComponentDefinitionsDetailed: ComponentDefinition[] = [
    * - Config-driven rendering (title and subtitle from config)
    */
   {
-    type: 'blog-header',
-    name: 'Blog Header',
-    icon: '📰',
+    type: "blog-header",
+    name: "Blog Header",
+    icon: "📰",
 
     // Default size when dropped onto canvas
     // 50 units width = 100% of canvas (library uses 50 units for full width by default)
@@ -305,7 +309,7 @@ export const _blogComponentDefinitionsDetailed: ComponentDefinition[] = [
 
     // Custom selection color (overrides library's default blue)
     // Applied to selection outline when this component is selected
-    selectionColor: '#3b82f6', // Blue for headers
+    selectionColor: "#3b82f6", // Blue for headers
 
     // Custom palette item with SVG preview
     renderPaletteItem: ({ componentType, name, icon }) =>
@@ -323,7 +327,7 @@ export const _blogComponentDefinitionsDetailed: ComponentDefinition[] = [
     // Config comes from gridState.canvases[canvasId].items[itemId].config
     render: ({ config }) => (
       <blog-header
-        headerTitle={config?.title || 'Default Header'}
+        headerTitle={config?.title || "Default Header"}
         subtitle={config?.subtitle}
       />
     ),
@@ -341,9 +345,9 @@ export const _blogComponentDefinitionsDetailed: ComponentDefinition[] = [
    * - Multiple config properties (content, author, date)
    */
   {
-    type: 'blog-article',
-    name: 'Blog Article',
-    icon: '📝',
+    type: "blog-article",
+    name: "Blog Article",
+    icon: "📝",
 
     // Default size when dropped
     // 25 units = 50% canvas width (good for side-by-side articles)
@@ -351,7 +355,7 @@ export const _blogComponentDefinitionsDetailed: ComponentDefinition[] = [
     defaultSize: { width: 25, height: 10 },
 
     // Custom selection color (green distinguishes articles from headers/buttons)
-    selectionColor: '#10b981', // Green for articles
+    selectionColor: "#10b981", // Green for articles
 
     // No minSize/maxSize specified
     // Library will use defaults: 100px min width, 80px min height, no maximum
@@ -371,7 +375,7 @@ export const _blogComponentDefinitionsDetailed: ComponentDefinition[] = [
     // Demonstrates passing multiple configuration values to child component
     render: ({ config }) => (
       <blog-article
-        content={config?.content || 'Article content goes here'}
+        content={config?.content || "Article content goes here"}
         author={config?.author}
         date={config?.date}
       />
@@ -390,9 +394,9 @@ export const _blogComponentDefinitionsDetailed: ComponentDefinition[] = [
    * - Custom selection color (red for CTAs)
    */
   {
-    type: 'blog-button',
-    name: 'Blog Button',
-    icon: '🔘',
+    type: "blog-button",
+    name: "Blog Button",
+    icon: "🔘",
 
     // Default size for buttons
     // 20 units = 40% canvas width (buttons don't need full width)
@@ -406,7 +410,7 @@ export const _blogComponentDefinitionsDetailed: ComponentDefinition[] = [
     maxSize: { width: 30, height: 5 },
 
     // Custom selection color (red for call-to-action buttons)
-    selectionColor: '#ef4444', // Red for buttons
+    selectionColor: "#ef4444", // Red for buttons
 
     /**
      * Custom Palette Item Rendering
@@ -451,8 +455,8 @@ export const _blogComponentDefinitionsDetailed: ComponentDefinition[] = [
     // Demonstrates fallback values for optional config properties
     render: ({ config }) => (
       <blog-button
-        label={config?.label || 'Click me!'}
-        variant={config?.variant || 'primary'}
+        label={config?.label || "Click me!"}
+        variant={config?.variant || "primary"}
         href={config?.href}
       />
     ),
@@ -474,9 +478,9 @@ export const _blogComponentDefinitionsDetailed: ComponentDefinition[] = [
    * - Editable config (src, alt, caption, objectFit)
    */
   {
-    type: 'blog-image',
-    name: 'Blog Image',
-    icon: '🖼️',
+    type: "blog-image",
+    name: "Blog Image",
+    icon: "🖼️",
 
     // Default size for images
     // 25 units = 50% canvas width (good for side-by-side layouts)
@@ -489,7 +493,7 @@ export const _blogComponentDefinitionsDetailed: ComponentDefinition[] = [
     minSize: { width: 10, height: 8 },
 
     // Custom selection color (purple for media components)
-    selectionColor: '#8b5cf6', // Purple for images
+    selectionColor: "#8b5cf6", // Purple for images
 
     // Custom palette item
     renderPaletteItem: ({ componentType, name, icon }) =>
@@ -514,34 +518,35 @@ export const _blogComponentDefinitionsDetailed: ComponentDefinition[] = [
      */
     configSchema: [
       {
-        name: 'src',
-        label: 'Image URL',
-        type: 'text',
-        defaultValue: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&h=600&fit=crop',
-        placeholder: 'Enter image URL',
+        name: "src",
+        label: "Image URL",
+        type: "text",
+        defaultValue:
+          "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&h=600&fit=crop",
+        placeholder: "Enter image URL",
       },
       {
-        name: 'alt',
-        label: 'Alt Text',
-        type: 'text',
-        defaultValue: 'Placeholder image',
-        placeholder: 'Enter alt text for accessibility',
+        name: "alt",
+        label: "Alt Text",
+        type: "text",
+        defaultValue: "Placeholder image",
+        placeholder: "Enter alt text for accessibility",
       },
       {
-        name: 'caption',
-        label: 'Caption',
-        type: 'text',
-        defaultValue: '',
-        placeholder: 'Optional caption (max 2 lines)',
+        name: "caption",
+        label: "Caption",
+        type: "text",
+        defaultValue: "",
+        placeholder: "Optional caption (max 2 lines)",
       },
       {
-        name: 'objectFit',
-        label: 'Fit Mode',
-        type: 'select',
-        defaultValue: 'contain',
+        name: "objectFit",
+        label: "Fit Mode",
+        type: "select",
+        defaultValue: "contain",
         options: [
-          { value: 'contain', label: 'Contain (show all, no crop)' },
-          { value: 'cover', label: 'Cover (fill, may crop)' },
+          { value: "contain", label: "Contain (show all, no crop)" },
+          { value: "cover", label: "Cover (fill, may crop)" },
         ],
       },
     ],
@@ -550,10 +555,13 @@ export const _blogComponentDefinitionsDetailed: ComponentDefinition[] = [
     // Demonstrates src, alt, caption, and objectFit configuration
     render: ({ config }) => (
       <blog-image
-        src={config?.src || 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&h=600&fit=crop'}
-        alt={config?.alt || 'Placeholder image'}
+        src={
+          config?.src ||
+          "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&h=600&fit=crop"
+        }
+        alt={config?.alt || "Placeholder image"}
         caption={config?.caption}
-        objectFit={config?.objectFit || 'contain'}
+        objectFit={config?.objectFit || "contain"}
       />
     ),
   },

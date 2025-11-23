@@ -162,12 +162,12 @@ import {
   updateItem as updateItemInState,
   deleteItemsBatch,
   updateItemsBatch,
-} from './state-manager';
-import { Command } from './undo-redo';
-import { eventManager } from './event-manager';
-import { createDebugLogger } from '../utils/debug';
+} from "./state-manager";
+import { Command } from "./undo-redo";
+import { eventManager } from "./event-manager";
+import { createDebugLogger } from "../utils/debug";
 
-const debug = createDebugLogger('undo-redo-commands');
+const debug = createDebugLogger("undo-redo-commands");
 
 /**
  * Helper function to remove an item from a canvas and clear selection
@@ -798,7 +798,7 @@ export class MoveItemCommand implements Command {
     targetPosition: { x: number; y: number },
     sourceIndex: number,
     sourceSize?: { width: number; height: number },
-    targetSize?: { width: number; height: number }
+    targetSize?: { width: number; height: number },
   ) {
     this.itemId = itemId;
     this.sourceCanvasId = sourceCanvasId;
@@ -833,7 +833,7 @@ export class MoveItemCommand implements Command {
    * **Safety**: Returns early if canvas or item not found
    */
   undo(): void {
-    debug.log('🔙 MoveItemCommand.undo()', {
+    debug.log("🔙 MoveItemCommand.undo()", {
       itemId: this.itemId,
       sourceCanvasId: this.sourceCanvasId,
       targetCanvasId: this.targetCanvasId,
@@ -859,11 +859,11 @@ export class MoveItemCommand implements Command {
     }
 
     if (!item || !targetCanvas) {
-      console.warn('  ❌ Item or canvas not found, aborting undo');
+      console.warn("  ❌ Item or canvas not found, aborting undo");
       return;
     }
 
-    debug.log('  📍 Found item, current position:', {
+    debug.log("  📍 Found item, current position:", {
       x: item.layouts.desktop.x,
       y: item.layouts.desktop.y,
     });
@@ -876,7 +876,7 @@ export class MoveItemCommand implements Command {
     item.layouts.desktop.x = this.sourcePosition.x;
     item.layouts.desktop.y = this.sourcePosition.y;
 
-    debug.log('  ✅ Updated item position to:', {
+    debug.log("  ✅ Updated item position to:", {
       x: item.layouts.desktop.x,
       y: item.layouts.desktop.y,
     });
@@ -890,11 +890,14 @@ export class MoveItemCommand implements Command {
     // Add back to source canvas at original index
     const sourceCanvas = gridState.canvases[this.sourceCanvasId];
     if (!sourceCanvas) {
-      console.warn('  ❌ Source canvas not found, aborting undo');
+      console.warn("  ❌ Source canvas not found, aborting undo");
       return;
     }
 
-    if (this.sourceIndex >= 0 && this.sourceIndex <= sourceCanvas.items.length) {
+    if (
+      this.sourceIndex >= 0 &&
+      this.sourceIndex <= sourceCanvas.items.length
+    ) {
       sourceCanvas.items.splice(this.sourceIndex, 0, item);
     } else {
       sourceCanvas.items.push(item);
@@ -907,11 +910,11 @@ export class MoveItemCommand implements Command {
     // This ensures the component re-renders with the correct position from state
     const element = document.getElementById(this.itemId);
     if (element) {
-      debug.log('  🎨 Clearing inline transform style');
-      element.style.transform = '';
+      debug.log("  🎨 Clearing inline transform style");
+      element.style.transform = "";
     }
 
-    debug.log('  ✅ Undo complete');
+    debug.log("  ✅ Undo complete");
   }
 
   /**
@@ -936,7 +939,7 @@ export class MoveItemCommand implements Command {
    * **Safety**: Returns early if canvas or item not found
    */
   redo(): void {
-    debug.log('🔜 MoveItemCommand.redo()', {
+    debug.log("🔜 MoveItemCommand.redo()", {
       itemId: this.itemId,
       sourceCanvasId: this.sourceCanvasId,
       targetCanvasId: this.targetCanvasId,
@@ -948,11 +951,11 @@ export class MoveItemCommand implements Command {
     const sourceCanvas = gridState.canvases[this.sourceCanvasId];
     const item = sourceCanvas?.items.find((i) => i.id === this.itemId);
     if (!item) {
-      console.warn('  ❌ Item not found, aborting redo');
+      console.warn("  ❌ Item not found, aborting redo");
       return;
     }
 
-    debug.log('  📍 Found item, current position:', {
+    debug.log("  📍 Found item, current position:", {
       x: item.layouts.desktop.x,
       y: item.layouts.desktop.y,
     });
@@ -965,7 +968,7 @@ export class MoveItemCommand implements Command {
     item.layouts.desktop.x = this.targetPosition.x;
     item.layouts.desktop.y = this.targetPosition.y;
 
-    debug.log('  ✅ Updated item position to:', {
+    debug.log("  ✅ Updated item position to:", {
       x: item.layouts.desktop.x,
       y: item.layouts.desktop.y,
     });
@@ -979,7 +982,7 @@ export class MoveItemCommand implements Command {
     // Add to target canvas
     const targetCanvas = gridState.canvases[this.targetCanvasId];
     if (!targetCanvas) {
-      console.warn('  ❌ Target canvas not found, aborting redo');
+      console.warn("  ❌ Target canvas not found, aborting redo");
       return;
     }
 
@@ -992,11 +995,11 @@ export class MoveItemCommand implements Command {
     // This ensures the component re-renders with the correct position from state
     const element = document.getElementById(this.itemId);
     if (element) {
-      debug.log('  🎨 Clearing inline transform style');
-      element.style.transform = '';
+      debug.log("  🎨 Clearing inline transform style");
+      element.style.transform = "";
     }
 
-    debug.log('  ✅ Redo complete');
+    debug.log("  ✅ Redo complete");
   }
 }
 
@@ -1010,7 +1013,7 @@ export class UpdateItemCommand implements Command {
     private canvasId: string,
     private itemId: string,
     private oldItem: GridItem,
-    private updates: Partial<GridItem>
+    private updates: Partial<GridItem>,
   ) {}
 
   undo(): void {
@@ -1030,7 +1033,7 @@ export class UpdateItemCommand implements Command {
 export class RemoveItemCommand implements Command {
   constructor(
     private canvasId: string,
-    private item: GridItem
+    private item: GridItem,
   ) {}
 
   undo(): void {
@@ -1049,8 +1052,8 @@ export class RemoveItemCommand implements Command {
  */
 export class SetViewportCommand implements Command {
   constructor(
-    private oldViewport: 'desktop' | 'mobile',
-    private newViewport: 'desktop' | 'mobile'
+    private oldViewport: "desktop" | "mobile",
+    private newViewport: "desktop" | "mobile",
   ) {}
 
   undo(): void {
@@ -1070,7 +1073,7 @@ export class SetViewportCommand implements Command {
 export class ToggleGridCommand implements Command {
   constructor(
     private oldValue: boolean,
-    private newValue: boolean
+    private newValue: boolean,
   ) {}
 
   undo(): void {
@@ -1081,7 +1084,6 @@ export class ToggleGridCommand implements Command {
     gridState.showGrid = this.newValue;
   }
 }
-
 
 /**
  * BatchAddCommand - Add multiple items in a single batch operation
@@ -1109,12 +1111,14 @@ export class BatchAddCommand implements Command {
 
   constructor(itemIds: string[]) {
     // Store full item data for redo (deep clone to prevent mutations)
-    this.itemsData = itemIds.map((id) => {
-      const item = Object.values(gridState.canvases)
-        .flatMap((canvas) => canvas.items)
-        .find((i) => i.id === id);
-      return item ? JSON.parse(JSON.stringify(item)) : null;
-    }).filter(Boolean) as GridItem[];
+    this.itemsData = itemIds
+      .map((id) => {
+        const item = Object.values(gridState.canvases)
+          .flatMap((canvas) => canvas.items)
+          .find((i) => i.id === id);
+        return item ? JSON.parse(JSON.stringify(item)) : null;
+      })
+      .filter(Boolean) as GridItem[];
   }
 
   undo(): void {
@@ -1167,12 +1171,14 @@ export class BatchDeleteCommand implements Command {
 
   constructor(itemIds: string[]) {
     // Store full item data for undo (deep clone to prevent mutations)
-    this.itemsData = itemIds.map((id) => {
-      const item = Object.values(gridState.canvases)
-        .flatMap((canvas) => canvas.items)
-        .find((i) => i.id === id);
-      return item ? JSON.parse(JSON.stringify(item)) : null;
-    }).filter(Boolean) as GridItem[];
+    this.itemsData = itemIds
+      .map((id) => {
+        const item = Object.values(gridState.canvases)
+          .flatMap((canvas) => canvas.items)
+          .find((i) => i.id === id);
+        return item ? JSON.parse(JSON.stringify(item)) : null;
+      })
+      .filter(Boolean) as GridItem[];
   }
 
   undo(): void {
@@ -1232,24 +1238,26 @@ export class BatchUpdateConfigCommand implements Command {
       itemId: string;
       canvasId: string;
       updates: Partial<GridItem>;
-    }>
+    }>,
   ) {
     // Store old and new state for each item (deep clone to prevent mutations)
-    this.updates = updates.map(({ itemId, canvasId, updates: itemUpdates }) => {
-      const canvas = gridState.canvases[canvasId];
-      const item = canvas?.items.find((i) => i.id === itemId);
+    this.updates = updates
+      .map(({ itemId, canvasId, updates: itemUpdates }) => {
+        const canvas = gridState.canvases[canvasId];
+        const item = canvas?.items.find((i) => i.id === itemId);
 
-      if (!item) {
-        return null;
-      }
+        if (!item) {
+          return null;
+        }
 
-      return {
-        itemId,
-        canvasId,
-        oldItem: JSON.parse(JSON.stringify(item)),
-        newItem: JSON.parse(JSON.stringify({ ...item, ...itemUpdates })),
-      };
-    }).filter(Boolean) as Array<{
+        return {
+          itemId,
+          canvasId,
+          oldItem: JSON.parse(JSON.stringify(item)),
+          newItem: JSON.parse(JSON.stringify({ ...item, ...itemUpdates })),
+        };
+      })
+      .filter(Boolean) as Array<{
       itemId: string;
       canvasId: string;
       oldItem: GridItem;
@@ -1322,7 +1330,7 @@ export class BatchUpdateConfigCommand implements Command {
  * @module undo-redo-commands
  */
 export class AddCanvasCommand implements Command {
-  description = 'Add Canvas';
+  description = "Add Canvas";
   private canvasId: string;
 
   constructor(canvasId: string) {
@@ -1330,7 +1338,7 @@ export class AddCanvasCommand implements Command {
   }
 
   undo(): void {
-    debug.log('🔙 AddCanvasCommand.undo() - removing canvas:', this.canvasId);
+    debug.log("🔙 AddCanvasCommand.undo() - removing canvas:", this.canvasId);
 
     // Remove canvas from library state
     delete gridState.canvases[this.canvasId];
@@ -1339,8 +1347,8 @@ export class AddCanvasCommand implements Command {
     gridState.canvases = { ...gridState.canvases };
 
     // Emit event so host app can sync its metadata
-    debug.log('  📢 Emitting canvasRemoved event for:', this.canvasId);
-    eventManager.emit('canvasRemoved', { canvasId: this.canvasId });
+    debug.log("  📢 Emitting canvasRemoved event for:", this.canvasId);
+    eventManager.emit("canvasRemoved", { canvasId: this.canvasId });
   }
 
   redo(): void {
@@ -1354,7 +1362,7 @@ export class AddCanvasCommand implements Command {
     gridState.canvases = { ...gridState.canvases };
 
     // Emit event so host app can sync its metadata
-    eventManager.emit('canvasAdded', { canvasId: this.canvasId });
+    eventManager.emit("canvasAdded", { canvasId: this.canvasId });
   }
 }
 
@@ -1405,7 +1413,7 @@ export class AddCanvasCommand implements Command {
  * @module undo-redo-commands
  */
 export class RemoveCanvasCommand implements Command {
-  description = 'Remove Canvas';
+  description = "Remove Canvas";
   private canvasId: string;
   private canvasSnapshot: {
     zIndexCounter: number;
@@ -1425,13 +1433,15 @@ export class RemoveCanvasCommand implements Command {
   undo(): void {
     // Restore canvas from snapshot (just layout state, no metadata)
     if (this.canvasSnapshot) {
-      gridState.canvases[this.canvasId] = JSON.parse(JSON.stringify(this.canvasSnapshot));
+      gridState.canvases[this.canvasId] = JSON.parse(
+        JSON.stringify(this.canvasSnapshot),
+      );
 
       // Trigger state change for reactivity
       gridState.canvases = { ...gridState.canvases };
 
       // Emit event so host app can sync its metadata
-      eventManager.emit('canvasAdded', { canvasId: this.canvasId });
+      eventManager.emit("canvasAdded", { canvasId: this.canvasId });
     }
   }
 
@@ -1443,6 +1453,6 @@ export class RemoveCanvasCommand implements Command {
     gridState.canvases = { ...gridState.canvases };
 
     // Emit event so host app can sync its metadata
-    eventManager.emit('canvasRemoved', { canvasId: this.canvasId });
+    eventManager.emit("canvasRemoved", { canvasId: this.canvasId });
   }
 }

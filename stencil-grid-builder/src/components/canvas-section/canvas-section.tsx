@@ -65,15 +65,26 @@
  * @module canvas-section
  */
 
-import { Component, h, Prop, State, Watch } from '@stencil/core';
-import interact from 'interactjs';
+import { Component, h, Prop, State, Watch } from "@stencil/core";
+import interact from "interactjs";
 
 // Internal imports
-import { Canvas, GridItem, gridState, onChange, setActiveCanvas } from '../../services/state-manager';
-import { clearGridSizeCache, gridToPixelsX, gridToPixelsY, getGridSizeVertical } from '../../utils/grid-calculations';
-import { calculateCanvasHeight } from '../../utils/canvas-height-calculator';
-import { GridConfig } from '../../types/grid-config';
-import { ComponentDefinition } from '../../types/component-definition';
+import {
+  Canvas,
+  GridItem,
+  gridState,
+  onChange,
+  setActiveCanvas,
+} from "../../services/state-manager";
+import {
+  clearGridSizeCache,
+  gridToPixelsX,
+  gridToPixelsY,
+  getGridSizeVertical,
+} from "../../utils/grid-calculations";
+import { calculateCanvasHeight } from "../../utils/canvas-height-calculator";
+import { GridConfig } from "../../types/grid-config";
+import { ComponentDefinition } from "../../types/component-definition";
 
 /**
  * CanvasSection Component
@@ -86,8 +97,8 @@ import { ComponentDefinition } from '../../types/component-definition';
  * **Reactivity**: Listens to gridState changes via StencilJS store
  */
 @Component({
-  tag: 'canvas-section',
-  styleUrl: 'canvas-section.scss',
+  tag: "canvas-section",
+  styleUrl: "canvas-section.scss",
   shadow: false, // Light DOM required for interact.js
 })
 export class CanvasSection {
@@ -295,28 +306,31 @@ export class CanvasSection {
     this.calculatedHeight = calculateCanvasHeight(this.canvasId, this.config);
 
     // Subscribe to state changes
-    onChange('canvases', () => {
+    onChange("canvases", () => {
       try {
         if (this.canvasId && gridState.canvases[this.canvasId]) {
           this.canvas = gridState.canvases[this.canvasId];
           this.renderVersion++; // Force re-render
 
           // Recalculate canvas height based on content
-          this.calculatedHeight = calculateCanvasHeight(this.canvasId, this.config);
+          this.calculatedHeight = calculateCanvasHeight(
+            this.canvasId,
+            this.config,
+          );
         }
       } catch (error) {
-        console.debug('Canvas section state update skipped:', error);
+        console.debug("Canvas section state update skipped:", error);
       }
     });
 
     // Subscribe to viewport changes (desktop ↔ mobile)
-    onChange('currentViewport', () => {
+    onChange("currentViewport", () => {
       // Recalculate height for new viewport layout
       this.calculatedHeight = calculateCanvasHeight(this.canvasId, this.config);
     });
 
     // Subscribe to grid visibility changes
-    onChange('showGrid', () => {
+    onChange("showGrid", () => {
       // Force re-render to update grid visibility class
       this.renderVersion++;
     });
@@ -375,7 +389,7 @@ export class CanvasSection {
    *
    * **Note**: This is rare in practice - usually canvas IDs are static
    */
-  @Watch('canvasId')
+  @Watch("canvasId")
   handleCanvasIdChange(newCanvasId: string, oldCanvasId: string) {
     // Skip if canvas ID hasn't changed
     if (newCanvasId === oldCanvasId) return;
@@ -406,7 +420,7 @@ export class CanvasSection {
    * - Canvas height calculation uses grid-to-pixels conversions
    * - Config changes affect layout calculations
    */
-  @Watch('config')
+  @Watch("config")
   handleConfigChange(newConfig: GridConfig, oldConfig: GridConfig) {
     // Skip if config reference hasn't changed
     if (newConfig === oldConfig) return;
@@ -432,7 +446,7 @@ export class CanvasSection {
    * - Canvas title may be un-dimmed
    * - Host app can style via `.grid-container.active` selector
    */
-  @Watch('isActive')
+  @Watch("isActive")
   handleIsActiveChange(newIsActive: boolean, oldIsActive: boolean) {
     // Skip if active state hasn't changed
     if (newIsActive === oldIsActive) return;
@@ -467,7 +481,7 @@ export class CanvasSection {
       return;
     }
 
-    this.gridContainerRef.addEventListener('click', (event: MouseEvent) => {
+    this.gridContainerRef.addEventListener("click", (event: MouseEvent) => {
       // Only fire if clicking directly on the grid container
       // (not on a grid item or other child element)
       if (event.target === this.gridContainerRef) {
@@ -475,7 +489,7 @@ export class CanvasSection {
         setActiveCanvas(this.canvasId);
 
         // Emit canvas-activated event
-        const canvasActivatedEvent = new CustomEvent('canvas-activated', {
+        const canvasActivatedEvent = new CustomEvent("canvas-activated", {
           detail: {
             canvasId: this.canvasId,
           },
@@ -485,7 +499,7 @@ export class CanvasSection {
         this.gridContainerRef.dispatchEvent(canvasActivatedEvent);
 
         // Emit canvas-click event (backward compatibility)
-        const canvasClickEvent = new CustomEvent('canvas-click', {
+        const canvasClickEvent = new CustomEvent("canvas-click", {
           detail: {
             canvasId: this.canvasId,
           },
@@ -595,8 +609,8 @@ export class CanvasSection {
     const interactable = interact(this.gridContainerRef);
 
     interactable.dropzone({
-      accept: '.palette-item, .grid-item, .grid-item-header',
-      overlap: 'pointer',
+      accept: ".palette-item, .grid-item, .grid-item-header",
+      overlap: "pointer",
 
       listeners: {
         dragenter: (_event: any) => {
@@ -615,89 +629,97 @@ export class CanvasSection {
           let droppedElement = event.relatedTarget;
 
           // If dropped element is inside a palette item, get the palette item
-          const paletteItem = droppedElement.closest('.palette-item');
+          const paletteItem = droppedElement.closest(".palette-item");
           if (paletteItem) {
             droppedElement = paletteItem;
           }
 
-          const isPaletteItem = droppedElement.classList.contains('palette-item');
+          const isPaletteItem =
+            droppedElement.classList.contains("palette-item");
 
           // Mark palette item drop as valid (for snap-back animation)
           if (isPaletteItem) {
             (droppedElement as any)._dropWasValid = true;
           }
 
-        // Check if it's a grid item or grid item header (drag handle)
-        const isGridItemHeader = droppedElement.classList.contains('grid-item-header');
-        const isGridItem = droppedElement.classList.contains('grid-item');
+          // Check if it's a grid item or grid item header (drag handle)
+          const isGridItemHeader =
+            droppedElement.classList.contains("grid-item-header");
+          const isGridItem = droppedElement.classList.contains("grid-item");
 
-        // If it's the header, find the parent grid-item
-        const gridItem = isGridItemHeader
-          ? droppedElement.closest('.grid-item')
-          : droppedElement;
+          // If it's the header, find the parent grid-item
+          const gridItem = isGridItemHeader
+            ? droppedElement.closest(".grid-item")
+            : droppedElement;
 
-        if (isPaletteItem) {
-          // Dropping from palette - create new item
-          const componentType = droppedElement.getAttribute('data-component-type');
+          if (isPaletteItem) {
+            // Dropping from palette - create new item
+            const componentType = droppedElement.getAttribute(
+              "data-component-type",
+            );
 
-          // Get stored dimensions from palette drag handler (or fall back to 10×6 default)
-          const defaultWidth = (droppedElement as any)._defaultWidth || 10;
-          const defaultHeight = (droppedElement as any)._defaultHeight || 6;
-          const widthPx = gridToPixelsX(defaultWidth, this.canvasId, this.config);
-          const heightPx = gridToPixelsY(defaultHeight);
-          const halfWidth = widthPx / 2;
-          const halfHeight = heightPx / 2;
+            // Get stored dimensions from palette drag handler (or fall back to 10×6 default)
+            const defaultWidth = (droppedElement as any)._defaultWidth || 10;
+            const defaultHeight = (droppedElement as any)._defaultHeight || 6;
+            const widthPx = gridToPixelsX(
+              defaultWidth,
+              this.canvasId,
+              this.config,
+            );
+            const heightPx = gridToPixelsY(defaultHeight);
+            const halfWidth = widthPx / 2;
+            const halfHeight = heightPx / 2;
 
-          // Get drop position relative to grid container (cursor-centered)
-          const rect = this.gridContainerRef.getBoundingClientRect();
-          const x = event.dragEvent.clientX - rect.left - halfWidth;
-          const y = event.dragEvent.clientY - rect.top - halfHeight;
-
-          // Dispatch custom event for grid-builder to handle
-          const dropEvent = new CustomEvent('canvas-drop', {
-            detail: {
-              canvasId: this.canvasId,
-              componentType,
-              x,
-              y,
-            },
-            bubbles: true,
-            composed: true,
-          });
-          this.gridContainerRef.dispatchEvent(dropEvent);
-        } else if (isGridItem || isGridItemHeader) {
-          // Moving existing grid item to different canvas
-          const itemId = gridItem.id;
-          const sourceCanvasId = gridItem.getAttribute('data-canvas-id');
-
-          // Only process cross-canvas moves
-          if (sourceCanvasId !== this.canvasId) {
-            // Get element's position (already positioned by drag handler)
-            const droppedRect = gridItem.getBoundingClientRect();
+            // Get drop position relative to grid container (cursor-centered)
             const rect = this.gridContainerRef.getBoundingClientRect();
+            const x = event.dragEvent.clientX - rect.left - halfWidth;
+            const y = event.dragEvent.clientY - rect.top - halfHeight;
 
-            // Calculate position relative to target canvas
-            const x = droppedRect.left - rect.left;
-            const y = droppedRect.top - rect.top;
-
-            // Dispatch custom event for cross-canvas move
-            const moveEvent = new CustomEvent('canvas-move', {
+            // Dispatch custom event for grid-builder to handle
+            const dropEvent = new CustomEvent("canvas-drop", {
               detail: {
-                itemId,
-                sourceCanvasId,
-                targetCanvasId: this.canvasId,
+                canvasId: this.canvasId,
+                componentType,
                 x,
                 y,
               },
               bubbles: true,
               composed: true,
             });
-            this.gridContainerRef.dispatchEvent(moveEvent);
+            this.gridContainerRef.dispatchEvent(dropEvent);
+          } else if (isGridItem || isGridItemHeader) {
+            // Moving existing grid item to different canvas
+            const itemId = gridItem.id;
+            const sourceCanvasId = gridItem.getAttribute("data-canvas-id");
+
+            // Only process cross-canvas moves
+            if (sourceCanvasId !== this.canvasId) {
+              // Get element's position (already positioned by drag handler)
+              const droppedRect = gridItem.getBoundingClientRect();
+              const rect = this.gridContainerRef.getBoundingClientRect();
+
+              // Calculate position relative to target canvas
+              const x = droppedRect.left - rect.left;
+              const y = droppedRect.top - rect.top;
+
+              // Dispatch custom event for cross-canvas move
+              const moveEvent = new CustomEvent("canvas-move", {
+                detail: {
+                  itemId,
+                  sourceCanvasId,
+                  targetCanvasId: this.canvasId,
+                  x,
+                  y,
+                },
+                bubbles: true,
+                composed: true,
+              });
+              this.gridContainerRef.dispatchEvent(moveEvent);
+            }
           }
-        }
+        },
       },
-    },
-  });
+    });
 
     this.dropzoneInitialized = true;
   };
@@ -733,18 +755,20 @@ export class CanvasSection {
       <div class="canvas-section" data-canvas-id={this.canvasId}>
         <div
           class={{
-            'grid-container': true,
-            'hide-grid': !showGrid,
-            'active': this.isActive,
-            'drop-target': this.isDropTarget,
+            "grid-container": true,
+            "hide-grid": !showGrid,
+            active: this.isActive,
+            "drop-target": this.isDropTarget,
           }}
           id={this.canvasId}
           data-canvas-id={this.canvasId}
           style={{
-            backgroundColor: this.backgroundColor || '#ffffff',
+            backgroundColor: this.backgroundColor || "#ffffff",
             backgroundSize: `2% ${verticalGridSize}px`,
             minHeight: `${minHeightPx}px`,
-            ...(this.calculatedHeight > 0 ? { height: `${this.calculatedHeight}px` } : {}),
+            ...(this.calculatedHeight > 0
+              ? { height: `${this.calculatedHeight}px` }
+              : {}),
           }}
           ref={(el) => (this.gridContainerRef = el)}
         >

@@ -6,11 +6,11 @@
  * Provides methods for event subscriptions, state access, and programmatic operations.
  */
 
-import { GridItem, GridState } from '../services/state-manager';
-import { UndoRedoState } from '../services/undo-redo';
+import { GridItem, GridState } from "../services/state-manager";
+import { UndoRedoState } from "../services/undo-redo";
 
 // Export UI override types for consumer use
-export type { CanvasHeaderProps } from './ui-overrides';
+export type { CanvasHeaderProps } from "./ui-overrides";
 
 /**
  * Event callback type for grid builder events
@@ -337,7 +337,7 @@ export interface GridBuilderAPI {
     canvasId: string,
     componentType: string,
     position: { x: number; y: number; width: number; height: number },
-    config?: Record<string, any>
+    config?: Record<string, any>,
   ): string | null;
 
   /**
@@ -445,7 +445,7 @@ export interface GridBuilderAPI {
       type: string;
       position: { x: number; y: number; width: number; height: number };
       config?: Record<string, any>;
-    }>
+    }>,
   ): string[];
 
   /**
@@ -509,7 +509,9 @@ export interface GridBuilderAPI {
    * console.log(`Updated ${headerUpdates.length} headers to dark theme`);
    * ```
    */
-  updateConfigsBatch(updates: Array<{ itemId: string; config: Record<string, any> }>): void;
+  updateConfigsBatch(
+    updates: Array<{ itemId: string; config: Record<string, any> }>,
+  ): void;
 
   // ======================
   // Canvas Access

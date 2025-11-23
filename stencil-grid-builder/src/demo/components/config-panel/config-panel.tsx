@@ -25,12 +25,15 @@
  * @module config-panel
  */
 
-import { Component, h, Listen, Prop, State } from '@stencil/core';
+import { Component, h, Listen, Prop, State } from "@stencil/core";
 
 // Internal imports
-import { eventManager } from '../../../services/event-manager';
-import { gridState } from '../../../services/state-manager';
-import { ComponentDefinition, ConfigField } from '../../../types/component-definition';
+import { eventManager } from "../../../services/event-manager";
+import { gridState } from "../../../services/state-manager";
+import {
+  ComponentDefinition,
+  ConfigField,
+} from "../../../types/component-definition";
 
 /**
  * ConfigPanel Component
@@ -42,8 +45,8 @@ import { ComponentDefinition, ConfigField } from '../../../types/component-defin
  * **Shadow DOM**: Disabled (for consistency with other components)
  */
 @Component({
-  tag: 'config-panel',
-  styleUrl: 'config-panel.scss',
+  tag: "config-panel",
+  styleUrl: "config-panel.scss",
   shadow: false,
 })
 export class ConfigPanel {
@@ -73,7 +76,7 @@ export class ConfigPanel {
   /**
    * Component name (editable)
    */
-  @State() componentName: string = '';
+  @State() componentName: string = "";
 
   /**
    * Component config (editable)
@@ -92,27 +95,39 @@ export class ConfigPanel {
   /**
    * Callback for componentDeleted event (stored for unsubscribe)
    */
-  private handleComponentDeleted = (event: { itemId: string; canvasId: string }) => {
-    console.log('🔔 config-panel received componentDeleted event', {
+  private handleComponentDeleted = (event: {
+    itemId: string;
+    canvasId: string;
+  }) => {
+    console.log("🔔 config-panel received componentDeleted event", {
       eventItemId: event.itemId,
       selectedItemId: this.selectedItemId,
       isOpen: this.isOpen,
-      shouldClose: this.isOpen && this.selectedItemId && event.itemId === this.selectedItemId,
+      shouldClose:
+        this.isOpen &&
+        this.selectedItemId &&
+        event.itemId === this.selectedItemId,
     });
 
     // Close panel if the deleted item is the currently selected one
-    if (this.isOpen && this.selectedItemId && event.itemId === this.selectedItemId) {
-      console.log('  ✅ Closing panel because selected item was deleted');
+    if (
+      this.isOpen &&
+      this.selectedItemId &&
+      event.itemId === this.selectedItemId
+    ) {
+      console.log("  ✅ Closing panel because selected item was deleted");
       this.closePanel();
     } else {
-      console.log('  ℹ️ Not closing panel - different item or panel already closed');
+      console.log(
+        "  ℹ️ Not closing panel - different item or panel already closed",
+      );
     }
   };
 
   /**
    * Listen for item-click events to open panel
    */
-  @Listen('item-click', { target: 'document' })
+  @Listen("item-click", { target: "document" })
   handleItemClick(event: CustomEvent) {
     const { itemId, canvasId } = event.detail;
     this.openPanel(itemId, canvasId);
@@ -122,17 +137,19 @@ export class ConfigPanel {
    * Component lifecycle: Subscribe to componentDeleted event
    */
   componentDidLoad() {
-    console.log('📋 config-panel componentDidLoad - subscribing to componentDeleted event');
+    console.log(
+      "📋 config-panel componentDidLoad - subscribing to componentDeleted event",
+    );
     // Subscribe to componentDeleted events to auto-close panel when selected item is deleted
-    eventManager.on('componentDeleted', this.handleComponentDeleted);
-    console.log('  ✅ Subscribed to componentDeleted event');
+    eventManager.on("componentDeleted", this.handleComponentDeleted);
+    console.log("  ✅ Subscribed to componentDeleted event");
   }
 
   /**
    * Component lifecycle: Cleanup event subscriptions
    */
   disconnectedCallback() {
-    eventManager.off('componentDeleted', this.handleComponentDeleted);
+    eventManager.off("componentDeleted", this.handleComponentDeleted);
   }
 
   /**
@@ -140,7 +157,7 @@ export class ConfigPanel {
    */
   render() {
     const panelClasses = {
-      'config-panel': true,
+      "config-panel": true,
       open: this.isOpen,
     };
 
@@ -177,16 +194,32 @@ export class ConfigPanel {
           <div class="config-field">
             <label>Layer Order</label>
             <div class="z-index-controls">
-              <button class="z-index-btn" onClick={() => this.bringToFront()} title="Bring to Front">
+              <button
+                class="z-index-btn"
+                onClick={() => this.bringToFront()}
+                title="Bring to Front"
+              >
                 ⬆️ To Front
               </button>
-              <button class="z-index-btn" onClick={() => this.bringForward()} title="Bring Forward">
+              <button
+                class="z-index-btn"
+                onClick={() => this.bringForward()}
+                title="Bring Forward"
+              >
                 ↑ Forward
               </button>
-              <button class="z-index-btn" onClick={() => this.sendBackward()} title="Send Backward">
+              <button
+                class="z-index-btn"
+                onClick={() => this.sendBackward()}
+                title="Send Backward"
+              >
                 ↓ Backward
               </button>
-              <button class="z-index-btn" onClick={() => this.sendToBack()} title="Send to Back">
+              <button
+                class="z-index-btn"
+                onClick={() => this.sendToBack()}
+                title="Send to Back"
+              >
                 ⬇️ To Back
               </button>
             </div>
@@ -222,7 +255,9 @@ export class ConfigPanel {
       return (
         <div class="config-section">
           <h3>Component Configuration</h3>
-          {definition.configSchema.map((field) => this.renderConfigField(field))}
+          {definition.configSchema.map((field) =>
+            this.renderConfigField(field),
+          )}
         </div>
       );
     }
@@ -230,7 +265,9 @@ export class ConfigPanel {
     // No config available
     return (
       <div class="config-section">
-        <p class="no-config">No configuration options available for this component.</p>
+        <p class="no-config">
+          No configuration options available for this component.
+        </p>
       </div>
     );
   }
@@ -239,10 +276,10 @@ export class ConfigPanel {
    * Render a single config field from schema
    */
   private renderConfigField(field: ConfigField) {
-    const value = this.componentConfig[field.name] ?? field.defaultValue ?? '';
+    const value = this.componentConfig[field.name] ?? field.defaultValue ?? "";
 
     switch (field.type) {
-      case 'text':
+      case "text":
         return (
           <div class="config-field" key={field.name}>
             <label htmlFor={field.name}>{field.label}</label>
@@ -250,13 +287,18 @@ export class ConfigPanel {
               type="text"
               id={field.name}
               value={value}
-              onInput={(e) => this.handleConfigChange(field.name, (e.target as HTMLInputElement).value)}
+              onInput={(e) =>
+                this.handleConfigChange(
+                  field.name,
+                  (e.target as HTMLInputElement).value,
+                )
+              }
               placeholder={field.placeholder}
             />
           </div>
         );
 
-      case 'number':
+      case "number":
         return (
           <div class="config-field" key={field.name}>
             <label htmlFor={field.name}>{field.label}</label>
@@ -264,7 +306,12 @@ export class ConfigPanel {
               type="number"
               id={field.name}
               value={value}
-              onInput={(e) => this.handleConfigChange(field.name, Number((e.target as HTMLInputElement).value))}
+              onInput={(e) =>
+                this.handleConfigChange(
+                  field.name,
+                  Number((e.target as HTMLInputElement).value),
+                )
+              }
               min={field.min}
               max={field.max}
               step={field.step}
@@ -272,20 +319,31 @@ export class ConfigPanel {
           </div>
         );
 
-      case 'select':
+      case "select":
         return (
           <div class="config-field" key={field.name}>
             <label htmlFor={field.name}>{field.label}</label>
             <select
               id={field.name}
-              onChange={(e) => this.handleConfigChange(field.name, (e.target as HTMLSelectElement).value)}
+              onChange={(e) =>
+                this.handleConfigChange(
+                  field.name,
+                  (e.target as HTMLSelectElement).value,
+                )
+              }
             >
               {field.options?.map((option) => {
                 // Handle both string and object options
-                const optionValue = typeof option === 'string' ? option : option.value;
-                const optionLabel = typeof option === 'string' ? option : option.label;
+                const optionValue =
+                  typeof option === "string" ? option : option.value;
+                const optionLabel =
+                  typeof option === "string" ? option : option.label;
                 return (
-                  <option key={optionValue} value={optionValue} selected={value === optionValue}>
+                  <option
+                    key={optionValue}
+                    value={optionValue}
+                    selected={value === optionValue}
+                  >
                     {optionLabel}
                   </option>
                 );
@@ -294,7 +352,7 @@ export class ConfigPanel {
           </div>
         );
 
-      case 'checkbox':
+      case "checkbox":
         return (
           <div class="config-field config-field-checkbox" key={field.name}>
             <label htmlFor={field.name}>
@@ -302,14 +360,19 @@ export class ConfigPanel {
                 type="checkbox"
                 id={field.name}
                 checked={!!value}
-                onChange={(e) => this.handleConfigChange(field.name, (e.target as HTMLInputElement).checked)}
+                onChange={(e) =>
+                  this.handleConfigChange(
+                    field.name,
+                    (e.target as HTMLInputElement).checked,
+                  )
+                }
               />
               {field.label}
             </label>
           </div>
         );
 
-      case 'color':
+      case "color":
         return (
           <div class="config-field" key={field.name}>
             <label htmlFor={field.name}>{field.label}</label>
@@ -317,19 +380,29 @@ export class ConfigPanel {
               type="color"
               id={field.name}
               value={value}
-              onInput={(e) => this.handleConfigChange(field.name, (e.target as HTMLInputElement).value)}
+              onInput={(e) =>
+                this.handleConfigChange(
+                  field.name,
+                  (e.target as HTMLInputElement).value,
+                )
+              }
             />
           </div>
         );
 
-      case 'textarea':
+      case "textarea":
         return (
           <div class="config-field" key={field.name}>
             <label htmlFor={field.name}>{field.label}</label>
             <textarea
               id={field.name}
               value={value}
-              onInput={(e) => this.handleConfigChange(field.name, (e.target as HTMLTextAreaElement).value)}
+              onInput={(e) =>
+                this.handleConfigChange(
+                  field.name,
+                  (e.target as HTMLTextAreaElement).value,
+                )
+              }
               placeholder={field.placeholder}
               rows={field.rows || 3}
             />
@@ -400,7 +473,9 @@ export class ConfigPanel {
     // Revert changes on cancel
     if (this.selectedItemId && this.selectedCanvasId && this.originalState) {
       const canvas = gridState.canvases[this.selectedCanvasId];
-      const itemIndex = canvas?.items.findIndex((i) => i.id === this.selectedItemId);
+      const itemIndex = canvas?.items.findIndex(
+        (i) => i.id === this.selectedItemId,
+      );
       if (itemIndex !== undefined && itemIndex !== -1) {
         canvas.items[itemIndex] = {
           ...canvas.items[itemIndex],
@@ -415,7 +490,7 @@ export class ConfigPanel {
     this.isOpen = false;
     this.selectedItemId = null;
     this.selectedCanvasId = null;
-    this.componentName = '';
+    this.componentName = "";
     this.componentConfig = {};
     this.originalState = null;
   };
@@ -428,7 +503,7 @@ export class ConfigPanel {
     this.isOpen = false;
     this.selectedItemId = null;
     this.selectedCanvasId = null;
-    this.componentName = '';
+    this.componentName = "";
     this.componentConfig = {};
     this.originalState = null;
   };
@@ -443,9 +518,14 @@ export class ConfigPanel {
     // Apply changes immediately (live preview)
     if (this.selectedItemId && this.selectedCanvasId) {
       const canvas = gridState.canvases[this.selectedCanvasId];
-      const itemIndex = canvas?.items.findIndex((i) => i.id === this.selectedItemId);
+      const itemIndex = canvas?.items.findIndex(
+        (i) => i.id === this.selectedItemId,
+      );
       if (itemIndex !== undefined && itemIndex !== -1) {
-        canvas.items[itemIndex] = { ...canvas.items[itemIndex], name: this.componentName };
+        canvas.items[itemIndex] = {
+          ...canvas.items[itemIndex],
+          name: this.componentName,
+        };
         gridState.canvases = { ...gridState.canvases };
       }
     }
@@ -461,7 +541,9 @@ export class ConfigPanel {
     // Apply changes immediately (live preview)
     if (this.selectedItemId && this.selectedCanvasId) {
       const canvas = gridState.canvases[this.selectedCanvasId];
-      const itemIndex = canvas?.items.findIndex((i) => i.id === this.selectedItemId);
+      const itemIndex = canvas?.items.findIndex(
+        (i) => i.id === this.selectedItemId,
+      );
       if (itemIndex !== undefined && itemIndex !== -1) {
         canvas.items[itemIndex] = {
           ...canvas.items[itemIndex],
@@ -478,7 +560,9 @@ export class ConfigPanel {
   private bringToFront = () => {
     if (!this.selectedItemId || !this.selectedCanvasId) return;
     const canvas = gridState.canvases[this.selectedCanvasId];
-    const itemIndex = canvas?.items.findIndex((i) => i.id === this.selectedItemId);
+    const itemIndex = canvas?.items.findIndex(
+      (i) => i.id === this.selectedItemId,
+    );
     if (itemIndex === undefined || itemIndex === -1) return;
 
     const newZIndex = ++canvas.zIndexCounter;
@@ -489,18 +573,25 @@ export class ConfigPanel {
   private bringForward = () => {
     if (!this.selectedItemId || !this.selectedCanvasId) return;
     const canvas = gridState.canvases[this.selectedCanvasId];
-    const itemIndex = canvas?.items.findIndex((i) => i.id === this.selectedItemId);
+    const itemIndex = canvas?.items.findIndex(
+      (i) => i.id === this.selectedItemId,
+    );
     if (itemIndex === undefined || itemIndex === -1) return;
 
     const item = canvas.items[itemIndex];
     const itemsAbove = canvas.items.filter((i) => i.zIndex > item.zIndex);
     if (itemsAbove.length > 0) {
       const nextZIndex = Math.min(...itemsAbove.map((i) => i.zIndex));
-      const itemAboveIndex = canvas.items.findIndex((i) => i.zIndex === nextZIndex);
+      const itemAboveIndex = canvas.items.findIndex(
+        (i) => i.zIndex === nextZIndex,
+      );
       if (itemAboveIndex !== -1) {
         const temp = item.zIndex;
         canvas.items[itemIndex] = { ...item, zIndex: nextZIndex };
-        canvas.items[itemAboveIndex] = { ...canvas.items[itemAboveIndex], zIndex: temp };
+        canvas.items[itemAboveIndex] = {
+          ...canvas.items[itemAboveIndex],
+          zIndex: temp,
+        };
         gridState.canvases = { ...gridState.canvases };
       }
     }
@@ -509,18 +600,25 @@ export class ConfigPanel {
   private sendBackward = () => {
     if (!this.selectedItemId || !this.selectedCanvasId) return;
     const canvas = gridState.canvases[this.selectedCanvasId];
-    const itemIndex = canvas?.items.findIndex((i) => i.id === this.selectedItemId);
+    const itemIndex = canvas?.items.findIndex(
+      (i) => i.id === this.selectedItemId,
+    );
     if (itemIndex === undefined || itemIndex === -1) return;
 
     const item = canvas.items[itemIndex];
     const itemsBelow = canvas.items.filter((i) => i.zIndex < item.zIndex);
     if (itemsBelow.length > 0) {
       const prevZIndex = Math.max(...itemsBelow.map((i) => i.zIndex));
-      const itemBelowIndex = canvas.items.findIndex((i) => i.zIndex === prevZIndex);
+      const itemBelowIndex = canvas.items.findIndex(
+        (i) => i.zIndex === prevZIndex,
+      );
       if (itemBelowIndex !== -1) {
         const temp = item.zIndex;
         canvas.items[itemIndex] = { ...item, zIndex: prevZIndex };
-        canvas.items[itemBelowIndex] = { ...canvas.items[itemBelowIndex], zIndex: temp };
+        canvas.items[itemBelowIndex] = {
+          ...canvas.items[itemBelowIndex],
+          zIndex: temp,
+        };
         gridState.canvases = { ...gridState.canvases };
       }
     }
@@ -529,7 +627,9 @@ export class ConfigPanel {
   private sendToBack = () => {
     if (!this.selectedItemId || !this.selectedCanvasId) return;
     const canvas = gridState.canvases[this.selectedCanvasId];
-    const itemIndex = canvas?.items.findIndex((i) => i.id === this.selectedItemId);
+    const itemIndex = canvas?.items.findIndex(
+      (i) => i.id === this.selectedItemId,
+    );
     if (itemIndex === undefined || itemIndex === -1) return;
 
     const minZIndex = Math.min(...canvas.items.map((i) => i.zIndex));
@@ -542,7 +642,10 @@ export class ConfigPanel {
         zIndex: itm.id === this.selectedItemId ? 1 : index + 2,
       }));
     } else {
-      canvas.items[itemIndex] = { ...canvas.items[itemIndex], zIndex: newZIndex };
+      canvas.items[itemIndex] = {
+        ...canvas.items[itemIndex],
+        zIndex: newZIndex,
+      };
     }
 
     gridState.canvases = { ...gridState.canvases };

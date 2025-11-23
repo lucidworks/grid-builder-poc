@@ -52,20 +52,20 @@
  * @module grid-viewer
  */
 
-import { Component, Element, h, Host, Prop, State, Watch } from '@stencil/core';
+import { Component, Element, h, Host, Prop, State, Watch } from "@stencil/core";
 
 // Type imports
-import { ComponentDefinition } from '../../types/component-definition';
-import { GridConfig } from '../../types/grid-config';
-import { GridBuilderTheme } from '../../types/theme';
-import { GridExport } from '../../types/grid-export';
+import { ComponentDefinition } from "../../types/component-definition";
+import { GridConfig } from "../../types/grid-config";
+import { GridBuilderTheme } from "../../types/theme";
+import { GridExport } from "../../types/grid-export";
 
 // Service imports - only rendering-related, no editing
-import { ViewerState } from '../../services/state-manager';
-import { createStore } from '@stencil/store';
-import { createDebugLogger } from '../../utils/debug';
+import { ViewerState } from "../../services/state-manager";
+import { createStore } from "@stencil/store";
+import { createDebugLogger } from "../../utils/debug";
 
-const debug = createDebugLogger('grid-viewer');
+const debug = createDebugLogger("grid-viewer");
 
 /**
  * GridViewer Component
@@ -84,8 +84,8 @@ const debug = createDebugLogger('grid-viewer');
  * - Rendering-only canvas sections
  */
 @Component({
-  tag: 'grid-viewer',
-  styleUrl: 'grid-viewer.scss',
+  tag: "grid-viewer",
+  styleUrl: "grid-viewer.scss",
   shadow: false, // Light DOM for consistency with grid-builder
 })
 export class GridViewer {
@@ -177,7 +177,8 @@ export class GridViewer {
    * **Purpose**: Map component type → definition for lookup
    * **Built from**: components prop
    */
-  @State() private componentRegistry: Map<string, ComponentDefinition> = new Map();
+  @State() private componentRegistry: Map<string, ComponentDefinition> =
+    new Map();
 
   /**
    * Local viewer state store
@@ -208,33 +209,36 @@ export class GridViewer {
   componentWillLoad() {
     // Validate required props
     if (!this.components || this.components.length === 0) {
-      console.error('GridViewer: components prop is required');
+      console.error("GridViewer: components prop is required");
       return;
     }
 
     // Build component registry
     this.componentRegistry = new Map(
-      this.components.map(comp => [comp.type, comp])
+      this.components.map((comp) => [comp.type, comp]),
     );
 
     // Validate unique component types
     if (this.componentRegistry.size !== this.components.length) {
-      console.warn('GridViewer: Duplicate component types detected');
+      console.warn("GridViewer: Duplicate component types detected");
     }
 
     // Initialize local viewer state store
     const initialViewerState: ViewerState = {
       canvases: {},
-      currentViewport: 'desktop',
+      currentViewport: "desktop",
     };
 
     // Restore initial state if provided
     if (this.initialState) {
       // Handle both ViewerState and GridExport formats
-      if ('viewport' in this.initialState) {
+      if ("viewport" in this.initialState) {
         // GridExport format
         initialViewerState.currentViewport = this.initialState.viewport;
-        initialViewerState.canvases = this.initialState.canvases as Record<string, any>;
+        initialViewerState.canvases = this.initialState.canvases as Record<
+          string,
+          any
+        >;
       } else {
         // ViewerState format
         Object.assign(initialViewerState, this.initialState);
@@ -277,10 +281,10 @@ export class GridViewer {
    *
    * **Purpose**: Rebuild component registry when components prop changes
    */
-  @Watch('components')
+  @Watch("components")
   handleComponentsChange(newComponents: ComponentDefinition[]) {
     this.componentRegistry = new Map(
-      newComponents.map(comp => [comp.type, comp])
+      newComponents.map((comp) => [comp.type, comp]),
     );
   }
 
@@ -289,14 +293,17 @@ export class GridViewer {
    *
    * **Purpose**: Update viewer state when initialState prop changes
    */
-  @Watch('initialState')
+  @Watch("initialState")
   handleInitialStateChange(newState: Partial<ViewerState> | GridExport) {
     if (newState) {
       // Handle both ViewerState and GridExport formats
-      if ('viewport' in newState) {
+      if ("viewport" in newState) {
         // GridExport format
         this.viewerState.state.currentViewport = newState.viewport;
-        this.viewerState.state.canvases = newState.canvases as Record<string, any>;
+        this.viewerState.state.canvases = newState.canvases as Record<
+          string,
+          any
+        >;
       } else {
         // ViewerState format
         Object.assign(this.viewerState.state, newState);
@@ -316,13 +323,13 @@ export class GridViewer {
 
     // Apply predefined theme properties
     if (theme.primaryColor) {
-      host.style.setProperty('--grid-viewer-primary-color', theme.primaryColor);
+      host.style.setProperty("--grid-viewer-primary-color", theme.primaryColor);
     }
     if (theme.canvasBackground) {
-      host.style.setProperty('--grid-viewer-canvas-bg', theme.canvasBackground);
+      host.style.setProperty("--grid-viewer-canvas-bg", theme.canvasBackground);
     }
     if (theme.fontFamily) {
-      host.style.setProperty('--grid-viewer-font-family', theme.fontFamily);
+      host.style.setProperty("--grid-viewer-font-family", theme.fontFamily);
     }
 
     // Apply custom properties
@@ -352,21 +359,28 @@ export class GridViewer {
         // Get container width directly from the element
         // Note: We use offsetWidth instead of entry.contentRect.width because
         // the grid-viewer uses Light DOM and contentRect returns 0 for elements with height: 100%
-        const width = this.hostElement.offsetWidth || entry.borderBoxSize?.[0]?.inlineSize || entry.contentRect.width;
+        const width =
+          this.hostElement.offsetWidth ||
+          entry.borderBoxSize?.[0]?.inlineSize ||
+          entry.contentRect.width;
 
         // Skip viewport switching if width is 0 or very small (container not yet laid out)
         // This prevents premature switching to mobile before CSS layout is complete
         if (width < 100) {
-          debug.log(`📱 [Viewer] Skipping viewport switch - container not yet laid out (width: ${Math.round(width)}px)`);
+          debug.log(
+            `📱 [Viewer] Skipping viewport switch - container not yet laid out (width: ${Math.round(width)}px)`,
+          );
           return;
         }
 
         // Determine target viewport based on container width
-        const targetViewport = width < 768 ? 'mobile' : 'desktop';
+        const targetViewport = width < 768 ? "mobile" : "desktop";
 
         // Only update if viewport changed
         if (this.viewerState.state.currentViewport !== targetViewport) {
-          debug.log(`📱 [Viewer] Container-based viewport switch: ${this.viewerState.state.currentViewport} → ${targetViewport} (width: ${Math.round(width)}px)`);
+          debug.log(
+            `📱 [Viewer] Container-based viewport switch: ${this.viewerState.state.currentViewport} → ${targetViewport} (width: ${Math.round(width)}px)`,
+          );
           this.viewerState.state.currentViewport = targetViewport;
         }
       }
@@ -395,7 +409,7 @@ export class GridViewer {
     const canvasIds = Object.keys(this.viewerState.state.canvases);
 
     return (
-      <Host ref={(el) => this.el = el}>
+      <Host ref={(el) => (this.el = el)}>
         <div class="grid-viewer-container">
           {/* Canvas Area Only (no palette, no config panel) */}
           <div class="canvas-area">
@@ -408,7 +422,9 @@ export class GridViewer {
                   componentRegistry={this.componentRegistry}
                   items={this.viewerState.state.canvases[canvasId].items}
                   currentViewport={this.viewerState.state.currentViewport}
-                  backgroundColor={this.canvasMetadata?.[canvasId]?.backgroundColor}
+                  backgroundColor={
+                    this.canvasMetadata?.[canvasId]?.backgroundColor
+                  }
                 />
               ))}
             </div>

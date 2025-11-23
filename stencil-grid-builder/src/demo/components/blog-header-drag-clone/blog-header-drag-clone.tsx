@@ -1,8 +1,8 @@
-import { Component, h } from '@stencil/core';
+import { Component, h } from "@stencil/core";
 
 @Component({
-  tag: 'blog-header-drag-clone',
-  styleUrl: 'blog-header-drag-clone.scss',
+  tag: "blog-header-drag-clone",
+  styleUrl: "blog-header-drag-clone.scss",
   shadow: false,
 })
 export class BlogHeaderDragClone {

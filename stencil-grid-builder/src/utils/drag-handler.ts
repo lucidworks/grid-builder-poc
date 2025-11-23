@@ -131,12 +131,20 @@
  * @module drag-handler
  */
 
-import type { InteractDragEvent, Interactable } from 'interactjs';
-import { GridItem, setActiveCanvas } from '../services/state-manager';
-import { GridConfig } from '../types/grid-config';
-import { domCache } from './dom-cache';
-import { getGridSizeHorizontal, getGridSizeVertical, pixelsToGridX, pixelsToGridY } from './grid-calculations';
-import { constrainPositionToCanvas, CANVAS_WIDTH_UNITS } from './boundary-constraints';
+import type { InteractDragEvent, Interactable } from "interactjs";
+import { GridItem, setActiveCanvas } from "../services/state-manager";
+import { GridConfig } from "../types/grid-config";
+import { domCache } from "./dom-cache";
+import {
+  getGridSizeHorizontal,
+  getGridSizeVertical,
+  pixelsToGridX,
+  pixelsToGridY,
+} from "./grid-calculations";
+import {
+  constrainPositionToCanvas,
+  CANVAS_WIDTH_UNITS,
+} from "./boundary-constraints";
 
 /**
  * Extract current transform position from element's inline style
@@ -250,7 +258,7 @@ export class DragHandler {
   private basePosition: { x: number; y: number } = { x: 0, y: 0 };
 
   /** Canvas ID where drag started - for cross-canvas detection */
-  private dragStartCanvasId: string = '';
+  private dragStartCanvasId: string = "";
 
   /** Optional separate drag handle element */
   private dragHandleElement?: HTMLElement;
@@ -305,7 +313,7 @@ export class DragHandler {
     onUpdate: (item: GridItem) => void,
     config?: GridConfig,
     dragHandleElement?: HTMLElement,
-    onDragMove?: () => void
+    onDragMove?: () => void,
   ) {
     this.element = element;
     this.item = item;
@@ -404,7 +412,7 @@ export class DragHandler {
   private initialize(): void {
     const interact = window.interact;
     if (!interact) {
-      console.warn('interact.js not loaded');
+      console.warn("interact.js not loaded");
       return;
     }
 
@@ -418,15 +426,17 @@ export class DragHandler {
     const config: any = {
       inertia: false,
       // Auto-scroll configuration
-      autoScroll: enableAutoScroll ? {
-        enabled: true,
-        // Scroll the window (works for most cases)
-        container: window,
-        // Trigger scroll when within 60px of edge
-        margin: 60,
-        // Scroll speed
-        speed: 600,
-      } : false,
+      autoScroll: enableAutoScroll
+        ? {
+            enabled: true,
+            // Scroll the window (works for most cases)
+            container: window,
+            // Trigger scroll when within 60px of edge
+            margin: 60,
+            // Scroll speed
+            speed: 600,
+          }
+        : false,
       listeners: {
         start: this.handleDragStart.bind(this),
         move: this.handleDragMove.bind(this),
@@ -436,8 +446,8 @@ export class DragHandler {
 
     // Only use allowFrom/ignoreFrom if dragging from main element
     if (!this.dragHandleElement) {
-      config.allowFrom = '.grid-item-header';
-      config.ignoreFrom = '.resize-handle';
+      config.allowFrom = ".grid-item-header";
+      config.ignoreFrom = ".resize-handle";
     }
 
     this.interactInstance = interact(dragElement).draggable(config);
@@ -488,7 +498,7 @@ export class DragHandler {
   private handleDragStart(event: InteractDragEvent): void {
     // Start performance tracking
     if (window.perfMonitor) {
-      window.perfMonitor.startOperation('drag');
+      window.perfMonitor.startOperation("drag");
     }
 
     // Reset movement flag
@@ -496,7 +506,7 @@ export class DragHandler {
 
     // Add dragging class to main element (not the header)
     const elementToMark = this.dragHandleElement ? this.element : event.target;
-    elementToMark.classList.add('dragging');
+    elementToMark.classList.add("dragging");
 
     // Store the original canvas ID at drag start
     this.dragStartCanvasId = this.item.canvasId;
@@ -516,8 +526,8 @@ export class DragHandler {
     };
 
     // Reset accumulation
-    event.target.setAttribute('data-x', '0');
-    event.target.setAttribute('data-y', '0');
+    event.target.setAttribute("data-x", "0");
+    event.target.setAttribute("data-y", "0");
   }
 
   /**
@@ -582,12 +592,12 @@ export class DragHandler {
    * ```
    */
   private handleDragMove(event: InteractDragEvent): void {
-    const x = (parseFloat(event.target.getAttribute('data-x')) || 0) + event.dx;
-    const y = (parseFloat(event.target.getAttribute('data-y')) || 0) + event.dy;
+    const x = (parseFloat(event.target.getAttribute("data-x")) || 0) + event.dx;
+    const y = (parseFloat(event.target.getAttribute("data-y")) || 0) + event.dy;
 
     // Update data attributes immediately for next move event
-    event.target.setAttribute('data-x', x.toString());
-    event.target.setAttribute('data-y', y.toString());
+    event.target.setAttribute("data-x", x.toString());
+    event.target.setAttribute("data-y", y.toString());
 
     // Mark that movement has occurred and notify parent immediately
     if (!this.hasMoved && this.onDragMove) {
@@ -604,7 +614,9 @@ export class DragHandler {
     this.dragRafId = requestAnimationFrame(() => {
       // If dragging from a separate handle, apply transform to main element
       // Otherwise, apply to the event target
-      const elementToMove = this.dragHandleElement ? this.element : event.target;
+      const elementToMove = this.dragHandleElement
+        ? this.element
+        : event.target;
 
       // Apply drag delta to base position
       // Direct DOM manipulation - no StencilJS re-render during drag
@@ -614,7 +626,6 @@ export class DragHandler {
       this.dragRafId = null;
     });
   }
-
 
   /**
    * Handle drag end event - finalize position and update state
@@ -735,12 +746,12 @@ export class DragHandler {
       this.dragRafId = null;
     }
 
-    const deltaX = parseFloat(event.target.getAttribute('data-x')) || 0;
-    const deltaY = parseFloat(event.target.getAttribute('data-y')) || 0;
+    const deltaX = parseFloat(event.target.getAttribute("data-x")) || 0;
+    const deltaY = parseFloat(event.target.getAttribute("data-y")) || 0;
 
     // Remove dragging class immediately to enable CSS transitions
     const elementToMark = this.dragHandleElement ? this.element : event.target;
-    elementToMark.classList.remove('dragging');
+    elementToMark.classList.remove("dragging");
 
     // If drag movement occurred, prevent click event from opening config panel
     if (this.hasMoved) {
@@ -751,13 +762,13 @@ export class DragHandler {
         e.stopPropagation();
         e.preventDefault();
         // Remove this listener after handling one click
-        draggedElement.removeEventListener('click', suppressClick, true);
+        draggedElement.removeEventListener("click", suppressClick, true);
       };
-      draggedElement.addEventListener('click', suppressClick, true);
+      draggedElement.addEventListener("click", suppressClick, true);
 
       // Fallback cleanup in case click never fires
       setTimeout(() => {
-        draggedElement.removeEventListener('click', suppressClick, true);
+        draggedElement.removeEventListener("click", suppressClick, true);
       }, 100);
     }
 
@@ -769,7 +780,7 @@ export class DragHandler {
     let targetCanvasId = this.item.canvasId;
     let isFullyContained = false;
 
-    const gridContainers = document.querySelectorAll('.grid-container');
+    const gridContainers = document.querySelectorAll(".grid-container");
 
     // Priority 1: Check if item is fully contained in any canvas
     gridContainers.forEach((container: HTMLElement) => {
@@ -780,7 +791,8 @@ export class DragHandler {
         rect.top >= containerRect.top &&
         rect.bottom <= containerRect.bottom
       ) {
-        targetCanvasId = container.getAttribute('data-canvas-id') || this.item.canvasId;
+        targetCanvasId =
+          container.getAttribute("data-canvas-id") || this.item.canvasId;
         isFullyContained = true;
       }
     });
@@ -798,7 +810,8 @@ export class DragHandler {
           centerY >= containerRect.top &&
           centerY <= containerRect.bottom
         ) {
-          targetCanvasId = container.getAttribute('data-canvas-id') || this.item.canvasId;
+          targetCanvasId =
+            container.getAttribute("data-canvas-id") || this.item.canvasId;
         }
       });
     }
@@ -807,12 +820,12 @@ export class DragHandler {
     // (Use dragStartCanvasId since item.canvasId may have been updated by dropzone already)
     if (targetCanvasId !== this.dragStartCanvasId) {
       // Clean up drag state (dragging class already removed above)
-      event.target.setAttribute('data-x', '0');
-      event.target.setAttribute('data-y', '0');
+      event.target.setAttribute("data-x", "0");
+      event.target.setAttribute("data-y", "0");
 
       // End performance tracking
       if (window.perfMonitor) {
-        window.perfMonitor.endOperation('drag');
+        window.perfMonitor.endOperation("drag");
       }
       return;
     }
@@ -837,7 +850,9 @@ export class DragHandler {
     newY = Math.round(newY / gridSizeY) * gridSizeY;
 
     // Get item dimensions (use main element if dragging from handle)
-    const elementForDimensions = this.dragHandleElement ? this.element : event.target;
+    const elementForDimensions = this.dragHandleElement
+      ? this.element
+      : event.target;
     const itemWidth = parseFloat(elementForDimensions.style.width) || 0;
     const itemHeight = parseFloat(elementForDimensions.style.height) || 0;
 
@@ -854,7 +869,7 @@ export class DragHandler {
       gridY,
       gridWidth,
       gridHeight,
-      CANVAS_WIDTH_UNITS
+      CANVAS_WIDTH_UNITS,
     );
 
     // Convert back to pixels
@@ -864,14 +879,14 @@ export class DragHandler {
     newY = constrained.y * gridSizeYForConversion;
 
     // Update item position in current viewport's layout (use constrained grid units)
-    const currentViewport = window.gridState?.currentViewport || 'desktop';
-    const layout = this.item.layouts[currentViewport as 'desktop' | 'mobile'];
+    const currentViewport = window.gridState?.currentViewport || "desktop";
+    const layout = this.item.layouts[currentViewport as "desktop" | "mobile"];
 
     layout.x = constrained.x;
     layout.y = constrained.y;
 
     // If in mobile view, mark as customized
-    if (currentViewport === 'mobile') {
+    if (currentViewport === "mobile") {
       this.item.layouts.mobile.customized = true;
       // Set width/height if not already set (copy from desktop)
       if (this.item.layouts.mobile.width === null) {
@@ -887,14 +902,16 @@ export class DragHandler {
     // (dragging class was removed above, enabling transitions)
     requestAnimationFrame(() => {
       // Apply final snapped position to DOM (to main element if dragging from handle)
-      const elementToMove = this.dragHandleElement ? this.element : event.target;
+      const elementToMove = this.dragHandleElement
+        ? this.element
+        : event.target;
       elementToMove.style.transform = `translate(${newX}px, ${newY}px)`;
-      event.target.setAttribute('data-x', '0');
-      event.target.setAttribute('data-y', '0');
+      event.target.setAttribute("data-x", "0");
+      event.target.setAttribute("data-y", "0");
 
       // End performance tracking
       if (window.perfMonitor) {
-        window.perfMonitor.endOperation('drag');
+        window.perfMonitor.endOperation("drag");
       }
 
       // Trigger StencilJS update (single re-render at end)
@@ -929,8 +946,10 @@ export class DragHandler {
 
     if (!originalPos) {
       // Fallback: just remove dragging class if no original position stored
-      const elementToMark = this.dragHandleElement ? this.element : event.target;
-      elementToMark.classList.remove('dragging');
+      const elementToMark = this.dragHandleElement
+        ? this.element
+        : event.target;
+      elementToMark.classList.remove("dragging");
       return;
     }
 
@@ -938,7 +957,8 @@ export class DragHandler {
     const elementToMove = this.dragHandleElement ? this.element : event.target;
 
     // Enable CSS transitions for smooth snap-back
-    elementToMove.style.transition = 'transform 0.3s cubic-bezier(0.4, 0.0, 0.2, 1)';
+    elementToMove.style.transition =
+      "transform 0.3s cubic-bezier(0.4, 0.0, 0.2, 1)";
 
     // Snap back to original position
     elementToMove.style.transform =
@@ -946,13 +966,13 @@ export class DragHandler {
 
     // Remove transition after animation completes
     setTimeout(() => {
-      elementToMove.style.transition = '';
-      elementToMove.classList.remove('dragging');
+      elementToMove.style.transition = "";
+      elementToMove.classList.remove("dragging");
     }, 300);
 
     // Reset data attributes
-    event.target.setAttribute('data-x', '0');
-    event.target.setAttribute('data-y', '0');
+    event.target.setAttribute("data-x", "0");
+    event.target.setAttribute("data-y", "0");
 
     // Cleanup stored properties
     delete (this.element as any)._originalPosition;
@@ -960,7 +980,7 @@ export class DragHandler {
 
     // End performance tracking
     if (window.perfMonitor) {
-      window.perfMonitor.endOperation('drag');
+      window.perfMonitor.endOperation("drag");
     }
 
     // No state update - item stays in original position

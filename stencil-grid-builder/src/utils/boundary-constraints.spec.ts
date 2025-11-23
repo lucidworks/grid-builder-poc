@@ -11,17 +11,17 @@ import {
   constrainSizeToCanvas,
   constrainPositionToCanvas,
   applyBoundaryConstraints,
-} from './boundary-constraints';
-import { ComponentDefinition } from '../types/component-definition';
-import { mockDragClone } from './test-helpers';
+} from "./boundary-constraints";
+import { ComponentDefinition } from "../types/component-definition";
+import { mockDragClone } from "./test-helpers";
 
-describe('boundary-constraints', () => {
-  describe('canComponentFitCanvas', () => {
-    it('should return true when component fits', () => {
+describe("boundary-constraints", () => {
+  describe("canComponentFitCanvas", () => {
+    it("should return true when component fits", () => {
       const definition: ComponentDefinition = {
-        type: 'test',
-        name: 'Test',
-        icon: '🧪',
+        type: "test",
+        name: "Test",
+        icon: "🧪",
         defaultSize: { width: 20, height: 10 },
         minSize: { width: 10, height: 5 },
         renderDragClone: mockDragClone,
@@ -31,11 +31,11 @@ describe('boundary-constraints', () => {
       expect(canComponentFitCanvas(definition)).toBe(true);
     });
 
-    it('should return false when minSize exceeds canvas width', () => {
+    it("should return false when minSize exceeds canvas width", () => {
       const definition: ComponentDefinition = {
-        type: 'huge',
-        name: 'Huge',
-        icon: '📦',
+        type: "huge",
+        name: "Huge",
+        icon: "📦",
         defaultSize: { width: 60, height: 10 },
         minSize: { width: 60, height: 10 },
         renderDragClone: mockDragClone,
@@ -45,11 +45,11 @@ describe('boundary-constraints', () => {
       expect(canComponentFitCanvas(definition, 50)).toBe(false);
     });
 
-    it('should return true when minSize equals canvas width', () => {
+    it("should return true when minSize equals canvas width", () => {
       const definition: ComponentDefinition = {
-        type: 'full-width',
-        name: 'Full Width',
-        icon: '📏',
+        type: "full-width",
+        name: "Full Width",
+        icon: "📏",
         defaultSize: { width: 50, height: 10 },
         minSize: { width: 50, height: 10 },
         renderDragClone: mockDragClone,
@@ -59,11 +59,11 @@ describe('boundary-constraints', () => {
       expect(canComponentFitCanvas(definition, 50)).toBe(true);
     });
 
-    it('should return true when no minSize specified', () => {
+    it("should return true when no minSize specified", () => {
       const definition: ComponentDefinition = {
-        type: 'flexible',
-        name: 'Flexible',
-        icon: '🔧',
+        type: "flexible",
+        name: "Flexible",
+        icon: "🔧",
         defaultSize: { width: 20, height: 10 },
         renderDragClone: mockDragClone,
         render: () => null,
@@ -73,12 +73,12 @@ describe('boundary-constraints', () => {
     });
   });
 
-  describe('constrainSizeToCanvas', () => {
-    it('should not adjust size when default fits', () => {
+  describe("constrainSizeToCanvas", () => {
+    it("should not adjust size when default fits", () => {
       const definition: ComponentDefinition = {
-        type: 'test',
-        name: 'Test',
-        icon: '🧪',
+        type: "test",
+        name: "Test",
+        icon: "🧪",
         defaultSize: { width: 20, height: 10 },
         renderDragClone: mockDragClone,
         render: () => null,
@@ -93,11 +93,11 @@ describe('boundary-constraints', () => {
       });
     });
 
-    it('should shrink width when default exceeds canvas', () => {
+    it("should shrink width when default exceeds canvas", () => {
       const definition: ComponentDefinition = {
-        type: 'wide',
-        name: 'Wide',
-        icon: '↔️',
+        type: "wide",
+        name: "Wide",
+        icon: "↔️",
         defaultSize: { width: 60, height: 10 },
         minSize: { width: 20, height: 5 },
         renderDragClone: mockDragClone,
@@ -113,11 +113,11 @@ describe('boundary-constraints', () => {
       });
     });
 
-    it('should respect minSize when shrinking', () => {
+    it("should respect minSize when shrinking", () => {
       const definition: ComponentDefinition = {
-        type: 'constrained',
-        name: 'Constrained',
-        icon: '🔒',
+        type: "constrained",
+        name: "Constrained",
+        icon: "🔒",
         defaultSize: { width: 60, height: 10 },
         minSize: { width: 40, height: 5 },
         renderDragClone: mockDragClone,
@@ -130,11 +130,11 @@ describe('boundary-constraints', () => {
       expect(result.wasAdjusted).toBe(true);
     });
 
-    it('should respect maxSize', () => {
+    it("should respect maxSize", () => {
       const definition: ComponentDefinition = {
-        type: 'limited',
-        name: 'Limited',
-        icon: '📏',
+        type: "limited",
+        name: "Limited",
+        icon: "📏",
         defaultSize: { width: 60, height: 10 },
         maxSize: { width: 30, height: 15 },
         renderDragClone: mockDragClone,
@@ -147,11 +147,11 @@ describe('boundary-constraints', () => {
       expect(result.wasAdjusted).toBe(true);
     });
 
-    it('should not constrain height by canvas', () => {
+    it("should not constrain height by canvas", () => {
       const definition: ComponentDefinition = {
-        type: 'tall',
-        name: 'Tall',
-        icon: '↕️',
+        type: "tall",
+        name: "Tall",
+        icon: "↕️",
         defaultSize: { width: 20, height: 100 },
         renderDragClone: mockDragClone,
         render: () => null,
@@ -164,8 +164,8 @@ describe('boundary-constraints', () => {
     });
   });
 
-  describe('constrainPositionToCanvas', () => {
-    it('should not adjust position when component fits', () => {
+  describe("constrainPositionToCanvas", () => {
+    it("should not adjust position when component fits", () => {
       const result = constrainPositionToCanvas(10, 10, 20, 10, 50);
 
       expect(result).toEqual({
@@ -178,7 +178,7 @@ describe('boundary-constraints', () => {
       });
     });
 
-    it('should constrain left edge', () => {
+    it("should constrain left edge", () => {
       const result = constrainPositionToCanvas(-5, 10, 20, 10, 50);
 
       expect(result.x).toBe(0);
@@ -186,7 +186,7 @@ describe('boundary-constraints', () => {
       expect(result.positionAdjusted).toBe(true);
     });
 
-    it('should constrain right edge', () => {
+    it("should constrain right edge", () => {
       const result = constrainPositionToCanvas(45, 10, 20, 10, 50);
 
       expect(result.x).toBe(30); // 50 - 20 = 30
@@ -194,7 +194,7 @@ describe('boundary-constraints', () => {
       expect(result.positionAdjusted).toBe(true);
     });
 
-    it('should constrain top edge', () => {
+    it("should constrain top edge", () => {
       const result = constrainPositionToCanvas(10, -5, 20, 10, 50);
 
       expect(result.x).toBe(10);
@@ -202,7 +202,7 @@ describe('boundary-constraints', () => {
       expect(result.positionAdjusted).toBe(true);
     });
 
-    it('should not constrain bottom edge (canvas grows)', () => {
+    it("should not constrain bottom edge (canvas grows)", () => {
       const result = constrainPositionToCanvas(10, 100, 20, 10, 50);
 
       expect(result.x).toBe(10);
@@ -210,7 +210,7 @@ describe('boundary-constraints', () => {
       expect(result.positionAdjusted).toBe(false);
     });
 
-    it('should constrain both x and y', () => {
+    it("should constrain both x and y", () => {
       const result = constrainPositionToCanvas(-5, -10, 20, 10, 50);
 
       expect(result.x).toBe(0);
@@ -218,7 +218,7 @@ describe('boundary-constraints', () => {
       expect(result.positionAdjusted).toBe(true);
     });
 
-    it('should handle full-width component', () => {
+    it("should handle full-width component", () => {
       const result = constrainPositionToCanvas(5, 10, 50, 10, 50);
 
       expect(result.x).toBe(0); // Adjusted from 5 to 0
@@ -226,12 +226,12 @@ describe('boundary-constraints', () => {
     });
   });
 
-  describe('applyBoundaryConstraints', () => {
-    it('should apply full constraint pipeline', () => {
+  describe("applyBoundaryConstraints", () => {
+    it("should apply full constraint pipeline", () => {
       const definition: ComponentDefinition = {
-        type: 'test',
-        name: 'Test',
-        icon: '🧪',
+        type: "test",
+        name: "Test",
+        icon: "🧪",
         defaultSize: { width: 60, height: 10 },
         minSize: { width: 20, height: 5 },
         renderDragClone: mockDragClone,
@@ -249,11 +249,11 @@ describe('boundary-constraints', () => {
       expect(result!.sizeAdjusted).toBe(true);
     });
 
-    it('should return null when component cannot fit', () => {
+    it("should return null when component cannot fit", () => {
       const definition: ComponentDefinition = {
-        type: 'too-large',
-        name: 'Too Large',
-        icon: '📦',
+        type: "too-large",
+        name: "Too Large",
+        icon: "📦",
         defaultSize: { width: 60, height: 10 },
         minSize: { width: 60, height: 10 },
         renderDragClone: mockDragClone,
@@ -265,11 +265,11 @@ describe('boundary-constraints', () => {
       expect(result).toBeNull();
     });
 
-    it('should handle placement at origin', () => {
+    it("should handle placement at origin", () => {
       const definition: ComponentDefinition = {
-        type: 'test',
-        name: 'Test',
-        icon: '🧪',
+        type: "test",
+        name: "Test",
+        icon: "🧪",
         defaultSize: { width: 20, height: 10 },
         renderDragClone: mockDragClone,
         render: () => null,
@@ -287,11 +287,11 @@ describe('boundary-constraints', () => {
       });
     });
 
-    it('should handle negative positions', () => {
+    it("should handle negative positions", () => {
       const definition: ComponentDefinition = {
-        type: 'test',
-        name: 'Test',
-        icon: '🧪',
+        type: "test",
+        name: "Test",
+        icon: "🧪",
         defaultSize: { width: 20, height: 10 },
         renderDragClone: mockDragClone,
         render: () => null,
@@ -305,11 +305,11 @@ describe('boundary-constraints', () => {
       expect(result!.positionAdjusted).toBe(true);
     });
 
-    it('should use default canvas width', () => {
+    it("should use default canvas width", () => {
       const definition: ComponentDefinition = {
-        type: 'test',
-        name: 'Test',
-        icon: '🧪',
+        type: "test",
+        name: "Test",
+        icon: "🧪",
         defaultSize: { width: 20, height: 10 },
         renderDragClone: mockDragClone,
         render: () => null,
@@ -322,11 +322,11 @@ describe('boundary-constraints', () => {
       expect(result!.x).toBe(30); // 50 - 20 = 30 (using CANVAS_WIDTH_UNITS = 50)
     });
 
-    it('should combine size and position constraints', () => {
+    it("should combine size and position constraints", () => {
       const definition: ComponentDefinition = {
-        type: 'complex',
-        name: 'Complex',
-        icon: '🔧',
+        type: "complex",
+        name: "Complex",
+        icon: "🔧",
         defaultSize: { width: 70, height: 15 },
         minSize: { width: 30, height: 8 },
         maxSize: { width: 50, height: 20 },

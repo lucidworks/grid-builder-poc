@@ -1,5 +1,5 @@
-import { Component, h, Prop, Event, EventEmitter } from '@stencil/core';
-import { ConfirmationModalData } from '../../types/confirmation-modal-data';
+import { Component, h, Prop, Event, EventEmitter } from "@stencil/core";
+import { ConfirmationModalData } from "../../types/confirmation-modal-data";
 
 /**
  * Confirmation Modal Component
@@ -64,8 +64,8 @@ import { ConfirmationModalData } from '../../types/confirmation-modal-data';
  * Promise to resolve with true/false.
  */
 @Component({
-  tag: 'confirmation-modal',
-  styleUrl: 'confirmation-modal.scss',
+  tag: "confirmation-modal",
+  styleUrl: "confirmation-modal.scss",
   shadow: false,
 })
 export class ConfirmationModal {

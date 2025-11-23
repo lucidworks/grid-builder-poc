@@ -61,7 +61,7 @@ import {
   reset as resetState,
   selectItem as selectItemInState,
   updateItemsBatch,
-} from './state-manager';
+} from "./state-manager";
 import {
   AddCanvasCommand,
   AddItemCommand,
@@ -74,7 +74,7 @@ import {
   SetViewportCommand,
   ToggleGridCommand,
   UpdateItemCommand,
-} from './undo-redo-commands';
+} from "./undo-redo-commands";
 import {
   canRedo as canRedoInternal,
   canUndo as canUndoInternal,
@@ -82,7 +82,7 @@ import {
   pushCommand,
   redo as redoInternal,
   undo as undoInternal,
-} from './undo-redo';
+} from "./undo-redo";
 import {
   CanvasAddedEvent,
   CanvasRemovedEvent,
@@ -95,12 +95,14 @@ import {
   SelectionChangedEvent,
   StateChangedEvent,
   ViewportChangedEvent,
-} from '../types/events';
+} from "../types/events";
 
 /**
  * Event listener function type
  */
-type EventListener<K extends keyof GridBuilderEventMap> = (event: GridBuilderEventMap[K]) => void;
+type EventListener<K extends keyof GridBuilderEventMap> = (
+  event: GridBuilderEventMap[K],
+) => void;
 
 /**
  * Event emitter for grid builder events
@@ -109,12 +111,16 @@ type EventListener<K extends keyof GridBuilderEventMap> = (event: GridBuilderEve
  * listener management and notification
  */
 class EventEmitter {
-  private listeners: Map<keyof GridBuilderEventMap, Set<EventListener<any>>> = new Map();
+  private listeners: Map<keyof GridBuilderEventMap, Set<EventListener<any>>> =
+    new Map();
 
   /**
    * Register an event listener
    */
-  on<K extends keyof GridBuilderEventMap>(event: K, listener: EventListener<K>): void {
+  on<K extends keyof GridBuilderEventMap>(
+    event: K,
+    listener: EventListener<K>,
+  ): void {
     if (!this.listeners.has(event)) {
       this.listeners.set(event, new Set());
     }
@@ -124,7 +130,10 @@ class EventEmitter {
   /**
    * Unregister an event listener
    */
-  off<K extends keyof GridBuilderEventMap>(event: K, listener: EventListener<K>): void {
+  off<K extends keyof GridBuilderEventMap>(
+    event: K,
+    listener: EventListener<K>,
+  ): void {
     const eventListeners = this.listeners.get(event);
     if (eventListeners) {
       eventListeners.delete(listener);
@@ -134,7 +143,10 @@ class EventEmitter {
   /**
    * Register a one-time event listener
    */
-  once<K extends keyof GridBuilderEventMap>(event: K, listener: EventListener<K>): void {
+  once<K extends keyof GridBuilderEventMap>(
+    event: K,
+    listener: EventListener<K>,
+  ): void {
     const onceListener = ((eventData: GridBuilderEventMap[K]) => {
       this.off(event, onceListener);
       listener(eventData);
@@ -146,7 +158,10 @@ class EventEmitter {
   /**
    * Emit an event to all registered listeners
    */
-  emit<K extends keyof GridBuilderEventMap>(event: K, data: GridBuilderEventMap[K]): void {
+  emit<K extends keyof GridBuilderEventMap>(
+    event: K,
+    data: GridBuilderEventMap[K],
+  ): void {
     const eventListeners = this.listeners.get(event);
     if (eventListeners) {
       eventListeners.forEach((listener) => listener(data));
@@ -267,7 +282,7 @@ export class GridBuilderAPI {
     cmd.redo(); // Execute the command
 
     // Emit event
-    this.eventEmitter.emit('canvasAdded', { canvasId } as CanvasAddedEvent);
+    this.eventEmitter.emit("canvasAdded", { canvasId } as CanvasAddedEvent);
   }
 
   /**
@@ -302,7 +317,7 @@ export class GridBuilderAPI {
     cmd.redo(); // Execute the command
 
     // Emit event
-    this.eventEmitter.emit('canvasRemoved', { canvasId } as CanvasRemovedEvent);
+    this.eventEmitter.emit("canvasRemoved", { canvasId } as CanvasRemovedEvent);
   }
 
   /**
@@ -377,7 +392,7 @@ export class GridBuilderAPI {
     y: number,
     width: number,
     height: number,
-    config?: Record<string, any>
+    config?: Record<string, any>,
   ): GridItem {
     const item: GridItem = {
       id: generateItemId(),
@@ -386,7 +401,13 @@ export class GridBuilderAPI {
       name: componentType,
       layouts: {
         desktop: { x, y, width, height },
-        mobile: { x: null, y: null, width: null, height: null, customized: false },
+        mobile: {
+          x: null,
+          y: null,
+          width: null,
+          height: null,
+          customized: false,
+        },
       },
       zIndex: gridState.canvases[canvasId]?.zIndexCounter || 1,
       config: config || {},
@@ -396,7 +417,7 @@ export class GridBuilderAPI {
     command.redo(); // Execute command first
     pushCommand(command); // Then add to history
 
-    this.eventEmitter.emit('itemAdded', { item, canvasId } as ItemAddedEvent);
+    this.eventEmitter.emit("itemAdded", { item, canvasId } as ItemAddedEvent);
 
     return item;
   }
@@ -421,7 +442,10 @@ export class GridBuilderAPI {
     command.redo(); // Execute command first
     pushCommand(command); // Then add to history
 
-    this.eventEmitter.emit('itemRemoved', { itemId, canvasId } as ItemRemovedEvent);
+    this.eventEmitter.emit("itemRemoved", {
+      itemId,
+      canvasId,
+    } as ItemRemovedEvent);
   }
 
   /**
@@ -435,7 +459,11 @@ export class GridBuilderAPI {
    *
    * @emits itemUpdated
    */
-  updateItem(canvasId: string, itemId: string, updates: Partial<GridItem>): void {
+  updateItem(
+    canvasId: string,
+    itemId: string,
+    updates: Partial<GridItem>,
+  ): void {
     const oldItem = getItemFromState(canvasId, itemId);
     if (!oldItem) {
       return;
@@ -445,7 +473,11 @@ export class GridBuilderAPI {
     command.redo(); // Execute command first
     pushCommand(command); // Then add to history
 
-    this.eventEmitter.emit('itemUpdated', { itemId, canvasId, updates } as ItemUpdatedEvent);
+    this.eventEmitter.emit("itemUpdated", {
+      itemId,
+      canvasId,
+      updates,
+    } as ItemUpdatedEvent);
   }
 
   /**
@@ -472,8 +504,14 @@ export class GridBuilderAPI {
     }
 
     const sourceIndex = sourceCanvas.items.findIndex((i) => i.id === itemId);
-    const sourcePosition = { x: item.layouts.desktop.x, y: item.layouts.desktop.y };
-    const targetPosition = { x: item.layouts.desktop.x, y: item.layouts.desktop.y };
+    const sourcePosition = {
+      x: item.layouts.desktop.x,
+      y: item.layouts.desktop.y,
+    };
+    const targetPosition = {
+      x: item.layouts.desktop.x,
+      y: item.layouts.desktop.y,
+    };
 
     const command = new MoveItemCommand(
       itemId,
@@ -481,12 +519,16 @@ export class GridBuilderAPI {
       toCanvasId,
       sourcePosition,
       targetPosition,
-      sourceIndex
+      sourceIndex,
     );
     command.redo(); // Execute command first
     pushCommand(command); // Then add to history
 
-    this.eventEmitter.emit('itemMoved', { itemId, fromCanvasId, toCanvasId } as ItemMovedEvent);
+    this.eventEmitter.emit("itemMoved", {
+      itemId,
+      fromCanvasId,
+      toCanvasId,
+    } as ItemMovedEvent);
   }
 
   // ============================================================================
@@ -582,19 +624,27 @@ export class GridBuilderAPI {
       width: number;
       height: number;
       config?: Record<string, any>;
-    }>
+    }>,
   ): string[] {
     // Convert API format to state-manager format
-    const partialItems = items.map(({ canvasId, type, x, y, width, height, config }) => ({
-      canvasId,
-      type,
-      name: type,
-      layouts: {
-        desktop: { x, y, width, height },
-        mobile: { x: null, y: null, width: null, height: null, customized: false },
-      },
-      config: config || {},
-    }));
+    const partialItems = items.map(
+      ({ canvasId, type, x, y, width, height, config }) => ({
+        canvasId,
+        type,
+        name: type,
+        layouts: {
+          desktop: { x, y, width, height },
+          mobile: {
+            x: null,
+            y: null,
+            width: null,
+            height: null,
+            customized: false,
+          },
+        },
+        config: config || {},
+      }),
+    );
 
     // Use state-manager batch operation (single state update)
     const itemIds = addItemsBatch(partialItems);
@@ -604,10 +654,12 @@ export class GridBuilderAPI {
     pushCommand(command); // Note: Batch operations store full item data, so no need to redo()
 
     // Collect all created items for event
-    const createdItems = itemIds.map((id) => this.findItemById(id)).filter(Boolean) as GridItem[];
+    const createdItems = itemIds
+      .map((id) => this.findItemById(id))
+      .filter(Boolean) as GridItem[];
 
     // Emit single batch event
-    this.eventEmitter.emit('itemsBatchAdded', { items: createdItems });
+    this.eventEmitter.emit("itemsBatchAdded", { items: createdItems });
 
     return itemIds;
   }
@@ -682,13 +734,16 @@ export class GridBuilderAPI {
     deleteItemsBatch(itemIds);
 
     // Clear selection if any deleted item was selected
-    if (gridState.selectedItemId && itemIds.includes(gridState.selectedItemId)) {
+    if (
+      gridState.selectedItemId &&
+      itemIds.includes(gridState.selectedItemId)
+    ) {
       gridState.selectedItemId = null;
       gridState.selectedCanvasId = null;
     }
 
     // Emit single batch event
-    this.eventEmitter.emit('itemsBatchDeleted', { itemIds });
+    this.eventEmitter.emit("itemsBatchDeleted", { itemIds });
   }
 
   /**
@@ -771,20 +826,28 @@ export class GridBuilderAPI {
    *
    * @see https://github.com/yourusername/extraction-guide#phase-72-batch-operations
    */
-  updateConfigsBatch(updates: Array<{ itemId: string; config: Record<string, any> }>): void {
+  updateConfigsBatch(
+    updates: Array<{ itemId: string; config: Record<string, any> }>,
+  ): void {
     // Convert to state-manager format (need canvasId)
-    const batchUpdates = updates.map(({ itemId, config }) => {
-      const item = this.findItemById(itemId);
-      if (!item) {
-        console.warn(`Item ${itemId} not found for config update`);
-        return null;
-      }
-      return {
-        itemId,
-        canvasId: item.canvasId,
-        updates: { config: { ...item.config, ...config } },
-      };
-    }).filter(Boolean) as Array<{ itemId: string; canvasId: string; updates: Partial<GridItem> }>;
+    const batchUpdates = updates
+      .map(({ itemId, config }) => {
+        const item = this.findItemById(itemId);
+        if (!item) {
+          console.warn(`Item ${itemId} not found for config update`);
+          return null;
+        }
+        return {
+          itemId,
+          canvasId: item.canvasId,
+          updates: { config: { ...item.config, ...config } },
+        };
+      })
+      .filter(Boolean) as Array<{
+      itemId: string;
+      canvasId: string;
+      updates: Partial<GridItem>;
+    }>;
 
     // Add to undo/redo history
     const command = new BatchUpdateConfigCommand(batchUpdates);
@@ -799,7 +862,7 @@ export class GridBuilderAPI {
       canvasId,
       config: updates.config!,
     }));
-    this.eventEmitter.emit('itemsBatchUpdated', { updates: eventUpdates });
+    this.eventEmitter.emit("itemsBatchUpdated", { updates: eventUpdates });
   }
 
   /**
@@ -833,7 +896,10 @@ export class GridBuilderAPI {
    */
   selectItem(itemId: string, canvasId: string): void {
     selectItemInState(itemId, canvasId);
-    this.eventEmitter.emit('selectionChanged', { itemId, canvasId } as SelectionChangedEvent);
+    this.eventEmitter.emit("selectionChanged", {
+      itemId,
+      canvasId,
+    } as SelectionChangedEvent);
   }
 
   /**
@@ -843,7 +909,10 @@ export class GridBuilderAPI {
    */
   deselectItem(): void {
     deselectItem();
-    this.eventEmitter.emit('selectionChanged', { itemId: null, canvasId: null } as SelectionChangedEvent);
+    this.eventEmitter.emit("selectionChanged", {
+      itemId: null,
+      canvasId: null,
+    } as SelectionChangedEvent);
   }
 
   // ============================================================================
@@ -859,13 +928,16 @@ export class GridBuilderAPI {
    *
    * @emits viewportChanged
    */
-  setViewport(viewport: 'desktop' | 'mobile'): void {
+  setViewport(viewport: "desktop" | "mobile"): void {
     const oldViewport = gridState.currentViewport;
     const command = new SetViewportCommand(oldViewport, viewport);
     command.redo(); // Execute command first
     pushCommand(command); // Then add to history
 
-    this.eventEmitter.emit('viewportChanged', { oldViewport, newViewport: viewport } as ViewportChangedEvent);
+    this.eventEmitter.emit("viewportChanged", {
+      oldViewport,
+      newViewport: viewport,
+    } as ViewportChangedEvent);
   }
 
   /**
@@ -883,9 +955,10 @@ export class GridBuilderAPI {
     command.redo(); // Execute command first
     pushCommand(command); // Then add to history
 
-    this.eventEmitter.emit('gridVisibilityChanged', { visible } as GridVisibilityChangedEvent);
+    this.eventEmitter.emit("gridVisibilityChanged", {
+      visible,
+    } as GridVisibilityChangedEvent);
   }
-
 
   // ============================================================================
   // Undo/Redo Methods
@@ -898,7 +971,7 @@ export class GridBuilderAPI {
    */
   undo(): void {
     undoInternal();
-    this.eventEmitter.emit('stateChanged', {} as StateChangedEvent);
+    this.eventEmitter.emit("stateChanged", {} as StateChangedEvent);
   }
 
   /**
@@ -908,7 +981,7 @@ export class GridBuilderAPI {
    */
   redo(): void {
     redoInternal();
-    this.eventEmitter.emit('stateChanged', {} as StateChangedEvent);
+    this.eventEmitter.emit("stateChanged", {} as StateChangedEvent);
   }
 
   /**
@@ -986,7 +1059,7 @@ export class GridBuilderAPI {
     // Clear undo/redo history (imported state is new baseline)
     clearHistoryInternal();
 
-    this.eventEmitter.emit('stateChanged', {} as StateChangedEvent);
+    this.eventEmitter.emit("stateChanged", {} as StateChangedEvent);
   }
 
   /**
@@ -1000,7 +1073,7 @@ export class GridBuilderAPI {
   reset(): void {
     resetState();
     clearHistoryInternal();
-    this.eventEmitter.emit('stateChanged', {} as StateChangedEvent);
+    this.eventEmitter.emit("stateChanged", {} as StateChangedEvent);
   }
 
   // ============================================================================
@@ -1020,7 +1093,10 @@ export class GridBuilderAPI {
    * });
    * ```
    */
-  on<K extends keyof GridBuilderEventMap>(event: K, listener: EventListener<K>): void {
+  on<K extends keyof GridBuilderEventMap>(
+    event: K,
+    listener: EventListener<K>,
+  ): void {
     this.eventEmitter.on(event, listener);
   }
 
@@ -1030,7 +1106,10 @@ export class GridBuilderAPI {
    * @param event - Event name
    * @param listener - Event handler function to remove
    */
-  off<K extends keyof GridBuilderEventMap>(event: K, listener: EventListener<K>): void {
+  off<K extends keyof GridBuilderEventMap>(
+    event: K,
+    listener: EventListener<K>,
+  ): void {
     this.eventEmitter.off(event, listener);
   }
 
@@ -1049,7 +1128,10 @@ export class GridBuilderAPI {
    * });
    * ```
    */
-  once<K extends keyof GridBuilderEventMap>(event: K, listener: EventListener<K>): void {
+  once<K extends keyof GridBuilderEventMap>(
+    event: K,
+    listener: EventListener<K>,
+  ): void {
     this.eventEmitter.once(event, listener);
   }
 

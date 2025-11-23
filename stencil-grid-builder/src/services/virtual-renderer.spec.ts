@@ -13,15 +13,15 @@ let mockOptions: any;
     unobserve: mockUnobserve,
     disconnect: mockDisconnect,
     root: null,
-    rootMargin: '200px',
+    rootMargin: "200px",
     thresholds: [0.01],
     takeRecords: jest.fn(),
   };
 });
 
-import { VirtualRendererService, VisibilityCallback } from './virtual-renderer';
+import { VirtualRendererService, VisibilityCallback } from "./virtual-renderer";
 
-describe('virtual-renderer', () => {
+describe("virtual-renderer", () => {
   let service: VirtualRendererService;
   let mockElement: HTMLElement;
   let callback: jest.Mock<VisibilityCallback>;
@@ -34,8 +34,8 @@ describe('virtual-renderer', () => {
     service = new VirtualRendererService();
 
     // Create mock element
-    mockElement = document.createElement('div');
-    mockElement.id = 'test-element';
+    mockElement = document.createElement("div");
+    mockElement.id = "test-element";
 
     // Create mock callback
     callback = jest.fn();
@@ -46,32 +46,32 @@ describe('virtual-renderer', () => {
     service.destroy();
   });
 
-  describe('constructor', () => {
-    it('should initialize IntersectionObserver with correct options', () => {
+  describe("constructor", () => {
+    it("should initialize IntersectionObserver with correct options", () => {
       expect(mockOptions).toEqual({
-        rootMargin: '200px',
+        rootMargin: "200px",
         threshold: [0, 0.01],
       });
     });
   });
 
-  describe('observe', () => {
-    it('should observe element and store callback', () => {
-      service.observe(mockElement, 'test-element', callback);
+  describe("observe", () => {
+    it("should observe element and store callback", () => {
+      service.observe(mockElement, "test-element", callback);
 
       expect(mockObserve).toHaveBeenCalledWith(mockElement);
     });
 
-    it('should handle null element gracefully', () => {
+    it("should handle null element gracefully", () => {
       expect(() => {
-        service.observe(null as any, 'test-element', callback);
+        service.observe(null as any, "test-element", callback);
       }).not.toThrow();
 
       expect(mockObserve).not.toHaveBeenCalled();
     });
 
-    it('should store callback for element ID', () => {
-      service.observe(mockElement, 'test-element', callback);
+    it("should store callback for element ID", () => {
+      service.observe(mockElement, "test-element", callback);
 
       // Simulate intersection observer callback
       const entries: Partial<IntersectionObserverEntry>[] = [
@@ -86,13 +86,13 @@ describe('virtual-renderer', () => {
       expect(callback).toHaveBeenCalledWith(true);
     });
 
-    it('should handle multiple elements', () => {
-      const element2 = document.createElement('div');
-      element2.id = 'test-element-2';
+    it("should handle multiple elements", () => {
+      const element2 = document.createElement("div");
+      element2.id = "test-element-2";
       const callback2 = jest.fn();
 
-      service.observe(mockElement, 'test-element', callback);
-      service.observe(element2, 'test-element-2', callback2);
+      service.observe(mockElement, "test-element", callback);
+      service.observe(element2, "test-element-2", callback2);
 
       expect(mockObserve).toHaveBeenCalledTimes(2);
       expect(mockObserve).toHaveBeenCalledWith(mockElement);
@@ -100,13 +100,13 @@ describe('virtual-renderer', () => {
     });
   });
 
-  describe('unobserve', () => {
+  describe("unobserve", () => {
     beforeEach(() => {
-      service.observe(mockElement, 'test-element', callback);
+      service.observe(mockElement, "test-element", callback);
     });
 
-    it('should unobserve element and remove callback', () => {
-      service.unobserve(mockElement, 'test-element');
+    it("should unobserve element and remove callback", () => {
+      service.unobserve(mockElement, "test-element");
 
       expect(mockUnobserve).toHaveBeenCalledWith(mockElement);
 
@@ -123,34 +123,34 @@ describe('virtual-renderer', () => {
       expect(callback).not.toHaveBeenCalled();
     });
 
-    it('should handle null element gracefully', () => {
+    it("should handle null element gracefully", () => {
       expect(() => {
-        service.unobserve(null as any, 'test-element');
+        service.unobserve(null as any, "test-element");
       }).not.toThrow();
     });
 
-    it('should handle unobserving non-observed element', () => {
-      const element2 = document.createElement('div');
-      element2.id = 'test-element-2';
+    it("should handle unobserving non-observed element", () => {
+      const element2 = document.createElement("div");
+      element2.id = "test-element-2";
 
       expect(() => {
-        service.unobserve(element2, 'test-element-2');
+        service.unobserve(element2, "test-element-2");
       }).not.toThrow();
     });
   });
 
-  describe('destroy', () => {
+  describe("destroy", () => {
     beforeEach(() => {
-      service.observe(mockElement, 'test-element', callback);
+      service.observe(mockElement, "test-element", callback);
     });
 
-    it('should disconnect observer', () => {
+    it("should disconnect observer", () => {
       service.destroy();
 
       expect(mockDisconnect).toHaveBeenCalled();
     });
 
-    it('should clear all observed elements', () => {
+    it("should clear all observed elements", () => {
       service.destroy();
 
       // Callback should not be called after destroy
@@ -166,7 +166,7 @@ describe('virtual-renderer', () => {
       expect(callback).not.toHaveBeenCalled();
     });
 
-    it('should handle multiple destroy calls', () => {
+    it("should handle multiple destroy calls", () => {
       service.destroy();
 
       expect(() => {
@@ -175,12 +175,12 @@ describe('virtual-renderer', () => {
     });
   });
 
-  describe('Intersection Callbacks', () => {
+  describe("Intersection Callbacks", () => {
     beforeEach(() => {
-      service.observe(mockElement, 'test-element', callback);
+      service.observe(mockElement, "test-element", callback);
     });
 
-    it('should call callback with true when element becomes visible', () => {
+    it("should call callback with true when element becomes visible", () => {
       const entries: Partial<IntersectionObserverEntry>[] = [
         {
           target: mockElement,
@@ -193,7 +193,7 @@ describe('virtual-renderer', () => {
       expect(callback).toHaveBeenCalledWith(true);
     });
 
-    it('should call callback with false when element becomes invisible', () => {
+    it("should call callback with false when element becomes invisible", () => {
       const entries: Partial<IntersectionObserverEntry>[] = [
         {
           target: mockElement,
@@ -206,7 +206,7 @@ describe('virtual-renderer', () => {
       expect(callback).toHaveBeenCalledWith(false);
     });
 
-    it('should handle multiple intersection changes', () => {
+    it("should handle multiple intersection changes", () => {
       // Becomes visible
       let entries: Partial<IntersectionObserverEntry>[] = [
         {
@@ -232,12 +232,12 @@ describe('virtual-renderer', () => {
       expect(callback).toHaveBeenCalledTimes(2);
     });
 
-    it('should handle multiple elements in single callback', () => {
-      const element2 = document.createElement('div');
-      element2.id = 'test-element-2';
+    it("should handle multiple elements in single callback", () => {
+      const element2 = document.createElement("div");
+      element2.id = "test-element-2";
       const callback2 = jest.fn();
 
-      service.observe(element2, 'test-element-2', callback2);
+      service.observe(element2, "test-element-2", callback2);
 
       const entries: Partial<IntersectionObserverEntry>[] = [
         {
@@ -256,9 +256,9 @@ describe('virtual-renderer', () => {
       expect(callback2).toHaveBeenCalledWith(false);
     });
 
-    it('should not call callback for unknown element', () => {
-      const unknownElement = document.createElement('div');
-      unknownElement.id = 'unknown-element';
+    it("should not call callback for unknown element", () => {
+      const unknownElement = document.createElement("div");
+      unknownElement.id = "unknown-element";
 
       const entries: Partial<IntersectionObserverEntry>[] = [
         {
@@ -275,21 +275,21 @@ describe('virtual-renderer', () => {
     });
   });
 
-  describe('Performance Benefits', () => {
-    it('should use 200px rootMargin for pre-rendering', () => {
+  describe("Performance Benefits", () => {
+    it("should use 200px rootMargin for pre-rendering", () => {
       const options = mockOptions;
-      expect(options.rootMargin).toBe('200px');
+      expect(options.rootMargin).toBe("200px");
     });
 
-    it('should trigger at 1% visibility threshold', () => {
+    it("should trigger at 1% visibility threshold", () => {
       const options = mockOptions;
       expect(options.threshold).toEqual([0, 0.01]);
     });
 
-    it('should support lazy loading pattern', () => {
+    it("should support lazy loading pattern", () => {
       let isVisible = false;
 
-      service.observe(mockElement, 'test-element', (visible) => {
+      service.observe(mockElement, "test-element", (visible) => {
         isVisible = visible;
       });
 

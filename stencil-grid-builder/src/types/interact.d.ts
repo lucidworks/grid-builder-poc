@@ -26,7 +26,7 @@
  * For full API documentation, see: https://interactjs.io/docs/
  */
 
-declare module 'interactjs' {
+declare module "interactjs" {
   /**
    * Interact.js drag event
    *
@@ -179,7 +179,7 @@ declare module 'interactjs' {
     preventDefault?: boolean;
 
     /** Lock dragging to specific axes */
-    lockAxis?: 'x' | 'y' | 'xy' | 'start';
+    lockAxis?: "x" | "y" | "xy" | "start";
 
     /** Modifiers for drag behavior */
     modifiers?: any[];
@@ -232,7 +232,7 @@ declare module 'interactjs' {
     preserveAspectRatio?: boolean;
 
     /** Invert edges during resize from top/left */
-    invert?: 'none' | 'negate' | 'reposition';
+    invert?: "none" | "negate" | "reposition";
   }
 
   /**
@@ -243,10 +243,18 @@ declare module 'interactjs' {
     accept?: string;
 
     /** Overlap requirement (percentage or pixels) */
-    overlap?: number | 'pointer' | 'center';
+    overlap?: number | "pointer" | "center";
 
     /** Check if element is draggable before accepting drop */
-    checker?: (dragEvent: any, event: any, dropped: boolean, dropzone: Interactable, dropElement: HTMLElement, draggable: Interactable, draggableElement: HTMLElement) => boolean;
+    checker?: (
+      dragEvent: any,
+      event: any,
+      dropped: boolean,
+      dropzone: Interactable,
+      dropElement: HTMLElement,
+      draggable: Interactable,
+      draggableElement: HTMLElement,
+    ) => boolean;
 
     /** Event listeners */
     listeners?: {
@@ -289,10 +297,18 @@ declare module 'interactjs' {
     unset(): void;
 
     /** Add event listener */
-    on(eventType: string, listener: (event: any) => void, options?: any): Interactable;
+    on(
+      eventType: string,
+      listener: (event: any) => void,
+      options?: any,
+    ): Interactable;
 
     /** Remove event listener */
-    off(eventType: string, listener: (event: any) => void, options?: any): Interactable;
+    off(
+      eventType: string,
+      listener: (event: any) => void,
+      options?: any,
+    ): Interactable;
 
     /** Set/get context (arbitrary data storage) */
     context(element?: HTMLElement): any;

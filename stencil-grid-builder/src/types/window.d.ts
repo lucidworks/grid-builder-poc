@@ -35,9 +35,9 @@
  * - **eventManager**: Event bus for plugin communication
  */
 
-import type interact from 'interactjs';
-import type { VirtualRendererService } from '../services/virtual-renderer';
-import type { EventManager } from '../services/event-manager';
+import type interact from "interactjs";
+import type { VirtualRendererService } from "../services/virtual-renderer";
+import type { EventManager } from "../services/event-manager";
 
 /**
  * Grid State interface
@@ -57,7 +57,7 @@ export interface WindowGridState {
   };
 
   /** Current viewport mode (desktop or mobile) */
-  currentViewport?: 'desktop' | 'mobile';
+  currentViewport?: "desktop" | "mobile";
 
   /** Currently selected item IDs */
   selectedItems?: string[];

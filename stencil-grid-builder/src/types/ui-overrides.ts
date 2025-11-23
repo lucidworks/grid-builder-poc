@@ -6,8 +6,8 @@
  * to customize the grid builder's appearance and behavior.
  */
 
-import { GridItem } from '../services/state-manager';
-import { ComponentDefinition } from './component-definition';
+import { GridItem } from "../services/state-manager";
+import { ComponentDefinition } from "./component-definition";
 
 /**
  * Config Panel Props
@@ -370,7 +370,7 @@ export interface ToolbarProps {
    *
    * **Use**: Toggle button active state
    */
-  viewport: 'desktop' | 'mobile';
+  viewport: "desktop" | "mobile";
 
   /**
    * Whether grid lines are visible
