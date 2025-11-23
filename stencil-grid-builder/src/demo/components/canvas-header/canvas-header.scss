@@ -3,20 +3,39 @@
  * ===============================
  *
  * Styling for canvas section headers with title badges and delete buttons.
+ *
+ * **Positioning**:
+ * - Headers are rendered inside .canvas-wrapper (sibling to canvas-section)
+ * - Headers overlay the top of their associated canvas using absolute positioning
+ * - No gaps between canvases - headers use negative margin to overlap with canvas above
+ *
+ * **Negative Margin Pattern**:
+ * - All headers EXCEPT the first one get negative top margin
+ * - This pulls headers up to overlap with the canvas above
+ * - Eliminates gaps between sections
+ * - First header starts at top of its canvas (no overlap needed)
+ *
+ * **Active State Behavior**:
+ * - Canvas title starts dimmed (opacity 0.6) when canvas is inactive
+ * - Full opacity when canvas is active (isActive prop)
  */
 
 .canvas-header {
-  position: relative;
+  position: absolute; // Overlay canvas without adding vertical space
+  top: 0;
+  right: 0;
+  z-index: 10; // Above canvas content
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  padding: 0;
-  margin: 0; /* No margin - flush with canvas */
+  padding: 12px;
+  margin: 0;
   gap: 8px;
 
-  /* All canvas headers except the first overlay the canvas above */
-  &:not(:first-of-type) {
-    margin-top: var(--canvas-header-overlay-margin, -28px); /* Grid-relative overlay (default 1.4 grid units @ 20px) */
+  // Pull up all headers except the first one to eliminate gaps
+  // Tab effect: significant overlap creates clean tab appearance
+  .canvas-wrapper:not(:first-child) & {
+    margin-top: -38px;
   }
 
   .canvas-title {
@@ -32,12 +51,18 @@
     font-size: 13px;
     font-weight: 500;
     text-transform: none;
+    opacity: 0.6; // Dimmed by default
     transition: all 0.15s;
 
     &:hover {
       background: #357abd;
       box-shadow: 0 2px 6px rgba(74, 144, 226, 0.3);
     }
+  }
+
+  // Undim title when canvas is active
+  &.is-active .canvas-title {
+    opacity: 1;
   }
 
   .canvas-actions {

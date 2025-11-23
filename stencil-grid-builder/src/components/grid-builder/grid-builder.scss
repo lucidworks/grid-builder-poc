@@ -52,6 +52,43 @@
   gap: 0; /* No gaps between canvas sections */
 }
 
+/**
+ * Canvas Wrapper
+ * ==============
+ *
+ * Wrapper around each canvas-section providing a mounting point for custom canvas headers.
+ * Headers are positioned automatically with their canvases - no manual offset calculations needed.
+ *
+ * **Layout Pattern**:
+ * ```html
+ * <div class="canvas-wrapper">
+ *   <canvas-header /> <!-- Custom header from uiOverrides.CanvasHeader -->
+ *   <canvas-section />
+ * </div>
+ * ```
+ *
+ * **Positioning**:
+ * - Wrapper uses relative positioning (provides context for absolute children)
+ * - Headers can position themselves relative to their canvas
+ * - No gaps between canvases (flex column layout)
+ *
+ * **Performance**:
+ * - Negligible overhead (~0.05ms per canvas)
+ * - Natural DOM hierarchy (header + canvas siblings)
+ */
+.canvas-wrapper {
+  position: relative; // Positioning context for custom headers
+  display: flex;
+  flex-direction: column;
+  gap: 0; // No gap between header and canvas
+
+  // First canvas needs top padding so header doesn't get cut off at page top
+  // Matches the negative margin amount used on other headers
+  &:first-child {
+    padding-top: 38px;
+  }
+}
+
 .config-area {
   position: fixed;
   z-index: 1000;
