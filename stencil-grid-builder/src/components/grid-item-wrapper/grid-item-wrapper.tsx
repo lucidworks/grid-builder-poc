@@ -26,22 +26,27 @@
  * @module grid-item-wrapper
  */
 
-import { Component, h, Listen, Prop, State, Watch } from '@stencil/core';
+import { Component, h, Listen, Prop, State, Watch } from "@stencil/core";
 
 // Internal imports
-import { GridItem, gridState, updateItem, setActiveCanvas } from '../../services/state-manager';
-import { pushCommand } from '../../services/undo-redo';
-import { MoveItemCommand } from '../../services/undo-redo-commands';
-import { virtualRenderer } from '../../services/virtual-renderer';
-import { eventManager } from '../../services/event-manager';
-import { DragHandler } from '../../utils/drag-handler';
-import { ResizeHandler } from '../../utils/resize-handler';
-import { gridToPixelsX, gridToPixelsY } from '../../utils/grid-calculations';
-import { GridConfig } from '../../types/grid-config';
-import { ComponentDefinition } from '../../types/component-definition';
-import { createDebugLogger } from '../../utils/debug';
+import {
+  GridItem,
+  gridState,
+  updateItem,
+  setActiveCanvas,
+} from "../../services/state-manager";
+import { pushCommand } from "../../services/undo-redo";
+import { MoveItemCommand } from "../../services/undo-redo-commands";
+import { virtualRenderer } from "../../services/virtual-renderer";
+import { eventManager } from "../../services/event-manager";
+import { DragHandler } from "../../utils/drag-handler";
+import { ResizeHandler } from "../../utils/resize-handler";
+import { gridToPixelsX, gridToPixelsY } from "../../utils/grid-calculations";
+import { GridConfig } from "../../types/grid-config";
+import { ComponentDefinition } from "../../types/component-definition";
+import { createDebugLogger } from "../../utils/debug";
 
-const debug = createDebugLogger('grid-item-wrapper');
+const debug = createDebugLogger("grid-item-wrapper");
 
 /**
  * GridItemWrapper Component
@@ -54,8 +59,8 @@ const debug = createDebugLogger('grid-item-wrapper');
  * **Dynamic rendering**: Uses ComponentDefinition.render() from registry
  */
 @Component({
-  tag: 'grid-item-wrapper',
-  styleUrl: 'grid-item-wrapper.scss',
+  tag: "grid-item-wrapper",
+  styleUrl: "grid-item-wrapper.scss",
   shadow: false,
 })
 export class GridItemWrapper {
@@ -143,7 +148,7 @@ export class GridItemWrapper {
    * and gridState.currentViewport is used instead. When in viewer mode
    * (viewerMode=true), this prop is required.
    */
-  @Prop() currentViewport?: 'desktop' | 'mobile';
+  @Prop() currentViewport?: "desktop" | "mobile";
 
   /**
    * All items in the canvas (for viewer mode auto-layout)
@@ -237,9 +242,16 @@ export class GridItemWrapper {
   componentDidLoad() {
     // Set up virtual rendering observer (both builder and viewer modes)
     // Virtual rendering improves performance for long pages with many components
-    virtualRenderer.observe(this.itemRef, this.item.id, (isVisible) => {
-      this.isVisible = isVisible;
-    });
+    // Can be disabled via config for Storybook or testing scenarios
+    if (this.config?.enableVirtualRendering !== false) {
+      // Virtual rendering enabled (default behavior)
+      virtualRenderer.observe(this.itemRef, this.item.id, (isVisible) => {
+        this.isVisible = isVisible;
+      });
+    } else {
+      // Virtual rendering disabled - render immediately
+      this.isVisible = true;
+    }
 
     // Inject component content into custom wrapper's content slot if needed
     this.injectComponentContent();
@@ -250,7 +262,9 @@ export class GridItemWrapper {
       const componentDefinition = this.componentRegistry?.get(this.item.type);
 
       // Get the header element for drag handler
-      const headerElement = this.itemRef.querySelector('.grid-item-header') as HTMLElement;
+      const headerElement = this.itemRef.querySelector(
+        ".grid-item-header",
+      ) as HTMLElement;
 
       // Initialize drag and resize handlers
       // Pass header element for drag (instead of whole item)
@@ -262,9 +276,15 @@ export class GridItemWrapper {
         headerElement,
         () => {
           this.wasDragged = true;
-        }
+        },
       );
-      this.resizeHandler = new ResizeHandler(this.itemRef, this.item, this.handleItemUpdate, componentDefinition, this.config);
+      this.resizeHandler = new ResizeHandler(
+        this.itemRef,
+        this.item,
+        this.handleItemUpdate,
+        componentDefinition,
+        this.config,
+      );
     }
   }
 
@@ -294,30 +314,30 @@ export class GridItemWrapper {
     if (!contentSlot) return;
 
     // Check if already injected
-    if (contentSlot.hasAttribute('data-content-injected')) return;
+    if (contentSlot.hasAttribute("data-content-injected")) return;
 
     // Render and inject component content
     const componentContent = this.renderComponent();
 
     // Clear any existing content
-    contentSlot.innerHTML = '';
+    contentSlot.innerHTML = "";
 
     if (componentContent instanceof HTMLElement) {
       contentSlot.appendChild(componentContent);
     } else {
       // For Stencil vNodes, we need to use a workaround
       // Create a temporary container and let Stencil render into it
-      const tempContainer = document.createElement('div');
+      const tempContainer = document.createElement("div");
       contentSlot.appendChild(tempContainer);
 
       // This is a limitation - vNodes can't be manually appended
       // The custom wrapper should handle rendering the component directly
       // For now, we'll just set a placeholder
-      tempContainer.textContent = '[Component Content]';
+      tempContainer.textContent = "[Component Content]";
     }
 
     // Mark as injected
-    contentSlot.setAttribute('data-content-injected', 'true');
+    contentSlot.setAttribute("data-content-injected", "true");
   }
 
   /**
@@ -347,12 +367,12 @@ export class GridItemWrapper {
    * - Reinitialize drag/resize handlers with new item data
    * - Preserve handlers if already initialized
    */
-  @Watch('item')
+  @Watch("item")
   handleItemChange(newItem: GridItem, oldItem: GridItem) {
     // Skip if item reference hasn't actually changed
     if (newItem === oldItem) return;
 
-    debug.log('📦 Item prop changed:', {
+    debug.log("📦 Item prop changed:", {
       itemId: newItem.id,
       oldId: oldItem?.id,
     });
@@ -364,7 +384,7 @@ export class GridItemWrapper {
     if (!this.viewerMode && this.dragHandler && this.resizeHandler) {
       // Handlers are already initialized, they'll use the updated this.item reference
       // No need to destroy and recreate - they reference this.item internally
-      debug.log('  ✅ Handlers updated with new item reference');
+      debug.log("  ✅ Handlers updated with new item reference");
     }
   }
 
@@ -375,12 +395,12 @@ export class GridItemWrapper {
    * **Purpose**: Force component re-render to recalculate grid positions
    * **Note**: This is a force-update mechanism, actual recalculation happens in render()
    */
-  @Watch('renderVersion')
+  @Watch("renderVersion")
   handleRenderVersionChange(newVersion: number, oldVersion: number) {
     // Skip if version hasn't changed (undefined → undefined)
     if (newVersion === oldVersion) return;
 
-    debug.log('🔄 RenderVersion changed:', {
+    debug.log("🔄 RenderVersion changed:", {
       oldVersion,
       newVersion,
       itemId: this.item.id,
@@ -397,12 +417,12 @@ export class GridItemWrapper {
    * **Actions**: Reinitialize drag/resize handlers with new config
    * **Note**: Config changes are rare (e.g., user changes grid settings)
    */
-  @Watch('config')
+  @Watch("config")
   handleConfigChange(newConfig: GridConfig, oldConfig: GridConfig) {
     // Skip if config reference hasn't changed
     if (newConfig === oldConfig) return;
 
-    debug.log('⚙️ Config prop changed:', {
+    debug.log("⚙️ Config prop changed:", {
       itemId: this.item.id,
       oldConfig,
       newConfig,
@@ -420,7 +440,9 @@ export class GridItemWrapper {
 
       // Recreate handlers with new config
       const componentDefinition = this.componentRegistry?.get(this.item.type);
-      const headerElement = this.itemRef.querySelector('.grid-item-header') as HTMLElement;
+      const headerElement = this.itemRef.querySelector(
+        ".grid-item-header",
+      ) as HTMLElement;
 
       this.dragHandler = new DragHandler(
         this.itemRef,
@@ -430,11 +452,17 @@ export class GridItemWrapper {
         headerElement,
         () => {
           this.wasDragged = true;
-        }
+        },
       );
-      this.resizeHandler = new ResizeHandler(this.itemRef, this.item, this.handleItemUpdate, componentDefinition, newConfig);
+      this.resizeHandler = new ResizeHandler(
+        this.itemRef,
+        this.item,
+        this.handleItemUpdate,
+        componentDefinition,
+        newConfig,
+      );
 
-      debug.log('  ✅ Handlers reinitialized with new config');
+      debug.log("  ✅ Handlers reinitialized with new config");
     }
   }
 
@@ -445,15 +473,18 @@ export class GridItemWrapper {
    * **Purpose**: Force re-render to use appropriate layout
    * **Note**: Only relevant in viewerMode=true
    */
-  @Watch('currentViewport')
-  handleViewportChange(newViewport: 'desktop' | 'mobile', oldViewport: 'desktop' | 'mobile') {
+  @Watch("currentViewport")
+  handleViewportChange(
+    newViewport: "desktop" | "mobile",
+    oldViewport: "desktop" | "mobile",
+  ) {
     // Skip if viewport hasn't changed
     if (newViewport === oldViewport) return;
 
     // Only relevant in viewer mode
     if (!this.viewerMode) return;
 
-    debug.log('📱 Viewport prop changed (viewer mode):', {
+    debug.log("📱 Viewport prop changed (viewer mode):", {
       oldViewport,
       newViewport,
       itemId: this.item.id,
@@ -468,9 +499,9 @@ export class GridItemWrapper {
    * This is the PUBLIC API for custom wrappers to request item deletion
    * We intercept these and re-dispatch as internal 'grid-item:delete' events
    */
-  @Listen('item-delete')
+  @Listen("item-delete")
   handleItemDeleteEvent(event: CustomEvent) {
-    debug.log('🔴 @Listen(item-delete) - from custom wrapper', {
+    debug.log("🔴 @Listen(item-delete) - from custom wrapper", {
       eventTarget: event.target,
       itemId: this.item.id,
     });
@@ -479,19 +510,19 @@ export class GridItemWrapper {
     event.stopPropagation();
 
     // Re-dispatch as internal event that grid-builder listens for
-    const deleteEvent = new CustomEvent('grid-item:delete', {
+    const deleteEvent = new CustomEvent("grid-item:delete", {
       detail: { itemId: this.item.id, canvasId: this.item.canvasId },
       bubbles: true,
       composed: true,
     });
-    debug.log('  📤 Re-dispatching as grid-item:delete');
+    debug.log("  📤 Re-dispatching as grid-item:delete");
     this.itemRef.dispatchEvent(deleteEvent);
   }
 
   /**
    * Listen for item-bring-to-front events from custom wrapper components
    */
-  @Listen('item-bring-to-front')
+  @Listen("item-bring-to-front")
   handleItemBringToFrontEvent(event: CustomEvent) {
     event.stopPropagation();
     const canvas = gridState.canvases[this.item.canvasId];
@@ -504,7 +535,7 @@ export class GridItemWrapper {
   /**
    * Listen for item-send-to-back events from custom wrapper components
    */
-  @Listen('item-send-to-back')
+  @Listen("item-send-to-back")
   handleItemSendToBackEvent(event: CustomEvent) {
     event.stopPropagation();
     const canvas = gridState.canvases[this.item.canvasId];
@@ -541,16 +572,26 @@ export class GridItemWrapper {
 
     // Check if component registry is available
     if (!this.componentRegistry) {
-      console.error(`GridItemWrapper: componentRegistry not provided for item ${this.item.id}`);
-      return <div class="component-error">Component registry not available</div>;
+      console.error(
+        `GridItemWrapper: componentRegistry not provided for item ${this.item.id}`,
+      );
+      return (
+        <div class="component-error">Component registry not available</div>
+      );
     }
 
     // Look up component definition from registry
     const definition = this.componentRegistry.get(this.item.type);
 
     if (!definition) {
-      console.error(`GridItemWrapper: Unknown component type "${this.item.type}" for item ${this.item.id}`);
-      return <div class="component-error">Unknown component type: {this.item.type}</div>;
+      console.error(
+        `GridItemWrapper: Unknown component type "${this.item.type}" for item ${this.item.id}`,
+      );
+      return (
+        <div class="component-error">
+          Unknown component type: {this.item.type}
+        </div>
+      );
     }
 
     // Call component definition's render function
@@ -563,7 +604,11 @@ export class GridItemWrapper {
     // If render returns a DOM element (HTMLElement), wrap it in a div for Stencil
     // This handles cases where consumer uses document.createElement()
     if (rendered instanceof HTMLElement) {
-      return <div ref={(el) => el && !el.hasChildNodes() && el.appendChild(rendered)} />;
+      return (
+        <div
+          ref={(el) => el && !el.hasChildNodes() && el.appendChild(rendered)}
+        />
+      );
     }
 
     // Otherwise return the vNode directly (JSX)
@@ -596,22 +641,23 @@ export class GridItemWrapper {
   render() {
     // Use prop-based viewport in viewer mode, global state in builder mode
     const currentViewport = this.viewerMode
-      ? (this.currentViewport || 'desktop')
+      ? this.currentViewport || "desktop"
       : gridState.currentViewport;
 
     const layout = this.item.layouts[currentViewport];
 
     // For mobile viewport, calculate auto-layout if not customized
     let actualLayout = layout;
-    if (currentViewport === 'mobile' && !this.item.layouts.mobile.customized) {
+    if (currentViewport === "mobile" && !this.item.layouts.mobile.customized) {
       // Auto-layout for mobile: stack components vertically at full width
 
       // Use prop-based items in viewer mode, global state in builder mode
       const canvasItems = this.viewerMode
-        ? (this.canvasItems || [])
-        : (gridState.canvases[this.item.canvasId]?.items || []);
+        ? this.canvasItems || []
+        : gridState.canvases[this.item.canvasId]?.items || [];
 
-      const itemIndex = canvasItems.findIndex((i) => i.id === this.item.id) ?? 0;
+      const itemIndex =
+        canvasItems.findIndex((i) => i.id === this.item.id) ?? 0;
 
       // Calculate Y position by summing heights of all previous items
       let yPosition = 0;
@@ -631,33 +677,42 @@ export class GridItemWrapper {
     }
 
     // Compute selection directly from gridState (only in editing mode)
-    const isSelected = !this.viewerMode && gridState.selectedItemId === this.item.id;
+    const isSelected =
+      !this.viewerMode && gridState.selectedItemId === this.item.id;
 
     const itemClasses = {
-      'grid-item': true,
+      "grid-item": true,
       selected: isSelected,
-      'with-animations': this.config?.enableAnimations ?? true,
+      "with-animations": this.config?.enableAnimations ?? true,
     };
 
     // Convert grid units to pixels (with GridConfig support)
-    const xPixels = gridToPixelsX(actualLayout.x, this.item.canvasId, this.config);
+    const xPixels = gridToPixelsX(
+      actualLayout.x,
+      this.item.canvasId,
+      this.config,
+    );
     const yPixels = gridToPixelsY(actualLayout.y);
-    const widthPixels = gridToPixelsX(actualLayout.width, this.item.canvasId, this.config);
+    const widthPixels = gridToPixelsX(
+      actualLayout.width,
+      this.item.canvasId,
+      this.config,
+    );
     const heightPixels = gridToPixelsY(actualLayout.height);
 
     // Get component definition for icon, name, and selection color
     const definition = this.componentRegistry?.get(this.item.type);
-    const icon = definition?.icon || '�';
+    const icon = definition?.icon || "�";
     const displayName = this.item.name || definition?.name || this.item.type;
-    const selectionColor = definition?.selectionColor || '#f59e0b'; // Default yellow/gold
+    const selectionColor = definition?.selectionColor || "#f59e0b"; // Default yellow/gold
 
     const itemStyle = {
       transform: `translate(${xPixels}px, ${yPixels}px)`,
       width: `${widthPixels}px`,
       height: `${heightPixels}px`,
       zIndex: this.item.zIndex.toString(),
-      '--selection-color': selectionColor,
-      '--animation-duration': `${this.config?.animationDuration ?? 100}ms`,
+      "--selection-color": selectionColor,
+      "--animation-duration": `${this.config?.animationDuration ?? 100}ms`,
     };
 
     // Generate unique content slot ID for custom wrapper
@@ -680,7 +735,7 @@ export class GridItemWrapper {
           id={this.item.id}
           data-canvas-id={this.item.canvasId}
           data-component-name={displayName}
-          data-viewer-mode={this.viewerMode ? 'true' : 'false'}
+          data-viewer-mode={this.viewerMode ? "true" : "false"}
           style={itemStyle}
           onClick={(e) => this.handleClick(e)}
           ref={(el) => (this.itemRef = el)}
@@ -712,49 +767,52 @@ export class GridItemWrapper {
         id={this.item.id}
         data-canvas-id={this.item.canvasId}
         data-component-name={displayName}
-        data-viewer-mode={this.viewerMode ? 'true' : 'false'}
+        data-viewer-mode={this.viewerMode ? "true" : "false"}
         style={itemStyle}
         onClick={(e) => this.handleClick(e)}
         ref={(el) => (this.itemRef = el)}
       >
         {/* Editing UI (hidden in viewer mode) */}
-        {!this.viewerMode && (
-          [
-            /* Drag Handle */
-            <div class="drag-handle" key="drag-handle" />,
+        {!this.viewerMode && [
+          /* Drag Handle */
+          <div class="drag-handle" key="drag-handle" />,
 
-            /* Item Header */
-            <div class="grid-item-header" key="header">
-              {icon} {displayName}
-            </div>,
+          /* Item Header */
+          <div class="grid-item-header" key="header">
+            {icon} {displayName}
+          </div>,
 
-            /* Item Controls */
-            <div class="grid-item-controls" key="controls">
-              <button class="grid-item-delete" onClick={() => this.handleDelete()}>
-                ×
-              </button>
-            </div>
-          ]
-        )}
+          /* Item Controls */
+          <div class="grid-item-controls" key="controls">
+            <button
+              class="grid-item-delete"
+              onClick={() => this.handleDelete()}
+            >
+              ×
+            </button>
+          </div>,
+        ]}
 
         {/* Item Content (always rendered) */}
-        <div class="grid-item-content" id={contentSlotId} data-component-type={this.item.type}>
+        <div
+          class="grid-item-content"
+          id={contentSlotId}
+          data-component-type={this.item.type}
+        >
           {this.renderComponent()}
         </div>
 
         {/* Resize Handles (hidden in viewer mode) */}
-        {!this.viewerMode && (
-          [
-            <div class="resize-handle nw" key="resize-nw" />,
-            <div class="resize-handle ne" key="resize-ne" />,
-            <div class="resize-handle sw" key="resize-sw" />,
-            <div class="resize-handle se" key="resize-se" />,
-            <div class="resize-handle n" key="resize-n" />,
-            <div class="resize-handle s" key="resize-s" />,
-            <div class="resize-handle e" key="resize-e" />,
-            <div class="resize-handle w" key="resize-w" />
-          ]
-        )}
+        {!this.viewerMode && [
+          <div class="resize-handle nw" key="resize-nw" />,
+          <div class="resize-handle ne" key="resize-ne" />,
+          <div class="resize-handle sw" key="resize-sw" />,
+          <div class="resize-handle se" key="resize-se" />,
+          <div class="resize-handle n" key="resize-n" />,
+          <div class="resize-handle s" key="resize-s" />,
+          <div class="resize-handle e" key="resize-e" />,
+          <div class="resize-handle w" key="resize-w" />,
+        ]}
       </div>
     );
   }
@@ -792,7 +850,8 @@ export class GridItemWrapper {
       if (isDrag || isResize) {
         // Find source canvas and index
         const sourceCanvas = gridState.canvases[snapshot.canvasId];
-        const sourceIndex = sourceCanvas?.items.findIndex((i) => i.id === this.item.id) || 0;
+        const sourceIndex =
+          sourceCanvas?.items.findIndex((i) => i.id === this.item.id) || 0;
 
         // Push undo command before updating state
         // Include size tracking for resize operations (also handles resize with position change)
@@ -822,8 +881,8 @@ export class GridItemWrapper {
                   width: updatedItem.layouts.desktop.width,
                   height: updatedItem.layouts.desktop.height,
                 }
-              : undefined
-          )
+              : undefined,
+          ),
         );
       }
     }
@@ -838,7 +897,7 @@ export class GridItemWrapper {
 
     // Emit events for plugins
     if (isDrag) {
-      eventManager.emit('componentDragged', {
+      eventManager.emit("componentDragged", {
         itemId: updatedItem.id,
         canvasId: updatedItem.canvasId,
         position: {
@@ -848,7 +907,7 @@ export class GridItemWrapper {
       });
     }
     if (isResize) {
-      eventManager.emit('componentResized', {
+      eventManager.emit("componentResized", {
         itemId: updatedItem.id,
         canvasId: updatedItem.canvasId,
         size: {
@@ -863,16 +922,15 @@ export class GridItemWrapper {
    * Handle click event (selection and config panel)
    */
   private handleClick = (e: MouseEvent) => {
-
     // Skip click handling in viewer mode
     if (this.viewerMode) {
-      debug.log('  ⏭️ Skipping - viewer mode');
+      debug.log("  ⏭️ Skipping - viewer mode");
       return;
     }
 
     // Don't open config panel if item was just dragged
     if (this.wasDragged) {
-      debug.log('  ⏭️ Skipping - was dragged');
+      debug.log("  ⏭️ Skipping - was dragged");
       // Reset flag after a small delay to allow this click event to finish
       setTimeout(() => {
         this.wasDragged = false;
@@ -883,18 +941,18 @@ export class GridItemWrapper {
     // Don't open config panel if clicking on drag handle, resize handle, or control buttons
     const target = e.target as HTMLElement;
     if (
-      target.classList.contains('drag-handle') ||
-      target.closest('.drag-handle') ||
-      target.classList.contains('resize-handle') ||
-      target.closest('.resize-handle') ||
-      target.classList.contains('grid-item-delete') ||
-      target.classList.contains('grid-item-control-btn')
+      target.classList.contains("drag-handle") ||
+      target.closest(".drag-handle") ||
+      target.classList.contains("resize-handle") ||
+      target.closest(".resize-handle") ||
+      target.classList.contains("grid-item-delete") ||
+      target.classList.contains("grid-item-control-btn")
     ) {
-      debug.log('  ⏭️ Skipping - clicked on control element');
+      debug.log("  ⏭️ Skipping - clicked on control element");
       return;
     }
 
-    debug.log('  ✅ Proceeding with click handling');
+    debug.log("  ✅ Proceeding with click handling");
 
     // Set selection state immediately
     gridState.selectedItemId = this.item.id;
@@ -904,24 +962,24 @@ export class GridItemWrapper {
     setActiveCanvas(this.item.canvasId);
 
     // Emit selection event for plugins
-    eventManager.emit('componentSelected', {
+    eventManager.emit("componentSelected", {
       itemId: this.item.id,
       canvasId: this.item.canvasId,
     });
 
     // Dispatch event to open config panel
-    debug.log('  📤 Dispatching item-click event', {
+    debug.log("  📤 Dispatching item-click event", {
       itemId: this.item.id,
       canvasId: this.item.canvasId,
       hasItemRef: !!this.itemRef,
     });
-    const event = new CustomEvent('item-click', {
+    const event = new CustomEvent("item-click", {
       detail: { itemId: this.item.id, canvasId: this.item.canvasId },
       bubbles: true,
       composed: true,
     });
     this.itemRef.dispatchEvent(event);
-    debug.log('  ✅ item-click event dispatched');
+    debug.log("  ✅ item-click event dispatched");
   };
 
   /**
@@ -929,14 +987,14 @@ export class GridItemWrapper {
    * Calls deletion hook if provided, then dispatches delete event if approved
    */
   private handleDelete = async () => {
-    debug.log('🗑️ handleDelete (default wrapper button)', {
+    debug.log("🗑️ handleDelete (default wrapper button)", {
       itemId: this.item.id,
       canvasId: this.item.canvasId,
     });
 
     // If deletion hook provided, call it first
     if (this.onBeforeDelete) {
-      debug.log('  🪝 Calling deletion hook...');
+      debug.log("  🪝 Calling deletion hook...");
       try {
         const shouldDelete = await this.onBeforeDelete({
           item: this.item,
@@ -945,23 +1003,23 @@ export class GridItemWrapper {
         });
 
         if (!shouldDelete) {
-          debug.log('  ❌ Deletion cancelled by hook');
+          debug.log("  ❌ Deletion cancelled by hook");
           return;
         }
-        debug.log('  ✅ Deletion approved by hook');
+        debug.log("  ✅ Deletion approved by hook");
       } catch (error) {
-        console.error('  ❌ Deletion hook error:', error);
+        console.error("  ❌ Deletion hook error:", error);
         return;
       }
     }
 
     // Proceed with deletion
-    const event = new CustomEvent('grid-item:delete', {
+    const event = new CustomEvent("grid-item:delete", {
       detail: { itemId: this.item.id, canvasId: this.item.canvasId },
       bubbles: true,
       composed: true,
     });
-    debug.log('  📤 Dispatching grid-item:delete (internal event)');
+    debug.log("  📤 Dispatching grid-item:delete (internal event)");
     this.itemRef.dispatchEvent(event);
   };
 }
