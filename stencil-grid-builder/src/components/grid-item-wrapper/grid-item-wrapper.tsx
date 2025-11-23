@@ -645,6 +645,12 @@ export class GridItemWrapper {
    * - Look up definition from registry
    * - Use definition.icon and definition.name for header
    * - Call definition.render() for content
+   *
+   * **Accessibility (ARIA-describedby)**:
+   * - Provides contextual hints for screen reader users
+   * - Describes available keyboard interactions
+   * - Hidden visually with .sr-only class
+   * - Only rendered in builder mode (not viewer mode)
    */
   render() {
     // Capture item ID and canvas ID at render time for delete handler
@@ -729,8 +735,14 @@ export class GridItemWrapper {
       "--animation-duration": `${this.config?.animationDuration ?? 100}ms`,
     };
 
-    // Generate unique content slot ID for custom wrapper
+    // Generate unique IDs for custom wrapper and ARIA description
     const contentSlotId = `${this.item.id}-content`;
+    const descriptionId = `${this.item.id}-description`;
+
+    // ARIA description text for screen readers (only in builder mode)
+    const ariaDescription = !this.viewerMode
+      ? "Use arrow keys to nudge position, drag header to move, resize handles to change size, or press Delete to remove"
+      : null;
 
     // Check if custom item wrapper is provided
     if (definition?.renderItemWrapper) {
@@ -748,6 +760,7 @@ export class GridItemWrapper {
           class={itemClasses}
           id={this.item.id}
           aria-selected={isSelected ? "true" : "false"}
+          aria-describedby={ariaDescription ? descriptionId : undefined}
           data-canvas-id={this.item.canvasId}
           data-component-name={displayName}
           data-viewer-mode={this.viewerMode ? "true" : "false"}
@@ -755,6 +768,13 @@ export class GridItemWrapper {
           onClick={(e) => this.handleClick(e)}
           ref={(el) => (this.itemRef = el)}
         >
+          {/* ARIA description (hidden, only for screen readers) */}
+          {ariaDescription && (
+            <div id={descriptionId} class="sr-only">
+              {ariaDescription}
+            </div>
+          )}
+
           {/* Custom wrapper JSX - renders securely */}
           {customWrapper}
 
@@ -783,6 +803,7 @@ export class GridItemWrapper {
         role="group"
         aria-label={`${displayName} component`}
         aria-selected={isSelected ? "true" : "false"}
+        aria-describedby={ariaDescription ? descriptionId : undefined}
         data-canvas-id={this.item.canvasId}
         data-component-name={displayName}
         data-viewer-mode={this.viewerMode ? "true" : "false"}
@@ -790,6 +811,13 @@ export class GridItemWrapper {
         onClick={(e) => this.handleClick(e)}
         ref={(el) => (this.itemRef = el)}
       >
+        {/* ARIA description (hidden, only for screen readers) */}
+        {ariaDescription && (
+          <div id={descriptionId} class="sr-only">
+            {ariaDescription}
+          </div>
+        )}
+
         {/* Editing UI (hidden in viewer mode) */}
         {!this.viewerMode && [
           /* Drag Handle */

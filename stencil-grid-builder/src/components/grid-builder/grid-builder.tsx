@@ -820,6 +820,43 @@ export class GridBuilder {
         return;
       }
 
+      // Handle Delete key (delete selected component)
+      if (event.key === "Delete" || event.key === "Backspace") {
+        if (gridState.selectedItemId && gridState.selectedCanvasId) {
+          debug.log("⌨️ Keyboard: Delete triggered", {
+            itemId: gridState.selectedItemId,
+          });
+          event.preventDefault();
+
+          // Delete the selected item (async - respects onBeforeDelete hook)
+          this.api?.deleteComponent(gridState.selectedItemId).then((deleted) => {
+            if (deleted) {
+              // Announce deletion only if actually deleted (not cancelled by modal)
+              this.announce("Component deleted");
+            }
+          });
+
+          return;
+        }
+      }
+
+      // Handle Escape key (deselect component)
+      if (event.key === "Escape") {
+        if (gridState.selectedItemId || gridState.selectedCanvasId) {
+          debug.log("⌨️ Keyboard: Escape triggered (deselecting)");
+          event.preventDefault();
+
+          // Clear selection
+          gridState.selectedItemId = null;
+          gridState.selectedCanvasId = null;
+
+          // Announce deselection
+          this.announce("Selection cleared");
+
+          return;
+        }
+      }
+
       // Handle arrow key nudging (only if component is selected)
       if (!gridState.selectedItemId || !gridState.selectedCanvasId) {
         return;
@@ -1102,30 +1139,65 @@ export class GridBuilder {
         return newItem.id;
       },
 
-      deleteComponent: (itemId: string) => {
-        // Find and delete item across all canvases
+      deleteComponent: async (itemId: string) => {
+        // Find item and canvas across all canvases
+        let targetCanvasId: string | null = null;
+        let targetItem: any = null;
+
         for (const canvasId in gridState.canvases) {
           const canvas = gridState.canvases[canvasId];
-          const itemIndex = canvas.items.findIndex((i) => i.id === itemId);
-          if (itemIndex !== -1) {
-            // Add to undo/redo history BEFORE deletion (need state for undo)
-            undoRedo.push(new BatchDeleteCommand([itemId]));
-
-            // Delete item
-            canvas.items.splice(itemIndex, 1);
-            gridState.canvases = { ...gridState.canvases };
-
-            // Deselect if deleted item was selected
-            if (gridState.selectedItemId === itemId) {
-              gridState.selectedItemId = null;
-              gridState.selectedCanvasId = null;
-            }
-
-            // Emit event
-            eventManager.emit("componentDeleted", { itemId, canvasId });
-
-            return true;
+          const item = canvas.items.find((i) => i.id === itemId);
+          if (item) {
+            targetCanvasId = canvasId;
+            targetItem = item;
+            break;
           }
+        }
+
+        if (!targetCanvasId || !targetItem) {
+          return false;
+        }
+
+        // Call onBeforeDelete hook if provided (for deletion confirmation)
+        if (this.onBeforeDelete) {
+          try {
+            const shouldDelete = await this.onBeforeDelete({
+              item: targetItem,
+              canvasId: targetCanvasId,
+              itemId: itemId,
+            });
+
+            if (!shouldDelete) {
+              // Deletion cancelled by hook
+              return false;
+            }
+          } catch (error) {
+            console.error("Error in onBeforeDelete hook:", error);
+            return false;
+          }
+        }
+
+        // Proceed with deletion
+        const canvas = gridState.canvases[targetCanvasId];
+        const itemIndex = canvas.items.findIndex((i) => i.id === itemId);
+        if (itemIndex !== -1) {
+          // Add to undo/redo history BEFORE deletion (need state for undo)
+          undoRedo.push(new BatchDeleteCommand([itemId]));
+
+          // Delete item
+          canvas.items.splice(itemIndex, 1);
+          gridState.canvases = { ...gridState.canvases };
+
+          // Deselect if deleted item was selected
+          if (gridState.selectedItemId === itemId) {
+            gridState.selectedItemId = null;
+            gridState.selectedCanvasId = null;
+          }
+
+          // Emit event
+          eventManager.emit("componentDeleted", { itemId, canvasId: targetCanvasId });
+
+          return true;
         }
         return false;
       },
