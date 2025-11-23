@@ -616,6 +616,26 @@ export class VirtualRendererService {
 
     // Start observing
     this.observer.observe(element);
+
+    // IMPORTANT: IntersectionObserver doesn't fire immediately for already-visible elements
+    // Check if element is already in viewport and call callback synchronously
+    // This prevents "Loading..." flash for items that are initially visible
+    const rect = element.getBoundingClientRect();
+    const windowHeight = window.innerHeight || document.documentElement.clientHeight;
+    const windowWidth = window.innerWidth || document.documentElement.clientWidth;
+
+    // Check if element is in viewport (with 200px margin matching rootMargin)
+    const isInViewport = (
+      rect.top < windowHeight + 200 &&
+      rect.bottom > -200 &&
+      rect.left < windowWidth + 200 &&
+      rect.right > -200
+    );
+
+    // Call callback immediately if already visible
+    if (isInViewport) {
+      callback(true);
+    }
   }
 
   /**

@@ -216,6 +216,14 @@ export class GridItemWrapper {
    */
   componentWillLoad() {
     this.updateComponentState();
+
+    // Set initial visibility BEFORE first render
+    // When virtual rendering is disabled (e.g., Storybook), render immediately
+    if (this.config?.enableVirtualRendering === false) {
+      this.isVisible = true;
+    }
+    // When virtual rendering is enabled (default), isVisible starts as false
+    // and will be updated by IntersectionObserver callback in componentDidLoad
   }
 
   /**
@@ -639,6 +647,12 @@ export class GridItemWrapper {
    * - Call definition.render() for content
    */
   render() {
+    // Capture item ID and canvas ID at render time for delete handler
+    // This ensures the delete button always deletes the correct item,
+    // even if this.item prop changes during async operations (e.g., confirm dialog)
+    const itemIdForDelete = this.item.id;
+    const canvasIdForDelete = this.item.canvasId;
+
     // Use prop-based viewport in viewer mode, global state in builder mode
     const currentViewport = this.viewerMode
       ? this.currentViewport || "desktop"
@@ -786,7 +800,7 @@ export class GridItemWrapper {
           <div class="grid-item-controls" key="controls">
             <button
               class="grid-item-delete"
-              onClick={() => this.handleDelete()}
+              onClick={() => this.handleDelete(itemIdForDelete, canvasIdForDelete)}
             >
               ×
             </button>
@@ -985,21 +999,27 @@ export class GridItemWrapper {
   /**
    * Handle delete from default wrapper button
    * Calls deletion hook if provided, then dispatches delete event if approved
+   *
+   * @param itemId - Item ID captured at render time
+   * @param canvasId - Canvas ID captured at render time
    */
-  private handleDelete = async () => {
+  private handleDelete = async (itemId: string, canvasId: string) => {
     debug.log("🗑️ handleDelete (default wrapper button)", {
-      itemId: this.item.id,
-      canvasId: this.item.canvasId,
+      itemId,
+      canvasId,
     });
+
+    // Get the current item for the deletion hook
+    const itemToDelete = this.item;
 
     // If deletion hook provided, call it first
     if (this.onBeforeDelete) {
       debug.log("  🪝 Calling deletion hook...");
       try {
         const shouldDelete = await this.onBeforeDelete({
-          item: this.item,
-          canvasId: this.item.canvasId,
-          itemId: this.item.id,
+          item: itemToDelete,
+          canvasId: canvasId,
+          itemId: itemId,
         });
 
         if (!shouldDelete) {
@@ -1013,9 +1033,9 @@ export class GridItemWrapper {
       }
     }
 
-    // Proceed with deletion
+    // Proceed with deletion using captured itemId/canvasId
     const event = new CustomEvent("grid-item:delete", {
-      detail: { itemId: this.item.id, canvasId: this.item.canvasId },
+      detail: { itemId, canvasId },
       bubbles: true,
       composed: true,
     });

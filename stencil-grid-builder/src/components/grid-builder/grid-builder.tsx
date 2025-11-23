@@ -1818,9 +1818,20 @@ export class GridBuilder {
                   isActive,
                 });
 
+                // Handle both vNode and HTMLElement returns
+                const headerContent = headerElement instanceof HTMLElement
+                  ? <div ref={(el) => {
+                      if (el) {
+                        // Clear existing children to allow updates when active state changes
+                        el.innerHTML = '';
+                        el.appendChild(headerElement);
+                      }
+                    }} />
+                  : headerElement;
+
                 return (
                   <div key={canvasId} class="canvas-wrapper">
-                    {headerElement}
+                    {headerContent}
                     <canvas-section
                       canvasId={canvasId}
                       isActive={isActive}
