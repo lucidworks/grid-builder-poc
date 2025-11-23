@@ -1974,7 +1974,7 @@ describe('grid-builder', () => {
 
       // Verify canvasActivated event was emitted 3 times
       const activatedCalls = emitSpy.mock.calls.filter(
-        call => call[0] === 'canvasActivated' && call[1].canvasId === 'canvas1'
+        call => call[0] === 'canvasActivated' && (call[1] as any).canvasId === 'canvas1'
       );
       expect(activatedCalls.length).toBe(3);
 
