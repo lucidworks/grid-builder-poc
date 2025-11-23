@@ -74,14 +74,16 @@ Choose the component that matches your use case:
         description: 'Page header component',
         defaultSize: { width: 50, height: 6 },
         minSize: { width: 10, height: 3 },
-        render: ({ config }) => {
-          const div = document.createElement('div');
-          div.style.cssText = 'padding: 12px; background: #f0f0f0;';
-          const h3 = document.createElement('h3');
-          h3.textContent = config?.title || 'Header';
-          div.appendChild(h3);
-          return div;
-        }
+        renderDragClone: () => (
+          <div style={{ padding: '8px 12px', background: '#f0f0f0', border: '2px dashed #ccc' }}>
+            📄 Header
+          </div>
+        ),
+        render: ({ config }) => (
+          <div style={{ padding: '12px', background: '#f0f0f0' }}>
+            <h3>{config?.title || 'Header'}</h3>
+          </div>
+        )
       },
       {
         type: 'text',
@@ -90,14 +92,16 @@ Choose the component that matches your use case:
         description: 'Rich text content',
         defaultSize: { width: 25, height: 10 },
         minSize: { width: 10, height: 5 },
-        render: ({ config }) => {
-          const div = document.createElement('div');
-          div.style.cssText = 'padding: 10px; background: #fff;';
-          const p = document.createElement('p');
-          p.textContent = config?.text || 'Sample text';
-          div.appendChild(p);
-          return div;
-        }
+        renderDragClone: () => (
+          <div style={{ padding: '8px 12px', background: '#fff', border: '2px dashed #ccc' }}>
+            📝 Text Block
+          </div>
+        ),
+        render: ({ config }) => (
+          <div style={{ padding: '10px', background: '#fff' }}>
+            <p>{config?.text || 'Sample text'}</p>
+          </div>
+        )
       }
     ];
 
@@ -280,14 +284,16 @@ The `grid-viewer` component is a **lightweight, display-only** version of grid-b
         icon: '📄',
         defaultSize: { width: 30, height: 4 },
         minSize: { width: 15, height: 3 },
-        render: ({ config }) => {
-          const div = document.createElement('div');
-          div.style.cssText = 'padding: 12px; background: #f0f0f0;';
-          const h3 = document.createElement('h3');
-          h3.textContent = config?.title || 'Header';
-          div.appendChild(h3);
-          return div;
-        }
+        renderDragClone: () => (
+          <div style={{ padding: '8px 12px', background: '#f0f0f0', border: '2px dashed #ccc' }}>
+            📄 Header
+          </div>
+        ),
+        render: ({ config }) => (
+          <div style={{ padding: '12px', background: '#f0f0f0' }}>
+            <h3>{config?.title || 'Header'}</h3>
+          </div>
+        )
       },
       {
         type: 'text',
@@ -295,14 +301,16 @@ The `grid-viewer` component is a **lightweight, display-only** version of grid-b
         icon: '📝',
         defaultSize: { width: 20, height: 6 },
         minSize: { width: 10, height: 4 },
-        render: ({ config }) => {
-          const div = document.createElement('div');
-          div.style.cssText = 'padding: 10px; background: #fff;';
-          const p = document.createElement('p');
-          p.textContent = config?.text || 'Sample text';
-          div.appendChild(p);
-          return div;
-        }
+        renderDragClone: () => (
+          <div style={{ padding: '8px 12px', background: '#fff', border: '2px dashed #ccc' }}>
+            📝 Text Block
+          </div>
+        ),
+        render: ({ config }) => (
+          <div style={{ padding: '10px', background: '#fff' }}>
+            <p>{config?.text || 'Sample text'}</p>
+          </div>
+        )
       }
     ];
 
@@ -510,8 +518,8 @@ interface ComponentDefinition {
   // Custom rendering - REQUIRED
   render: (props: { itemId: string; config: any }) => HTMLElement | JSX.Element;
 
-  // Optional: Custom drag clone for palette
-  renderDragClone?: () => HTMLElement | JSX.Element;
+  // Custom drag clone for palette - REQUIRED
+  renderDragClone: () => HTMLElement | JSX.Element;
 
   // Optional: Custom config panel
   renderConfigPanel?: (props: {
@@ -542,15 +550,25 @@ const blogComponents = [
     description: 'Large hero banner',
     defaultSize: { width: 50, height: 15 },
     minSize: { width: 30, height: 10 },
-    render: ({ itemId, config }) => {
-      // Create and return your custom Stencil component
-      const hero = document.createElement('blog-hero');
-      hero.itemId = itemId;
-      hero.headline = config?.headline || 'Welcome to My Blog';
-      hero.subheadline = config?.subheadline || 'Discover amazing content';
-      hero.backgroundImage = config?.backgroundImage;
-      return hero;
-    }
+    renderDragClone: () => (
+      <div style={{
+        padding: '12px',
+        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+        color: 'white',
+        border: '2px dashed #fff'
+      }}>
+        🎯 Hero Section
+      </div>
+    ),
+    render: ({ itemId, config }) => (
+      // Use your custom Stencil component with JSX
+      <blog-hero
+        item-id={itemId}
+        headline={config?.headline || 'Welcome to My Blog'}
+        subheadline={config?.subheadline || 'Discover amazing content'}
+        background-image={config?.backgroundImage}
+      />
+    )
   },
   {
     type: 'article',
@@ -559,16 +577,26 @@ const blogComponents = [
     description: 'Blog article preview',
     defaultSize: { width: 15, height: 12 },
     minSize: { width: 12, height: 10 },
-    render: ({ itemId, config }) => {
-      // Create and configure your custom Stencil component
-      const card = document.createElement('article-card');
-      card.itemId = itemId;
-      card.title = config?.title || 'Article Title';
-      card.excerpt = config?.excerpt || 'Brief article description...';
-      card.imageUrl = config?.imageUrl;
-      card.author = config?.author || 'John Doe';
-      return card;
-    }
+    renderDragClone: () => (
+      <div style={{
+        padding: '8px 12px',
+        background: '#fff',
+        border: '2px dashed #ccc',
+        boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+      }}>
+        📰 Article Card
+      </div>
+    ),
+    render: ({ itemId, config }) => (
+      // Use your custom Stencil component with JSX
+      <article-card
+        item-id={itemId}
+        title={config?.title || 'Article Title'}
+        excerpt={config?.excerpt || 'Brief article description...'}
+        image-url={config?.imageUrl}
+        author={config?.author || 'John Doe'}
+      />
+    )
   }
 ];
 
