@@ -388,6 +388,7 @@ export class ComponentPalette {
           // Class binding with reactive state
           const itemClasses = {
             "palette-item": true,
+            "palette-item-custom": !!component.renderPaletteItem,
             "dragging-from-palette": this.draggingItemType === component.type,
           };
 
@@ -398,11 +399,28 @@ export class ComponentPalette {
               key={component.type}
             >
               {component.renderPaletteItem
-                ? component.renderPaletteItem({
-                    componentType: component.type,
-                    name: component.name,
-                    icon: component.icon,
-                  })
+                ? (() => {
+                    const rendered = component.renderPaletteItem({
+                      componentType: component.type,
+                      name: component.name,
+                      icon: component.icon,
+                    });
+
+                    // If render returns a DOM element (HTMLElement), wrap it in a div
+                    // This handles cases where consumer uses document.createElement()
+                    if (rendered instanceof HTMLElement) {
+                      return (
+                        <div
+                          ref={(el) =>
+                            el && !el.hasChildNodes() && el.appendChild(rendered)
+                          }
+                        />
+                      );
+                    }
+
+                    // Otherwise return the vNode directly (JSX)
+                    return rendered;
+                  })()
                 : `${component.icon} ${component.name}`}
             </div>
           );
@@ -594,23 +612,30 @@ export class ComponentPalette {
             dragClone.style.boxShadow = "0 4px 12px rgba(0, 0, 0, 0.2)";
             dragClone.style.cursor = "grabbing";
 
-            // Render custom drag clone JSX
-            const vNode = definition.renderDragClone();
+            // Render custom drag clone (supports both VNode and HTMLElement)
+            const cloneContent = definition.renderDragClone();
 
-            // Extract tag name from vNode (Stencil's JSX returns vNode with $tag$ property)
-            const tagName = vNode.$tag$;
+            // Check if it's a real DOM element (from document.createElement)
+            if (cloneContent instanceof HTMLElement) {
+              // Direct DOM element - just append it
+              dragClone.appendChild(cloneContent);
+            } else {
+              // Stencil VNode - extract tag and create element
+              const vNode = cloneContent;
+              const tagName = vNode.$tag$;
 
-            // Create the drag clone element (components are pre-loaded in blog-app.tsx)
-            const contentElement = document.createElement(tagName);
+              // Create the drag clone element (components are pre-loaded in blog-app.tsx)
+              const contentElement = document.createElement(tagName);
 
-            // Copy any props from vNode to element
-            if (vNode.$attrs$) {
-              Object.keys(vNode.$attrs$).forEach((key) => {
-                contentElement.setAttribute(key, vNode.$attrs$[key]);
-              });
+              // Copy any props from vNode to element
+              if (vNode.$attrs$) {
+                Object.keys(vNode.$attrs$).forEach((key) => {
+                  contentElement.setAttribute(key, vNode.$attrs$[key]);
+                });
+              }
+
+              dragClone.appendChild(contentElement);
             }
-
-            dragClone.appendChild(contentElement);
             document.body.appendChild(dragClone);
 
             // Store clone reference, half dimensions, and default size for move/drop events
