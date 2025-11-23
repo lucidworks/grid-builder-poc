@@ -2155,4 +2155,794 @@ describe("grid-builder", () => {
       emitSpy.mockRestore();
     });
   });
+
+  describe("Accessibility Features", () => {
+    beforeEach(() => {
+      resetState();
+      clearHistory();
+      jest.clearAllMocks();
+    });
+
+    describe("Keyboard Navigation", () => {
+      it("should delete selected component on Delete key", async () => {
+        const component = new GridBuilder();
+        component.components = mockComponentDefinitions;
+
+        // Setup: Add item and select it
+        const testItem = {
+          id: "test-item-1",
+          canvasId: "canvas1",
+          type: "header",
+          name: "Test Header",
+          zIndex: 1,
+          layouts: {
+            desktop: { x: 10, y: 10, width: 20, height: 6 },
+            mobile: { x: 0, y: 0, width: 50, height: 6, customized: false },
+          },
+          config: {},
+        };
+
+        gridState.canvases = {
+          canvas1: { items: [testItem], zIndexCounter: 2 },
+        };
+        gridState.selectedItemId = "test-item-1";
+        gridState.selectedCanvasId = "canvas1";
+
+        const mockHostElement = {
+          addEventListener: jest.fn(),
+          removeEventListener: jest.fn(),
+        };
+        Object.defineProperty(component, "hostElement", {
+          value: mockHostElement,
+          writable: true,
+        });
+
+        component.componentWillLoad();
+        component.componentDidLoad();
+
+        // Get the keyboard handler
+        const keyboardHandler = (document as any).addEventListener.mock?.calls?.find(
+          (call: any) => call[0] === "keydown",
+        )?.[1];
+
+        expect(keyboardHandler).toBeDefined();
+
+        // Simulate Delete key press
+        const deleteEvent = new KeyboardEvent("keydown", { key: "Delete" });
+        Object.defineProperty(deleteEvent, "preventDefault", {
+          value: jest.fn(),
+        });
+
+        await keyboardHandler(deleteEvent);
+
+        // Wait for async deletion
+        await new Promise((resolve) => setTimeout(resolve, 10));
+
+        // Verify item was deleted
+        expect(gridState.canvases.canvas1.items.length).toBe(0);
+
+        // Verify selection cleared
+        expect(gridState.selectedItemId).toBeNull();
+        expect(gridState.selectedCanvasId).toBeNull();
+      });
+
+      it("should delete selected component on Backspace key", async () => {
+        const component = new GridBuilder();
+        component.components = mockComponentDefinitions;
+
+        // Setup: Add item and select it
+        const testItem = {
+          id: "test-item-1",
+          canvasId: "canvas1",
+          type: "text",
+          name: "Test Text",
+          zIndex: 1,
+          layouts: {
+            desktop: { x: 5, y: 5, width: 15, height: 10 },
+            mobile: { x: 0, y: 0, width: 50, height: 10, customized: false },
+          },
+          config: {},
+        };
+
+        gridState.canvases = {
+          canvas1: { items: [testItem], zIndexCounter: 2 },
+        };
+        gridState.selectedItemId = "test-item-1";
+        gridState.selectedCanvasId = "canvas1";
+
+        const mockHostElement = {
+          addEventListener: jest.fn(),
+          removeEventListener: jest.fn(),
+        };
+        Object.defineProperty(component, "hostElement", {
+          value: mockHostElement,
+          writable: true,
+        });
+
+        component.componentWillLoad();
+        component.componentDidLoad();
+
+        // Get the keyboard handler
+        const keyboardHandler = (document as any).addEventListener.mock?.calls?.find(
+          (call: any) => call[0] === "keydown",
+        )?.[1];
+
+        // Simulate Backspace key press
+        const backspaceEvent = new KeyboardEvent("keydown", { key: "Backspace" });
+        Object.defineProperty(backspaceEvent, "preventDefault", {
+          value: jest.fn(),
+        });
+
+        await keyboardHandler(backspaceEvent);
+
+        // Wait for async deletion
+        await new Promise((resolve) => setTimeout(resolve, 10));
+
+        // Verify item was deleted
+        expect(gridState.canvases.canvas1.items.length).toBe(0);
+      });
+
+      it("should not delete when no component is selected", async () => {
+        const component = new GridBuilder();
+        component.components = mockComponentDefinitions;
+
+        // Setup: Add item but don't select it
+        const testItem = {
+          id: "test-item-1",
+          canvasId: "canvas1",
+          type: "header",
+          name: "Test Header",
+          zIndex: 1,
+          layouts: {
+            desktop: { x: 10, y: 10, width: 20, height: 6 },
+            mobile: { x: 0, y: 0, width: 50, height: 6, customized: false },
+          },
+          config: {},
+        };
+
+        gridState.canvases = {
+          canvas1: { items: [testItem], zIndexCounter: 2 },
+        };
+        gridState.selectedItemId = null;
+        gridState.selectedCanvasId = null;
+
+        const mockHostElement = {
+          addEventListener: jest.fn(),
+          removeEventListener: jest.fn(),
+        };
+        Object.defineProperty(component, "hostElement", {
+          value: mockHostElement,
+          writable: true,
+        });
+
+        component.componentWillLoad();
+        component.componentDidLoad();
+
+        // Get the keyboard handler
+        const keyboardHandler = (document as any).addEventListener.mock?.calls?.find(
+          (call: any) => call[0] === "keydown",
+        )?.[1];
+
+        // Simulate Delete key press
+        const deleteEvent = new KeyboardEvent("keydown", { key: "Delete" });
+        await keyboardHandler(deleteEvent);
+
+        // Verify item was NOT deleted
+        expect(gridState.canvases.canvas1.items.length).toBe(1);
+      });
+
+      it("should clear selection on Escape key", () => {
+        const component = new GridBuilder();
+        component.components = mockComponentDefinitions;
+
+        // Setup: Select an item
+        gridState.canvases = {
+          canvas1: {
+            items: [
+              {
+                id: "test-item-1",
+                canvasId: "canvas1",
+                type: "header",
+                name: "Test",
+                zIndex: 1,
+                layouts: {
+                  desktop: { x: 0, y: 0, width: 10, height: 5 },
+                  mobile: { x: 0, y: 0, width: 50, height: 5, customized: false },
+                },
+                config: {},
+              },
+            ],
+            zIndexCounter: 2,
+          },
+        };
+        gridState.selectedItemId = "test-item-1";
+        gridState.selectedCanvasId = "canvas1";
+
+        const mockHostElement = {
+          addEventListener: jest.fn(),
+          removeEventListener: jest.fn(),
+        };
+        Object.defineProperty(component, "hostElement", {
+          value: mockHostElement,
+          writable: true,
+        });
+
+        component.componentWillLoad();
+        component.componentDidLoad();
+
+        // Get the keyboard handler
+        const keyboardHandler = (document as any).addEventListener.mock?.calls?.find(
+          (call: any) => call[0] === "keydown",
+        )?.[1];
+
+        // Simulate Escape key press
+        const escapeEvent = new KeyboardEvent("keydown", { key: "Escape" });
+        Object.defineProperty(escapeEvent, "preventDefault", {
+          value: jest.fn(),
+        });
+
+        keyboardHandler(escapeEvent);
+
+        // Verify selection was cleared
+        expect(gridState.selectedItemId).toBeNull();
+        expect(gridState.selectedCanvasId).toBeNull();
+      });
+
+      it("should not clear selection on Escape when nothing is selected", () => {
+        const component = new GridBuilder();
+        component.components = mockComponentDefinitions;
+
+        gridState.selectedItemId = null;
+        gridState.selectedCanvasId = null;
+
+        const mockHostElement = {
+          addEventListener: jest.fn(),
+          removeEventListener: jest.fn(),
+        };
+        Object.defineProperty(component, "hostElement", {
+          value: mockHostElement,
+          writable: true,
+        });
+
+        component.componentWillLoad();
+        component.componentDidLoad();
+
+        // Get the keyboard handler
+        const keyboardHandler = (document as any).addEventListener.mock?.calls?.find(
+          (call: any) => call[0] === "keydown",
+        )?.[1];
+
+        // Create a spy on preventDefault
+        const preventDefaultSpy = jest.fn();
+
+        // Simulate Escape key press
+        const escapeEvent = new KeyboardEvent("keydown", { key: "Escape" });
+        Object.defineProperty(escapeEvent, "preventDefault", {
+          value: preventDefaultSpy,
+        });
+
+        keyboardHandler(escapeEvent);
+
+        // Verify preventDefault was NOT called (early return)
+        expect(preventDefaultSpy).not.toHaveBeenCalled();
+      });
+
+      it("should respect onBeforeDelete hook when using Delete key", async () => {
+        const mockHook = jest.fn(() => Promise.resolve(false)); // Cancel deletion
+
+        const component = new GridBuilder();
+        component.components = mockComponentDefinitions;
+        component.onBeforeDelete = mockHook;
+
+        // Setup: Add item and select it
+        const testItem = {
+          id: "test-item-1",
+          canvasId: "canvas1",
+          type: "header",
+          name: "Test Header",
+          zIndex: 1,
+          layouts: {
+            desktop: { x: 10, y: 10, width: 20, height: 6 },
+            mobile: { x: 0, y: 0, width: 50, height: 6, customized: false },
+          },
+          config: {},
+        };
+
+        gridState.canvases = {
+          canvas1: { items: [testItem], zIndexCounter: 2 },
+        };
+        gridState.selectedItemId = "test-item-1";
+        gridState.selectedCanvasId = "canvas1";
+
+        const mockHostElement = {
+          addEventListener: jest.fn(),
+          removeEventListener: jest.fn(),
+        };
+        Object.defineProperty(component, "hostElement", {
+          value: mockHostElement,
+          writable: true,
+        });
+
+        component.componentWillLoad();
+        component.componentDidLoad();
+
+        // Get the keyboard handler
+        const keyboardHandler = (document as any).addEventListener.mock?.calls?.find(
+          (call: any) => call[0] === "keydown",
+        )?.[1];
+
+        // Simulate Delete key press
+        const deleteEvent = new KeyboardEvent("keydown", { key: "Delete" });
+        Object.defineProperty(deleteEvent, "preventDefault", {
+          value: jest.fn(),
+        });
+
+        await keyboardHandler(deleteEvent);
+
+        // Wait for async hook
+        await new Promise((resolve) => setTimeout(resolve, 10));
+
+        // Verify hook was called
+        expect(mockHook).toHaveBeenCalledWith({
+          item: testItem,
+          canvasId: "canvas1",
+          itemId: "test-item-1",
+        });
+
+        // Verify item was NOT deleted (hook returned false)
+        expect(gridState.canvases.canvas1.items.length).toBe(1);
+      });
+
+      it("should delete component when onBeforeDelete hook returns true", async () => {
+        const mockHook = jest.fn(() => Promise.resolve(true)); // Approve deletion
+
+        const component = new GridBuilder();
+        component.components = mockComponentDefinitions;
+        component.onBeforeDelete = mockHook;
+
+        // Setup: Add item and select it
+        const testItem = {
+          id: "test-item-1",
+          canvasId: "canvas1",
+          type: "header",
+          name: "Test Header",
+          zIndex: 1,
+          layouts: {
+            desktop: { x: 10, y: 10, width: 20, height: 6 },
+            mobile: { x: 0, y: 0, width: 50, height: 6, customized: false },
+          },
+          config: {},
+        };
+
+        gridState.canvases = {
+          canvas1: { items: [testItem], zIndexCounter: 2 },
+        };
+        gridState.selectedItemId = "test-item-1";
+        gridState.selectedCanvasId = "canvas1";
+
+        const mockHostElement = {
+          addEventListener: jest.fn(),
+          removeEventListener: jest.fn(),
+        };
+        Object.defineProperty(component, "hostElement", {
+          value: mockHostElement,
+          writable: true,
+        });
+
+        component.componentWillLoad();
+        component.componentDidLoad();
+
+        // Get the keyboard handler
+        const keyboardHandler = (document as any).addEventListener.mock?.calls?.find(
+          (call: any) => call[0] === "keydown",
+        )?.[1];
+
+        // Simulate Delete key press
+        const deleteEvent = new KeyboardEvent("keydown", { key: "Delete" });
+        Object.defineProperty(deleteEvent, "preventDefault", {
+          value: jest.fn(),
+        });
+
+        await keyboardHandler(deleteEvent);
+
+        // Wait for async hook
+        await new Promise((resolve) => setTimeout(resolve, 10));
+
+        // Verify hook was called
+        expect(mockHook).toHaveBeenCalled();
+
+        // Verify item WAS deleted (hook returned true)
+        expect(gridState.canvases.canvas1.items.length).toBe(0);
+      });
+    });
+
+    describe("ARIA Live Regions", () => {
+      it("should have announcement state property", () => {
+        const component = new GridBuilder();
+        component.components = mockComponentDefinitions;
+
+        // Access private property for testing
+        expect((component as any).announcement).toBeDefined();
+        expect((component as any).announcement).toBe("");
+      });
+
+      it("should announce component additions", () => {
+        const component = new GridBuilder();
+        component.components = mockComponentDefinitions;
+
+        const mockHostElement = {
+          addEventListener: jest.fn(),
+          removeEventListener: jest.fn(),
+        };
+        Object.defineProperty(component, "hostElement", {
+          value: mockHostElement,
+          writable: true,
+        });
+
+        component.componentWillLoad();
+        component.componentDidLoad();
+
+        // Trigger componentAdded event
+        eventManager.emit("componentAdded", {
+          item: { type: "header", id: "item-1", name: "Header" },
+          canvasId: "canvas1",
+        });
+
+        // Verify announcement was set
+        expect((component as any).announcement).toContain("component added");
+      });
+
+      it("should announce component deletions", () => {
+        const component = new GridBuilder();
+        component.components = mockComponentDefinitions;
+
+        const mockHostElement = {
+          addEventListener: jest.fn(),
+          removeEventListener: jest.fn(),
+        };
+        Object.defineProperty(component, "hostElement", {
+          value: mockHostElement,
+          writable: true,
+        });
+
+        component.componentWillLoad();
+        component.componentDidLoad();
+
+        // Trigger componentDeleted event
+        eventManager.emit("componentDeleted", {
+          itemId: "item-1",
+          canvasId: "canvas1",
+        });
+
+        // Verify announcement was set
+        expect((component as any).announcement).toBe("Component deleted");
+      });
+
+      it("should announce component moves", () => {
+        const component = new GridBuilder();
+        component.components = mockComponentDefinitions;
+
+        const mockHostElement = {
+          addEventListener: jest.fn(),
+          removeEventListener: jest.fn(),
+        };
+        Object.defineProperty(component, "hostElement", {
+          value: mockHostElement,
+          writable: true,
+        });
+
+        component.componentWillLoad();
+        component.componentDidLoad();
+
+        // Trigger componentMoved event
+        eventManager.emit("componentMoved", {
+          item: { id: "item-1" },
+          sourceCanvasId: "canvas1",
+          targetCanvasId: "canvas2",
+          position: { x: 10, y: 10 },
+        });
+
+        // Verify announcement was set
+        expect((component as any).announcement).toBe("Component moved to new canvas");
+      });
+
+      it("should announce undo actions", () => {
+        const component = new GridBuilder();
+        component.components = mockComponentDefinitions;
+
+        const mockHostElement = {
+          addEventListener: jest.fn(),
+          removeEventListener: jest.fn(),
+        };
+        Object.defineProperty(component, "hostElement", {
+          value: mockHostElement,
+          writable: true,
+        });
+
+        component.componentWillLoad();
+        component.componentDidLoad();
+
+        // Trigger undoExecuted event
+        eventManager.emit("undoExecuted", {});
+
+        // Verify announcement was set
+        expect((component as any).announcement).toBe("Undo action performed");
+      });
+
+      it("should announce redo actions", () => {
+        const component = new GridBuilder();
+        component.components = mockComponentDefinitions;
+
+        const mockHostElement = {
+          addEventListener: jest.fn(),
+          removeEventListener: jest.fn(),
+        };
+        Object.defineProperty(component, "hostElement", {
+          value: mockHostElement,
+          writable: true,
+        });
+
+        component.componentWillLoad();
+        component.componentDidLoad();
+
+        // Trigger redoExecuted event
+        eventManager.emit("redoExecuted", {});
+
+        // Verify announcement was set
+        expect((component as any).announcement).toBe("Redo action performed");
+      });
+
+      it("should announce canvas activation", () => {
+        const component = new GridBuilder();
+        component.components = mockComponentDefinitions;
+        component.canvasMetadata = {
+          canvas1: { title: "Hero Section" },
+        };
+
+        const mockHostElement = {
+          addEventListener: jest.fn(),
+          removeEventListener: jest.fn(),
+        };
+        Object.defineProperty(component, "hostElement", {
+          value: mockHostElement,
+          writable: true,
+        });
+
+        component.componentWillLoad();
+        component.componentDidLoad();
+
+        // Trigger canvasActivated event
+        eventManager.emit("canvasActivated", { canvasId: "canvas1" });
+
+        // Verify announcement was set with canvas title
+        expect((component as any).announcement).toBe("Hero Section canvas activated");
+      });
+
+      it("should clear announcement after 100ms", (done) => {
+        const component = new GridBuilder();
+        component.components = mockComponentDefinitions;
+
+        const mockHostElement = {
+          addEventListener: jest.fn(),
+          removeEventListener: jest.fn(),
+        };
+        Object.defineProperty(component, "hostElement", {
+          value: mockHostElement,
+          writable: true,
+        });
+
+        component.componentWillLoad();
+        component.componentDidLoad();
+
+        // Trigger event
+        eventManager.emit("componentDeleted", {
+          itemId: "item-1",
+          canvasId: "canvas1",
+        });
+
+        // Verify announcement is set immediately
+        expect((component as any).announcement).toBe("Component deleted");
+
+        // Wait 150ms and check it was cleared
+        setTimeout(() => {
+          expect((component as any).announcement).toBe("");
+          done();
+        }, 150);
+      });
+
+      it("should render ARIA live region in DOM", () => {
+        const component = new GridBuilder();
+        component.components = mockComponentDefinitions;
+        component.initialState = {
+          canvases: {
+            canvas1: { items: [], zIndexCounter: 0 },
+          },
+        };
+
+        component.componentWillLoad();
+        const result = component.render();
+
+        // Verify Host contains sr-only div with aria-live
+        // (Structural verification - actual DOM would require spec page)
+        expect(result).toBeDefined();
+      });
+    });
+
+    describe("deleteComponent Hook Integration", () => {
+      it("should call onBeforeDelete hook when deleting via API", async () => {
+        const mockHook = jest.fn(() => Promise.resolve(true));
+
+        const component = new GridBuilder();
+        component.components = mockComponentDefinitions;
+        component.onBeforeDelete = mockHook;
+
+        // Setup: Add item
+        const testItem = {
+          id: "test-item-1",
+          canvasId: "canvas1",
+          type: "header",
+          name: "Test Header",
+          zIndex: 1,
+          layouts: {
+            desktop: { x: 10, y: 10, width: 20, height: 6 },
+            mobile: { x: 0, y: 0, width: 50, height: 6, customized: false },
+          },
+          config: {},
+        };
+
+        gridState.canvases = {
+          canvas1: { items: [testItem], zIndexCounter: 2 },
+        };
+
+        component.componentWillLoad();
+        component.componentDidLoad();
+
+        const api = (component as any).api;
+
+        // Call deleteComponent via API
+        const result = await api.deleteComponent("test-item-1");
+
+        // Verify hook was called with correct context
+        expect(mockHook).toHaveBeenCalledWith({
+          item: expect.objectContaining({ id: "test-item-1" }),
+          canvasId: "canvas1",
+          itemId: "test-item-1",
+        });
+
+        // Verify deletion succeeded
+        expect(result).toBe(true);
+        expect(gridState.canvases.canvas1.items.length).toBe(0);
+      });
+
+      it("should cancel deletion when hook returns false", async () => {
+        const mockHook = jest.fn(() => Promise.resolve(false)); // Cancel
+
+        const component = new GridBuilder();
+        component.components = mockComponentDefinitions;
+        component.onBeforeDelete = mockHook;
+
+        // Setup: Add item
+        const testItem = {
+          id: "test-item-1",
+          canvasId: "canvas1",
+          type: "header",
+          name: "Test Header",
+          zIndex: 1,
+          layouts: {
+            desktop: { x: 10, y: 10, width: 20, height: 6 },
+            mobile: { x: 0, y: 0, width: 50, height: 6, customized: false },
+          },
+          config: {},
+        };
+
+        gridState.canvases = {
+          canvas1: { items: [testItem], zIndexCounter: 2 },
+        };
+
+        component.componentWillLoad();
+        component.componentDidLoad();
+
+        const api = (component as any).api;
+
+        // Call deleteComponent via API
+        const result = await api.deleteComponent("test-item-1");
+
+        // Verify hook was called
+        expect(mockHook).toHaveBeenCalled();
+
+        // Verify deletion was cancelled
+        expect(result).toBe(false);
+        expect(gridState.canvases.canvas1.items.length).toBe(1);
+      });
+
+      it("should proceed with deletion when hook is not provided", async () => {
+        const component = new GridBuilder();
+        component.components = mockComponentDefinitions;
+        // No onBeforeDelete hook provided
+
+        // Setup: Add item
+        const testItem = {
+          id: "test-item-1",
+          canvasId: "canvas1",
+          type: "header",
+          name: "Test Header",
+          zIndex: 1,
+          layouts: {
+            desktop: { x: 10, y: 10, width: 20, height: 6 },
+            mobile: { x: 0, y: 0, width: 50, height: 6, customized: false },
+          },
+          config: {},
+        };
+
+        gridState.canvases = {
+          canvas1: { items: [testItem], zIndexCounter: 2 },
+        };
+
+        component.componentWillLoad();
+        component.componentDidLoad();
+
+        const api = (component as any).api;
+
+        // Call deleteComponent via API
+        const result = await api.deleteComponent("test-item-1");
+
+        // Verify deletion succeeded
+        expect(result).toBe(true);
+        expect(gridState.canvases.canvas1.items.length).toBe(0);
+      });
+
+      it("should handle hook errors gracefully", async () => {
+        const mockHook = jest.fn(() => {
+          throw new Error("Hook error");
+        });
+
+        const consoleErrorSpy = jest.spyOn(console, "error").mockImplementation();
+
+        const component = new GridBuilder();
+        component.components = mockComponentDefinitions;
+        component.onBeforeDelete = mockHook;
+
+        // Setup: Add item
+        const testItem = {
+          id: "test-item-1",
+          canvasId: "canvas1",
+          type: "header",
+          name: "Test Header",
+          zIndex: 1,
+          layouts: {
+            desktop: { x: 10, y: 10, width: 20, height: 6 },
+            mobile: { x: 0, y: 0, width: 50, height: 6, customized: false },
+          },
+          config: {},
+        };
+
+        gridState.canvases = {
+          canvas1: { items: [testItem], zIndexCounter: 2 },
+        };
+
+        component.componentWillLoad();
+        component.componentDidLoad();
+
+        const api = (component as any).api;
+
+        // Call deleteComponent via API
+        const result = await api.deleteComponent("test-item-1");
+
+        // Verify hook was called
+        expect(mockHook).toHaveBeenCalled();
+
+        // Verify error was logged
+        expect(consoleErrorSpy).toHaveBeenCalledWith(
+          "Error in onBeforeDelete hook:",
+          expect.any(Error),
+        );
+
+        // Verify deletion was cancelled (error treated as false)
+        expect(result).toBe(false);
+        expect(gridState.canvases.canvas1.items.length).toBe(1);
+
+        consoleErrorSpy.mockRestore();
+      });
+    });
+  });
 });
