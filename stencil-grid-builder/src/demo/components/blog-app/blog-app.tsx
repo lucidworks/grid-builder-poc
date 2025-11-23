@@ -1,6 +1,7 @@
-import { Component, h, State } from '@stencil/core';
+import { Component, h, State, Watch } from '@stencil/core';
 import { blogComponentDefinitions, contentComponents, interactiveComponents, mediaComponents } from '../../component-definitions';
-import { GridBuilderAPI } from '../../../types/api';
+import { GridBuilderAPI, CanvasHeaderProps } from '../../../types/api';
+import { UIComponentOverrides } from '../../../types/ui-overrides';
 import { SectionEditorData } from '../../types/section-editor-data';
 import { ConfirmationModalData } from '../../types/confirmation-modal-data';
 import { DeletionHookContext } from '../../../types/deletion-hook';
@@ -225,6 +226,26 @@ export class BlogApp {
   @State() private api!: GridBuilderAPI;
 
   /**
+   * Watch API Property for Changes
+   * --------------------------------
+   *
+   * StencilJS Pattern: Use @Watch decorator for reactive initialization
+   *
+   * When API is assigned from window.gridBuilderAPI, this watcher automatically
+   * triggers setupGridBuilderIntegration(). This replaces polling pattern with
+   * reactive state management.
+   *
+   * Fires when: componentDidLoad assigns this.api = window.gridBuilderAPI
+   */
+  @Watch('api')
+  handleApiChange(newApi: GridBuilderAPI) {
+    if (newApi) {
+      console.log('🔧 blog-app API watcher triggered, initializing...');
+      this.setupGridBuilderIntegration();
+    }
+  }
+
+  /**
    * Local undo/redo state (synced from API)
    * ------------------------------------
    *
@@ -241,6 +262,27 @@ export class BlogApp {
   @State() private canRedo: boolean = false;
 
   private sectionCounter = 1;
+
+  /**
+   * Event Handler References for Cleanup
+   * -------------------------------------
+   *
+   * Store references to event handlers so they can be removed in disconnectedCallback.
+   * This prevents memory leaks when the component is unmounted.
+   */
+  private gridBuilder: HTMLElement | null = null;
+  private eventsToWatch = [
+    'componentAdded',
+    'componentDeleted',
+    'componentDragged',
+    'componentResized',
+    'componentsBatchAdded',
+    'componentsBatchDeleted',
+    'canvasAdded',
+    'canvasRemoved',
+    'undoExecuted',
+    'redoExecuted'
+  ];
 
   /**
    * Canvas Metadata State
@@ -357,63 +399,68 @@ export class BlogApp {
    */
   @State() isSidebarCollapsed: boolean = false;
 
-  componentWillLoad() {
-    // Grid-builder components are built alongside the demo
-    this.updateCanvasStyles();
-  }
+  /**
+   * Preview Metadata State
+   * -----------------------
+   *
+   * Temporary preview values for live preview (replaces DOM manipulation).
+   * - Stores title/backgroundColor during section editing
+   * - Merged with canvasMetadata for rendering
+   * - Cleared when panel closes
+   */
+  @State() previewMetadata: Record<string, { title?: string; backgroundColor?: string }> = {};
 
   componentDidLoad() {
-    // Wait for grid-builder to initialize and expose API on window
-    // Check every 50ms for up to 2 seconds
-    let attempts = 0;
-    const maxAttempts = 40; // 2 seconds / 50ms
-
-    const checkForAPI = () => {
-      attempts++;
-
+    // Grid-builder exposes API on window after componentDidLoad
+    // Use requestAnimationFrame to wait for next render cycle
+    requestAnimationFrame(() => {
       if ((window as any).gridBuilderAPI) {
-        console.log('🔧 blog-app found API on window, initializing...');
+        console.log('🔧 blog-app found API on window, assigning...');
         this.api = (window as any).gridBuilderAPI;
-        this.setupGridBuilderIntegration();
-      } else if (attempts < maxAttempts) {
-        setTimeout(checkForAPI, 50);
       } else {
-        console.warn('⚠️ blog-app timeout waiting for API');
+        console.warn('⚠️ API not available on window.gridBuilderAPI');
       }
-    };
-
-    checkForAPI();
+    });
   }
 
   /**
-   * Track whether we've initialized the API integration
+   * Lifecycle: Component Disconnected
+   * ----------------------------------
+   *
+   * StencilJS Pattern: Clean up event listeners in disconnectedCallback
+   *
+   * This lifecycle method is called when the component is removed from the DOM.
+   * Clean up all event listeners to prevent memory leaks.
+   *
+   * Event Listeners to Clean Up:
+   * - DOM event listener on grid-builder element (canvas-click)
+   * - API event listeners (canvasAdded, canvasRemoved, undo/redo events)
    */
-  private apiInitialized = false;
+  disconnectedCallback() {
+    console.log('🔧 blog-app disconnectedCallback - cleaning up event listeners');
 
-  private setupGridBuilderIntegration() {
-    console.log('🔧 blog-app setupGridBuilderIntegration called', {
-      apiInitialized: this.apiInitialized,
-      hasApi: !!this.api,
-      apiType: typeof this.api,
-    });
-
-    // Only initialize once, and only when API is available
-    if (this.apiInitialized || !this.api) {
-      console.log('  ⏭️ Skipping setup -', {
-        alreadyInitialized: this.apiInitialized,
-        noApi: !this.api,
-      });
-      return;
+    // Remove DOM event listener
+    if (this.gridBuilder) {
+      this.gridBuilder.removeEventListener('canvas-click', this.handleCanvasClick as EventListener);
+      this.gridBuilder = null;
     }
 
-    console.log('  ✅ Proceeding with API setup');
-    this.apiInitialized = true;
+    // Remove API event listeners
+    if (this.api) {
+      this.api.off('canvasAdded', this.handleCanvasAdded);
+      this.api.off('canvasRemoved', this.handleCanvasRemoved);
 
-    // Inject canvas headers after initial render
-    // This is demo-specific UI (not part of library)
-    setTimeout(() => {
-      this.injectCanvasHeaders();
-    }, 100);
+      // Remove undo/redo event listeners
+      this.eventsToWatch.forEach(eventName => {
+        this.api.off(eventName, this.syncUndoRedoState);
+      });
+    }
+
+    console.log('  ✅ Event listeners cleaned up');
+  }
+
+  private setupGridBuilderIntegration() {
+    console.log('🔧 blog-app setupGridBuilderIntegration called');
 
     /**
      * Listen to canvas-click Events
@@ -428,15 +475,12 @@ export class BlogApp {
      * - etc.
      *
      * These events allow host apps to respond to user interactions.
+     *
+     * Note: Store grid-builder reference for cleanup in disconnectedCallback.
      */
-    const gridBuilder = document.querySelector('grid-builder');
-    if (gridBuilder) {
-      gridBuilder.addEventListener('canvas-click', ((event: CustomEvent) => {
-        const { canvasId } = event.detail;
-        console.log('Canvas clicked:', canvasId);
-        // In a real app, this would show a canvas settings panel
-        // For now, we just log it to demonstrate the event
-      }) as EventListener);
+    this.gridBuilder = document.querySelector('grid-builder');
+    if (this.gridBuilder) {
+      this.gridBuilder.addEventListener('canvas-click', this.handleCanvasClick as EventListener);
     }
 
     /**
@@ -457,37 +501,11 @@ export class BlogApp {
      * - Library fires events when canvases are added/removed
      * - Host app adds/removes metadata in response to events
      * - This keeps host app metadata in sync with library state
+     *
+     * Note: Use class method handlers for cleanup in disconnectedCallback.
      */
-    this.api.on('canvasAdded', (event) => {
-      const { canvasId } = event;
-      // Add metadata for new canvas if it doesn't exist
-      if (!this.canvasMetadata[canvasId]) {
-        const title = `Custom Section ${this.sectionCounter++}`;
-        this.canvasMetadata = {
-          ...this.canvasMetadata,
-          [canvasId]: {
-            title,
-            backgroundColor: '#f5f5f5',
-          },
-        };
-      }
-    });
-
-    this.api.on('canvasRemoved', (event) => {
-      const { canvasId } = event;
-      console.log('🗑️ canvasRemoved event received:', canvasId);
-
-      // Remove metadata when canvas is removed
-      // This keeps metadata in sync with library state
-      const updated = { ...this.canvasMetadata };
-      delete updated[canvasId];
-      this.canvasMetadata = updated;
-      console.log('  ✅ Metadata removed for:', canvasId);
-
-      // Remove injected header (demo-specific UI)
-      this.removeCanvasHeader(canvasId);
-      console.log('  ✅ Header removal attempted for:', canvasId);
-    });
+    this.api.on('canvasAdded', this.handleCanvasAdded);
+    this.api.on('canvasRemoved', this.handleCanvasRemoved);
 
     /**
      * Sync undo/redo button state
@@ -503,26 +521,14 @@ export class BlogApp {
      * - canvasAdded, canvasRemoved (modify history)
      *
      * This ensures undo/redo buttons update correctly in the demo.
+     *
+     * Note: Use class method handler for cleanup in disconnectedCallback.
      */
-
     // Initial sync
     this.syncUndoRedoState();
 
     // Listen to all events that modify history
-    const eventsToWatch = [
-      'componentAdded',
-      'componentDeleted',
-      'componentDragged',
-      'componentResized',
-      'componentsBatchAdded',
-      'componentsBatchDeleted',
-      'canvasAdded',
-      'canvasRemoved',
-      'undoExecuted',  // Library emits this when undo() is called
-      'redoExecuted'   // Library emits this when redo() is called
-    ];
-
-    eventsToWatch.forEach(eventName => {
+    this.eventsToWatch.forEach(eventName => {
       this.api.on(eventName, this.syncUndoRedoState);
     });
   }
@@ -542,91 +548,60 @@ export class BlogApp {
     }
   };
 
-  componentDidUpdate() {
-    // Update canvas styles whenever metadata changes
-    this.updateCanvasStyles();
-    // Inject canvas headers
-    this.injectCanvasHeaders();
-  }
-
-  private updateCanvasStyles = () => {
-    // Apply canvas background colors via CSS custom properties
-    Object.keys(this.canvasMetadata).forEach((canvasId) => {
-      const canvas = document.querySelector(`[data-canvas-id="${canvasId}"] .grid-container`) as HTMLElement;
-      if (canvas) {
-        canvas.style.backgroundColor = this.canvasMetadata[canvasId].backgroundColor;
-      }
-    });
+  /**
+   * Canvas Click Event Handler
+   * ----------------------------
+   *
+   * Handles canvas-click events from grid-builder.
+   * Stored as class method for cleanup in disconnectedCallback.
+   */
+  private handleCanvasClick = (event: CustomEvent) => {
+    const { canvasId } = event.detail;
+    console.log('Canvas clicked:', canvasId);
+    // In a real app, this would show a canvas settings panel
+    // For now, we just log it to demonstrate the event
   };
 
-  private removeCanvasHeader = (canvasId: string) => {
-    console.log('🔍 removeCanvasHeader called for:', canvasId);
-    // Find and remove the header for this canvas
-    const headers = document.querySelectorAll('.canvas-header');
-    console.log('  📋 Total headers found:', headers.length);
-
-    let removed = false;
-    headers.forEach((header) => {
-      const headerCanvasId = header.getAttribute('data-canvas-id');
-      console.log('  🔎 Checking header with data-canvas-id:', headerCanvasId);
-
-      if (headerCanvasId === canvasId) {
-        console.log('  ✅ Match found! Removing header for:', canvasId);
-        header.remove();
-        removed = true;
-      }
-    });
-
-    if (!removed) {
-      console.warn('  ⚠️ No matching header found for:', canvasId);
+  /**
+   * Canvas Added Event Handler
+   * ---------------------------
+   *
+   * Handles canvasAdded events from API.
+   * Adds metadata for newly created canvases.
+   */
+  private handleCanvasAdded = (event: any) => {
+    const { canvasId } = event;
+    // Add metadata for new canvas if it doesn't exist
+    if (!this.canvasMetadata[canvasId]) {
+      const title = `Custom Section ${this.sectionCounter++}`;
+      this.canvasMetadata = {
+        ...this.canvasMetadata,
+        [canvasId]: {
+          title,
+          backgroundColor: '#f5f5f5',
+        },
+      };
     }
   };
 
-  private injectCanvasHeaders = () => {
-    // Inject section headers before each canvas-section
-    Object.keys(this.canvasMetadata).forEach((canvasId) => {
-      // Find canvas-section by looking for the inner div with data-canvas-id
-      const innerDiv = document.querySelector(`[data-canvas-id="${canvasId}"]`) as HTMLElement;
-      if (!innerDiv) return;
+  /**
+   * Canvas Removed Event Handler
+   * -----------------------------
+   *
+   * Handles canvasRemoved events from API.
+   * Removes metadata when canvases are deleted.
+   */
+  private handleCanvasRemoved = (event: any) => {
+    const { canvasId } = event;
+    console.log('🗑️ canvasRemoved event received:', canvasId);
 
-      const canvasSection = innerDiv.closest('canvas-section') as HTMLElement;
-      if (!canvasSection) return;
-
-      // Check if header already exists
-      let header = canvasSection.previousElementSibling as HTMLElement;
-      if (header && header.tagName.toLowerCase() === 'canvas-header') {
-        // Update existing header component - update sectionTitle prop
-        (header as any).sectionTitle = this.canvasMetadata[canvasId]?.title || canvasId;
-      } else {
-        // Create new header component
-        header = this.createCanvasHeader(canvasId);
-        canvasSection.parentElement?.insertBefore(header, canvasSection);
-      }
-    });
-  };
-
-  private createCanvasHeader = (canvasId: string): HTMLElement => {
-    // Create canvas-header component element
-    const header = document.createElement('canvas-header') as any;
-
-    // Set component properties
-    header.canvasId = canvasId;
-    header.sectionTitle = this.canvasMetadata[canvasId]?.title || canvasId;
-    header.isDeletable = !['hero-section', 'articles-grid', 'footer-section'].includes(canvasId);
-
-    // Add event listeners
-    header.addEventListener('headerClick', () => {
-      // Activate the canvas (adds visual highlight)
-      setActiveCanvas(canvasId);
-      // Open section editor panel
-      this.handleOpenSectionEditor(canvasId);
-    });
-
-    header.addEventListener('deleteClick', () => {
-      this.handleDeleteSection(canvasId);
-    });
-
-    return header;
+    // Remove metadata when canvas is removed
+    // This keeps metadata in sync with library state
+    // Headers automatically update via reactive rendering
+    const updated = { ...this.canvasMetadata };
+    delete updated[canvasId];
+    this.canvasMetadata = updated;
+    console.log('  ✅ Metadata removed for:', canvasId);
   };
 
   private handleOpenSectionEditor = (canvasId: string) => {
@@ -644,6 +619,8 @@ export class BlogApp {
   private handleClosePanel = () => {
     this.isPanelOpen = false;
     this.editingSection = null;
+    // Clear preview state when closing panel
+    this.previewMetadata = {};
   };
 
   private handleUpdateSection = (event: CustomEvent<{ canvasId: string; title: string; backgroundColor: string }>) => {
@@ -655,44 +632,49 @@ export class BlogApp {
         backgroundColor,
       },
     };
+    // Clear preview state for this canvas after saving
+    const { [canvasId]: _, ...rest } = this.previewMetadata;
+    this.previewMetadata = rest;
   };
 
   /**
    * Preview Color Change Handler
    * ------------------------------
    *
-   * Handles live preview of background color changes.
-   * Updates canvas background immediately without saving to metadata.
-   * This allows real-time preview while editing, with revert on cancel.
+   * Handles live preview of background color changes using reactive state.
+   * Updates preview state which triggers re-render with new color.
+   * Allows real-time preview while editing, with revert on cancel.
    */
   private handlePreviewColorChange = (event: CustomEvent<{ canvasId: string; backgroundColor: string }>) => {
     const { canvasId, backgroundColor } = event.detail;
-    // Directly update canvas background color (don't update metadata yet)
-    const canvas = document.querySelector(`[data-canvas-id="${canvasId}"] .grid-container`) as HTMLElement;
-    if (canvas) {
-      canvas.style.backgroundColor = backgroundColor;
-    }
+    // Update preview state (triggers re-render)
+    this.previewMetadata = {
+      ...this.previewMetadata,
+      [canvasId]: {
+        ...this.previewMetadata[canvasId],
+        backgroundColor
+      }
+    };
   };
 
   /**
    * Preview Title Change Handler
    * -----------------------------
    *
-   * Handles live preview of section title changes.
-   * Updates canvas title immediately without saving to metadata.
-   * This allows real-time preview while editing, with revert on cancel.
+   * Handles live preview of section title changes using reactive state.
+   * Updates preview state which triggers re-render with new title.
+   * Allows real-time preview while editing, with revert on cancel.
    */
   private handlePreviewTitleChange = (event: CustomEvent<{ canvasId: string; title: string }>) => {
     const { canvasId, title } = event.detail;
-    // Find the canvas header for this canvas
-    const header = document.querySelector(`.canvas-header[data-canvas-id="${canvasId}"]`) as HTMLElement;
-    if (header) {
-      const titleEl = header.querySelector('.canvas-title') as HTMLElement;
-      if (titleEl) {
-        // Directly update title text (don't update metadata yet)
-        titleEl.textContent = title;
+    // Update preview state (triggers re-render)
+    this.previewMetadata = {
+      ...this.previewMetadata,
+      [canvasId]: {
+        ...this.previewMetadata[canvasId],
+        title
       }
-    }
+    };
   };
 
   /**
@@ -1036,10 +1018,37 @@ export class BlogApp {
     },
   };
 
+  /**
+   * Get Merged Canvas Metadata
+   * ---------------------------
+   *
+   * Merges canvas metadata with preview state for rendering.
+   * Preview state takes precedence over saved metadata for live preview.
+   *
+   * @param canvasId - Canvas ID to get metadata for
+   * @returns Merged metadata object with title and backgroundColor
+   */
+  private getMergedMetadata(canvasId: string) {
+    const baseMetadata = this.canvasMetadata[canvasId] || { title: canvasId, backgroundColor: '#ffffff' };
+    const preview = this.previewMetadata[canvasId] || {};
+
+    return {
+      title: preview.title !== undefined ? preview.title : baseMetadata.title,
+      backgroundColor: preview.backgroundColor !== undefined ? preview.backgroundColor : baseMetadata.backgroundColor
+    };
+  }
+
   render() {
     // Calculate canvas header overlay margin from grid size (1.4 grid units)
     const verticalGridSize = getGridSizeVertical();
     const canvasHeaderOverlayMargin = -(verticalGridSize * 1.4);
+
+    // Build merged metadata (canvas metadata + preview state) for all canvases
+    const canvasIds = Object.keys(this.canvasMetadata);
+    const mergedCanvasMetadata = canvasIds.reduce((acc, canvasId) => {
+      acc[canvasId] = this.getMergedMetadata(canvasId);
+      return acc;
+    }, {} as Record<string, { title: string; backgroundColor: string }>);
 
     return (
       <div
@@ -1178,7 +1187,7 @@ export class BlogApp {
                 key="viewer"
                 components={blogComponentDefinitions}
                 initialState={this.currentGridState || this.initialState}
-                canvasMetadata={this.canvasMetadata}
+                canvasMetadata={mergedCanvasMetadata}
               />
             ) : (
               <grid-builder
@@ -1189,8 +1198,27 @@ export class BlogApp {
                   animationDuration: 100,
                 }}
                 initialState={this.initialState}
-                canvasMetadata={this.canvasMetadata}
+                canvasMetadata={mergedCanvasMetadata}
                 onBeforeDelete={this.handleBeforeDelete}
+                uiOverrides={{
+                  CanvasHeader: ({ canvasId, metadata, isActive }: CanvasHeaderProps) => {
+                    const isDeletable = !['hero-section', 'articles-grid', 'footer-section'].includes(canvasId);
+
+                    return (
+                      <canvas-header
+                        canvasId={canvasId}
+                        sectionTitle={metadata.title}
+                        isDeletable={isDeletable}
+                        isActive={isActive}
+                        onHeaderClick={() => {
+                          setActiveCanvas(canvasId);
+                          this.handleOpenSectionEditor(canvasId);
+                        }}
+                        onDeleteClick={() => this.handleDeleteSection(canvasId)}
+                      />
+                    );
+                  }
+                }}
               />
             )}
           </div>

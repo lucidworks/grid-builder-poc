@@ -69,6 +69,14 @@ export class CanvasHeader {
   @Prop() isDeletable: boolean = true;
 
   /**
+   * Whether this canvas is currently active
+   *
+   * **Purpose**: Control header opacity (active = full opacity, inactive = dimmed)
+   * **Default**: false
+   */
+  @Prop() isActive: boolean = false;
+
+  /**
    * Event emitted when header title is clicked
    *
    * **Detail**: { canvasId: string }
@@ -102,8 +110,10 @@ export class CanvasHeader {
    * Render component template
    */
   render() {
+    const headerClass = `canvas-header ${this.isActive ? 'is-active' : ''}`;
+
     return (
-      <div class="canvas-header" data-canvas-id={this.canvasId}>
+      <div class={headerClass} data-canvas-id={this.canvasId}>
         <div class="canvas-actions">
           {/* Section title badge (clickable) */}
           <span class="canvas-title" onClick={this.handleTitleClick}>
