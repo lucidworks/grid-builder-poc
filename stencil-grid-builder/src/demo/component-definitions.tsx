@@ -75,14 +75,7 @@ export const contentComponents: ComponentDefinition[] = [
         icon={icon}
       />
     ),
-    renderDragClone: ({ componentType, name, icon, width, height}) =>
-      `<custom-drag-clone
-        component-type="${componentType}"
-        name="${name}"
-        icon="${icon}"
-        width="${width}"
-        height="${height}">
-      </custom-drag-clone>`,
+    renderDragClone: () => <blog-header-drag-clone />,
     render: ({ config }) => (
       <blog-header
         headerTitle={config?.title || 'Default Header'}
@@ -103,14 +96,7 @@ export const contentComponents: ComponentDefinition[] = [
         icon={icon}
       />
     ),
-    renderDragClone: ({ componentType, name, icon, width, height}) =>
-      `<custom-drag-clone
-        component-type="${componentType}"
-        name="${name}"
-        icon="${icon}"
-        width="${width}"
-        height="${height}">
-      </custom-drag-clone>`,
+    renderDragClone: () => <blog-article-drag-clone />,
     render: ({ config }) => (
       <blog-article
         content={config?.content || 'Article content goes here'}
@@ -133,14 +119,7 @@ export const contentComponents: ComponentDefinition[] = [
         icon={icon}
       />
     ),
-    renderDragClone: ({ componentType, name, icon, width, height}) =>
-      `<custom-drag-clone
-        component-type="${componentType}"
-        name="${name}"
-        icon="${icon}"
-        width="${width}"
-        height="${height}">
-      </custom-drag-clone>`,
+    renderDragClone: () => <blog-image-drag-clone />,
     configSchema: [
       {
         name: 'src',
@@ -202,14 +181,7 @@ export const interactiveComponents: ComponentDefinition[] = [
         icon={icon}
       />
     ),
-    renderDragClone: ({ componentType, name, icon, width, height}) =>
-      `<custom-drag-clone
-        component-type="${componentType}"
-        name="${name}"
-        icon="${icon}"
-        width="${width}"
-        height="${height}">
-      </custom-drag-clone>`,
+    renderDragClone: () => <blog-button-drag-clone />,
     render: ({ config }) => (
       <blog-button
         label={config?.label || 'Click me!'}
@@ -236,14 +208,7 @@ export const mediaComponents: ComponentDefinition[] = [
         icon={icon}
       />
     ),
-    renderDragClone: ({ componentType, name, icon, width, height}) =>
-      `<custom-drag-clone
-        component-type="${componentType}"
-        name="${name}"
-        icon="${icon}"
-        width="${width}"
-        height="${height}">
-      </custom-drag-clone>`,
+    renderDragClone: () => <image-gallery-drag-clone />,
     configSchema: [
       {
         name: 'imageCount',
@@ -276,14 +241,7 @@ export const mediaComponents: ComponentDefinition[] = [
         icon={icon}
       />
     ),
-    renderDragClone: ({ componentType, name, icon, width, height}) =>
-      `<custom-drag-clone
-        component-type="${componentType}"
-        name="${name}"
-        icon="${icon}"
-        width="${width}"
-        height="${height}">
-      </custom-drag-clone>`,
+    renderDragClone: () => <dashboard-widget-drag-clone />,
     render: () => <dashboard-widget />,
   },
   {
@@ -300,14 +258,7 @@ export const mediaComponents: ComponentDefinition[] = [
         icon={icon}
       />
     ),
-    renderDragClone: ({ componentType, name, icon, width, height}) =>
-      `<custom-drag-clone
-        component-type="${componentType}"
-        name="${name}"
-        icon="${icon}"
-        width="${width}"
-        height="${height}">
-      </custom-drag-clone>`,
+    renderDragClone: () => <live-data-drag-clone />,
     render: () => <live-data />,
   },
 ];
@@ -365,14 +316,7 @@ export const _blogComponentDefinitionsDetailed: ComponentDefinition[] = [
       </custom-palette-item>`,
 
     // Custom drag clone preview
-    renderDragClone: ({ componentType, name, icon, width, height }) =>
-      `<custom-drag-clone
-        component-type="${componentType}"
-        name="${name}"
-        icon="${icon}"
-        width="${width}"
-        height="${height}">
-      </custom-drag-clone>`,
+    renderDragClone: () => <blog-header-drag-clone />,
 
     // Render function - returns the actual component JSX
     // The library calls this with { config, itemId, ...otherProps }
@@ -421,14 +365,7 @@ export const _blogComponentDefinitionsDetailed: ComponentDefinition[] = [
       </custom-palette-item>`,
 
     // Custom drag clone preview
-    renderDragClone: ({ componentType, name, icon, width, height }) =>
-      `<custom-drag-clone
-        component-type="${componentType}"
-        name="${name}"
-        icon="${icon}"
-        width="${width}"
-        height="${height}">
-      </custom-drag-clone>`,
+    renderDragClone: () => <blog-article-drag-clone />,
 
     // Render function with multiple config properties
     // Demonstrates passing multiple configuration values to child component
@@ -508,14 +445,7 @@ export const _blogComponentDefinitionsDetailed: ComponentDefinition[] = [
      * - Match actual component appearance
      * - Improve user experience during placement
      */
-    renderDragClone: ({ componentType, name, icon, width, height }) =>
-      `<custom-drag-clone
-        component-type="${componentType}"
-        name="${name}"
-        icon="${icon}"
-        width="${width}"
-        height="${height}">
-      </custom-drag-clone>`,
+    renderDragClone: () => <blog-button-drag-clone />,
 
     // Render function with conditional config values
     // Demonstrates fallback values for optional config properties
@@ -570,14 +500,7 @@ export const _blogComponentDefinitionsDetailed: ComponentDefinition[] = [
       </custom-palette-item>`,
 
     // Custom drag clone preview
-    renderDragClone: ({ componentType, name, icon, width, height }) =>
-      `<custom-drag-clone
-        component-type="${componentType}"
-        name="${name}"
-        icon="${icon}"
-        width="${width}"
-        height="${height}">
-      </custom-drag-clone>`,
+    renderDragClone: () => <blog-image-drag-clone />,
 
     /**
      * Configuration Schema
