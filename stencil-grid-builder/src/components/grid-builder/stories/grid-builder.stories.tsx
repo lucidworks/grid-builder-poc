@@ -938,6 +938,19 @@ export const BatchOperationsPerformance = () => {
     enableVirtualRendering: false, // Disable for Storybook iframe compatibility
   };
 
+  // Plugin to log all events to Storybook Actions (shows batch vs individual event counts)
+  const actionsPlugin = {
+    name: "batch-operations-logger",
+    init: (api: any) => {
+      api.on("componentAdded", action("componentAdded"));
+      api.on("componentDeleted", action("componentDeleted"));
+      api.on("componentsBatchAdded", action("componentsBatchAdded"));
+      api.on("componentsBatchDeleted", action("componentsBatchDeleted"));
+    },
+  };
+
+  builderEl.plugins = [actionsPlugin];
+
   // Container for performance stats
   const statsDiv = document.createElement("div");
   statsDiv.style.cssText = `
@@ -1539,6 +1552,22 @@ export const UndoRedoDemo = () => {
   builderEl.config = {
     enableVirtualRendering: false, // Disable for Storybook iframe compatibility
   };
+
+  // Plugin to log undo/redo events to Storybook Actions
+  const actionsPlugin = {
+    name: "undo-redo-logger",
+    init: (api: any) => {
+      api.on("undoExecuted", action("undoExecuted"));
+      api.on("redoExecuted", action("redoExecuted"));
+      // Also log the operations that create undo/redo commands
+      api.on("componentAdded", action("componentAdded"));
+      api.on("componentDeleted", action("componentDeleted"));
+      api.on("componentDragged", action("componentDragged"));
+      api.on("componentResized", action("componentResized"));
+    },
+  };
+
+  builderEl.plugins = [actionsPlugin];
 
   // History status display
   const historyDiv = document.createElement("div");
