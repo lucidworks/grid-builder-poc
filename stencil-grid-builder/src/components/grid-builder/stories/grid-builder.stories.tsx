@@ -2426,6 +2426,75 @@ export const ExportImportWorkflow = () => {
     statusDiv.style.background = "#d1ecf1";
   };
 
+  // Save to file button
+  const saveFileBtn = document.createElement("button");
+  saveFileBtn.textContent = "💾 Save to File";
+  saveFileBtn.style.cssText = exportBtn.style.cssText.replace("#28a745", "#17a2b8");
+  saveFileBtn.onclick = () => {
+    if (!exportDiv.textContent || exportDiv.textContent === 'Click "Export State" to see JSON output...') {
+      statusDiv.textContent = "⚠️ Please export state first before saving to file";
+      statusDiv.style.background = "#fff3cd";
+      return;
+    }
+
+    // Create blob from JSON
+    const blob = new Blob([exportDiv.textContent], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+
+    // Create download link
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `grid-layout-${Date.now()}.json`;
+    a.click();
+
+    // Cleanup
+    URL.revokeObjectURL(url);
+
+    statusDiv.textContent = "💾 File saved successfully!";
+    statusDiv.style.background = "#d4edda";
+  };
+
+  // Load from file button
+  const loadFileBtn = document.createElement("button");
+  loadFileBtn.textContent = "📂 Load from File";
+  loadFileBtn.style.cssText = exportBtn.style.cssText.replace("#28a745", "#6f42c1");
+  loadFileBtn.onclick = () => {
+    // Create hidden file input
+    const fileInput = document.createElement("input");
+    fileInput.type = "file";
+    fileInput.accept = ".json";
+    fileInput.style.display = "none";
+
+    fileInput.onchange = async (e: any) => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      try {
+        const text = await file.text();
+        const imported = JSON.parse(text);
+
+        // Update display
+        exportDiv.textContent = JSON.stringify(imported, null, 2);
+
+        // Import to builder
+        await builderEl.importState(imported);
+
+        statusDiv.textContent = `✅ Loaded from file: ${file.name}`;
+        statusDiv.style.background = "#d4edda";
+      } catch (error) {
+        statusDiv.textContent = `❌ Failed to load file: ${error.message}`;
+        statusDiv.style.background = "#f8d7da";
+      }
+
+      // Cleanup
+      fileInput.remove();
+    };
+
+    // Trigger file picker
+    document.body.appendChild(fileInput);
+    fileInput.click();
+  };
+
   return html`
     <div
       style="font-family: system-ui, -apple-system, sans-serif; padding: 20px;"
@@ -2435,14 +2504,19 @@ export const ExportImportWorkflow = () => {
         Demonstrates persisting and restoring layouts. Build a layout, export it
         as JSON, then re-import it later.
         <br />
-        <strong>Try it:</strong> Add/modify components, export, clear canvas,
-        then re-import!
+        <strong>Try it:</strong> Add/modify components, export, save to file, load from file, or re-import!
+        <br />
+        <strong>File support:</strong> Save layouts as .json files and load them back for testing persistence.
       </p>
 
       ${statusDiv}
 
       <div style="margin: 10px 0;">
         ${exportBtn} ${importBtn} ${clearBtn} ${copyBtn}
+      </div>
+
+      <div style="margin: 10px 0;">
+        ${saveFileBtn} ${loadFileBtn}
       </div>
 
       <div
@@ -2492,6 +2566,9 @@ export const ExportImportWorkflow = () => {
           <li><strong>Versioning:</strong> Track layout changes over time</li>
           <li><strong>Duplication:</strong> Clone layouts between projects</li>
           <li><strong>Migration:</strong> Move layouts between environments</li>
+          <li>
+            <strong>File-based workflows:</strong> Save/load .json files for testing, backup, or sharing
+          </li>
         </ul>
       </div>
     </div>
