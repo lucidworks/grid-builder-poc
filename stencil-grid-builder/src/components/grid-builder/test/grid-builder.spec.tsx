@@ -28,6 +28,7 @@ import { GridBuilder } from '../grid-builder';
 import { reset as resetState, gridState, setActiveCanvas } from '../../../services/state-manager';
 import { clearHistory } from '../../../services/undo-redo';
 import { eventManager } from '../../../services/event-manager';
+import { mockDragClone } from '../../../utils/test-helpers';
 
 // Mock component definitions for tests
 const mockComponentDefinitions = [
@@ -37,6 +38,7 @@ const mockComponentDefinitions = [
     icon: '📄',
     defaultSize: { width: 50, height: 6 },
     minSize: { width: 10, height: 3 },
+    renderDragClone: () => <div>Header Clone</div>,
     render: () => <div>Header</div>,
   },
   {
@@ -45,6 +47,7 @@ const mockComponentDefinitions = [
     icon: '📝',
     defaultSize: { width: 25, height: 10 },
     minSize: { width: 10, height: 5 },
+    renderDragClone: () => <div>Text Clone</div>,
     render: () => <div>Text</div>,
   },
 ];
@@ -399,6 +402,7 @@ describe('grid-builder', () => {
           icon: '📄',
           defaultSize: { width: 20, height: 6 },
           selectionColor: '#3b82f6', // Custom blue
+          renderDragClone: () => <div>Header Clone</div>,
           render: () => <div>Header</div>,
         },
       ];
@@ -416,6 +420,7 @@ describe('grid-builder', () => {
           name: 'Default Header',
           icon: '📄',
           defaultSize: { width: 20, height: 6 },
+          renderDragClone: () => <div>Header Clone</div>,
           render: () => <div>Header</div>,
         },
       ];
@@ -434,6 +439,7 @@ describe('grid-builder', () => {
           icon: '📄',
           defaultSize: { width: 20, height: 6 },
           selectionColor: '#3b82f6', // Blue
+          renderDragClone: () => <div>Header Clone</div>,
           render: () => <div>Header</div>,
         },
         {
@@ -442,6 +448,7 @@ describe('grid-builder', () => {
           icon: '📝',
           defaultSize: { width: 25, height: 10 },
           selectionColor: '#10b981', // Green
+          renderDragClone: () => <div>Article Clone</div>,
           render: () => <div>Article</div>,
         },
         {
@@ -450,6 +457,7 @@ describe('grid-builder', () => {
           icon: '🔘',
           defaultSize: { width: 15, height: 5 },
           selectionColor: '#ef4444', // Red
+          renderDragClone: () => <div>Button Clone</div>,
           render: () => <div>Button</div>,
         },
       ];
@@ -470,6 +478,7 @@ describe('grid-builder', () => {
           icon: '🎨',
           defaultSize: { width: 20, height: 6 },
           selectionColor: '#ff5733', // 6-digit hex
+          renderDragClone: mockDragClone,
           render: () => <div>Hex</div>,
         },
         {
@@ -478,6 +487,7 @@ describe('grid-builder', () => {
           icon: '🎨',
           defaultSize: { width: 20, height: 6 },
           selectionColor: 'rgb(255, 87, 51)', // RGB
+          renderDragClone: mockDragClone,
           render: () => <div>RGB</div>,
         },
         {
@@ -486,6 +496,7 @@ describe('grid-builder', () => {
           icon: '🎨',
           defaultSize: { width: 20, height: 6 },
           selectionColor: 'rgba(255, 87, 51, 0.8)', // RGBA
+          renderDragClone: mockDragClone,
           render: () => <div>RGBA</div>,
         },
       ];

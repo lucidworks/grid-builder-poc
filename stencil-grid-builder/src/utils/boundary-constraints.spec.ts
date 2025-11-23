@@ -13,6 +13,7 @@ import {
   applyBoundaryConstraints,
 } from './boundary-constraints';
 import { ComponentDefinition } from '../types/component-definition';
+import { mockDragClone } from './test-helpers';
 
 describe('boundary-constraints', () => {
   describe('canComponentFitCanvas', () => {
@@ -23,6 +24,7 @@ describe('boundary-constraints', () => {
         icon: '🧪',
         defaultSize: { width: 20, height: 10 },
         minSize: { width: 10, height: 5 },
+        renderDragClone: mockDragClone,
         render: () => null,
       };
 
@@ -36,6 +38,7 @@ describe('boundary-constraints', () => {
         icon: '📦',
         defaultSize: { width: 60, height: 10 },
         minSize: { width: 60, height: 10 },
+        renderDragClone: mockDragClone,
         render: () => null,
       };
 
@@ -49,6 +52,7 @@ describe('boundary-constraints', () => {
         icon: '📏',
         defaultSize: { width: 50, height: 10 },
         minSize: { width: 50, height: 10 },
+        renderDragClone: mockDragClone,
         render: () => null,
       };
 
@@ -61,6 +65,7 @@ describe('boundary-constraints', () => {
         name: 'Flexible',
         icon: '🔧',
         defaultSize: { width: 20, height: 10 },
+        renderDragClone: mockDragClone,
         render: () => null,
       };
 
@@ -75,6 +80,7 @@ describe('boundary-constraints', () => {
         name: 'Test',
         icon: '🧪',
         defaultSize: { width: 20, height: 10 },
+        renderDragClone: mockDragClone,
         render: () => null,
       };
 
@@ -94,6 +100,7 @@ describe('boundary-constraints', () => {
         icon: '↔️',
         defaultSize: { width: 60, height: 10 },
         minSize: { width: 20, height: 5 },
+        renderDragClone: mockDragClone,
         render: () => null,
       };
 
@@ -113,6 +120,7 @@ describe('boundary-constraints', () => {
         icon: '🔒',
         defaultSize: { width: 60, height: 10 },
         minSize: { width: 40, height: 5 },
+        renderDragClone: mockDragClone,
         render: () => null,
       };
 
@@ -129,6 +137,7 @@ describe('boundary-constraints', () => {
         icon: '📏',
         defaultSize: { width: 60, height: 10 },
         maxSize: { width: 30, height: 15 },
+        renderDragClone: mockDragClone,
         render: () => null,
       };
 
@@ -144,6 +153,7 @@ describe('boundary-constraints', () => {
         name: 'Tall',
         icon: '↕️',
         defaultSize: { width: 20, height: 100 },
+        renderDragClone: mockDragClone,
         render: () => null,
       };
 
@@ -224,6 +234,7 @@ describe('boundary-constraints', () => {
         icon: '🧪',
         defaultSize: { width: 60, height: 10 },
         minSize: { width: 20, height: 5 },
+        renderDragClone: mockDragClone,
         render: () => null,
       };
 
@@ -245,6 +256,7 @@ describe('boundary-constraints', () => {
         icon: '📦',
         defaultSize: { width: 60, height: 10 },
         minSize: { width: 60, height: 10 },
+        renderDragClone: mockDragClone,
         render: () => null,
       };
 
@@ -259,6 +271,7 @@ describe('boundary-constraints', () => {
         name: 'Test',
         icon: '🧪',
         defaultSize: { width: 20, height: 10 },
+        renderDragClone: mockDragClone,
         render: () => null,
       };
 
@@ -280,6 +293,7 @@ describe('boundary-constraints', () => {
         name: 'Test',
         icon: '🧪',
         defaultSize: { width: 20, height: 10 },
+        renderDragClone: mockDragClone,
         render: () => null,
       };
 
@@ -297,6 +311,7 @@ describe('boundary-constraints', () => {
         name: 'Test',
         icon: '🧪',
         defaultSize: { width: 20, height: 10 },
+        renderDragClone: mockDragClone,
         render: () => null,
       };
 
@@ -315,6 +330,7 @@ describe('boundary-constraints', () => {
         defaultSize: { width: 70, height: 15 },
         minSize: { width: 30, height: 8 },
         maxSize: { width: 50, height: 20 },
+        renderDragClone: mockDragClone,
         render: () => null,
       };
 

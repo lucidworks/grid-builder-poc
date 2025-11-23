@@ -15,6 +15,7 @@ import { ResizeHandler } from './resize-handler';
 import { GridItem, gridState, reset, setActiveCanvas } from '../services/state-manager';
 import { ComponentDefinition } from '../types/component-definition';
 import { domCache } from './dom-cache';
+import { mockDragClone } from './test-helpers';
 
 // Mock interact.js
 const mockInteract = () => {
@@ -135,6 +136,7 @@ describe('ResizeHandler', () => {
         defaultSize: { width: 10, height: 5 },
         minSize: { width: 5, height: 3 },
         maxSize: { width: 20, height: 10 },
+        renderDragClone: mockDragClone,
         render: () => <div>Test</div>,
       };
 
@@ -173,6 +175,7 @@ describe('ResizeHandler', () => {
         icon: '🧪',
         defaultSize: { width: 10, height: 5 },
         minSize: { width: 5, height: 3 }, // 5 * 20px = 100px, 3 * 20px = 60px
+        renderDragClone: mockDragClone,
         render: () => <div>Test</div>,
       };
 
@@ -196,6 +199,7 @@ describe('ResizeHandler', () => {
         icon: '🧪',
         defaultSize: { width: 10, height: 5 },
         maxSize: { width: 25, height: 15 }, // 25 * 20px = 500px, 15 * 20px = 300px
+        renderDragClone: mockDragClone,
         render: () => <div>Test</div>,
       };
 
@@ -215,6 +219,7 @@ describe('ResizeHandler', () => {
         defaultSize: { width: 10, height: 5 },
         minSize: { width: 5, height: 3 },
         maxSize: { width: 25, height: 15 },
+        renderDragClone: mockDragClone,
         render: () => <div>Test</div>,
       };
 
@@ -233,6 +238,7 @@ describe('ResizeHandler', () => {
         icon: '🧪',
         defaultSize: { width: 10, height: 5 },
         // No minSize/maxSize
+        renderDragClone: mockDragClone,
         render: () => <div>Test</div>,
       };
 
@@ -272,6 +278,7 @@ describe('ResizeHandler', () => {
         icon: '🧪',
         defaultSize: { width: 10, height: 5 },
         minSize: { width: 10, height: 5 }, // 10 * 2% * 1000 = 200px, 5 * 20px = 100px
+        renderDragClone: mockDragClone,
         render: () => <div>Test</div>,
       };
 
@@ -293,6 +300,7 @@ describe('ResizeHandler', () => {
         icon: '🧪',
         defaultSize: { width: 10, height: 5 },
         maxSize: { width: 50, height: 20 }, // 50 * 2% * 1000 = 1000px (full width), 20 * 20px = 400px
+        renderDragClone: mockDragClone,
         render: () => <div>Test</div>,
       };
 
@@ -318,6 +326,7 @@ describe('ResizeHandler', () => {
         icon: '🧪',
         defaultSize: { width: 10, height: 5 },
         minSize: { width: 10, height: 5 }, // 10 * 2% * 2000 = 400px, 5 * 20px = 100px
+        renderDragClone: mockDragClone,
         render: () => <div>Test</div>,
       };
 
@@ -380,6 +389,7 @@ describe('ResizeHandler', () => {
         defaultSize: { width: 10, height: 5 },
         minSize: { width: 5, height: 3 },
         // No maxSize
+        renderDragClone: mockDragClone,
         render: () => <div>Test</div>,
       };
 
@@ -399,6 +409,7 @@ describe('ResizeHandler', () => {
         defaultSize: { width: 10, height: 5 },
         // No minSize
         maxSize: { width: 30, height: 15 },
+        renderDragClone: mockDragClone,
         render: () => <div>Test</div>,
       };
 

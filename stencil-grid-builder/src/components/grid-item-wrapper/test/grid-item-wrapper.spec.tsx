@@ -14,6 +14,7 @@ import { newSpecPage } from '@stencil/core/testing';
 import { GridItemWrapper } from '../grid-item-wrapper';
 import { gridState, reset, setActiveCanvas } from '../../../services/state-manager';
 import { domCache } from '../../../utils/dom-cache';
+import { mockDragClone } from '../../../utils/test-helpers';
 
 describe('grid-item-wrapper - Active Canvas', () => {
   const mockItem = {
@@ -37,6 +38,7 @@ describe('grid-item-wrapper - Active Canvas', () => {
         name: 'Header',
         icon: '📄',
         defaultSize: { width: 10, height: 6 },
+        renderDragClone: mockDragClone,
         render: (_item: any) => <div>Header Component</div>,
       },
     ],

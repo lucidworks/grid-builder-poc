@@ -12,6 +12,7 @@ import { h } from '@stencil/core';
 import { ConfigPanel } from '../config-panel';
 import { eventManager } from '../../../../services/event-manager';
 import { gridState, reset as resetState } from '../../../../services/state-manager';
+import { mockDragClone } from '../../../../utils/test-helpers';
 
 // Mock component definitions for tests
 const mockComponentDefinitions = [
@@ -20,6 +21,7 @@ const mockComponentDefinitions = [
     name: 'Header',
     icon: '📄',
     defaultSize: { width: 50, height: 6 },
+    renderDragClone: mockDragClone,
     render: () => <div>Header</div>,
   },
   {
@@ -27,6 +29,7 @@ const mockComponentDefinitions = [
     name: 'Text Block',
     icon: '📝',
     defaultSize: { width: 25, height: 10 },
+    renderDragClone: mockDragClone,
     render: () => <div>Text</div>,
   },
 ];
