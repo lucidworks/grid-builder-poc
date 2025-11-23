@@ -1,0 +1,352 @@
+/**
+ * Grid Item Wrapper Styles
+ * =========================
+ *
+ * Styles for grid-item-wrapper component with drag/resize handles.
+ */
+/* Grid Item */
+.grid-item {
+  position: absolute;
+  min-width: 100px;
+  min-height: 80px;
+  box-sizing: border-box; /* Include padding and border in width/height */
+  padding: 20px;
+  border: 2px solid transparent;
+  border-radius: 0; /* No border radius - components control their own borders */
+  background: transparent; /* No background - components render flush with their own backgrounds */
+  box-shadow: none; /* No shadow - components control their own shadows */
+  cursor: default;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  will-change: transform; /* GPU acceleration hint */
+  touch-action: none; /* Prevent default touch behaviors (scrolling, zooming) for drag/resize */
+  container-type: inline-size; /* Enable container queries for child components */
+  /* Default selection color (can be overridden per component type) */
+  --selection-color: #f59e0b;
+}
+
+/**
+ * Smooth animations for drag/resize operations
+ * ==============================================
+ *
+ * When enabled via config.enableAnimations, this class adds smooth CSS transitions
+ * for transform (position) and width/height properties.
+ *
+ * **When applied**:
+ * - Automatically added if config.enableAnimations is true
+ * - Temporarily removed during drag/resize for instant feedback
+ * - Reapplied at drag/resize end for smooth grid snapping
+ *
+ * **Performance**:
+ * - Uses GPU-accelerated CSS transforms
+ * - Negligible performance impact (~0.1ms per frame)
+ * - Transition duration controlled by --animation-duration CSS variable
+ *
+ * **CSS Variable**:
+ * - --animation-duration: Set via config.animationDuration (default: 100ms)
+ */
+.grid-item.with-animations {
+  transition: border-color 0.2s, box-shadow 0.2s, transform var(--animation-duration, 200ms) ease-out, width var(--animation-duration, 200ms) ease-out, height var(--animation-duration, 200ms) ease-out;
+}
+
+/**
+ * Disable animations during active drag/resize
+ * =============================================
+ *
+ * During drag/resize, we want instant feedback without animation delay.
+ * This class is added during drag/resize and removes all transitions.
+ */
+.grid-item.dragging,
+.grid-item.resizing {
+  transition: none !important;
+}
+
+.grid-item:hover {
+  border-color: var(--selection-color);
+}
+
+/* Disable hover styles in viewer mode */
+.grid-item[data-viewer-mode=true]:hover {
+  border-color: transparent;
+}
+
+.grid-item.selected {
+  /* Use outline instead of border to avoid layout shifts */
+  outline: 3px solid var(--selection-color);
+  outline-offset: -3px; /* Draw outline inside the element */
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--selection-color) 20%, transparent), 0 4px 12px color-mix(in srgb, var(--selection-color) 30%, transparent);
+  /* Add outer glow ring + shadow for clear visual distinction */
+}
+
+/* Disable selection styles in viewer mode */
+.grid-item[data-viewer-mode=true].selected {
+  padding: 20px; /* Reset to default padding */
+  border: 2px solid transparent;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.grid-item.dragging {
+  cursor: move;
+  opacity: 0.7;
+}
+
+.grid-item.resizing {
+  user-select: none;
+}
+
+/* Item Header - tab on selection border that only shows when selected */
+.grid-item-header {
+  position: absolute;
+  z-index: 100; /* Well above resize handles (z-index: 10) */
+  top: -26px; /* Position above the border (adjust based on content height) */
+  left: 12px; /* Offset from left edge */
+  display: flex;
+  align-items: center;
+  padding: 4px 10px;
+  border: 2px solid var(--selection-color);
+  border-radius: 4px 4px 0 0; /* Rounded top corners only */
+  border-bottom: none; /* No bottom border to connect with component border */
+  background: var(--selection-color);
+  color: white;
+  cursor: move !important; /* Indicate draggability - force override */
+  font-size: 11px;
+  font-weight: 600;
+  gap: 6px;
+  letter-spacing: 0.3px;
+  opacity: 0; /* Visual hiding only */
+  pointer-events: auto; /* Always interactive for interact.js */
+  transition: opacity 0.2s;
+  user-select: none; /* Prevent text selection while dragging */
+  touch-action: none; /* Enable touch dragging on mobile/tablet */
+}
+
+.grid-item.selected .grid-item-header,
+.grid-item:hover .grid-item-header {
+  opacity: 1;
+}
+
+/* Adjust for thicker border when selected */
+.grid-item.selected .grid-item-header {
+  top: -27px; /* Adjust for 3px border instead of 2px */
+  border: 3px solid var(--selection-color);
+  border-bottom: none;
+}
+
+/* Item Content */
+.grid-item-content {
+  overflow: hidden;
+  max-width: 100%;
+  color: #666;
+  font-size: 13px;
+}
+
+/* Only apply full height to components that explicitly need it (e.g., image components) */
+.grid-item-content[data-component-type=blog-image] {
+  height: 100%; /* Fill available space for image components that use height: 100% */
+}
+
+.component-placeholder,
+.component-error {
+  display: flex;
+  height: 100%;
+  align-items: center;
+  justify-content: center;
+  color: #999;
+  font-size: 12px;
+}
+
+.component-error {
+  color: #f44;
+}
+
+/* Item Controls */
+.grid-item-controls {
+  position: absolute;
+  z-index: 10; /* Ensure controls appear above item content */
+  top: -16px; /* Float above the component */
+  right: 8px;
+  display: flex;
+  gap: 4px;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.grid-item.selected .grid-item-controls,
+.grid-item:hover .grid-item-controls {
+  opacity: 1;
+}
+
+.grid-item.selected .grid-item-controls {
+  top: -16px; /* Keep floating above even with thicker border */
+  right: 8px;
+}
+
+.grid-item-control-btn {
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: none;
+  border-radius: 4px;
+  background: #4a90e2;
+  color: white;
+  cursor: pointer;
+  font-size: 12px;
+  line-height: 1;
+  transition: background 0.2s;
+}
+
+.grid-item-control-btn:hover {
+  background: #357abd;
+}
+
+.grid-item-delete {
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: #f44;
+  color: white;
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 1;
+  transition: background 0.2s;
+}
+
+.grid-item-delete:hover {
+  background: #c00;
+}
+
+/* Drag Handle - Hidden, drag functionality moved to header */
+.drag-handle {
+  display: none;
+}
+
+/* Resize Handles - Circular corners and pill-shaped sides */
+.resize-handle {
+  position: absolute;
+  z-index: 10; /* Ensure handles appear above item content */
+  width: 14px;
+  height: 14px;
+  border: 2px solid white;
+  border-radius: 50%;
+  background: var(--selection-color);
+  box-shadow: 0 0 4px rgba(0, 0, 0, 0.4);
+  opacity: 0;
+  transition: opacity 0.2s, transform 0.2s;
+  touch-action: none; /* Enable touch resizing on mobile/tablet */
+}
+
+.resize-handle:hover {
+  transform: scale(1.2);
+}
+
+.grid-item.selected .resize-handle,
+.grid-item:hover .resize-handle {
+  opacity: 1;
+}
+
+.resize-handle.nw {
+  top: -7px;
+  left: -7px;
+  cursor: nw-resize;
+}
+
+.resize-handle.ne {
+  top: -7px;
+  right: -7px;
+  cursor: ne-resize;
+}
+
+.resize-handle.sw {
+  bottom: -7px;
+  left: -7px;
+  cursor: sw-resize;
+}
+
+.resize-handle.se {
+  right: -7px;
+  bottom: -7px;
+  cursor: se-resize;
+}
+
+.resize-handle.n {
+  top: -7px;
+  left: 50%;
+  width: 30px;
+  height: 6px;
+  border-radius: 3px; /* Fully rounded pill ends (half of height) */
+  cursor: n-resize;
+  transform: translateX(-50%);
+}
+
+.resize-handle.s {
+  bottom: -7px;
+  left: 50%;
+  width: 30px;
+  height: 6px;
+  border-radius: 3px; /* Fully rounded pill ends (half of height) */
+  cursor: s-resize;
+  transform: translateX(-50%);
+}
+
+.resize-handle.e {
+  top: 50%;
+  right: -7px;
+  width: 6px;
+  height: 30px;
+  border-radius: 3px; /* Fully rounded pill ends (half of width) */
+  cursor: e-resize;
+  transform: translateY(-50%);
+}
+
+.resize-handle.w {
+  top: 50%;
+  left: -7px;
+  width: 6px;
+  height: 30px;
+  border-radius: 3px; /* Fully rounded pill ends (half of width) */
+  cursor: w-resize;
+  transform: translateY(-50%);
+}
+
+/* Compensate resize handles for thicker border when selected */
+.grid-item.selected .resize-handle.nw,
+.grid-item.selected .resize-handle.n,
+.grid-item.selected .resize-handle.ne {
+  top: -8px; /* -7px - 1px for thicker border */
+}
+
+.grid-item.selected .resize-handle.sw,
+.grid-item.selected .resize-handle.s,
+.grid-item.selected .resize-handle.se {
+  bottom: -8px; /* -7px - 1px for thicker border */
+}
+
+.grid-item.selected .resize-handle.nw,
+.grid-item.selected .resize-handle.w,
+.grid-item.selected .resize-handle.sw {
+  left: -8px; /* -7px - 1px for thicker border */
+}
+
+.grid-item.selected .resize-handle.ne,
+.grid-item.selected .resize-handle.e,
+.grid-item.selected .resize-handle.se {
+  right: -8px; /* -7px - 1px for thicker border */
+}
+
+/* Hide resize handles when dimension is disabled (min == max) */
+/* Hide horizontal handles (left, right, and corners) when width resize is disabled */
+.grid-item.resize-width-disabled .resize-handle.w,
+.grid-item.resize-width-disabled .resize-handle.e,
+.grid-item.resize-width-disabled .resize-handle.nw,
+.grid-item.resize-width-disabled .resize-handle.ne,
+.grid-item.resize-width-disabled .resize-handle.sw,
+.grid-item.resize-width-disabled .resize-handle.se {
+  display: none;
+}
+
+/* Hide vertical handles (top, bottom) when height resize is disabled */
+.grid-item.resize-height-disabled .resize-handle.n,
+.grid-item.resize-height-disabled .resize-handle.s {
+  display: none;
+}
