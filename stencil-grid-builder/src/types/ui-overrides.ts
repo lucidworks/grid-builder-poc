@@ -455,6 +455,124 @@ export interface ToolbarProps {
 }
 
 /**
+ * Canvas Header Props
+ * ====================
+ *
+ * Props passed to custom canvas header components.
+ * Used when consumer overrides canvas headers via uiOverrides.CanvasHeader.
+ *
+ * **When to override**:
+ * - Custom section headers with titles/controls
+ * - Canvas-specific toolbars or actions
+ * - Section navigation
+ * - Add/remove canvas buttons
+ * - Canvas settings/metadata display
+ *
+ * **Example: Custom Canvas Header**
+ * ```typescript
+ * const CustomCanvasHeader = ({ canvasId, metadata, isActive }: CanvasHeaderProps) => (
+ *   <div class={`canvas-header ${isActive ? 'active' : ''}`}>
+ *     <h3>{metadata.title || 'Untitled Section'}</h3>
+ *     <button onClick={() => openEditor(canvasId)}>Edit</button>
+ *     <button onClick={() => deleteCanvas(canvasId)}>Delete</button>
+ *   </div>
+ * );
+ * ```
+ */
+export interface CanvasHeaderProps {
+  /**
+   * Canvas ID for this header
+   *
+   * **Purpose**: Identify which canvas this header belongs to
+   * **Format**: 'canvas1', 'hero-section', etc.
+   *
+   * **Use cases**:
+   * - Key for event handlers
+   * - Look up canvas-specific data
+   * - Target for API operations
+   *
+   * @example
+   * ```typescript
+   * // Open section editor
+   * <button onClick={() => openEditor(canvasId)}>
+   *   Edit Section
+   * </button>
+   *
+   * // Delete canvas
+   * <button onClick={() => api.removeCanvas(canvasId)}>
+   *   Delete
+   * </button>
+   * ```
+   */
+  canvasId: string;
+
+  /**
+   * Canvas metadata from host app
+   *
+   * **Source**: Passed from grid-builder's canvasMetadata prop
+   * **Structure**: Host app defines structure (commonly includes title, backgroundColor, etc.)
+   * **Optional fields**: Varies by host app implementation
+   *
+   * **Use cases**:
+   * - Display section title
+   * - Show background color preview
+   * - Render custom metadata fields
+   *
+   * @example
+   * ```typescript
+   * // Common metadata structure:
+   * metadata = {
+   *   title: 'Hero Section',
+   *   backgroundColor: '#f0f4f8',
+   *   customSettings: { ... }
+   * }
+   *
+   * // Display title
+   * <h3>{metadata.title || 'Untitled'}</h3>
+   *
+   * // Color preview
+   * <div style={{ backgroundColor: metadata.backgroundColor }} />
+   * ```
+   */
+  metadata: Record<string, any>;
+
+  /**
+   * Whether this canvas is currently active
+   *
+   * **Purpose**: Indicate which canvas is focused/active
+   * **Source**: Computed from gridState.activeCanvasId
+   *
+   * **Canvas becomes active when**:
+   * - User clicks item on canvas
+   * - User clicks canvas background
+   * - User starts dragging/resizing on canvas
+   * - Programmatically via api.setActiveCanvas()
+   *
+   * **Use cases**:
+   * - Highlight active header
+   * - Show/hide canvas-specific controls
+   * - Apply active styling
+   *
+   * @example
+   * ```typescript
+   * // Conditional styling
+   * <div class={`header ${isActive ? 'active' : 'dimmed'}`}>
+   *   <h3>{metadata.title}</h3>
+   * </div>
+   *
+   * // Show controls only on active
+   * {isActive && (
+   *   <div class="controls">
+   *     <button>Edit</button>
+   *     <button>Delete</button>
+   *   </div>
+   * )}
+   * ```
+   */
+  isActive: boolean;
+}
+
+/**
  * UI Component Overrides
  * =======================
  *
@@ -483,7 +601,8 @@ export interface ToolbarProps {
  * const uiOverrides: UIComponentOverrides = {
  *   ConfigPanel: MyConfigPanel,
  *   ComponentPalette: MyPalette,
- *   Toolbar: MyToolbar
+ *   Toolbar: MyToolbar,
+ *   CanvasHeader: MyCanvasHeader
  * };
  * ```
  */
@@ -555,4 +674,38 @@ export interface UIComponentOverrides {
    * **Default**: Horizontal toolbar with undo/redo, viewport toggle, grid toggle
    */
   Toolbar?: (props: ToolbarProps) => any;
+
+  /**
+   * Custom canvas header component
+   *
+   * **When to override**:
+   * - Custom section headers with titles/controls
+   * - Canvas-specific toolbars
+   * - Section navigation
+   * - Add/remove canvas buttons
+   *
+   * **Receives**: CanvasHeaderProps
+   * **Positioning**: Headers are automatically positioned with their canvases
+   *
+   * **Example**:
+   * ```typescript
+   * const MyCanvasHeader = ({ canvasId, metadata, isActive }: CanvasHeaderProps) => (
+   *   <div class={`section-header ${isActive ? 'active' : ''}`}>
+   *     <h3>{metadata.title}</h3>
+   *     <button onClick={() => editSection(canvasId)}>Edit</button>
+   *   </div>
+   * );
+   *
+   * // Use in grid-builder
+   * <grid-builder
+   *   uiOverrides={{ CanvasHeader: MyCanvasHeader }}
+   *   canvasMetadata={{
+   *     'canvas1': { title: 'Hero Section' }
+   *   }}
+   * />
+   * ```
+   *
+   * **Default**: No header (headers are host app responsibility)
+   */
+  CanvasHeader?: (props: CanvasHeaderProps) => any;
 }

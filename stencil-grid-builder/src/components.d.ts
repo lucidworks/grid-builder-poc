@@ -250,6 +250,11 @@ export namespace Components {
          */
         "canvasId": string;
         /**
+          * Whether this canvas is currently active  **Purpose**: Control header opacity (active = full opacity, inactive = dimmed) **Default**: false
+          * @default false
+         */
+        "isActive": boolean;
+        /**
           * Whether this section can be deleted  **Purpose**: Control delete button visibility **Default**: true **Note**: Default sections (hero, articles, footer) should set to false
           * @default true
          */
@@ -1662,6 +1667,11 @@ declare namespace LocalJSX {
           * Canvas ID for data tracking  **Purpose**: Identify which canvas this header belongs to **Required**: Yes
          */
         "canvasId": string;
+        /**
+          * Whether this canvas is currently active  **Purpose**: Control header opacity (active = full opacity, inactive = dimmed) **Default**: false
+          * @default false
+         */
+        "isActive"?: boolean;
         /**
           * Whether this section can be deleted  **Purpose**: Control delete button visibility **Default**: true **Note**: Default sections (hero, articles, footer) should set to false
           * @default true

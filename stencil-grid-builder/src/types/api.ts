@@ -9,6 +9,9 @@
 import { GridItem, GridState } from '../services/state-manager';
 import { UndoRedoState } from '../services/undo-redo';
 
+// Export UI override types for consumer use
+export type { CanvasHeaderProps } from './ui-overrides';
+
 /**
  * Event callback type for grid builder events
  *

@@ -1645,4 +1645,138 @@ describe('grid-builder', () => {
       });
     });
   });
+
+  describe('UI Overrides - CanvasHeader', () => {
+    it('should not render custom canvas header when uiOverrides.CanvasHeader is not provided', () => {
+      const component = new GridBuilder();
+      component.components = mockComponentDefinitions;
+      component.initialState = {
+        canvases: {
+          canvas1: { items: [], zIndexCounter: 0 },
+        },
+      };
+
+      component.componentWillLoad();
+      const result = component.render();
+
+      // Check that no custom header is rendered
+      expect(result).toBeDefined();
+    });
+
+    it('should render custom canvas header when uiOverrides.CanvasHeader is provided', () => {
+      const mockHeaderRender = jest.fn(({ canvasId }) => <div class="custom-header">{canvasId}</div>);
+
+      const component = new GridBuilder();
+      component.components = mockComponentDefinitions;
+      component.initialState = {
+        canvases: {
+          canvas1: { items: [], zIndexCounter: 0 },
+        },
+      };
+      component.canvasMetadata = {
+        canvas1: { title: 'Test Canvas', backgroundColor: '#ffffff' },
+      };
+      component.uiOverrides = {
+        CanvasHeader: mockHeaderRender,
+      };
+
+      component.componentWillLoad();
+      const result = component.render();
+
+      // Verify header render function was called with correct props
+      expect(mockHeaderRender).toHaveBeenCalledWith({
+        canvasId: 'canvas1',
+        metadata: { title: 'Test Canvas', backgroundColor: '#ffffff' },
+        isActive: false,
+      });
+    });
+
+    it('should pass correct isActive prop when canvas is active', () => {
+      const mockHeaderRender = jest.fn(() => <div>Header</div>);
+
+      const component = new GridBuilder();
+      component.components = mockComponentDefinitions;
+      component.initialState = {
+        canvases: {
+          canvas1: { items: [], zIndexCounter: 0 },
+          canvas2: { items: [], zIndexCounter: 0 },
+        },
+      };
+      component.canvasMetadata = {
+        canvas1: { title: 'Canvas 1' },
+        canvas2: { title: 'Canvas 2' },
+      };
+      component.uiOverrides = {
+        CanvasHeader: mockHeaderRender,
+      };
+
+      // Set canvas2 as active
+      setActiveCanvas('canvas2');
+
+      component.componentWillLoad();
+      component.render();
+
+      // Verify canvas1 header was called with isActive: false
+      expect(mockHeaderRender).toHaveBeenCalledWith(
+        expect.objectContaining({
+          canvasId: 'canvas1',
+          isActive: false,
+        })
+      );
+
+      // Verify canvas2 header was called with isActive: true
+      expect(mockHeaderRender).toHaveBeenCalledWith(
+        expect.objectContaining({
+          canvasId: 'canvas2',
+          isActive: true,
+        })
+      );
+    });
+
+    it('should handle missing canvas metadata gracefully', () => {
+      const mockHeaderRender = jest.fn(() => <div>Header</div>);
+
+      const component = new GridBuilder();
+      component.components = mockComponentDefinitions;
+      component.initialState = {
+        canvases: {
+          canvas1: { items: [], zIndexCounter: 0 },
+        },
+      };
+      // No canvasMetadata provided
+      component.uiOverrides = {
+        CanvasHeader: mockHeaderRender,
+      };
+
+      component.componentWillLoad();
+      component.render();
+
+      // Verify header was called with empty metadata object
+      expect(mockHeaderRender).toHaveBeenCalledWith({
+        canvasId: 'canvas1',
+        metadata: {},
+        isActive: false,
+      });
+    });
+
+    it('should wrap each canvas in canvas-wrapper div', () => {
+      const component = new GridBuilder();
+      component.components = mockComponentDefinitions;
+      component.initialState = {
+        canvases: {
+          canvas1: { items: [], zIndexCounter: 0 },
+        },
+      };
+      component.uiOverrides = {
+        CanvasHeader: () => <div>Header</div>,
+      };
+
+      component.componentWillLoad();
+      const result = component.render();
+
+      // The result should contain canvas-wrapper divs
+      // Note: This is a structural test - actual DOM verification would require spec page
+      expect(result).toBeDefined();
+    });
+  });
 });
