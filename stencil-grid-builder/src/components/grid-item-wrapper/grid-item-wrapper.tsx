@@ -747,6 +747,7 @@ export class GridItemWrapper {
         <div
           class={itemClasses}
           id={this.item.id}
+          aria-selected={isSelected ? "true" : "false"}
           data-canvas-id={this.item.canvasId}
           data-component-name={displayName}
           data-viewer-mode={this.viewerMode ? "true" : "false"}
@@ -781,6 +782,7 @@ export class GridItemWrapper {
         id={this.item.id}
         role="group"
         aria-label={`${displayName} component`}
+        aria-selected={isSelected ? "true" : "false"}
         data-canvas-id={this.item.canvasId}
         data-component-name={displayName}
         data-viewer-mode={this.viewerMode ? "true" : "false"}

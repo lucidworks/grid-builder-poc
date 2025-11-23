@@ -421,6 +421,21 @@ export class GridBuilder {
   @State() private initializedPlugins: GridBuilderPlugin[] = [];
 
   /**
+   * Screen reader announcement (ARIA live region)
+   *
+   * **Purpose**: Announce dynamic changes to screen reader users
+   * **Updated by**: Event listeners for component operations
+   * **Non-visual**: Only affects screen readers, no visual impact
+   *
+   * **Announces**:
+   * - Component added/deleted
+   * - Drag/drop operations
+   * - Undo/redo actions
+   * - Canvas switching
+   */
+  @State() private announcement: string = "";
+
+  /**
    * GridBuilderAPI instance (internal state)
    *
    * **Purpose**: Provides API to plugins and external code
@@ -912,6 +927,9 @@ export class GridBuilder {
 
     // Setup container-based viewport switching
     this.setupViewportResizeObserver();
+
+    // Setup screen reader announcements (ARIA live region)
+    this.setupScreenReaderAnnouncements();
   }
 
   /**
@@ -1434,6 +1452,82 @@ export class GridBuilder {
   };
 
   /**
+   * Setup screen reader announcements for dynamic changes
+   *
+   * **Purpose**: Subscribe to events and announce changes via ARIA live region
+   * **Non-visual**: Only affects screen readers, no visual impact
+   *
+   * **Subscribes to**:
+   * - componentAdded: "Component added to canvas"
+   * - componentDeleted: "Component deleted"
+   * - componentMoved: "Component moved to new canvas"
+   * - undoExecuted: "Undo action performed"
+   * - redoExecuted: "Redo action performed"
+   * - canvasActivated: "Canvas activated"
+   *
+   * **WCAG Compliance**: 4.1.3 Status Messages (Level AA)
+   */
+  private setupScreenReaderAnnouncements = () => {
+    // Component added
+    eventManager.on("componentAdded", (data: any) => {
+      const definition = this.componentRegistry.get(data.item.type);
+      const componentName = definition?.name || data.item.type;
+      this.announce(`${componentName} component added to canvas`);
+    });
+
+    // Component deleted
+    eventManager.on("componentDeleted", (data: any) => {
+      this.announce(`Component deleted`);
+    });
+
+    // Component moved (cross-canvas)
+    eventManager.on("componentMoved", (data: any) => {
+      this.announce(`Component moved to new canvas`);
+    });
+
+    // Undo/Redo
+    eventManager.on("undoExecuted", () => {
+      this.announce(`Undo action performed`);
+    });
+
+    eventManager.on("redoExecuted", () => {
+      this.announce(`Redo action performed`);
+    });
+
+    // Canvas activated
+    eventManager.on("canvasActivated", (data: any) => {
+      const metadata = this.canvasMetadata?.[data.canvasId];
+      const canvasTitle = metadata?.title || data.canvasId;
+      this.announce(`${canvasTitle} canvas activated`);
+    });
+  };
+
+  /**
+   * Announce message to screen readers via ARIA live region
+   *
+   * **Purpose**: Update announcement state for screen reader users
+   * **Non-visual**: Only affects screen readers, no visual impact
+   *
+   * **Implementation**:
+   * - Updates @State() announcement property
+   * - Triggers re-render of ARIA live region
+   * - Screen reader automatically announces new content
+   * - Clears announcement after 100ms (prevents repeat announcements)
+   *
+   * **WCAG Compliance**: 4.1.3 Status Messages (Level AA)
+   *
+   * @param message - Message to announce to screen reader users
+   */
+  private announce = (message: string) => {
+    this.announcement = message;
+
+    // Clear announcement after brief delay to allow re-announcing same message
+    setTimeout(() => {
+      this.announcement = "";
+    }, 100);
+  };
+
+  /**
    * Export current state to JSON-serializable format
    *
    * **Purpose**: Export grid layout for saving or transferring to viewer app
@@ -1794,6 +1888,16 @@ export class GridBuilder {
 
     return (
       <Host ref={(el) => (this.el = el)}>
+        {/* ARIA Live Region for Screen Reader Announcements */}
+        <div
+          class="sr-only"
+          role="status"
+          aria-live="polite"
+          aria-atomic="true"
+        >
+          {this.announcement}
+        </div>
+
         <div class="grid-builder-container" role="application" aria-label="Grid builder">
           {/* Component Palette */}
           <div class="palette-area">

@@ -23,6 +23,38 @@
   font-family: var(--grid-builder-font-family);
 }
 
+/**
+ * Screen Reader Only (sr-only)
+ * =============================
+ *
+ * Standard accessibility pattern to hide content visually
+ * while keeping it accessible to screen readers.
+ *
+ * **Use Cases**:
+ * - ARIA live regions for announcements
+ * - Skip navigation links
+ * - Hidden form labels
+ * - Status messages
+ *
+ * **Technique**:
+ * - Positioned off-screen instead of display:none
+ * - display:none would hide from screen readers too
+ * - clip prevents visual rendering
+ *
+ * **WCAG Compliance**: 4.1.3 Status Messages (Level AA)
+ */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
 .grid-builder-container {
   position: relative;
   display: flex;
