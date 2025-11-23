@@ -523,55 +523,71 @@ export interface ComponentDefinition {
   }) => any;
 
   /**
-   * Optional: Custom drag clone renderer
+   * Custom drag clone renderer (REQUIRED)
    *
-   * **When provided**: Returns HTML string for custom drag clone.
-   *
-   * **When NOT provided**: Library uses default drag clone styling.
+   * **Returns**: JSX element for custom drag clone preview.
    *
    * **Use cases**:
-   * - Custom branding or animations
-   * - Complex visual preview
-   * - Match exact component appearance
+   * - Custom visual preview matching your component's appearance
+   * - Rich drag feedback with realistic component representation
+   * - Branded or styled drag previews
    *
-   * **Props provided**:
-   * - `componentType`: The component type being dragged
-   * - `name`: Component display name
-   * - `icon`: Component icon/emoji
-   * - `width`: Calculated width in pixels (from defaultSize)
-   * - `height`: Calculated height in pixels (from defaultSize)
+   * **Sizing**: The library automatically uses `defaultSize` from this definition
+   * and converts grid units to pixels. No need to specify size in renderDragClone.
    *
-   * **Return value**: HTML string
+   * **Return value**: JSX element (StencilJS vNode)
+   * - Can be inline JSX with styles
+   * - Can be a dedicated Stencil component (recommended for complex previews)
    *
-   * **Security Note**: Since component definitions are developer-written (not user input),
-   * XSS risk is minimal. However, avoid using untrusted data in the HTML string.
+   * **Recommended Pattern**: Create a dedicated Stencil component for drag clones
+   * ```typescript
+   * // Component: blog-header-drag-clone.tsx
+   * @Component({ tag: 'blog-header-drag-clone' })
+   * export class BlogHeaderDragClone {
+   *   render() {
+   *     return (
+   *       <div class="header-preview">
+   *         <h1>Header Title</h1>
+   *         <p>Subtitle preview</p>
+   *       </div>
+   *     );
+   *   }
+   * }
+   * ```
    *
-   * **Note**: The library automatically positions and manages the drag clone.
-   * You only need to provide the HTML string for the content.
+   * **Library responsibilities**:
+   * - Wraps your JSX in a fixed-size container (width × height from defaultSize)
+   * - Applies base drag styling (border, shadow, cursor)
+   * - Positions during drag and cleans up after drop
+   * - Sets `overflow: hidden` to clip content to size
    *
-   * @param props - Drag clone rendering context
-   * @returns HTML string
+   * **Your responsibility**:
+   * - Return JSX that looks good at the component's default size
+   * - Make it visually represent the actual component
+   *
+   * @returns JSX element (StencilJS vNode)
    *
    * @example
    * ```typescript
-   * // Custom drag clone with HTML string
-   * renderDragClone: ({ componentType, name, icon, width, height }) =>
-   *   `<custom-drag-clone
-   *     component-type="${componentType}"
-   *     name="${name}"
-   *     icon="${icon}"
-   *     width="${width}"
-   *     height="${height}">
-   *   </custom-drag-clone>`
+   * // Using a dedicated Stencil component (recommended)
+   * renderDragClone: () => (
+   *   <blog-header-drag-clone />
+   * )
+   *
+   * // Or inline JSX for simple cases
+   * renderDragClone: () => (
+   *   <div style={{
+   *     display: 'flex',
+   *     alignItems: 'center',
+   *     justifyContent: 'center',
+   *     height: '100%'
+   *   }}>
+   *     <h1>Header Preview</h1>
+   *   </div>
+   * )
    * ```
    */
-  renderDragClone?: (props: {
-    componentType: string;
-    name: string;
-    icon: string;
-    width: number;
-    height: number;
-  }) => string;
+  renderDragClone: () => any;
 
   /**
    * Optional: Custom item wrapper/chrome renderer
