@@ -30,6 +30,7 @@
   white-space: nowrap;
   width: 100%;
   order: -1; // Ensure name stays on top
+  pointer-events: none; // Don't block click events
 }
 
 .palette-icon-container {
@@ -40,12 +41,14 @@
   justify-content: center;
   border-radius: 8px;
   transition: all 0.2s;
+  pointer-events: none; // Don't block click events
 
   svg {
     width: 100%;
     max-width: 100px;
     height: auto;
     color: #6c757d !important;
+    pointer-events: none; // Don't block click events
   }
 
   .custom-palette-item:hover & {

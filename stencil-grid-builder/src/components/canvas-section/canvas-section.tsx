@@ -612,7 +612,14 @@ export class CanvasSection {
         drop: (event: any) => {
           // Remove visual feedback on successful drop (replaces classList.remove)
           this.isDropTarget = false;
-          const droppedElement = event.relatedTarget;
+          let droppedElement = event.relatedTarget;
+
+          // If dropped element is inside a palette item, get the palette item
+          const paletteItem = droppedElement.closest('.palette-item');
+          if (paletteItem) {
+            droppedElement = paletteItem;
+          }
+
           const isPaletteItem = droppedElement.classList.contains('palette-item');
 
           // Mark palette item drop as valid (for snap-back animation)

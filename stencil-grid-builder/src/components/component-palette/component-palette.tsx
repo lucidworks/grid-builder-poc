@@ -97,7 +97,7 @@
  * @module component-palette
  */
 
-import { Component, h, Prop, State, Watch } from '@stencil/core';
+import { Component, h, Prop, State, Watch, Element } from '@stencil/core';
 import interact from 'interactjs';
 
 // Type imports
@@ -178,6 +178,13 @@ import { gridToPixelsX, gridToPixelsY } from '../../utils/grid-calculations';
   shadow: false,
 })
 export class ComponentPalette {
+  /**
+   * Host element reference
+   *
+   * **Used for**: Scoping querySelectorAll to only palette items in this instance
+   */
+  @Element() hostElement: HTMLElement;
+
   /**
    * Component definitions to render in palette
    *
@@ -443,7 +450,11 @@ export class ComponentPalette {
    * @private
    */
   private initializePaletteItems = () => {
-    const paletteItems = document.querySelectorAll('.palette-item');
+    // IMPORTANT: Scope to only palette items within THIS component instance
+    // Multiple component-palette instances may exist (Content, Interactive, Media categories)
+    // Using document.querySelectorAll would find ALL palette items, causing
+    // drag handlers from one palette to try accessing component definitions from another
+    const paletteItems = this.hostElement.querySelectorAll('.palette-item');
 
     paletteItems.forEach((element: HTMLElement) => {
       // Check if already initialized to prevent duplicate handlers
@@ -500,19 +511,26 @@ export class ComponentPalette {
            * @param event - interact.js drag start event
            */
           start: (event: any) => {
+            // Get the .palette-item element (in case event.target is a nested child)
+            const paletteItem = event.target.closest('.palette-item');
+            if (!paletteItem) {
+              console.warn('Could not find .palette-item element');
+              return;
+            }
+
             // Get component type and find definition
-            const componentType = event.target.getAttribute('data-component-type');
+            const componentType = paletteItem.getAttribute('data-component-type');
 
             // Set dragging state (replaces classList.add)
             this.draggingItemType = componentType;
 
             // Store original palette item position for snap-back animation
-            const paletteRect = event.target.getBoundingClientRect();
-            (event.target as any)._originalPosition = {
+            const paletteRect = paletteItem.getBoundingClientRect();
+            (paletteItem as any)._originalPosition = {
               left: paletteRect.left,
               top: paletteRect.top,
             };
-            (event.target as any)._dropWasValid = false; // Flag to track if drop occurred
+            (paletteItem as any)._dropWasValid = false; // Flag to track if drop occurred
             const definition = this.components.find((c) => c.type === componentType);
 
             if (!definition) {
@@ -546,48 +564,47 @@ export class ComponentPalette {
             const halfWidth = widthPx / 2;
             const halfHeight = heightPx / 2;
 
-            // Create drag clone container
+            // Create drag clone container with base styling
             const dragClone = document.createElement('div');
             dragClone.className = 'dragging-clone';
             dragClone.style.position = 'fixed';
             dragClone.style.left = event.clientX - halfWidth + 'px';
             dragClone.style.top = event.clientY - halfHeight + 'px';
+            dragClone.style.width = widthPx + 'px';
+            dragClone.style.height = heightPx + 'px';
+            dragClone.style.overflow = 'hidden'; // Clip content to size
             dragClone.style.pointerEvents = 'none';
             dragClone.style.zIndex = '10000';
+            dragClone.style.border = '2px solid rgba(74, 144, 226, 0.5)';
+            dragClone.style.borderRadius = '4px';
+            dragClone.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.2)';
+            dragClone.style.cursor = 'grabbing';
 
-            // Use custom renderer if provided, otherwise use simple default
-            if (definition.renderDragClone) {
-              // Render custom drag clone HTML string
-              const customHTML = definition.renderDragClone({
-                componentType: componentType,
-                name: definition.name,
-                icon: definition.icon,
-                width: widthPx,
-                height: heightPx,
+            // Render custom drag clone JSX
+            const vNode = definition.renderDragClone();
+
+            // Extract tag name from vNode (Stencil's JSX returns vNode with $tag$ property)
+            const tagName = vNode.$tag$;
+
+            // Create the drag clone element (components are pre-loaded in blog-app.tsx)
+            const contentElement = document.createElement(tagName);
+
+            // Copy any props from vNode to element
+            if (vNode.$attrs$) {
+              Object.keys(vNode.$attrs$).forEach(key => {
+                contentElement.setAttribute(key, vNode.$attrs$[key]);
               });
-
-              dragClone.innerHTML = customHTML;
-            } else {
-              // Use simple default styled div
-              dragClone.style.width = widthPx + 'px';
-              dragClone.style.height = heightPx + 'px';
-              dragClone.style.padding = '20px';
-              dragClone.style.background = 'rgba(74, 144, 226, 0.9)';
-              dragClone.style.color = '#ffffff';
-              dragClone.style.borderRadius = '4px';
-              dragClone.innerHTML = `
-                <div style="font-weight: 600; color: #ffffff; font-size: 14px;">${definition.icon} ${definition.name}</div>
-              `;
             }
 
+            dragClone.appendChild(contentElement);
             document.body.appendChild(dragClone);
 
             // Store clone reference, half dimensions, and default size for move/drop events
-            (event.target as any)._dragClone = dragClone;
-            (event.target as any)._halfWidth = halfWidth;
-            (event.target as any)._halfHeight = halfHeight;
-            (event.target as any)._defaultWidth = defaultSize.width;
-            (event.target as any)._defaultHeight = defaultSize.height;
+            (paletteItem as any)._dragClone = dragClone;
+            (paletteItem as any)._halfWidth = halfWidth;
+            (paletteItem as any)._halfHeight = halfHeight;
+            (paletteItem as any)._defaultWidth = defaultSize.width;
+            (paletteItem as any)._defaultHeight = defaultSize.height;
           },
 
           /**
@@ -613,9 +630,12 @@ export class ComponentPalette {
            * @param event - interact.js drag move event
            */
           move: (event: any) => {
-            const dragClone = (event.target as any)._dragClone;
-            const halfWidth = (event.target as any)._halfWidth;
-            const halfHeight = (event.target as any)._halfHeight;
+            const paletteItem = event.target.closest('.palette-item');
+            if (!paletteItem) return;
+
+            const dragClone = (paletteItem as any)._dragClone;
+            const halfWidth = (paletteItem as any)._halfWidth;
+            const halfHeight = (paletteItem as any)._halfHeight;
             if (dragClone) {
               dragClone.style.left = event.clientX - halfWidth + 'px';
               dragClone.style.top = event.clientY - halfHeight + 'px';
@@ -654,9 +674,12 @@ export class ComponentPalette {
             // Clear dragging state (replaces classList.remove)
             this.draggingItemType = null;
 
-            const dragClone = (event.target as any)._dragClone;
-            const dropWasValid = (event.target as any)._dropWasValid;
-            const originalPos = (event.target as any)._originalPosition;
+            const paletteItem = event.target.closest('.palette-item');
+            if (!paletteItem) return;
+
+            const dragClone = (paletteItem as any)._dragClone;
+            const dropWasValid = (paletteItem as any)._dropWasValid;
+            const originalPos = (paletteItem as any)._originalPosition;
 
             if (dragClone) {
               if (!dropWasValid && originalPos) {
@@ -676,11 +699,11 @@ export class ComponentPalette {
               }
 
               // Cleanup
-              delete (event.target as any)._dragClone;
-              delete (event.target as any)._halfWidth;
-              delete (event.target as any)._halfHeight;
-              delete (event.target as any)._dropWasValid;
-              delete (event.target as any)._originalPosition;
+              delete (paletteItem as any)._dragClone;
+              delete (paletteItem as any)._halfWidth;
+              delete (paletteItem as any)._halfHeight;
+              delete (paletteItem as any)._dropWasValid;
+              delete (paletteItem as any)._originalPosition;
             }
           },
         },
@@ -722,8 +745,8 @@ export class ComponentPalette {
    * - grid-item-wrapper.tsx: Cleans up drag/resize handlers
    */
   disconnectedCallback() {
-    // Cleanup interact.js on all palette items
-    const paletteItems = document.querySelectorAll('.palette-item');
+    // Cleanup interact.js on all palette items (scoped to this instance)
+    const paletteItems = this.hostElement.querySelectorAll('.palette-item');
     paletteItems.forEach((element: HTMLElement) => {
       if ((element as any)._dragInitialized) {
         interact(element).unset();
