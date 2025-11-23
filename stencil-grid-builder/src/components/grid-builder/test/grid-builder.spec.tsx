@@ -1681,7 +1681,7 @@ describe('grid-builder', () => {
       };
 
       component.componentWillLoad();
-      const result = component.render();
+       component.render();
 
       // Verify header render function was called with correct props
       expect(mockHeaderRender).toHaveBeenCalledWith({

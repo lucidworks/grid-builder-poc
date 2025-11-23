@@ -66,7 +66,7 @@ Choose the component that matches your use case:
     const gridBuilder = document.getElementById('myGrid');
 
     // Define your components
-    gridBuilder.componentDefinitions = [
+    gridBuilder.components = [
       {
         type: 'header',
         name: 'Header',
@@ -74,14 +74,14 @@ Choose the component that matches your use case:
         description: 'Page header component',
         defaultSize: { width: 50, height: 6 },
         minSize: { width: 10, height: 3 },
-        configSchema: [
-          {
-            key: 'title',
-            label: 'Title',
-            type: 'text',
-            defaultValue: 'My Header'
-          }
-        ]
+        render: ({ config }) => {
+          const div = document.createElement('div');
+          div.style.cssText = 'padding: 12px; background: #f0f0f0;';
+          const h3 = document.createElement('h3');
+          h3.textContent = config?.title || 'Header';
+          div.appendChild(h3);
+          return div;
+        }
       },
       {
         type: 'text',
@@ -90,20 +90,19 @@ Choose the component that matches your use case:
         description: 'Rich text content',
         defaultSize: { width: 25, height: 10 },
         minSize: { width: 10, height: 5 },
-        configSchema: [
-          {
-            key: 'content',
-            label: 'Content',
-            type: 'textarea',
-            defaultValue: 'Enter text here...',
-            rows: 5
-          }
-        ]
+        render: ({ config }) => {
+          const div = document.createElement('div');
+          div.style.cssText = 'padding: 10px; background: #fff;';
+          const p = document.createElement('p');
+          p.textContent = config?.text || 'Sample text';
+          div.appendChild(p);
+          return div;
+        }
       }
     ];
 
     // Optional: Configure grid settings
-    gridBuilder.gridConfig = {
+    gridBuilder.config = {
       gridSizePercent: 2,    // 2% grid (50 units = 100% width)
       minGridSize: 10,       // Min 10px per grid unit
       maxGridSize: 50        // Max 50px per grid unit
@@ -118,36 +117,41 @@ Choose the component that matches your use case:
 ```typescript
 import { GridBuilderAPI } from '@lucidworks/stencil-grid-builder';
 
-// Get API instance from component
-const gridBuilder = document.querySelector('grid-builder');
-const api = await gridBuilder.getAPI();
+// API is available on window after grid-builder loads
+const api = window.gridBuilderAPI;
 
-// Add an item programmatically
-const item = api.addItem('canvas1', 'header', 10, 10, 30, 6);
-console.log('Added item:', item);
+// Or access via multiple instances with custom API keys
+// <grid-builder api-ref='{ "key": "myGridAPI" }'></grid-builder>
+// const api = window.myGridAPI;
+
+// Add a component programmatically
+const itemId = api.addComponent('canvas1', 'header', {
+  x: 10, y: 10, width: 30, height: 6
+}, { title: 'My Header' });
 
 // Listen for events
-api.on('itemAdded', (event) => {
-  console.log('Item added:', event.item);
+api.on('componentAdded', (event) => {
+  console.log('Component added:', event.item);
 });
 
-api.on('itemUpdated', (event) => {
-  console.log('Item updated:', event.itemId, event.updates);
+api.on('configChanged', (event) => {
+  console.log('Config changed:', event.itemId, event.config);
 });
 
-// Update item
-api.updateItem('canvas1', item.id, {
-  config: { title: 'Updated Header' }
+// Update component config
+api.updateConfig(itemId, {
+  title: 'Updated Header'
 });
 
 // Export/Import state
-const stateJson = api.exportState();
-localStorage.setItem('gridState', stateJson);
+const gridBuilder = document.querySelector('grid-builder');
+const stateJson = await gridBuilder.exportState();
+localStorage.setItem('gridState', JSON.stringify(stateJson));
 
 // Later...
-const savedState = localStorage.getItem('gridState');
+const savedState = JSON.parse(localStorage.getItem('gridState'));
 if (savedState) {
-  api.importState(savedState);
+  await gridBuilder.importState(savedState);
 }
 ```
 
@@ -155,36 +159,43 @@ if (savedState) {
 
 For optimal performance when adding, deleting, or updating multiple items, use the batch API methods. Batch operations trigger a single state update and re-render, compared to N updates for N individual operations.
 
-#### Adding Multiple Items
+#### Adding Multiple Components
 
 ```typescript
-const api = await gridBuilder.getAPI();
+const api = window.gridBuilderAPI;
 
 // ❌ BAD: 100 individual operations = 100 re-renders (~1600ms)
 for (let i = 0; i < 100; i++) {
-  api.addItem('canvas1', 'header', (i % 10) * 5, Math.floor(i / 10) * 5, 20, 6);
-}
-
-// ✅ GOOD: 1 batch operation = 1 re-render (~16ms)
-const itemIds = api.addItemsBatch(
-  Array.from({ length: 100 }, (_, i) => ({
-    canvasId: 'canvas1',
-    type: 'header',
+  api.addComponent('canvas1', 'header', {
     x: (i % 10) * 5,
     y: Math.floor(i / 10) * 5,
     width: 20,
-    height: 6,
+    height: 6
+  });
+}
+
+// ✅ GOOD: 1 batch operation = 1 re-render (~16ms)
+const itemIds = api.addComponentsBatch(
+  Array.from({ length: 100 }, (_, i) => ({
+    canvasId: 'canvas1',
+    type: 'header',
+    position: {
+      x: (i % 10) * 5,
+      y: Math.floor(i / 10) * 5,
+      width: 20,
+      height: 6
+    },
     config: { title: `Header ${i + 1}` }
   }))
 );
 ```
 
-#### Deleting Multiple Items
+#### Deleting Multiple Components
 
 ```typescript
-// Delete all selected items in one operation
+// Delete all selected components in one operation
 const selectedIds = ['item-1', 'item-2', 'item-3'];
-api.deleteItemsBatch(selectedIds);
+api.deleteComponentsBatch(selectedIds);
 ```
 
 #### Updating Multiple Configs
@@ -211,22 +222,22 @@ api.updateConfigsBatch([
 Batch operations are fully integrated with the undo/redo system. Each batch operation creates a single undo/redo command:
 
 ```typescript
-// Add 100 items
-api.addItemsBatch(items);
+// Add 100 components
+api.addComponentsBatch(components);
 
-// Undo removes all 100 items in one operation
+// Undo removes all 100 components in one operation
 api.undo();
 
-// Redo adds all 100 items back in one operation
+// Redo adds all 100 components back in one operation
 api.redo();
 ```
 
 #### Best Practices
 
-- **Use batch operations for 3+ items**: The overhead of batching is negligible, but benefits increase with size
+- **Use batch operations for 3+ components**: The overhead of batching is negligible, but benefits increase with size
 - **Batch related operations**: Group related adds/deletes/updates together for logical undo/redo
 - **Consider memory**: While batches can handle 1000+ items, keep individual batches under 1000 for best performance
-- **Event listeners**: Batch operations emit single batch events (`itemsBatchAdded`, `itemsBatchDeleted`, `itemsBatchUpdated`)
+- **Event listeners**: Batch operations emit single batch events (`componentsBatchAdded`, `componentsBatchDeleted`, `configsBatchChanged`)
 
 ### grid-viewer: Displaying Layouts
 
@@ -496,44 +507,30 @@ interface ComponentDefinition {
   minSize?: { width: number; height: number };
   maxSize?: { width: number; height: number };
 
-  // Configuration schema
-  configSchema?: ConfigField[];
+  // Custom rendering - REQUIRED
+  render: (props: { itemId: string; config: any }) => HTMLElement | JSX.Element;
 
-  // Custom rendering
-  renderComponent?: (item: GridItem, config: any) => HTMLElement;
-  renderPreview?: (item: GridItem, config: any) => HTMLElement;
+  // Optional: Custom drag clone for palette
+  renderDragClone?: () => HTMLElement | JSX.Element;
 
-  // Custom config form
-  renderConfigForm?: (item: GridItem, onChange: (updates: any) => void) => HTMLElement;
-}
+  // Optional: Custom config panel
+  renderConfigPanel?: (props: {
+    itemId: string;
+    config: any;
+    onUpdate: (config: any) => void
+  }) => HTMLElement | JSX.Element;
 
-interface ConfigField {
-  key: string;                     // Property key in config object
-  label: string;                   // Display label
-  type: 'text' | 'number' | 'color' | 'select' | 'checkbox' | 'textarea';
-  defaultValue?: any;
-
-  // Number field options
-  min?: number;
-  max?: number;
-  step?: number;
-
-  // Select field options
-  options?: Array<{ label: string; value: string } | string>;
-
-  // Textarea options
-  rows?: number;
-
-  // Validation
-  required?: boolean;
+  // Virtual rendering lifecycle hooks
+  onVisible?: (itemId: string) => void;
+  onHidden?: (itemId: string) => void;
 }
 ```
 
 ## Complete Example: Blog Layout Builder
 
-This example demonstrates using **custom Stencil components** within the grid builder. The `renderComponent` function creates instances of your own Stencil components (`<blog-hero>`, `<article-card>`, etc.) and configures them with props.
+This example demonstrates using **custom Stencil components** within the grid builder. The `render` function creates instances of your own Stencil components (`<blog-hero>`, `<article-card>`, etc.) and configures them with props.
 
-> **Note**: For a complete example with full Stencil component definitions, see the `/examples` directory in this repository.
+> **Note**: For a complete working example with full Stencil component definitions, see the demo in `src/demo/` directory.
 
 ```typescript
 // Define blog component definitions that use your custom Stencil components
@@ -545,32 +542,13 @@ const blogComponents = [
     description: 'Large hero banner',
     defaultSize: { width: 50, height: 15 },
     minSize: { width: 30, height: 10 },
-    configSchema: [
-      {
-        key: 'headline',
-        label: 'Headline',
-        type: 'text',
-        defaultValue: 'Welcome to My Blog',
-        required: true
-      },
-      {
-        key: 'subheadline',
-        label: 'Subheadline',
-        type: 'text',
-        defaultValue: 'Discover amazing content'
-      },
-      {
-        key: 'backgroundImage',
-        label: 'Background Image URL',
-        type: 'text'
-      }
-    ],
-    renderComponent: (item, config) => {
+    render: ({ itemId, config }) => {
       // Create and return your custom Stencil component
       const hero = document.createElement('blog-hero');
-      hero.headline = config.headline;
-      hero.subheadline = config.subheadline;
-      hero.backgroundImage = config.backgroundImage;
+      hero.itemId = itemId;
+      hero.headline = config?.headline || 'Welcome to My Blog';
+      hero.subheadline = config?.subheadline || 'Discover amazing content';
+      hero.backgroundImage = config?.backgroundImage;
       return hero;
     }
   },
@@ -581,40 +559,14 @@ const blogComponents = [
     description: 'Blog article preview',
     defaultSize: { width: 15, height: 12 },
     minSize: { width: 12, height: 10 },
-    configSchema: [
-      {
-        key: 'title',
-        label: 'Title',
-        type: 'text',
-        defaultValue: 'Article Title',
-        required: true
-      },
-      {
-        key: 'excerpt',
-        label: 'Excerpt',
-        type: 'textarea',
-        defaultValue: 'Brief article description...',
-        rows: 3
-      },
-      {
-        key: 'imageUrl',
-        label: 'Image URL',
-        type: 'text'
-      },
-      {
-        key: 'author',
-        label: 'Author',
-        type: 'text',
-        defaultValue: 'John Doe'
-      }
-    ],
-    renderComponent: (item, config) => {
+    render: ({ itemId, config }) => {
       // Create and configure your custom Stencil component
       const card = document.createElement('article-card');
-      card.title = config.title;
-      card.excerpt = config.excerpt;
-      card.imageUrl = config.imageUrl;
-      card.author = config.author;
+      card.itemId = itemId;
+      card.title = config?.title || 'Article Title';
+      card.excerpt = config?.excerpt || 'Brief article description...';
+      card.imageUrl = config?.imageUrl;
+      card.author = config?.author || 'John Doe';
       return card;
     }
   }
@@ -622,21 +574,21 @@ const blogComponents = [
 
 // Initialize grid builder
 const gridBuilder = document.querySelector('grid-builder');
-gridBuilder.componentDefinitions = blogComponents;
+gridBuilder.components = blogComponents;
 
 // Get API and set up event handlers
-const api = await gridBuilder.getAPI();
+const api = window.gridBuilderAPI;
 
 // Auto-save to localStorage
-api.on('stateChanged', () => {
-  const state = api.exportState();
-  localStorage.setItem('blogLayout', state);
+api.on('componentAdded', async () => {
+  const state = await gridBuilder.exportState();
+  localStorage.setItem('blogLayout', JSON.stringify(state));
 });
 
 // Load saved layout on startup
 const savedLayout = localStorage.getItem('blogLayout');
 if (savedLayout) {
-  api.importState(savedLayout);
+  await gridBuilder.importState(JSON.parse(savedLayout));
 }
 ```
 
@@ -644,117 +596,125 @@ if (savedLayout) {
 
 ### GridBuilderAPI Methods
 
+Available via `window.gridBuilderAPI` (or custom key with `api-ref` prop).
+
 #### State Access
 - `getState(): GridState` - Get current grid state
-- `getCanvases()` - Get all canvases
-- `getCanvas(canvasId: string)` - Get specific canvas
-- `getItem(canvasId: string, itemId: string)` - Get specific item
-- `getCurrentViewport()` - Get current viewport ('desktop' | 'mobile')
-- `getGridVisibility(): boolean` - Get grid visibility state
-- `getSelectedItem()` - Get currently selected item
+- `getItems(canvasId: string): GridItem[]` - Get all items in a canvas
+- `getItem(itemId: string): GridItem | null` - Get specific item (searches all canvases)
 
-#### Item Management
-- `addItem(canvasId, type, x, y, width, height, config?)` - Add new item
-- `removeItem(canvasId, itemId)` - Remove item
-- `updateItem(canvasId, itemId, updates)` - Update item properties
-- `moveItem(fromCanvasId, toCanvasId, itemId)` - Move item between canvases
+#### Component Management
+- `addComponent(canvasId, type, position, config?): string | null` - Add new component, returns itemId
+- `deleteComponent(itemId): boolean` - Delete component, returns success
+- `updateConfig(itemId, config): boolean` - Update component configuration, returns success
 
 #### Batch Operations (Performance Optimized)
-- `addItemsBatch(items[])` - Add multiple items in one operation
-- `deleteItemsBatch(itemIds[])` - Delete multiple items in one operation
+- `addComponentsBatch(components[]): string[]` - Add multiple components, returns itemIds
+- `deleteComponentsBatch(itemIds[])` - Delete multiple components in one operation
 - `updateConfigsBatch(updates[])` - Update multiple configs in one operation
 
-#### Selection
-- `selectItem(itemId, canvasId)` - Select an item
-- `deselectItem()` - Deselect current item
-
-#### Viewport & Display
-- `setViewport(viewport: 'desktop' | 'mobile')` - Change viewport
-- `toggleGrid(visible: boolean)` - Show/hide grid
-- `setCanvasBackground(canvasId, color)` - Set canvas background color
+#### Canvas Management
+- `addCanvas(canvasId: string)` - Add new canvas/section
+- `removeCanvas(canvasId: string)` - Remove canvas/section
+- `setActiveCanvas(canvasId: string)` - Set active canvas
+- `getActiveCanvas(): string | null` - Get currently active canvas ID
 
 #### Undo/Redo
 - `undo()` - Undo last action
 - `redo()` - Redo last undone action
 - `canUndo(): boolean` - Check if undo available
 - `canRedo(): boolean` - Check if redo available
-- `clearHistory()` - Clear undo/redo history
-
-#### State Management
-- `exportState(): Promise<GridExport>` - Export layout for saving or viewer display
-- `importState(json: string)` - Import state from JSON
-- `reset()` - Reset to initial state
+- `undoRedoState` - Observable state object with canUndo/canRedo properties
 
 #### Events
-- `on(event, listener)` - Register event listener
-- `off(event, listener)` - Unregister event listener
-- `once(event, listener)` - Register one-time listener
-- `destroy()` - Clean up all listeners
+- `on<T>(event: string, listener: (data: T) => void)` - Register event listener
+- `off<T>(event: string, listener: (data: T) => void)` - Unregister event listener
+
+### Component @Methods
+
+Methods available directly on the `<grid-builder>` element:
+
+- `exportState(): Promise<GridExport>` - Export layout for saving or viewer display
+- `importState(state: Partial<GridState> | GridExport): Promise<void>` - Import state
+- `getState(): Promise<GridState>` - Get current state
+- `addCanvas(canvasId: string): Promise<void>` - Add canvas
+- `removeCanvas(canvasId: string): Promise<void>` - Remove canvas
+- `setActiveCanvas(canvasId: string): Promise<void>` - Set active canvas
+- `getActiveCanvas(): Promise<string | null>` - Get active canvas
+- `undo(): Promise<void>` - Undo
+- `redo(): Promise<void>` - Redo
+- `canUndo(): Promise<boolean>` - Check undo availability
+- `canRedo(): Promise<boolean>` - Check redo availability
+- `addComponent(canvasId, type, position, config?): Promise<string | null>` - Add component
+- `deleteComponent(itemId): Promise<boolean>` - Delete component
+- `updateConfig(itemId, config): Promise<boolean>` - Update config
 
 ### Events
 
 ```typescript
-// Item events
-api.on('itemAdded', (event) => {
+// Component events
+api.on('componentAdded', (event) => {
   // event: { item: GridItem, canvasId: string }
 });
 
-api.on('itemRemoved', (event) => {
+api.on('componentDeleted', (event) => {
   // event: { itemId: string, canvasId: string }
 });
 
-api.on('itemUpdated', (event) => {
-  // event: { itemId: string, canvasId: string, updates: Partial<GridItem> }
+api.on('componentDragged', (event) => {
+  // event: { itemId: string, canvasId: string, position: { x: number, y: number } }
 });
 
-api.on('itemMoved', (event) => {
-  // event: { itemId: string, fromCanvasId: string, toCanvasId: string }
+api.on('componentMoved', (event) => {
+  // event: { item: GridItem, sourceCanvasId: string, targetCanvasId: string, position: { x, y } }
 });
 
-// Batch item events
-api.on('itemsBatchAdded', (event) => {
-  // event: { items: GridItem[] }
+api.on('configChanged', (event) => {
+  // event: { itemId: string, canvasId: string, config: Record<string, any> }
 });
 
-api.on('itemsBatchDeleted', (event) => {
-  // event: { itemIds: string[] }
+// Batch component events
+api.on('componentsBatchAdded', (event) => {
+  // event: { items: Array<{ item: GridItem, canvasId: string }> }
 });
 
-api.on('itemsBatchUpdated', (event) => {
-  // event: { updates: Array<{ itemId: string, canvasId: string, config: Record<string, any> }> }
+api.on('componentsBatchDeleted', (event) => {
+  // event: { items: Array<{ itemId: string, canvasId: string }> }
 });
 
-// Selection events
-api.on('selectionChanged', (event) => {
-  // event: { itemId: string | null, canvasId: string | null }
+api.on('configsBatchChanged', (event) => {
+  // event: { items: Array<{ itemId: string, canvasId: string, config: Record<string, any> }> }
 });
 
-// Viewport events
-api.on('viewportChanged', (event) => {
-  // event: { viewport: 'desktop' | 'mobile' }
+// Canvas events
+api.on('canvasAdded', (event) => {
+  // event: { canvasId: string }
 });
 
-// Display events
-api.on('gridVisibilityChanged', (event) => {
-  // event: { visible: boolean }
+api.on('canvasRemoved', (event) => {
+  // event: { canvasId: string }
 });
 
-api.on('canvasBackgroundChanged', (event) => {
-  // event: { canvasId: string, color: string }
+api.on('canvasActivated', (event) => {
+  // event: { canvasId: string }
 });
 
-// State events
-api.on('stateChanged', (event) => {
-  // Generic state change event
+// Undo/Redo events
+api.on('undoExecuted', (event) => {
+  // Event fired after undo operation
+});
+
+api.on('redoExecuted', (event) => {
+  // Event fired after redo operation
 });
 ```
 
 ## Grid Configuration
 
-Configure the grid system:
+Configure the grid system via the `config` prop:
 
 ```typescript
-gridBuilder.gridConfig = {
+gridBuilder.config = {
   gridSizePercent: 2,    // Grid unit as % of container width (default: 2%)
   minGridSize: 10,       // Minimum grid size in pixels (default: 10px)
   maxGridSize: 50        // Maximum grid size in pixels (default: 50px)
@@ -763,8 +723,85 @@ gridBuilder.gridConfig = {
 
 **Grid System**:
 - Horizontal: Percentage-based (default 2% = 50 units across full width)
-- Vertical: Fixed 20px per grid unit
+- Vertical: Grid size determined by container-relative calculation
 - Responsive: Grid scales with container width
+- Boundary constraints: Components cannot exceed canvas width (100 grid units = 100%)
+
+## Advanced Features
+
+### Canvas Metadata
+
+The `canvasMetadata` prop allows you to store presentation data for each canvas (sections). The library handles placement state while you manage visual presentation:
+
+```typescript
+const canvasMetadata = {
+  'hero-section': {
+    title: 'Hero Section',
+    backgroundColor: '#f0f4f8',
+    // Any custom properties you need
+    customData: { ... }
+  },
+  'features-section': {
+    title: 'Features',
+    backgroundColor: '#ffffff'
+  }
+};
+
+gridBuilder.canvasMetadata = canvasMetadata;
+```
+
+**Use cases**:
+- Section titles and descriptions
+- Background colors
+- Custom styling per section
+- Any section-level metadata your app needs
+
+### Deletion Hook
+
+Intercept component deletion with the `onBeforeDelete` hook to show confirmations or run validation:
+
+```typescript
+const handleBeforeDelete = async (context) => {
+  // context: { item: GridItem, canvasId: string, itemId: string }
+
+  const confirmed = await showConfirmModal(
+    `Delete "${context.item.name}"?`,
+    'This action cannot be undone.'
+  );
+
+  return confirmed; // true = proceed, false = cancel
+};
+
+gridBuilder.onBeforeDelete = handleBeforeDelete;
+```
+
+**Hook return values**:
+- `true` - Proceed with deletion
+- `false` - Cancel deletion
+- `Promise<boolean>` - Async operations (modals, API calls)
+
+### UI Overrides
+
+Customize the UI by providing your own components via the `uiOverrides` prop:
+
+```typescript
+gridBuilder.uiOverrides = {
+  // Custom canvas headers
+  CanvasHeader: ({ canvasId, metadata, isActive }) => {
+    return (
+      <my-canvas-header
+        canvas-id={canvasId}
+        title={metadata.title}
+        is-active={isActive}
+      />
+    );
+  }
+};
+```
+
+**Available overrides**:
+- `CanvasHeader` - Header rendered above each canvas section
+  - Props: `{ canvasId: string, metadata: any, isActive: boolean }`
 
 ## Styling & Theming
 

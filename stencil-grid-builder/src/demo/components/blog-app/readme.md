@@ -17,10 +17,10 @@ using the
 
 ### Depends on
 
-- [canvas-header](../canvas-header)
 - [component-palette](../../../components/component-palette)
 - [grid-viewer](../../../components/grid-viewer)
 - [grid-builder](../../../components/grid-builder)
+- [canvas-header](../canvas-header)
 - [section-editor-panel](../section-editor-panel)
 - [confirmation-modal](../confirmation-modal)
 - [custom-config-panel](../custom-config-panel)
@@ -43,10 +43,10 @@ using the
 ### Graph
 ```mermaid
 graph TD;
-  blog-app --> canvas-header
   blog-app --> component-palette
   blog-app --> grid-viewer
   blog-app --> grid-builder
+  blog-app --> canvas-header
   blog-app --> section-editor-panel
   blog-app --> confirmation-modal
   blog-app --> custom-config-panel

@@ -1,7 +1,6 @@
 import { Component, h, State, Watch } from '@stencil/core';
 import { blogComponentDefinitions, contentComponents, interactiveComponents, mediaComponents } from '../../component-definitions';
 import { GridBuilderAPI, CanvasHeaderProps } from '../../../types/api';
-import { UIComponentOverrides } from '../../../types/ui-overrides';
 import { SectionEditorData } from '../../types/section-editor-data';
 import { ConfirmationModalData } from '../../types/confirmation-modal-data';
 import { DeletionHookContext } from '../../../types/deletion-hook';
