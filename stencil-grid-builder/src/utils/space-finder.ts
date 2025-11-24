@@ -73,6 +73,10 @@ const DEFAULT_BOTTOM_SPACING = 2;
  * - If separated on either axis → no collision
  * - Otherwise → collision
  *
+ * **Edge cases**:
+ * - Touching edges (no gap) is considered NOT colliding
+ * - Actual overlap (one pixel or more) is colliding
+ *
  * **Examples**:
  * ```typescript
  * // No collision (separated horizontally)
@@ -81,38 +85,38 @@ const DEFAULT_BOTTOM_SPACING = 2;
  *   { x: 15, y: 0, width: 10, height: 10 }
  * ); // false
  *
+ * // No collision (touching edges)
+ * checkCollision(
+ *   { x: 0, y: 0, width: 10, height: 10 },
+ *   { x: 10, y: 0, width: 10, height: 10 }
+ * ); // false (item1 ends at 10, item2 starts at 10 = touching, not overlapping)
+ *
  * // Collision (overlapping)
  * checkCollision(
  *   { x: 0, y: 0, width: 10, height: 10 },
  *   { x: 5, y: 5, width: 10, height: 10 }
- * ); // true
- *
- * // Edge case: touching (not overlapping)
- * checkCollision(
- *   { x: 0, y: 0, width: 10, height: 10 },
- *   { x: 10, y: 0, width: 10, height: 10 }
- * ); // false (item1.x + width = 10, item2.x = 10, so item1.x + width <= item2.x)
+ * ); // true (actual overlap)
  * ```
  *
  * @param item1 - First rectangle (x, y, width, height)
  * @param item2 - Second rectangle (x, y, width, height)
- * @returns true if rectangles overlap, false otherwise
+ * @returns true if rectangles overlap, false if separated or just touching
  */
 export function checkCollision(
   item1: { x: number; y: number; width: number; height: number },
   item2: { x: number; y: number; width: number; height: number },
 ): boolean {
-  // Check if completely separated horizontally
+  // Check if completely separated horizontally (or just touching)
   if (item1.x + item1.width <= item2.x || item2.x + item2.width <= item1.x) {
     return false;
   }
 
-  // Check if completely separated vertically
+  // Check if completely separated vertically (or just touching)
   if (item1.y + item1.height <= item2.y || item2.y + item2.height <= item1.y) {
     return false;
   }
 
-  // Not separated on either axis → collision
+  // Not separated on either axis → actual overlap/collision
   return true;
 }
 
@@ -238,30 +242,54 @@ export function findFreeSpace(
 ): { x: number; y: number } | null {
   const canvas = gridState.canvases[canvasId];
 
+  console.log(`[findFreeSpace] Finding space for ${width}x${height} on ${canvasId}`);
+  console.log(`[findFreeSpace] Existing items:`, canvas?.items.map(item => ({
+    id: item.id,
+    type: item.type,
+    x: item.layouts.desktop.x,
+    y: item.layouts.desktop.y,
+    width: item.layouts.desktop.width,
+    height: item.layouts.desktop.height,
+    occupiesY: `${item.layouts.desktop.y} to ${item.layouts.desktop.y + item.layouts.desktop.height}`
+  })));
+
   // Canvas doesn't exist
   if (!canvas) {
+    console.log(`[findFreeSpace] Canvas ${canvasId} doesn't exist`);
     return null;
   }
 
   // Empty canvas → center horizontally
   if (canvas.items.length === 0) {
-    return getCenteredPosition(width);
+    const position = getCenteredPosition(width);
+    console.log(`[findFreeSpace] Empty canvas, centering at:`, position);
+    return position;
   }
 
   // Try top-left position (preferred)
-  const topLeft = {
-    x: DEFAULT_LEFT_MARGIN,
-    y: DEFAULT_TOP_MARGIN,
-    width,
-    height,
-  };
+  // But only if component fits within canvas bounds at this position
+  const fitsAtTopLeft = DEFAULT_LEFT_MARGIN + width <= CANVAS_WIDTH_UNITS;
 
-  const hasCollisionAtTopLeft = canvas.items.some((item) =>
-    checkCollision(topLeft, item.layouts.desktop),
-  );
+  if (fitsAtTopLeft) {
+    const topLeft = {
+      x: DEFAULT_LEFT_MARGIN,
+      y: DEFAULT_TOP_MARGIN,
+      width,
+      height,
+    };
 
-  if (!hasCollisionAtTopLeft) {
-    return { x: DEFAULT_LEFT_MARGIN, y: DEFAULT_TOP_MARGIN };
+    const hasCollisionAtTopLeft = canvas.items.some((item) => {
+      return checkCollision(topLeft, item.layouts.desktop);
+    });
+
+    if (!hasCollisionAtTopLeft) {
+      console.log(`[findFreeSpace] Top-left position is free:`, { x: DEFAULT_LEFT_MARGIN, y: DEFAULT_TOP_MARGIN });
+      return { x: DEFAULT_LEFT_MARGIN, y: DEFAULT_TOP_MARGIN };
+    } else {
+      console.log(`[findFreeSpace] Top-left position occupied, scanning grid...`);
+    }
+  } else {
+    console.log(`[findFreeSpace] Component too wide for top-left position (width=${width}), scanning grid...`);
   }
 
   // Scan grid for free space (top-to-bottom, left-to-right)
@@ -270,17 +298,29 @@ export function findFreeSpace(
       const testPos = { x, y, width, height };
 
       // Check collision with all existing items
-      const hasCollision = canvas.items.some((item) =>
-        checkCollision(testPos, item.layouts.desktop),
-      );
+      const collisions = canvas.items.map((item) => {
+        const collision = checkCollision(testPos, item.layouts.desktop);
+        return { itemId: item.id, itemType: item.type, collision };
+      });
+
+      const hasCollision = collisions.some(c => c.collision);
 
       // Found free space → return immediately (early exit)
       if (!hasCollision) {
+        console.log(`[findFreeSpace] Found free space at:`, { x, y });
         return { x, y };
+      } else if (y >= 7 && y <= 12) {
+        // Log collision details when scanning near button positions
+        const collidingItems = collisions.filter(c => c.collision);
+        if (collidingItems.some(c => c.itemType === 'blog-button')) {
+          console.log(`[findFreeSpace] Position (${x}, ${y}) collides with:`, collidingItems);
+        }
       }
     }
   }
 
   // No free space found → place at bottom (canvas will auto-expand)
-  return getBottomPosition(canvasId);
+  const bottomPosition = getBottomPosition(canvasId);
+  console.log(`[findFreeSpace] No free space in scan, placing at bottom:`, bottomPosition);
+  return bottomPosition;
 }
