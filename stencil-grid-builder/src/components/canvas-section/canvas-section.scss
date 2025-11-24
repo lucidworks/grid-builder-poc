@@ -88,10 +88,10 @@
 /* Position Indicator (Ghost Outline) */
 @keyframes position-indicator-fade {
   0% {
-    opacity: 0.3;
+    opacity: 0.8;
   }
   70% {
-    opacity: 0.3;
+    opacity: 0.8;
   }
   100% {
     opacity: 0;
@@ -101,8 +101,7 @@
 .position-indicator {
   position: absolute;
   border: 2px dashed var(--primary-color, #007bff);
-  background: var(--primary-color, #007bff);
-  opacity: 0.3;
+  opacity: 0.8;
   pointer-events: none;
   z-index: 9999;
   animation: position-indicator-fade 800ms ease-out forwards;

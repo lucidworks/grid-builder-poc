@@ -142,16 +142,15 @@ export function highlightCanvas(canvasId: string): void {
  * .position-indicator {
  *   position: absolute;
  *   border: 2px dashed var(--selection-color);
- *   background: var(--selection-color);
- *   opacity: 0.3;
+ *   opacity: 0.8;
  *   pointer-events: none;
  *   z-index: 9999;
  *   animation: position-indicator-fade 800ms ease-out forwards;
  * }
  *
  * @keyframes position-indicator-fade {
- *   0% { opacity: 0.3; }
- *   70% { opacity: 0.3; }
+ *   0% { opacity: 0.8; }
+ *   70% { opacity: 0.8; }
  *   100% { opacity: 0; }
  * }
  * ```
@@ -221,33 +220,30 @@ export function showPositionIndicator(
 }
 
 /**
- * Animate component in (fade + scale animation)
+ * Animate component in (fade animation with scroll into view)
  *
  * Adds visual feedback when component is added via click-to-add.
- * Draws attention to newly created item.
+ * Draws attention to newly created item and ensures it's visible.
  *
  * **Visual Effect**:
+ * - Clears position indicators (prevents blue flash)
+ * - Scrolls component into view smoothly
  * - Fade in: opacity 0 → 1
- * - Scale in: scale 0.8 → 1
  * - Duration: 400ms
  * - Easing: ease-out
  *
  * **Implementation**:
  * 1. Find grid item element by ID
- * 2. Add `.component-animate-in` class (triggers CSS animation)
- * 3. Remove class after animation completes
+ * 2. Clear all position indicators immediately
+ * 3. Scroll component into view (smooth animation)
+ * 4. Add `.component-animate-in` class (triggers CSS animation)
+ * 5. Remove class after animation completes
  *
  * **CSS Animation** (defined in grid-item-wrapper.scss):
  * ```scss
  * @keyframes component-animate-in {
- *   0% {
- *     opacity: 0;
- *     transform: scale(0.8);
- *   }
- *   100% {
- *     opacity: 1;
- *     transform: scale(1);
- *   }
+ *   0% { opacity: 0; }
+ *   100% { opacity: 1; }
  * }
  *
  * .component-animate-in {
@@ -259,7 +255,7 @@ export function showPositionIndicator(
  * ```typescript
  * // After adding component with id 'item-123'
  * animateComponentIn('item-123');
- * // → Component fades and scales in
+ * // → Position indicators cleared, component scrolls into view and fades in
  * ```
  *
  * **Note**: Call this AFTER the component has been added to the DOM.
@@ -275,6 +271,30 @@ export function animateComponentIn(itemId: string): void {
     if (!itemElement) {
       console.warn(`animateComponentIn: Item element not found: ${itemId}`);
       return;
+    }
+
+    // Clear any position indicators immediately (prevents blue flash)
+    const indicators = document.querySelectorAll('.position-indicator');
+    indicators.forEach((indicator) => {
+      if (indicator.parentNode) {
+        indicator.parentNode.removeChild(indicator);
+      }
+    });
+
+    // Scroll component into view (with smooth animation)
+    // Use scrollIntoViewIfNeeded if available (Chrome/Safari), otherwise scrollIntoView
+    const scrollOptions: ScrollIntoViewOptions = {
+      behavior: 'smooth',
+      block: 'nearest',
+      inline: 'nearest',
+    };
+
+    if ('scrollIntoViewIfNeeded' in itemElement) {
+      // Chrome/Safari - only scrolls if not visible
+      (itemElement as any).scrollIntoViewIfNeeded({ behavior: 'smooth' });
+    } else {
+      // Standard scrollIntoView (Firefox, Edge)
+      itemElement.scrollIntoView(scrollOptions);
     }
 
     // Add animation class (triggers CSS animation)

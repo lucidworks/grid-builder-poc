@@ -649,21 +649,31 @@ export class GridBuilder {
       return;
     }
 
-    // Animate component in (after short delay to ensure DOM update)
-    setTimeout(() => {
-      visualFeedback.animateComponentIn(newItemId);
-    }, 100);
+    // Animate component in (after DOM update completes)
+    // Use double requestAnimationFrame to ensure:
+    // 1. First rAF: Current frame completes
+    // 2. Second rAF: Next frame starts (after StencilJS render + positioning)
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        visualFeedback.animateComponentIn(newItemId);
+      });
+    });
 
     // Set as selected (focus on newly added item)
     gridState.selectedItemId = newItemId;
     gridState.selectedCanvasId = canvasId;
 
     // Emit componentAdded event for plugins
-    eventManager.emit("componentAdded", {
-      itemId: newItemId,
-      canvasId: canvasId,
-      componentType: componentType,
-    });
+    // Must include full item object to match ComponentAddedEvent interface
+    const canvas = gridState.canvases[canvasId];
+    const newItem = canvas?.items.find(item => item.id === newItemId);
+
+    if (newItem) {
+      eventManager.emit("componentAdded", {
+        item: newItem,
+        canvasId: canvasId,
+      });
+    }
 
     debug.log("  ✅ Component added successfully");
   }
@@ -1734,7 +1744,7 @@ export class GridBuilder {
     });
 
     // Component moved (cross-canvas)
-    eventManager.on("componentMoved", (data: ComponentMovedEvent) => {
+    eventManager.on("componentMoved", (_data: ComponentMovedEvent) => {
       this.announce(`Component moved to new canvas`);
     });
 
