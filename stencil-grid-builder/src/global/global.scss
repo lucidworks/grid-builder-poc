@@ -1,13 +1,10 @@
 /**
  * Global Styles for Grid Builder Library
  * These styles are output as a separate CSS file
+ *
+ * Component-specific styles are loaded via styleUrl in each component's @Component decorator.
+ * This follows the StencilJS pattern of scoped component styles.
  */
-
-// Import all component SCSS files to make them available globally
-// Note: Component styles are also scoped to components via shadow DOM or class names
-@import '../components/component-palette/component-palette';
-@import '../components/canvas-section/canvas-section';
-@import '../components/grid-item-wrapper/grid-item-wrapper';
 
 * {
   box-sizing: border-box;
