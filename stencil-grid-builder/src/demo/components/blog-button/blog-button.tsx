@@ -22,7 +22,7 @@ export class BlogButton {
 
   render() {
     return (
-      <Host style={{ background: this.backgroundColor }}>
+      <Host>
         <div class="blog-button-content">
           <button
             class={`demo-button ${this.variant}`}

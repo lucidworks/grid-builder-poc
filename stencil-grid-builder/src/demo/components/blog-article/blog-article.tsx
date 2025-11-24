@@ -13,7 +13,7 @@ export class BlogArticle {
 
   render() {
     return (
-      <Host style={{ background: this.backgroundColor }}>
+      <Host>
         <div class="blog-article-content">
           <div class="article-text">
             <p>{this.content}</p>

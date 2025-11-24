@@ -4,6 +4,7 @@ blog-header {
   height: 100%;
   border-radius: 8px;
   overflow: hidden;
+  box-sizing: border-box; // CRITICAL: Include padding in dimensions
 
   .blog-header-content {
     display: flex;

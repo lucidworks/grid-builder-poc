@@ -42,7 +42,7 @@ export class LiveData {
 
   render() {
     return (
-      <Host style={{ background: this.backgroundColor }}>
+      <Host>
         <div class="live-data">
         <div class="temperature-display">
           <div class="temperature-label">🌡️ Temperature</div>

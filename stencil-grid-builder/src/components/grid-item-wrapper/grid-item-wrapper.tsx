@@ -733,6 +733,10 @@ export class GridItemWrapper {
     const displayName = this.item.name || definition?.name || this.item.type;
     const selectionColor = definition?.selectionColor || "#f59e0b"; // Default yellow/gold
 
+    // Get backgroundColor from config, or fall back to configSchema default
+    const backgroundColorField = definition?.configSchema?.find(f => f.name === 'backgroundColor');
+    const backgroundColor = this.item.config?.backgroundColor || backgroundColorField?.defaultValue || "transparent";
+
     const itemStyle = {
       transform: `translate(${xPixels}px, ${yPixels}px)`,
       width: `${widthPixels}px`,
@@ -740,6 +744,8 @@ export class GridItemWrapper {
       zIndex: this.item.zIndex.toString(),
       "--selection-color": selectionColor,
       "--animation-duration": `${this.config?.animationDuration ?? 100}ms`,
+      // Apply backgroundColor from config to .grid-item so it fills to edges
+      background: backgroundColor,
     };
 
     // Generate unique IDs for custom wrapper and ARIA description

@@ -19,7 +19,7 @@ export class ImageGallery {
     );
 
     return (
-      <Host style={{ background: this.backgroundColor }}>
+      <Host>
         <div class="image-gallery">
         {images.map((url, index) => (
           <div class="gallery-item" key={index}>

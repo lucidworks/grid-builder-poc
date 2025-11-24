@@ -4,6 +4,7 @@ dashboard-widget {
   height: 100%;
   border-radius: 8px;
   overflow: hidden;
+  box-sizing: border-box; // CRITICAL: Include padding in dimensions
 }
 
 .dashboard-widget {

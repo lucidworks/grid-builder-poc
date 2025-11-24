@@ -12,7 +12,7 @@ export class BlogHeader {
 
   render() {
     return (
-      <Host style={{ background: this.backgroundColor }}>
+      <Host>
         <div class="blog-header-content">
           <h1>{this.headerTitle}</h1>
           {this.subtitle && <h2 class="subtitle">{this.subtitle}</h2>}

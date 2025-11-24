@@ -39,9 +39,9 @@
 /* Grid Item */
 .grid-item {
   position: absolute;
-  min-width: 100px;
-  min-height: 80px;
   box-sizing: border-box; /* Include padding and border in width/height */
+  /* Note: min-width/min-height removed - resize-handler.ts enforces minimums via JavaScript */
+  /* This allows component-specific minSize from componentDefinition to work correctly */
   padding: 20px;
   border: 2px solid transparent;
   border-radius: 0; /* No border radius - components control their own borders */

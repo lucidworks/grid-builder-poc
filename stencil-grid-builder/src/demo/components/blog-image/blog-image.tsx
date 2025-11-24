@@ -37,7 +37,7 @@ export class BlogImage {
 
   render() {
     return (
-      <Host style={{ background: this.backgroundColor }}>
+      <Host>
         <div class="blog-image-content">
         <div class="image-container">
           {!this.imageLoaded && !this.imageError && (

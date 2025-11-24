@@ -10,7 +10,7 @@ export class DashboardWidget {
 
   render() {
     return (
-      <Host style={{ background: this.backgroundColor }}>
+      <Host>
         <div class="dashboard-widget">
         <div class="stats-row">
           <div class="stat-card">
