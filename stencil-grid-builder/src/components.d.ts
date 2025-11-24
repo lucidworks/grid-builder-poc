@@ -7,24 +7,24 @@
 import { HTMLStencilElement, JSXBase } from "@stencil/core/internal";
 import { GridConfig } from "./types/grid-config";
 import { ComponentDefinition } from "./types/component-definition";
+import { DeletionHook } from "./types/deletion-hook";
 import { GridItem, GridState, ViewerState } from "./services/state-manager";
 import { ConfirmationModalData } from "./demo/types/confirmation-modal-data";
 import { GridBuilderAPI } from "./types/api";
 import { GridBuilderTheme } from "./types/theme";
 import { GridBuilderPlugin } from "./types/plugin";
 import { UIComponentOverrides } from "./types/ui-overrides";
-import { DeletionHook } from "./types/deletion-hook";
 import { GridExport } from "./types/grid-export";
 import { SectionEditorData } from "./demo/types/section-editor-data";
 export { GridConfig } from "./types/grid-config";
 export { ComponentDefinition } from "./types/component-definition";
+export { DeletionHook } from "./types/deletion-hook";
 export { GridItem, GridState, ViewerState } from "./services/state-manager";
 export { ConfirmationModalData } from "./demo/types/confirmation-modal-data";
 export { GridBuilderAPI } from "./types/api";
 export { GridBuilderTheme } from "./types/theme";
 export { GridBuilderPlugin } from "./types/plugin";
 export { UIComponentOverrides } from "./types/ui-overrides";
-export { DeletionHook } from "./types/deletion-hook";
 export { GridExport } from "./types/grid-export";
 export { SectionEditorData } from "./demo/types/section-editor-data";
 export namespace Components {
@@ -304,7 +304,7 @@ export namespace Components {
         /**
           * Deletion hook (from parent grid-builder)  **Source**: grid-builder component (from onBeforeDelete prop) **Purpose**: Pass through to grid-item-wrapper for deletion interception **Optional**: If not provided, components delete immediately
          */
-        "onBeforeDelete"?: (context: any) => boolean | Promise<boolean>;
+        "onBeforeDelete"?: DeletionHook;
     }
     /**
      * CanvasSectionViewer Component
@@ -405,6 +405,11 @@ export namespace Components {
           * Grid configuration options  **Optional prop**: Customizes grid system behavior **Passed from**: grid-builder component **Used for**: Drag clone sizing (gridToPixelsX/Y calculations)
          */
         "config"?: GridConfig;
+        /**
+          * Custom label for this palette instance  **Optional prop**: Provides a descriptive label for this specific palette **Default**: "Component palette" **Used for**: ARIA label on toolbar container  **Use case - Multiple palettes**: When multiple component palettes exist on the same page (e.g., categorized palettes), provide unique labels for screen reader users:  ```typescript <component-palette   components={contentComponents}   paletteLabel="Content components" /> <component-palette   components={mediaComponents}   paletteLabel="Media components" /> <component-palette   components={interactiveComponents}   paletteLabel="Interactive components" /> ```  **Accessibility benefit**: - Screen readers announce: "Content components, toolbar" - Users can navigate between palettes by their distinct labels - Each palette has unique ARIA IDs to avoid conflicts
+          * @default "Component palette"
+         */
+        "paletteLabel"?: string;
         /**
           * Show palette header (title)  **Optional prop**: Controls whether the "Components" header is displayed **Default**: true (shows header for backward compatibility)  **Use cases**: - `showHeader={true}` (default): Standard palette with "Components" title - `showHeader={false}`: Chromeless mode - just the component list  **Chromeless mode benefits**: - Embed palette in custom layouts - Add your own headers/titles - Integrate into existing UI structures - More flexible component placement  **Example - Chromeless with custom wrapper**: ```typescript <div class="my-custom-sidebar">   <h3 class="my-title">Available Components</h3>   <p class="my-description">Drag to add</p>   <component-palette     components={componentDefinitions}     showHeader={false}   /> </div> ```
           * @default true
@@ -575,9 +580,9 @@ export namespace Components {
         "addComponent": (canvasId: string, componentType: string, position: { x: number; y: number; width: number; height: number; }, config?: Record<string, any>) => Promise<string | null>;
         /**
           * Custom API exposure configuration  **Optional prop**: Control where and how the Grid Builder API is exposed **Default**: `{ target: window, key: 'gridBuilderAPI' }` **Purpose**: Allows multiple grid-builder instances and flexible API access patterns  **Options**: 1. **Custom key on window** (multiple instances): ```typescript <grid-builder api-ref={{ key: 'gridAPI1' }}></grid-builder> <grid-builder api-ref={{ key: 'gridAPI2' }}></grid-builder> // Access: window.gridAPI1, window.gridAPI2 ```  2. **Custom storage object**: ```typescript const myStore = {}; <grid-builder api-ref={{ target: myStore, key: 'api' }}></grid-builder> // Access: myStore.api ```  3. **Disable automatic exposure** (use ref instead): ```typescript <grid-builder api-ref={null}></grid-builder> // Access via ref: <grid-builder ref={el => this.api = el?.api}></grid-builder> ```
-          * @default {     target: undefined,     key: "gridBuilderAPI",   }
+          * @default {     key: "gridBuilderAPI",   }
          */
-        "apiRef"?: { target?: any; key?: string } | null;
+        "apiRef"?: { key?: string } | null;
         /**
           * Check if redo is available  **Purpose**: Determine if there are actions to redo  **Example**: ```typescript const builder = document.querySelector('grid-builder'); const canRedo = await builder.canRedo(); redoButton.disabled = !canRedo; ```
           * @returns Promise<boolean> - True if redo is available
@@ -1740,7 +1745,7 @@ declare namespace LocalJSX {
         /**
           * Deletion hook (from parent grid-builder)  **Source**: grid-builder component (from onBeforeDelete prop) **Purpose**: Pass through to grid-item-wrapper for deletion interception **Optional**: If not provided, components delete immediately
          */
-        "onBeforeDelete"?: (context: any) => boolean | Promise<boolean>;
+        "onBeforeDelete"?: DeletionHook;
     }
     /**
      * CanvasSectionViewer Component
@@ -1841,6 +1846,11 @@ declare namespace LocalJSX {
           * Grid configuration options  **Optional prop**: Customizes grid system behavior **Passed from**: grid-builder component **Used for**: Drag clone sizing (gridToPixelsX/Y calculations)
          */
         "config"?: GridConfig;
+        /**
+          * Custom label for this palette instance  **Optional prop**: Provides a descriptive label for this specific palette **Default**: "Component palette" **Used for**: ARIA label on toolbar container  **Use case - Multiple palettes**: When multiple component palettes exist on the same page (e.g., categorized palettes), provide unique labels for screen reader users:  ```typescript <component-palette   components={contentComponents}   paletteLabel="Content components" /> <component-palette   components={mediaComponents}   paletteLabel="Media components" /> <component-palette   components={interactiveComponents}   paletteLabel="Interactive components" /> ```  **Accessibility benefit**: - Screen readers announce: "Content components, toolbar" - Users can navigate between palettes by their distinct labels - Each palette has unique ARIA IDs to avoid conflicts
+          * @default "Component palette"
+         */
+        "paletteLabel"?: string;
         /**
           * Show palette header (title)  **Optional prop**: Controls whether the "Components" header is displayed **Default**: true (shows header for backward compatibility)  **Use cases**: - `showHeader={true}` (default): Standard palette with "Components" title - `showHeader={false}`: Chromeless mode - just the component list  **Chromeless mode benefits**: - Embed palette in custom layouts - Add your own headers/titles - Integrate into existing UI structures - More flexible component placement  **Example - Chromeless with custom wrapper**: ```typescript <div class="my-custom-sidebar">   <h3 class="my-title">Available Components</h3>   <p class="my-description">Drag to add</p>   <component-palette     components={componentDefinitions}     showHeader={false}   /> </div> ```
           * @default true
@@ -2005,9 +2015,9 @@ declare namespace LocalJSX {
     interface GridBuilder {
         /**
           * Custom API exposure configuration  **Optional prop**: Control where and how the Grid Builder API is exposed **Default**: `{ target: window, key: 'gridBuilderAPI' }` **Purpose**: Allows multiple grid-builder instances and flexible API access patterns  **Options**: 1. **Custom key on window** (multiple instances): ```typescript <grid-builder api-ref={{ key: 'gridAPI1' }}></grid-builder> <grid-builder api-ref={{ key: 'gridAPI2' }}></grid-builder> // Access: window.gridAPI1, window.gridAPI2 ```  2. **Custom storage object**: ```typescript const myStore = {}; <grid-builder api-ref={{ target: myStore, key: 'api' }}></grid-builder> // Access: myStore.api ```  3. **Disable automatic exposure** (use ref instead): ```typescript <grid-builder api-ref={null}></grid-builder> // Access via ref: <grid-builder ref={el => this.api = el?.api}></grid-builder> ```
-          * @default {     target: undefined,     key: "gridBuilderAPI",   }
+          * @default {     key: "gridBuilderAPI",   }
          */
-        "apiRef"?: { target?: any; key?: string } | null;
+        "apiRef"?: { key?: string } | null;
         /**
           * Canvas metadata storage (host app responsibility)  **Optional prop**: Store canvas-level presentation metadata **Purpose**: Host app owns canvas metadata (titles, colors, settings)  **Separation of concerns**: - Library owns placement state (items, layouts, zIndex) - Host app owns presentation state (colors, titles, custom metadata)  **Structure**: Record<canvasId, any>  **Example**: ```typescript const canvasMetadata = {   'hero-section': {     title: 'Hero Section',     backgroundColor: '#f0f4f8',     customSettings: { ... }   },   'articles-grid': {     title: 'Articles Grid',     backgroundColor: '#ffffff'   } }; <grid-builder canvasMetadata={canvasMetadata} ... /> ```  **Use with canvas-click events**: - Library fires canvas-click event when canvas background clicked - Host app shows canvas settings panel - Host app updates canvasMetadata state - Library passes metadata to canvas-section via props
          */
