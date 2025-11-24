@@ -185,6 +185,10 @@
   height: 100%; /* Fill available space for image components that use height: 100% */
 }
 
+.grid-item-content[data-component-type="image-gallery"] {
+  height: 100%; /* Fill available space for image gallery components */
+}
+
 .component-placeholder,
 .component-error {
   display: flex;
