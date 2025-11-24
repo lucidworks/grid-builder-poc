@@ -1,4 +1,4 @@
-import { Component, h, State } from "@stencil/core";
+import { Component, h, State, Prop, Host } from "@stencil/core";
 
 @Component({
   tag: "live-data",
@@ -6,6 +6,8 @@ import { Component, h, State } from "@stencil/core";
   shadow: false,
 })
 export class LiveData {
+  @Prop() backgroundColor?: string = "#b2ebf2";
+
   @State() temperature: string = "20.0";
   @State() cpu: string = "0";
   @State() memory: string = "40";
@@ -40,7 +42,8 @@ export class LiveData {
 
   render() {
     return (
-      <div class="live-data">
+      <Host style={{ background: this.backgroundColor }}>
+        <div class="live-data">
         <div class="temperature-display">
           <div class="temperature-label">🌡️ Temperature</div>
           <div class="temperature-value">{this.temperature}°C</div>
@@ -76,6 +79,7 @@ export class LiveData {
           Updated {this.updateCount} times • Last: {this.lastUpdate}
         </div>
       </div>
+      </Host>
     );
   }
 }

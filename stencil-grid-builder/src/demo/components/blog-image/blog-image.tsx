@@ -1,4 +1,4 @@
-import { Component, h, Prop, State } from "@stencil/core";
+import { Component, h, Prop, State, Host } from "@stencil/core";
 
 @Component({
   tag: "blog-image",
@@ -11,6 +11,7 @@ export class BlogImage {
   @Prop() alt: string = "Placeholder image";
   @Prop() caption?: string;
   @Prop() objectFit: "contain" | "cover" = "contain";
+  @Prop() backgroundColor?: string = "#c8e6c9";
 
   @State() imageLoaded: boolean = false;
   @State() imageError: boolean = false;
@@ -36,7 +37,8 @@ export class BlogImage {
 
   render() {
     return (
-      <div class="blog-image-content">
+      <Host style={{ background: this.backgroundColor }}>
+        <div class="blog-image-content">
         <div class="image-container">
           {!this.imageLoaded && !this.imageError && (
             <div class="image-placeholder">
@@ -65,6 +67,7 @@ export class BlogImage {
         </div>
         {this.caption && <div class="image-caption">{this.caption}</div>}
       </div>
+      </Host>
     );
   }
 }

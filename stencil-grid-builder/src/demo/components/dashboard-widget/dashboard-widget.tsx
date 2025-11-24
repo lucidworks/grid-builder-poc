@@ -1,4 +1,4 @@
-import { Component, h } from "@stencil/core";
+import { Component, h, Prop, Host } from "@stencil/core";
 
 @Component({
   tag: "dashboard-widget",
@@ -6,9 +6,12 @@ import { Component, h } from "@stencil/core";
   shadow: false,
 })
 export class DashboardWidget {
+  @Prop() backgroundColor?: string = "#ffccbc";
+
   render() {
     return (
-      <div class="dashboard-widget">
+      <Host style={{ background: this.backgroundColor }}>
+        <div class="dashboard-widget">
         <div class="stats-row">
           <div class="stat-card">
             <div class="stat-label">Users</div>
@@ -39,6 +42,7 @@ export class DashboardWidget {
           <div>• 89% bounce rate</div>
         </div>
       </div>
+      </Host>
     );
   }
 }

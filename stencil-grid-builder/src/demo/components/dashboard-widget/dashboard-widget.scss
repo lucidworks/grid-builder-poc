@@ -1,6 +1,17 @@
+dashboard-widget {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
 .dashboard-widget {
   font-size: 11px;
   line-height: 1.4;
+  padding: 12px;
+  height: 100%;
+  box-sizing: border-box;
 }
 
 .stats-row {
