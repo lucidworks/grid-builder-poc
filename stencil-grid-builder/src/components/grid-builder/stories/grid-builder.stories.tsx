@@ -947,6 +947,9 @@ export const BatchOperationsPerformance = () => {
       api.on("componentsBatchAdded", action("componentsBatchAdded"));
       api.on("componentsBatchDeleted", action("componentsBatchDeleted"));
     },
+    destroy: () => {
+      // No cleanup needed for Storybook actions
+    },
   };
 
   builderEl.plugins = [actionsPlugin];
@@ -1565,6 +1568,9 @@ export const UndoRedoDemo = () => {
       api.on("componentDragged", action("componentDragged"));
       api.on("componentResized", action("componentResized"));
     },
+    destroy: () => {
+      // No cleanup needed for Storybook actions
+    },
   };
 
   builderEl.plugins = [actionsPlugin];
@@ -1968,6 +1974,9 @@ export const EventsDemo = () => {
       api.on("redoExecuted", action("redoExecuted"));
       api.on("viewportSwitched", action("viewportSwitched"));
     },
+    destroy: () => {
+      // No cleanup needed for Storybook actions
+    },
   };
 
   builderEl.plugins = [actionsPlugin];
@@ -2271,6 +2280,204 @@ export const APIIntegrationDemo = () => {
             </ul>
           </div>
         </div>
+      </div>
+    </div>
+  `;
+};
+
+export const ClickToAddFeature = () => {
+  // Reset state to clear any cached data from previous stories
+  reset();
+  const builderEl = document.createElement("grid-builder");
+  builderEl.components = simpleComponents;
+
+  // Pre-populate with some items to demonstrate collision detection
+  builderEl.initialState = {
+    canvases: {
+      "canvas-1": {
+        items: [
+          {
+            id: "existing-1",
+            canvasId: "canvas-1",
+            type: "header",
+            name: "Header",
+            layouts: {
+              desktop: { x: 2, y: 2, width: 20, height: 4 },
+              mobile: {
+                x: null,
+                y: null,
+                width: null,
+                height: null,
+                customized: false,
+              },
+            },
+            zIndex: 1,
+            config: { title: "Existing Header" },
+          },
+          {
+            id: "existing-2",
+            canvasId: "canvas-1",
+            type: "text",
+            name: "Text",
+            layouts: {
+              desktop: { x: 23, y: 2, width: 15, height: 6 },
+              mobile: {
+                x: null,
+                y: null,
+                width: null,
+                height: null,
+                customized: false,
+              },
+            },
+            zIndex: 2,
+            config: { text: "Existing text block to demonstrate collision avoidance" },
+          },
+          {
+            id: "existing-3",
+            canvasId: "canvas-1",
+            type: "button",
+            name: "Button",
+            layouts: {
+              desktop: { x: 2, y: 7, width: 12, height: 4 },
+              mobile: {
+                x: null,
+                y: null,
+                width: null,
+                height: null,
+                customized: false,
+              },
+            },
+            zIndex: 3,
+            config: { label: "Existing Button" },
+          },
+        ],
+        zIndexCounter: 4,
+      },
+    },
+  };
+
+  // Enable click-to-add feature
+  builderEl.config = {
+    enableClickToAdd: true,
+    enableVirtualRendering: false,
+    snapToGrid: true,
+    showGridLines: true,
+  };
+
+  return html`
+    <div
+      style="font-family: system-ui, -apple-system, sans-serif; padding: 20px;"
+    >
+      <h2 style="margin: 0 0 10px 0; color: #333;">Click-to-Add Feature</h2>
+      <p style="color: #666; margin: 0 0 20px 0;">
+        <strong>New in this release!</strong> Click palette items to add them instantly with smart collision detection and visual feedback.
+        <br />
+        Compare the convenience of clicking vs dragging for precise component placement.
+      </p>
+
+      <div
+        style="padding: 16px; background: linear-gradient(135deg, #e0f2fe 0%, #dbeafe 100%); border-radius: 8px; border-left: 4px solid #0ea5e9; margin-bottom: 20px;"
+      >
+        <h4 style="margin: 0 0 12px 0; color: #0369a1; font-size: 15px;">💡 Try This:</h4>
+        <ol style="margin: 0; padding-left: 20px; color: #075985; font-size: 14px; line-height: 1.8;">
+          <li><strong>Click</strong> a palette item (no dragging needed!) to add it to the canvas</li>
+          <li>Watch the <strong>visual feedback</strong>: canvas pulse + ghost outline + fade-in animation</li>
+          <li>Notice <strong>smart positioning</strong>: automatically avoids existing components</li>
+          <li>Try <strong>keyboard navigation</strong>: Tab to palette items, press Enter/Space to add</li>
+          <li>Compare <strong>speed</strong>: Click is faster for precise placement than drag-and-drop</li>
+        </ol>
+      </div>
+
+      <div
+        style="width: 100%; height: 600px; border: 2px solid #0ea5e9; border-radius: 8px; overflow: hidden;"
+      >
+        ${builderEl}
+      </div>
+
+      <div
+        style="margin-top: 20px; padding: 20px; background: #f0fdf4; border-radius: 8px; border-left: 4px solid #22c55e;"
+      >
+        <h4 style="margin-top: 0; color: #15803d;">✨ Features Demonstrated</h4>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; font-size: 14px;">
+          <div>
+            <strong style="color: #15803d;">Smart Positioning:</strong>
+            <ul style="margin: 5px 0 0 0; padding-left: 20px; line-height: 1.6;">
+              <li>Empty canvas → centers horizontally</li>
+              <li>Tries top-left position (2, 2)</li>
+              <li>Scans grid to find free space</li>
+              <li>Fallback → places at bottom</li>
+            </ul>
+          </div>
+          <div>
+            <strong style="color: #15803d;">Visual Feedback:</strong>
+            <ul style="margin: 5px 0 0 0; padding-left: 20px; line-height: 1.6;">
+              <li>Canvas pulse animation (250ms)</li>
+              <li>Ghost outline showing position</li>
+              <li>Component fade-in (300ms)</li>
+              <li>GPU-accelerated animations</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div
+        style="margin-top: 20px; padding: 20px; background: #fef3c7; border-radius: 8px; border-left: 4px solid #f59e0b;"
+      >
+        <h4 style="margin-top: 0; color: #92400e;">🎯 Click vs Drag Comparison</h4>
+        <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
+          <thead>
+            <tr style="background: rgba(245, 158, 11, 0.1);">
+              <th style="padding: 10px; text-align: left; border-bottom: 2px solid #f59e0b;">Method</th>
+              <th style="padding: 10px; text-align: left; border-bottom: 2px solid #f59e0b;">Best For</th>
+              <th style="padding: 10px; text-align: left; border-bottom: 2px solid #f59e0b;">Precision</th>
+              <th style="padding: 10px; text-align: left; border-bottom: 2px solid #f59e0b;">Speed</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td style="padding: 10px; border-bottom: 1px solid #fbbf24;"><strong>Click-to-Add</strong></td>
+              <td style="padding: 10px; border-bottom: 1px solid #fbbf24;">Quick placement, accessibility, keyboard users</td>
+              <td style="padding: 10px; border-bottom: 1px solid #fbbf24;">⭐⭐⭐⭐ (smart positioning)</td>
+              <td style="padding: 10px; border-bottom: 1px solid #fbbf24;">⚡⚡⚡⚡⚡ (instant)</td>
+            </tr>
+            <tr>
+              <td style="padding: 10px;"><strong>Drag-and-Drop</strong></td>
+              <td style="padding: 10px;">Exact manual positioning, visual control</td>
+              <td style="padding: 10px;">⭐⭐⭐⭐⭐ (pixel-perfect)</td>
+              <td style="padding: 10px;">⚡⚡⚡ (slower for precision)</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div
+        style="margin-top: 20px; padding: 20px; background: #f3e5f5; border-radius: 8px; border-left: 4px solid #9c27b0;"
+      >
+        <h4 style="margin-top: 0; color: #6a1b9a;">♿ Accessibility Benefits</h4>
+        <ul style="margin-bottom: 0; padding-left: 20px; line-height: 1.8; font-size: 14px;">
+          <li><strong>Keyboard Users:</strong> Full navigation with Tab, Enter, Space keys</li>
+          <li><strong>Screen Readers:</strong> ARIA labels announce "Click to add" functionality</li>
+          <li><strong>Motor Impairments:</strong> Clicking is easier than precise dragging</li>
+          <li><strong>Touch Devices:</strong> Tap-to-add works better than drag on mobile</li>
+          <li><strong>WCAG 2.1 Level AAA:</strong> All functionality available via keyboard</li>
+        </ul>
+      </div>
+
+      <div
+        style="margin-top: 20px; padding: 20px; background: #e0e7ff; border-radius: 8px; border-left: 4px solid #6366f1;"
+      >
+        <h4 style="margin-top: 0; color: #3730a3;">⚙️ Configuration</h4>
+        <pre
+          style="background: white; padding: 15px; border-radius: 4px; overflow-x: auto; font-size: 13px; line-height: 1.5; margin: 0;"
+        ><code>const builderEl = document.createElement("grid-builder");
+builderEl.config = {
+  enableClickToAdd: true,  // Enable click-to-add (default: true)
+  snapToGrid: true,
+  showGridLines: true
+};
+
+// Click-to-add is enabled by default!
+// Set to false to require drag-and-drop only</code></pre>
       </div>
     </div>
   `;

@@ -827,7 +827,8 @@ describe("grid-item-wrapper - Active Canvas", () => {
             minSize: { width: 10, height: 3 },
             render: () => <div>Header Component</div>,
             renderDragClone: () => <div>Header</div>,
-            renderItemWrapper: ({ contentSlotId, _itemId }) => (
+            // @ts-expect-error - itemId intentionally unused in test mock
+            renderItemWrapper: ({ contentSlotId, itemId }) => (
               <div class="custom-wrapper">
                 <div id={contentSlotId}>Content Slot</div>
               </div>

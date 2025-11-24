@@ -4025,14 +4025,14 @@ describe("grid-builder", () => {
     it("should use fallback size when defaultSize not in definition", async () => {
       const component = new GridBuilder();
 
-      // Component with no defaultSize
+      // Component with no defaultSize (intentionally invalid for testing fallback)
       const componentWithoutSize: ComponentDefinition = {
         type: "no-size",
         name: "No Size",
         icon: "❓",
         render: () => <div>No size</div>,
         renderDragClone: () => <div>Clone</div>,
-      };
+      } as any; // Use 'as any' to test fallback behavior when defaultSize is missing
 
       component.components = [componentWithoutSize];
 

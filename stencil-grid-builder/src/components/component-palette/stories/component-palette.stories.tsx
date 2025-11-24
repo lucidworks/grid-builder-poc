@@ -593,8 +593,8 @@ export const WithCustomComponents = () => {
 
   // Initialize with a demo canvas
   setTimeout(() => {
-    if (window.gridBuilderAPI) {
-      window.gridBuilderAPI.addCanvas("demo-canvas");
+    if ((window as any).gridBuilderAPI) {
+      (window as any).gridBuilderAPI.addCanvas("demo-canvas");
     }
   }, 100);
 
@@ -687,4 +687,398 @@ WithCustomComponents.argTypes = {
       defaultValue: { summary: "#f8f9fa" },
     },
   },
+};
+
+/**
+ * Click-to-Add Demo
+ * ==================
+ *
+ * Demonstrates the click-to-add feature as an alternative to drag-and-drop.
+ * Shows visual feedback (pulse, ghost outline, fade-in) and keyboard support.
+ */
+export const ClickToAddDemo = () => {
+  // Reset state to clear any cached data from previous stories
+  reset();
+
+  const components = sampleComponents;
+
+  // Create grid-builder with click-to-add enabled
+  const gridBuilder = document.createElement("grid-builder");
+  gridBuilder.components = components;
+  gridBuilder.config = {
+    enableClickToAdd: true, // Enable click-to-add
+    enableVirtualRendering: false,
+    snapToGrid: true,
+    showGridLines: true,
+  };
+
+  // Initialize with empty canvas
+  setTimeout(() => {
+    if ((window as any).gridBuilderAPI) {
+      (window as any).gridBuilderAPI.addCanvas("demo-canvas");
+    }
+  }, 100);
+
+  // Create status display
+  const statusDiv = document.createElement("div");
+  statusDiv.style.cssText = `
+    padding: 15px;
+    background: #e7f3ff;
+    border-radius: 4px;
+    margin: 20px 0;
+    font-family: system-ui, -apple-system, sans-serif;
+    font-size: 14px;
+  `;
+  statusDiv.innerHTML = `
+    <strong style="color: #007bff;">Click-to-Add Enabled</strong><br/>
+    Click any palette item to add it to the active canvas with smart positioning!
+  `;
+
+  return html`
+    <div style="font-family: system-ui, -apple-system, sans-serif; background: #f0f2f5; height: 100vh; display: flex; flex-direction: column;">
+      <div style="padding: 20px; background: white; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+        <h2 style="margin: 0 0 10px 0; color: #333;">Click-to-Add Feature Demo</h2>
+        <p style="color: #666; margin: 0;">
+          <strong>New feature!</strong> Click palette items to add them instantly with smart collision detection and visual feedback.
+        </p>
+        ${statusDiv}
+      </div>
+
+      <div style="flex: 1; overflow: hidden;">
+        ${gridBuilder}
+      </div>
+
+      <div style="padding: 20px; background: white; border-top: 1px solid #ddd;">
+        <h4 style="margin: 0 0 10px 0; color: #28a745;">✨ Features Demonstrated</h4>
+        <ul style="margin: 0; padding-left: 20px; line-height: 1.8; color: #666;">
+          <li><strong>Click to Add:</strong> Simply click a palette item (no dragging needed)</li>
+          <li><strong>Smart Positioning:</strong> Automatic collision detection finds free space</li>
+          <li><strong>Visual Feedback:</strong> Canvas pulse + ghost outline + fade-in animation</li>
+          <li><strong>Keyboard Support:</strong> Tab to palette items, press Enter/Space to add</li>
+          <li><strong>Centering:</strong> First item centers horizontally for better layout</li>
+        </ul>
+      </div>
+    </div>
+  `;
+};
+
+/**
+ * Multi-Palette with Unique Labels
+ * =================================
+ *
+ * Demonstrates multiple component-palette instances with unique paletteLabel props.
+ * Shows how screen readers announce distinct labels and prevents ID conflicts.
+ */
+export const MultiPaletteWithUniqueLabels = () => {
+  // Reset state to clear any cached data from previous stories
+  reset();
+
+  // Content components
+  const contentComponents = [
+    {
+      type: "header",
+      name: "Header",
+      icon: "📄",
+      defaultSize: { width: 30, height: 4 },
+      render: () => {
+        const div = document.createElement("div");
+        div.style.cssText = "padding: 12px; background: #e3f2fd; border-radius: 4px; height: 100%;";
+        const h3 = document.createElement("h3");
+        h3.style.cssText = "margin: 0; font-size: 16px; color: #1976d2;";
+        h3.textContent = "Header";
+        div.appendChild(h3);
+        return div;
+      },
+      renderDragClone: () => {
+        const div = document.createElement("div");
+        div.textContent = "📄 Header";
+        return div;
+      },
+    },
+    {
+      type: "text",
+      name: "Text Block",
+      icon: "📝",
+      defaultSize: { width: 20, height: 6 },
+      render: () => {
+        const div = document.createElement("div");
+        div.style.cssText = "padding: 10px; background: #f3e5f5; border-radius: 4px; height: 100%;";
+        const p = document.createElement("p");
+        p.style.cssText = "margin: 0; font-size: 13px; color: #7b1fa2;";
+        p.textContent = "Text Content";
+        div.appendChild(p);
+        return div;
+      },
+      renderDragClone: () => {
+        const div = document.createElement("div");
+        div.textContent = "📝 Text";
+        return div;
+      },
+    },
+  ];
+
+  // Media components
+  const mediaComponents = [
+    {
+      type: "image",
+      name: "Image",
+      icon: "🖼️",
+      defaultSize: { width: 15, height: 12 },
+      render: () => {
+        const div = document.createElement("div");
+        div.style.cssText = "padding: 10px; background: #e8f5e9; border-radius: 4px; height: 100%; display: flex; align-items: center; justify-content: center;";
+        div.textContent = "🖼️ Image";
+        return div;
+      },
+      renderDragClone: () => {
+        const div = document.createElement("div");
+        div.textContent = "🖼️ Image";
+        return div;
+      },
+    },
+    {
+      type: "video",
+      name: "Video",
+      icon: "🎥",
+      defaultSize: { width: 20, height: 15 },
+      render: () => {
+        const div = document.createElement("div");
+        div.style.cssText = "padding: 10px; background: #fff3e0; border-radius: 4px; height: 100%; display: flex; align-items: center; justify-content: center;";
+        div.textContent = "🎥 Video";
+        return div;
+      },
+      renderDragClone: () => {
+        const div = document.createElement("div");
+        div.textContent = "🎥 Video";
+        return div;
+      },
+    },
+  ];
+
+  // Interactive components
+  const interactiveComponents = [
+    {
+      type: "button",
+      name: "Button",
+      icon: "🔘",
+      defaultSize: { width: 12, height: 4 },
+      render: () => {
+        const button = document.createElement("button");
+        button.style.cssText = "padding: 8px 16px; background: #007bff; color: white; border: none; border-radius: 4px; width: 100%; height: 100%;";
+        button.textContent = "Button";
+        return button;
+      },
+      renderDragClone: () => {
+        const div = document.createElement("div");
+        div.textContent = "🔘 Button";
+        return div;
+      },
+    },
+    {
+      type: "form",
+      name: "Form",
+      icon: "📋",
+      defaultSize: { width: 25, height: 20 },
+      render: () => {
+        const div = document.createElement("div");
+        div.style.cssText = "padding: 12px; background: #fce4ec; border-radius: 4px; height: 100%;";
+        div.textContent = "📋 Form";
+        return div;
+      },
+      renderDragClone: () => {
+        const div = document.createElement("div");
+        div.textContent = "📋 Form";
+        return div;
+      },
+    },
+  ];
+
+  // Create palettes with unique labels
+  const contentPalette = document.createElement("component-palette");
+  contentPalette.components = contentComponents;
+  contentPalette.paletteLabel = "Content components"; // Unique label
+  contentPalette.showHeader = false;
+
+  const mediaPalette = document.createElement("component-palette");
+  mediaPalette.components = mediaComponents;
+  mediaPalette.paletteLabel = "Media components"; // Unique label
+  mediaPalette.showHeader = false;
+
+  const interactivePalette = document.createElement("component-palette");
+  interactivePalette.components = interactiveComponents;
+  interactivePalette.paletteLabel = "Interactive components"; // Unique label
+  interactivePalette.showHeader = false;
+
+  // Create grid-builder with all components
+  const allComponents = [...contentComponents, ...mediaComponents, ...interactiveComponents];
+  const gridBuilder = document.createElement("grid-builder");
+  gridBuilder.components = allComponents;
+  gridBuilder.config = {
+    enableVirtualRendering: false,
+    enableClickToAdd: true,
+  };
+
+  setTimeout(() => {
+    if ((window as any).gridBuilderAPI) {
+      (window as any).gridBuilderAPI.addCanvas("demo-canvas");
+    }
+  }, 100);
+
+  return html`
+    <div style="font-family: system-ui, -apple-system, sans-serif; background: #f0f2f5; height: 100vh; display: flex; flex-direction: column;">
+      <div style="padding: 20px; background: white; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+        <h2 style="margin: 0 0 10px 0; color: #333;">Multi-Palette ARIA Accessibility</h2>
+        <p style="color: #666; margin: 0;">
+          Multiple palettes with unique <code>paletteLabel</code> props prevent ID conflicts and improve screen reader navigation.
+        </p>
+      </div>
+
+      <div style="display: flex; flex: 1; overflow: hidden;">
+        <!-- Left: Categorized Palettes -->
+        <div style="width: 280px; background: white; overflow-y: auto; border-right: 1px solid #ddd; display: flex; flex-direction: column; gap: 16px; padding: 16px;">
+          <!-- Content Components -->
+          <div>
+            <div style="background: #1976d2; color: white; padding: 10px 12px; border-radius: 6px 6px 0 0; font-weight: 600; font-size: 13px;">
+              📄 Content
+            </div>
+            <div style="background: #f9f9f9; border-radius: 0 0 6px 6px; overflow: hidden;">
+              ${contentPalette}
+            </div>
+          </div>
+
+          <!-- Media Components -->
+          <div>
+            <div style="background: #388e3c; color: white; padding: 10px 12px; border-radius: 6px 6px 0 0; font-weight: 600; font-size: 13px;">
+              🎨 Media
+            </div>
+            <div style="background: #f9f9f9; border-radius: 0 0 6px 6px; overflow: hidden;">
+              ${mediaPalette}
+            </div>
+          </div>
+
+          <!-- Interactive Components -->
+          <div>
+            <div style="background: #d32f2f; color: white; padding: 10px 12px; border-radius: 6px 6px 0 0; font-weight: 600; font-size: 13px;">
+              ⚡ Interactive
+            </div>
+            <div style="background: #f9f9f9; border-radius: 0 0 6px 6px; overflow: hidden;">
+              ${interactivePalette}
+            </div>
+          </div>
+
+          <!-- ARIA Info -->
+          <div style="padding: 12px; background: #e1f5fe; border-radius: 6px; border-left: 3px solid #0288d1;">
+            <h4 style="margin: 0 0 8px 0; color: #01579b; font-size: 12px;">♿ ARIA Features</h4>
+            <ul style="margin: 0; padding-left: 16px; color: #01579b; font-size: 11px; line-height: 1.6;">
+              <li><strong>Unique IDs:</strong> Each palette has unique aria-describedby IDs</li>
+              <li><strong>Screen Reader Labels:</strong> Palettes announced as "Content components, toolbar"</li>
+              <li><strong>No Conflicts:</strong> Multiple palettes on same page work correctly</li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- Right: Grid Builder -->
+        <div style="flex: 1; overflow: auto;">
+          ${gridBuilder}
+        </div>
+      </div>
+    </div>
+  `;
+};
+
+/**
+ * Keyboard Accessibility Demo
+ * ============================
+ *
+ * Demonstrates full keyboard navigation and screen reader support.
+ * Shows Tab navigation, Enter/Space activation, and ARIA attributes.
+ */
+export const KeyboardAccessibilityDemo = () => {
+  // Reset state to clear any cached data from previous stories
+  reset();
+
+  const components = sampleComponents;
+
+  // Create grid-builder with keyboard-friendly config
+  const gridBuilder = document.createElement("grid-builder");
+  gridBuilder.components = components;
+  gridBuilder.config = {
+    enableClickToAdd: true, // Required for keyboard activation
+    enableVirtualRendering: false,
+    snapToGrid: true,
+  };
+
+  setTimeout(() => {
+    if ((window as any).gridBuilderAPI) {
+      (window as any).gridBuilderAPI.addCanvas("demo-canvas");
+    }
+  }, 100);
+
+  // Create keyboard instruction panel
+  const instructionsDiv = document.createElement("div");
+  instructionsDiv.style.cssText = `
+    padding: 20px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    margin: 20px 0;
+  `;
+  instructionsDiv.innerHTML = `
+    <h3 style="margin: 0 0 15px 0; color: #333; font-size: 16px;">⌨️ Keyboard Navigation Instructions</h3>
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+      <div>
+        <h4 style="margin: 0 0 10px 0; color: #007bff; font-size: 14px;">Basic Navigation</h4>
+        <ul style="margin: 0; padding-left: 20px; line-height: 1.8; font-size: 13px;">
+          <li><kbd style="background: white; padding: 2px 6px; border: 1px solid #ccc; border-radius: 3px;">Tab</kbd> - Navigate between palette items</li>
+          <li><kbd style="background: white; padding: 2px 6px; border: 1px solid #ccc; border-radius: 3px;">Shift+Tab</kbd> - Navigate backwards</li>
+          <li><kbd style="background: white; padding: 2px 6px; border: 1px solid #ccc; border-radius: 3px;">Enter</kbd> or <kbd style="background: white; padding: 2px 6px; border: 1px solid #ccc; border-radius: 3px;">Space</kbd> - Add component to canvas</li>
+        </ul>
+      </div>
+      <div>
+        <h4 style="margin: 0 0 10px 0; color: #28a745; font-size: 14px;">Screen Reader Support</h4>
+        <ul style="margin: 0; padding-left: 20px; line-height: 1.8; font-size: 13px;">
+          <li><strong>aria-label:</strong> "Component name. Click to add to active canvas or drag to position"</li>
+          <li><strong>aria-describedby:</strong> Additional context for each item</li>
+          <li><strong>role="button":</strong> Announces as interactive button</li>
+          <li><strong>role="toolbar":</strong> Palette announced as toolbar</li>
+        </ul>
+      </div>
+    </div>
+  `;
+
+  return html`
+    <div style="font-family: system-ui, -apple-system, sans-serif; padding: 20px;">
+      <h2 style="margin: 0 0 10px 0; color: #333;">Keyboard Accessibility & Screen Reader Support</h2>
+      <p style="color: #666; margin: 0 0 20px 0;">
+        Comprehensive keyboard navigation makes the component palette fully accessible without a mouse.
+        <br/>
+        <strong>Try it:</strong> Click in the palette area, then use Tab/Enter to navigate and add components!
+      </p>
+
+      ${instructionsDiv}
+
+      <div style="border: 2px solid #007bff; border-radius: 8px; overflow: hidden;">
+        ${gridBuilder}
+      </div>
+
+      <div style="margin-top: 20px; padding: 20px; background: #d4edda; border-radius: 8px; border-left: 4px solid #28a745;">
+        <h4 style="margin: 0 0 10px 0; color: #155724;">✅ WCAG 2.1 Compliance</h4>
+        <ul style="margin: 0; padding-left: 20px; line-height: 1.8; color: #155724;">
+          <li><strong>2.1.1 Keyboard (Level A):</strong> All functionality available via keyboard</li>
+          <li><strong>2.1.3 Keyboard (No Exception) (Level AAA):</strong> No keyboard traps</li>
+          <li><strong>4.1.2 Name, Role, Value (Level A):</strong> All elements have proper ARIA attributes</li>
+          <li><strong>4.1.3 Status Messages (Level AA):</strong> Screen reader announcements for state changes</li>
+        </ul>
+      </div>
+
+      <div style="margin-top: 20px; padding: 20px; background: #fff3cd; border-radius: 8px; border-left: 4px solid #ffc107;">
+        <h4 style="margin: 0 0 10px 0; color: #856404;">💡 Testing with Screen Readers</h4>
+        <ul style="margin: 0; padding-left: 20px; line-height: 1.8; color: #856404;">
+          <li><strong>NVDA (Windows):</strong> Free, open-source screen reader</li>
+          <li><strong>JAWS (Windows):</strong> Professional screen reader</li>
+          <li><strong>VoiceOver (macOS):</strong> Built-in, press Cmd+F5 to enable</li>
+          <li><strong>TalkBack (Android):</strong> Built-in mobile screen reader</li>
+        </ul>
+      </div>
+    </div>
+  `;
 };
