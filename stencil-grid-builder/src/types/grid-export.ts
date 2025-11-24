@@ -11,8 +11,8 @@
  * const builder = document.querySelector('grid-builder');
  * const exportData = await builder.exportState();
  * await fetch('/api/layouts', {
- *   method: 'POST',
- *   body: JSON.stringify(exportData)
+ * method: 'POST',
+ * body: JSON.stringify(exportData)
  * });
  * ```
  *
@@ -27,7 +27,6 @@
  *
  * The `version` field allows for future format changes while maintaining backwards compatibility.
  * Current version: '1.0.0'
- *
  * @module grid-export
  */
 

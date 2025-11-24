@@ -120,10 +120,8 @@ export interface GridBuilderAPI {
    * // Unsubscribe (in destroy)
    * api.off('componentAdded', callback);
    * ```
-   *
    * @param eventName - Event to subscribe to
    * @param callback - Function called when event fires
-   *
    * @example
    * ```typescript
    * // Track all component additions
@@ -164,10 +162,8 @@ export interface GridBuilderAPI {
    * api.on('componentAdded', callback);
    * api.off('componentAdded', callback); // Unsubscribes successfully
    * ```
-   *
    * @param eventName - Event to unsubscribe from
    * @param callback - Exact callback reference used in on()
-   *
    * @example
    * ```typescript
    * class MyPlugin implements GridBuilderPlugin {
@@ -203,9 +199,7 @@ export interface GridBuilderAPI {
    * - Check current viewport mode
    * - Count items per canvas
    * - Custom validation logic
-   *
    * @returns Current grid state
-   *
    * @example
    * ```typescript
    * // Save state to localStorage
@@ -232,10 +226,8 @@ export interface GridBuilderAPI {
    * - Count items per canvas
    * - Filter items by type
    * - Export canvas layout
-   *
    * @param canvasId - Canvas to get items from
    * @returns Array of items or empty array if canvas not found
-   *
    * @example
    * ```typescript
    * // Count headers in canvas1
@@ -264,10 +256,8 @@ export interface GridBuilderAPI {
    * - Get item before operation
    * - Read item properties
    * - Validation checks
-   *
    * @param itemId - Item ID to find
    * @returns GridItem or null if not found
-   *
    * @example
    * ```typescript
    * // Check item exists before operation
@@ -307,13 +297,11 @@ export interface GridBuilderAPI {
    * - Mobile layout (if not provided)
    *
    * **Events triggered**: 'componentAdded'
-   *
    * @param canvasId - Target canvas
    * @param componentType - Component type (must match registered definition)
    * @param position - Position in grid units
    * @param config - Optional initial configuration
    * @returns Created item ID or null if failed
-   *
    * @example
    * ```typescript
    * // Add header to canvas1
@@ -352,10 +340,8 @@ export interface GridBuilderAPI {
    * **Events triggered**: 'componentDeleted'
    * **Deselects**: If deleting selected item
    * **Async**: Returns Promise because it may trigger onBeforeDelete hook
-   *
    * @param itemId - Item to delete
    * @returns Promise<true> if deleted, Promise<false> if item not found or deletion cancelled
-   *
    * @example
    * ```typescript
    * // Delete all headers in canvas1
@@ -379,11 +365,9 @@ export interface GridBuilderAPI {
    *
    * **Triggers**: Component re-render with new config
    * **Events triggered**: 'configChanged'
-   *
    * @param itemId - Item to update
    * @param config - New configuration (merged with existing)
    * @returns true if updated, false if item not found
-   *
    * @example
    * ```typescript
    * // Change all header colors to blue
@@ -413,10 +397,8 @@ export interface GridBuilderAPI {
    * - Bulk operations
    *
    * **Events triggered**: Single 'componentsBatchAdded' event with all items
-   *
    * @param components - Array of component specs (without id/zIndex)
    * @returns Array of created item IDs
-   *
    * @example
    * ```typescript
    * // Load template with 50 components
@@ -441,12 +423,12 @@ export interface GridBuilderAPI {
    * ```
    */
   addComponentsBatch(
-    components: Array<{
+    components: {
       canvasId: string;
       type: string;
       position: { x: number; y: number; width: number; height: number };
       config?: Record<string, any>;
-    }>,
+    }[],
   ): string[];
 
   /**
@@ -462,9 +444,7 @@ export interface GridBuilderAPI {
    * - Undo batch add
    *
    * **Events triggered**: Single 'componentsBatchDeleted' event with all item IDs
-   *
    * @param itemIds - Array of item IDs to delete
-   *
    * @example
    * ```typescript
    * // Clear entire canvas1
@@ -489,9 +469,7 @@ export interface GridBuilderAPI {
    * - Undo batch config change
    *
    * **Events triggered**: Single 'configsBatchChanged' event with all updates
-   *
    * @param updates - Array of { itemId, config } objects
-   *
    * @example
    * ```typescript
    * // Change all headers to dark theme
@@ -511,7 +489,7 @@ export interface GridBuilderAPI {
    * ```
    */
   updateConfigsBatch(
-    updates: Array<{ itemId: string; config: Record<string, any> }>,
+    updates: { itemId: string; config: Record<string, any> }[],
   ): void;
 
   // ======================
@@ -529,10 +507,8 @@ export interface GridBuilderAPI {
    *
    * **Warning**: Avoid direct DOM manipulation when possible.
    * Prefer API methods to maintain reactivity.
-   *
    * @param canvasId - Canvas to get element for
    * @returns HTMLElement or null if not found
-   *
    * @example
    * ```typescript
    * // Measure canvas dimensions
@@ -570,7 +546,6 @@ export interface GridBuilderAPI {
    * - Move/resize components
    * - Config changes
    * - Add/remove canvases
-   *
    * @example
    * ```typescript
    * // Undo button handler
@@ -588,7 +563,6 @@ export interface GridBuilderAPI {
    * - Implement redo button
    * - Keyboard shortcut (Ctrl+Y)
    * - Programmatic redo
-   *
    * @example
    * ```typescript
    * // Redo button handler
@@ -605,9 +579,7 @@ export interface GridBuilderAPI {
    * **Use cases**:
    * - Enable/disable undo button
    * - Check before undo operation
-   *
    * @returns true if undo stack has operations
-   *
    * @example
    * ```typescript
    * // Enable/disable undo button
@@ -624,9 +596,7 @@ export interface GridBuilderAPI {
    * **Use cases**:
    * - Enable/disable redo button
    * - Check before redo operation
-   *
    * @returns true if redo stack has operations
-   *
    * @example
    * ```typescript
    * // Enable/disable redo button
@@ -651,7 +621,6 @@ export interface GridBuilderAPI {
    * **Properties**:
    * - canUndo: boolean - Whether undo is available
    * - canRedo: boolean - Whether redo is available
-   *
    * @example
    * ```typescript
    * // Reactive undo/redo buttons (updates automatically)
@@ -691,9 +660,7 @@ export interface GridBuilderAPI {
    * - Add canvas metadata (title, backgroundColor, etc.)
    *
    * **Events triggered**: 'canvasAdded'
-   *
    * @param canvasId - Unique canvas identifier
-   *
    * @example
    * ```typescript
    * // Add new section
@@ -729,9 +696,7 @@ export interface GridBuilderAPI {
    * - Clean up any dynamically injected headers/UI
    *
    * **Events triggered**: 'canvasRemoved'
-   *
    * @param canvasId - Canvas to remove
-   *
    * @example
    * ```typescript
    * // Remove section
@@ -773,9 +738,7 @@ export interface GridBuilderAPI {
    * - Starts resizing item
    *
    * **Events triggered**: 'canvasActivated'
-   *
    * @param canvasId - Canvas to activate
-   *
    * @example
    * ```typescript
    * // Activate canvas after adding item
@@ -801,9 +764,7 @@ export interface GridBuilderAPI {
    * **Returns**:
    * - Canvas ID string if a canvas is active
    * - `null` if no canvas is active
-   *
    * @returns Canvas ID or null if none active
-   *
    * @example
    * ```typescript
    * const activeId = api.getActiveCanvas();

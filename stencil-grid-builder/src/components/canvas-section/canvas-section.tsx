@@ -33,18 +33,18 @@
  * ### 1. Palette Item (Create New)
  * ```typescript
  * new CustomEvent('canvas-drop', {
- *   detail: { canvasId, componentType, x, y },
- *   bubbles: true,
- *   composed: true
+ * detail: { canvasId, componentType, x, y },
+ * bubbles: true,
+ * composed: true
  * })
  * ```
  *
  * ### 2. Grid Item (Cross-Canvas Move)
  * ```typescript
  * new CustomEvent('canvas-move', {
- *   detail: { itemId, sourceCanvasId, targetCanvasId, x, y },
- *   bubbles: true,
- *   composed: true
+ * detail: { itemId, sourceCanvasId, targetCanvasId, x, y },
+ * bubbles: true,
+ * composed: true
  * })
  * ```
  *
@@ -61,7 +61,6 @@
  * **ResizeObserver**: Clears grid cache on container resize
  * **Virtual rendering**: Items use VirtualRenderer for lazy loading
  * **Render version**: Forces item recalculation on resize
- *
  * @module canvas-section
  */
 
@@ -136,7 +135,6 @@ export class CanvasSection {
    * **Host app responsibility**: Pass canvas styling from host app
    * **Library does NOT store**: backgroundColor is presentation concern
    * **Optional**: Defaults to '#ffffff'
-   *
    * @example
    * ```tsx
    * <canvas-section
@@ -154,7 +152,6 @@ export class CanvasSection {
    * **Renders as**: Rotated tab on right side, outside section bounds
    * **Builder mode only**: Title tabs visible in builder, not viewer
    * **Source**: Passed from grid-builder via canvasMetadata[canvasId].title
-   *
    * @example
    * ```tsx
    * <canvas-section
@@ -184,10 +181,9 @@ export class CanvasSection {
    * Consumer can style active canvas via CSS:
    * ```css
    * .grid-container.active .canvas-title {
-   *   opacity: 1;
+   * opacity: 1;
    * }
    * ```
-   *
    * @example
    * ```tsx
    * <canvas-section

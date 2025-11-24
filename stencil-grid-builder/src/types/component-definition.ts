@@ -23,7 +23,7 @@ export interface ConfigField {
   defaultValue?: any;
 
   /** Options for select fields (array of {label, value} or strings) */
-  options?: Array<{ label: string; value: string } | string>;
+  options?: ({ label: string; value: string } | string)[];
 
   /** Optional validation function */
   validation?: (value: any) => boolean;
@@ -125,7 +125,6 @@ export interface ComponentDefinition {
    * - Must be unique across all component definitions
    * - Lowercase recommended (e.g., 'header', 'text-block')
    * - Used in state to identify component type
-   *
    * @example 'header', 'text-block', 'image-gallery'
    */
   type: string;
@@ -134,7 +133,6 @@ export interface ComponentDefinition {
    * Display name in component palette
    *
    * **Usage**: Shown in UI when user selects component from palette
-   *
    * @example 'Header', 'Text Block', 'Image Gallery'
    */
   name: string;
@@ -144,7 +142,6 @@ export interface ComponentDefinition {
    *
    * **Usage**: Visual identifier in palette
    * **Recommendation**: Use emoji for consistency
-   *
    * @example '📄', '📝', '🖼️'
    */
   icon: string;
@@ -168,7 +165,6 @@ export interface ComponentDefinition {
    *
    * **Optional**: If not specified, no minimum enforced
    * **Usage**: Prevents user from making component too small
-   *
    * @example { width: 10, height: 4 }
    */
   minSize?: {
@@ -181,7 +177,6 @@ export interface ComponentDefinition {
    *
    * **Optional**: If not specified, no maximum enforced
    * **Usage**: Prevents user from making component too large
-   *
    * @example { width: 50, height: 30 }
    */
   maxSize?: {
@@ -204,7 +199,6 @@ export interface ComponentDefinition {
    * - Text: '#10b981' (green)
    * - Images: '#8b5cf6' (purple)
    * - Buttons: '#ef4444' (red)
-   *
    * @example '#3b82f6'
    */
   selectionColor?: string;
@@ -215,7 +209,7 @@ export interface ComponentDefinition {
    * **Called by**: grid-item-wrapper component
    * **Return value**: StencilJS component reference (e.g., `<my-component />`)
    * **Important**: Returns component reference, NOT rendered output
-   *               StencilJS manages internal component state independently
+   * StencilJS manages internal component state independently
    *
    * **Props provided**:
    * - `itemId`: Unique item identifier (use for event handlers, data fetching)
@@ -226,14 +220,62 @@ export interface ComponentDefinition {
    * will continue to update correctly. The wrapper's render memoization
    * only caches the component reference, not the rendered output.
    *
+   * 🔒 **SECURITY WARNING - XSS Prevention**:
+   * ⚠️ The `config` parameter MAY CONTAIN USER-CONTROLLED DATA!
+   *
+   * **NEVER use unsafe patterns with config values**:
+   * - ❌ `element.innerHTML = config.userText`
+   * - ❌ `<div dangerouslySetInnerHTML={{__html: config.html}}/>`
+   * - ❌ `eval(config.code)`
+   * - ❌ `new Function(config.script)()`
+   * - ❌ Directly injecting config into style attributes
+   *
+   * **ALWAYS use safe rendering**:
+   * - ✅ JSX auto-escapes values: `<div>{config.text}</div>`
+   * - ✅ Text content: `element.textContent = config.text`
+   * - ✅ Sanitize HTML: Use DOMPurify before rendering user HTML
+   *
+   * **For user-generated HTML content**:
+   * ```typescript
+   * import DOMPurify from 'dompurify';
+   *
+   * render: ({ config }) => {
+   *   const safeHTML = DOMPurify.sanitize(config.userHTML, {
+   *     ALLOWED_TAGS: ['b', 'i', 'p', 'br'],
+   *     ALLOWED_ATTR: []
+   *   });
+   *   return <div innerHTML={safeHTML}></div>;
+   * }
+   * ```
+   *
+   * **Security checklist**:
+   * - [ ] Never use innerHTML/dangerouslySetInnerHTML with config values
+   * - [ ] Use JSX for text rendering (auto-escapes)
+   * - [ ] Sanitize any HTML before rendering (DOMPurify)
+   * - [ ] Validate URLs before using in src/href attributes
+   * - [ ] Never execute code from config values
+   *
    * @param props - Contains itemId and config
    * @returns StencilJS component reference
-   *
    * @example
+   * **Safe example** (JSX auto-escaping):
    * ```typescript
    * render: ({ itemId, config }) => (
-   *   <component-header itemId={itemId} config={config} />
+   *   <component-header
+   *     itemId={itemId}
+   *     title={config.title}  // JSX auto-escapes
+   *     text={config.text}     // Safe
+   *   />
    * )
+   * ```
+   *
+   * **Unsafe example** (DON'T DO THIS):
+   * ```typescript
+   * render: ({ config }) => {
+   *   const div = document.createElement('div');
+   *   div.innerHTML = config.html;  // ❌ XSS VULNERABILITY!
+   *   return div;
+   * }
    * ```
    */
   render: (props: { itemId: string; config?: Record<string, any> }) => any;
@@ -256,7 +298,6 @@ export interface ComponentDefinition {
    * - Complex UIs (image uploaders, multi-step wizards)
    * - Visual pickers (color palettes, icon selectors)
    * - Conditional field visibility
-   *
    * @example
    * ```typescript
    * configSchema: [
@@ -317,23 +358,21 @@ export interface ComponentDefinition {
    * ```typescript
    * // In your custom config panel component
    * componentDidLoad() {
-   *   eventManager.on('componentDeleted', this.handleComponentDeleted);
+   * eventManager.on('componentDeleted', this.handleComponentDeleted);
    * }
    *
    * private handleComponentDeleted = (event: { itemId: string }) => {
-   *   if (this.selectedItemId === event.itemId) {
-   *     this.closePanel();
-   *   }
+   * if (this.selectedItemId === event.itemId) {
+   * this.closePanel();
+   * }
    * };
    *
    * disconnectedCallback() {
-   *   eventManager.off('componentDeleted', this.handleComponentDeleted);
+   * eventManager.off('componentDeleted', this.handleComponentDeleted);
    * }
    * ```
-   *
    * @param props - Config state and callbacks
    * @returns Custom config panel UI
-   *
    * @example
    * ```typescript
    * renderConfigPanel: ({ config, onChange, onSave, onCancel }) => (
@@ -378,11 +417,9 @@ export interface ComponentDefinition {
    * - Prevent overlapping with other components
    * - Enforce grid boundaries
    * - Custom business rules
-   *
    * @param canvasId - Target canvas ID
    * @param position - Proposed position (x, y in grid units)
    * @returns true if placement is valid
-   *
    * @example
    * ```typescript
    * validatePlacement: (canvasId, position) => {
@@ -410,10 +447,8 @@ export interface ComponentDefinition {
    *
    * **Note**: min/max size constraints are enforced automatically,
    * this is for additional custom validation.
-   *
    * @param newSize - Proposed size (width, height in grid units)
    * @returns true if resize is valid
-   *
    * @example
    * ```typescript
    * validateResize: (newSize) => {
@@ -438,10 +473,8 @@ export interface ComponentDefinition {
    * - Components render when entering viewport (default: 20% margin)
    * - Once rendered, stay rendered (no de-rendering)
    * - Use this hook to pause/resume resources, not to manage DOM
-   *
    * @param itemId - The component's unique ID
    * @param config - The component's current configuration
-   *
    * @example
    * ```typescript
    * onVisible: (itemId, config) => {
@@ -470,9 +503,7 @@ export interface ComponentDefinition {
    * - Preserves component state (form inputs, video position)
    * - Faster scroll-back (already rendered)
    * - Browser optimized for off-screen DOM
-   *
    * @param itemId - The component's unique ID
-   *
    * @example
    * ```typescript
    * onHidden: (itemId) => {
@@ -504,10 +535,8 @@ export interface ComponentDefinition {
    * **Return value**: JSX element (StencilJS vNode)
    *
    * **Security**: Using JSX instead of HTML strings prevents XSS vulnerabilities
-   *
    * @param props - Palette item rendering context
    * @returns JSX element
-   *
    * @example
    * ```typescript
    * renderPaletteItem: ({ componentType, name, icon }) => (
@@ -547,14 +576,14 @@ export interface ComponentDefinition {
    * // Component: blog-header-drag-clone.tsx
    * @Component({ tag: 'blog-header-drag-clone' })
    * export class BlogHeaderDragClone {
-   *   render() {
-   *     return (
-   *       <div class="header-preview">
-   *         <h1>Header Title</h1>
-   *         <p>Subtitle preview</p>
-   *       </div>
-   *     );
-   *   }
+   * render() {
+   * return (
+   * <div class="header-preview">
+   * <h1>Header Title</h1>
+   * <p>Subtitle preview</p>
+   * </div>
+   * );
+   * }
    * }
    * ```
    *
@@ -567,9 +596,7 @@ export interface ComponentDefinition {
    * **Your responsibility**:
    * - Return JSX that looks good at the component's default size
    * - Make it visually represent the actual component
-   *
    * @returns JSX element (StencilJS vNode)
-   *
    * @example
    * ```typescript
    * // Using a dedicated Stencil component (recommended)
@@ -622,26 +649,26 @@ export interface ComponentDefinition {
    * Your custom wrapper component MUST include:
    *
    * 1. **Content Slot**: A container with `id={contentSlotId}` where the actual component will render
-   *    ```jsx
-   *    <div id={contentSlotId} class="component-content"></div>
-   *    ```
+   * ```jsx
+   * <div id={contentSlotId} class="component-content"></div>
+   * ```
    *
    * 2. **Drag Handle**: An element with class `drag-handle` for dragging functionality
-   *    ```jsx
-   *    <div class="drag-handle"></div>
-   *    ```
+   * ```jsx
+   * <div class="drag-handle"></div>
+   * ```
    *
    * 3. **Event Emission**: Your component must emit the following standard events for user actions
-   *    ```typescript
-   *    // Delete button clicked
-   *    this.el.dispatchEvent(new CustomEvent('item-delete', { bubbles: true, composed: true }));
+   * ```typescript
+   * // Delete button clicked
+   * this.el.dispatchEvent(new CustomEvent('item-delete', { bubbles: true, composed: true }));
    *
-   *    // Bring to front button clicked
-   *    this.el.dispatchEvent(new CustomEvent('item-bring-to-front', { bubbles: true, composed: true }));
+   * // Bring to front button clicked
+   * this.el.dispatchEvent(new CustomEvent('item-bring-to-front', { bubbles: true, composed: true }));
    *
-   *    // Send to back button clicked
-   *    this.el.dispatchEvent(new CustomEvent('item-send-to-back', { bubbles: true, composed: true }));
-   *    ```
+   * // Send to back button clicked
+   * this.el.dispatchEvent(new CustomEvent('item-send-to-back', { bubbles: true, composed: true }));
+   * ```
    *
    * **Event-based architecture**:
    * The library uses Stencil's `@Listen` decorator to listen for these standard events.
@@ -650,10 +677,8 @@ export interface ComponentDefinition {
    *
    * Without the required elements and events, drag, resize, and delete functionality will not work.
    * The resize handles (8-point) are added automatically by the library outside your custom chrome.
-   *
    * @param props - Item wrapper rendering context
    * @returns JSX element
-   *
    * @example
    * ```typescript
    * renderItemWrapper: ({ itemId, componentType, name, icon, isSelected, contentSlotId }) => (

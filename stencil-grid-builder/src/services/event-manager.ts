@@ -43,7 +43,6 @@
  * **Internal cleanup**:
  * - Empty event Sets auto-deleted
  * - No memory retention for unused events
- *
  * @module event-manager
  */
 
@@ -118,10 +117,8 @@ export class EventManager {
    *
    * **Idempotent**: Calling multiple times with same callback does nothing
    * **Thread-safe**: Uses Set which handles concurrent additions
-   *
    * @param eventName - Event to subscribe to
    * @param callback - Function called when event fires
-   *
    * @example
    * ```typescript
    * eventManager.on('componentAdded', (data) => {
@@ -144,10 +141,8 @@ export class EventManager {
    * - Callback stored as property or bound method
    *
    * **Cleanup**: If event has no more listeners, delete the Set
-   *
    * @param eventName - Event to unsubscribe from
    * @param callback - Exact callback reference used in on()
-   *
    * @example
    * ```typescript
    * // ✅ Correct pattern
@@ -191,10 +186,8 @@ export class EventManager {
    * **Error handling**: One callback error doesn't prevent others
    *
    * **Performance**: O(n) where n = number of callbacks for this event
-   *
    * @param eventName - Event to fire
    * @param data - Data to pass to callbacks
-   *
    * @example
    * ```typescript
    * // Internal usage (in state-manager.ts)
@@ -218,7 +211,6 @@ export class EventManager {
    * Fire event immediately (no debouncing)
    *
    * **Private method**: Called by emit()
-   *
    * @param eventName - Event to fire
    * @param data - Data to pass to callbacks
    */
@@ -247,7 +239,6 @@ export class EventManager {
    * **Result**: Event only fires once after activity stops
    *
    * **Private method**: Called by emit()
-   *
    * @param eventName - Event to fire
    * @param data - Data to pass to callbacks
    */
@@ -271,9 +262,7 @@ export class EventManager {
    * Set debounce delay for all debounced events
    *
    * **Configurable**: Called by grid-builder with config.eventDebounceDelay
-   *
    * @param delay - Delay in milliseconds
-   *
    * @example
    * ```typescript
    * // In grid-builder componentDidLoad
@@ -288,7 +277,6 @@ export class EventManager {
    * Get current debounce delay
    *
    * **Use case**: Debugging, testing
-   *
    * @returns Debounce delay in milliseconds
    */
   getDebounceDelay(): number {
@@ -299,9 +287,7 @@ export class EventManager {
    * Remove all listeners for specific event
    *
    * **Use case**: Cleanup during component unmount
-   *
    * @param eventName - Event to remove all listeners from
-   *
    * @example
    * ```typescript
    * // Clear all componentAdded listeners
@@ -320,10 +306,8 @@ export class EventManager {
    * Get listener count for debugging
    *
    * **Use case**: Check for memory leaks (too many listeners)
-   *
    * @param eventName - Event to count listeners for
    * @returns Number of listeners or 0 if event not registered
-   *
    * @example
    * ```typescript
    * const count = eventManager.listenerCount('componentAdded');

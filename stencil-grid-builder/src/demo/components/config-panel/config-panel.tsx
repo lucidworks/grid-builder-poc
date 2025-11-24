@@ -21,7 +21,6 @@
  * **Basic fields** (always available):
  * - Component name (item.name)
  * - Z-index controls (bring to front, send to back, etc.)
- *
  * @module config-panel
  */
 

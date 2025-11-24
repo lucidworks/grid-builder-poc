@@ -55,16 +55,16 @@
  * To adapt for your project:
  * ```typescript
  * class MyDOMCache {
- *   private elements = new Map<string, HTMLElement>();
+ * private elements = new Map<string, HTMLElement>();
  *
- *   get(id: string): HTMLElement | null {
- *     if (this.elements.has(id)) return this.elements.get(id)!;
- *     const el = document.getElementById(id);
- *     if (el) this.elements.set(id, el);
- *     return el;
- *   }
+ * get(id: string): HTMLElement | null {
+ * if (this.elements.has(id)) return this.elements.get(id)!;
+ * const el = document.getElementById(id);
+ * if (el) this.elements.set(id, el);
+ * return el;
+ * }
  *
- *   invalidate(id: string) { this.elements.delete(id); }
+ * invalidate(id: string) { this.elements.delete(id); }
  * }
  * export const cache = new MyDOMCache();
  * ```
@@ -76,7 +76,6 @@
  * - Component unmounts
  * - Major DOM restructuring
  * - Element IDs change
- *
  * @module dom-cache
  */
 
@@ -106,10 +105,8 @@ class DOMCache {
    * - Returns `null` if element doesn't exist
    * - Safe to call before DOM ready (returns null, doesn't cache)
    * - Cache automatically populated on first successful access
-   *
    * @param canvasId - Canvas container element ID
    * @returns HTMLElement or null if not found
-   *
    * @example
    * ```typescript
    * // First call - queries DOM
@@ -153,9 +150,7 @@ class DOMCache {
    *
    * **Performance**:
    * Very cheap operation (Map.delete is O(1))
-   *
    * @param canvasId - Canvas ID to remove from cache
-   *
    * @example
    * ```typescript
    * // Component unmounting
@@ -188,7 +183,6 @@ class DOMCache {
    * **Performance**:
    * Cheap operation - just clears Map references.
    * Elements are garbage collected automatically.
-   *
    * @example
    * ```typescript
    * // Test cleanup
@@ -218,7 +212,6 @@ class DOMCache {
  * Export as const to ensure single instance across entire application.
  * All modules import same cache, preventing duplicate element caching
  * and ensuring consistent cache state.
- *
  * @example
  * ```typescript
  * import { domCache } from './dom-cache';

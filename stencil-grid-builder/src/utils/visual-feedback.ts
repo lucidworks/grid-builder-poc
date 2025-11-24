@@ -28,11 +28,10 @@
  * - Uses CSS animations (GPU-accelerated)
  * - Minimal JavaScript overhead
  * - Cleanup after animations complete
- *
  * @module visual-feedback
  */
 
-import { GridConfig } from '../types/grid-config';
+import { GridConfig } from "../types/grid-config";
 
 /**
  * Canvas highlight duration (milliseconds)
@@ -72,18 +71,18 @@ const COMPONENT_ANIMATION_DURATION = 600;
  * **CSS Animation** (defined in canvas-section.scss):
  * ```scss
  * @keyframes canvas-highlight-pulse {
- *   0%, 100% {
- *     box-shadow: 0 0 0 0 var(--selection-color);
- *     opacity: 1;
- *   }
- *   50% {
- *     box-shadow: 0 0 0 4px var(--selection-color);
- *     opacity: 0.7;
- *   }
+ * 0%, 100% {
+ * box-shadow: 0 0 0 0 var(--selection-color);
+ * opacity: 1;
+ * }
+ * 50% {
+ * box-shadow: 0 0 0 4px var(--selection-color);
+ * opacity: 0.7;
+ * }
  * }
  *
  * .canvas-highlight {
- *   animation: canvas-highlight-pulse 600ms ease-out;
+ * animation: canvas-highlight-pulse 600ms ease-out;
  * }
  * ```
  *
@@ -93,7 +92,6 @@ const COMPONENT_ANIMATION_DURATION = 600;
  * highlightCanvas('canvas1');
  * // → Canvas border pulses to show it's active
  * ```
- *
  * @param canvasId - Canvas ID to highlight
  */
 export function highlightCanvas(canvasId: string): void {
@@ -105,11 +103,11 @@ export function highlightCanvas(canvasId: string): void {
   }
 
   // Add highlight class (triggers CSS animation)
-  canvasElement.classList.add('canvas-highlight');
+  canvasElement.classList.add("canvas-highlight");
 
   // Remove class after animation completes
   setTimeout(() => {
-    canvasElement.classList.remove('canvas-highlight');
+    canvasElement.classList.remove("canvas-highlight");
   }, CANVAS_HIGHLIGHT_DURATION);
 }
 
@@ -140,18 +138,18 @@ export function highlightCanvas(canvasId: string): void {
  * **CSS Styling** (defined in canvas-section.scss):
  * ```scss
  * .position-indicator {
- *   position: absolute;
- *   border: 2px dashed var(--selection-color);
- *   opacity: 0.8;
- *   pointer-events: none;
- *   z-index: 9999;
- *   animation: position-indicator-fade 800ms ease-out forwards;
+ * position: absolute;
+ * border: 2px dashed var(--selection-color);
+ * opacity: 0.8;
+ * pointer-events: none;
+ * z-index: 9999;
+ * animation: position-indicator-fade 800ms ease-out forwards;
  * }
  *
  * @keyframes position-indicator-fade {
- *   0% { opacity: 0.8; }
- *   70% { opacity: 0.8; }
- *   100% { opacity: 0; }
+ * 0% { opacity: 0.8; }
+ * 70% { opacity: 0.8; }
+ * 100% { opacity: 0; }
  * }
  * ```
  *
@@ -166,7 +164,6 @@ export function highlightCanvas(canvasId: string): void {
  * showPositionIndicator('canvas1', 20, 2, 10, 6, customConfig);
  * // → Ghost outline uses 3% grid size instead of default 2%
  * ```
- *
  * @param canvasId - Canvas ID where component will be placed
  * @param x - X position in grid units
  * @param y - Y position in grid units
@@ -192,7 +189,7 @@ export function showPositionIndicator(
   }
 
   // Import grid calculations (avoid circular dependency by using dynamic import)
-  import('./grid-calculations').then(({ gridToPixelsX, gridToPixelsY }) => {
+  import("./grid-calculations").then(({ gridToPixelsX, gridToPixelsY }) => {
     // Convert grid units to pixels (respecting GridConfig)
     const xPixels = gridToPixelsX(x, canvasId, config);
     const yPixels = gridToPixelsY(y);
@@ -200,9 +197,9 @@ export function showPositionIndicator(
     const heightPixels = gridToPixelsY(height);
 
     // Create ghost indicator element
-    const indicator = document.createElement('div');
-    indicator.className = 'position-indicator';
-    indicator.style.position = 'absolute';
+    const indicator = document.createElement("div");
+    indicator.className = "position-indicator";
+    indicator.style.position = "absolute";
     indicator.style.transform = `translate(${xPixels}px, ${yPixels}px)`;
     indicator.style.width = `${widthPixels}px`;
     indicator.style.height = `${heightPixels}px`;
@@ -243,19 +240,19 @@ export function showPositionIndicator(
  * **CSS Animation** (defined in grid-item-wrapper.scss):
  * ```scss
  * @keyframes component-animate-in {
- *   0%, 100% {
- *     border-color: var(--selection-color);
- *     box-shadow: 0 0 0 2px rgba(74, 144, 226, 0.5);
- *   }
- *   50% {
- *     border-color: var(--selection-color);
- *     box-shadow: 0 0 0 6px rgba(74, 144, 226, 0.7);
- *   }
+ * 0%, 100% {
+ * border-color: var(--selection-color);
+ * box-shadow: 0 0 0 2px rgba(74, 144, 226, 0.5);
+ * }
+ * 50% {
+ * border-color: var(--selection-color);
+ * box-shadow: 0 0 0 6px rgba(74, 144, 226, 0.7);
+ * }
  * }
  *
  * .component-animate-in {
- *   animation: component-animate-in 600ms ease-out;
- *   border-color: var(--selection-color);
+ * animation: component-animate-in 600ms ease-out;
+ * border-color: var(--selection-color);
  * }
  * ```
  *
@@ -268,7 +265,6 @@ export function showPositionIndicator(
  *
  * **Note**: Call this AFTER the component has been added to the DOM.
  * Use a small delay (e.g., 50ms) to ensure DOM update has completed.
- *
  * @param itemId - Grid item ID to animate
  */
 export function animateComponentIn(itemId: string): void {
@@ -282,7 +278,7 @@ export function animateComponentIn(itemId: string): void {
     }
 
     // Clear any position indicators immediately (prevents blue flash)
-    const indicators = document.querySelectorAll('.position-indicator');
+    const indicators = document.querySelectorAll(".position-indicator");
     indicators.forEach((indicator) => {
       if (indicator.parentNode) {
         indicator.parentNode.removeChild(indicator);
@@ -292,17 +288,17 @@ export function animateComponentIn(itemId: string): void {
     // Scroll component into view (with smooth animation)
     // Always use standard scrollIntoView for consistent animated scrolling
     itemElement.scrollIntoView({
-      behavior: 'smooth',
-      block: 'center',
-      inline: 'nearest',
+      behavior: "smooth",
+      block: "center",
+      inline: "nearest",
     });
 
     // Add animation class (triggers CSS animation)
-    itemElement.classList.add('component-animate-in');
+    itemElement.classList.add("component-animate-in");
 
     // Remove class after animation completes
     setTimeout(() => {
-      itemElement.classList.remove('component-animate-in');
+      itemElement.classList.remove("component-animate-in");
     }, COMPONENT_ANIMATION_DURATION);
   }, 50); // 50ms delay for DOM update
 }

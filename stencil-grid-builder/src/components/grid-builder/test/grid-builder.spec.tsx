@@ -2276,7 +2276,9 @@ describe("grid-builder", () => {
         const keyboardHandler = (component as any).keyboardHandler;
 
         // Simulate Backspace key press
-        const backspaceEvent = new KeyboardEvent("keydown", { key: "Backspace" });
+        const backspaceEvent = new KeyboardEvent("keydown", {
+          key: "Backspace",
+        });
         Object.defineProperty(backspaceEvent, "preventDefault", {
           value: jest.fn(),
         });
@@ -2353,7 +2355,13 @@ describe("grid-builder", () => {
                 zIndex: 1,
                 layouts: {
                   desktop: { x: 0, y: 0, width: 10, height: 5 },
-                  mobile: { x: 0, y: 0, width: 50, height: 5, customized: false },
+                  mobile: {
+                    x: 0,
+                    y: 0,
+                    width: 50,
+                    height: 5,
+                    customized: false,
+                  },
                 },
                 config: {},
               },
@@ -2643,7 +2651,9 @@ describe("grid-builder", () => {
         });
 
         // Verify announcement was set
-        expect((component as any).announcement).toBe("Component moved to new canvas");
+        expect((component as any).announcement).toBe(
+          "Component moved to new canvas",
+        );
       });
 
       it("should announce undo actions", () => {
@@ -2715,7 +2725,9 @@ describe("grid-builder", () => {
         eventManager.emit("canvasActivated", { canvasId: "canvas1" });
 
         // Verify announcement was set with canvas title
-        expect((component as any).announcement).toBe("Hero Section canvas activated");
+        expect((component as any).announcement).toBe(
+          "Hero Section canvas activated",
+        );
       });
 
       it("should clear announcement after 100ms", (done) => {
@@ -2896,7 +2908,9 @@ describe("grid-builder", () => {
           throw new Error("Hook error");
         });
 
-        const consoleErrorSpy = jest.spyOn(console, "error").mockImplementation();
+        const consoleErrorSpy = jest
+          .spyOn(console, "error")
+          .mockImplementation();
 
         const component = new GridBuilder();
         component.components = mockComponentDefinitions;
@@ -2965,7 +2979,9 @@ describe("grid-builder", () => {
       /**
        * Helper to create a mock hostElement with required methods
        */
-      const createMockHostElement = (querySelectorFn: (selector: string) => any) => ({
+      const createMockHostElement = (
+        querySelectorFn: (selector: string) => any,
+      ) => ({
         querySelector: jest.fn(querySelectorFn),
         addEventListener: jest.fn(),
         removeEventListener: jest.fn(),
@@ -2986,7 +3002,13 @@ describe("grid-builder", () => {
                 name: "Item 1",
                 layouts: {
                   desktop: { x: 0, y: 0, width: 10, height: 6 },
-                  mobile: { x: 0, y: 0, width: 50, height: 6, customized: false },
+                  mobile: {
+                    x: 0,
+                    y: 0,
+                    width: 50,
+                    height: 6,
+                    customized: false,
+                  },
                 },
                 zIndex: 1,
                 config: {},
@@ -2998,7 +3020,13 @@ describe("grid-builder", () => {
                 name: "Item 2",
                 layouts: {
                   desktop: { x: 0, y: 10, width: 10, height: 6 },
-                  mobile: { x: 0, y: 10, width: 50, height: 6, customized: false },
+                  mobile: {
+                    x: 0,
+                    y: 10,
+                    width: 50,
+                    height: 6,
+                    customized: false,
+                  },
                 },
                 zIndex: 2,
                 config: {},
@@ -3010,7 +3038,13 @@ describe("grid-builder", () => {
                 name: "Item 3",
                 layouts: {
                   desktop: { x: 0, y: 20, width: 10, height: 6 },
-                  mobile: { x: 0, y: 20, width: 50, height: 6, customized: false },
+                  mobile: {
+                    x: 0,
+                    y: 20,
+                    width: 50,
+                    height: 6,
+                    customized: false,
+                  },
                 },
                 zIndex: 3,
                 config: {},
@@ -3075,7 +3109,13 @@ describe("grid-builder", () => {
                 name: "Item 1",
                 layouts: {
                   desktop: { x: 0, y: 0, width: 10, height: 6 },
-                  mobile: { x: 0, y: 0, width: 50, height: 6, customized: false },
+                  mobile: {
+                    x: 0,
+                    y: 0,
+                    width: 50,
+                    height: 6,
+                    customized: false,
+                  },
                 },
                 zIndex: 1,
                 config: {},
@@ -3169,7 +3209,13 @@ describe("grid-builder", () => {
                 name: "Item 1",
                 layouts: {
                   desktop: { x: 0, y: 0, width: 10, height: 6 },
-                  mobile: { x: 0, y: 0, width: 50, height: 6, customized: false },
+                  mobile: {
+                    x: 0,
+                    y: 0,
+                    width: 50,
+                    height: 6,
+                    customized: false,
+                  },
                 },
                 zIndex: 1,
                 config: {},
@@ -3228,7 +3274,13 @@ describe("grid-builder", () => {
                 name: "Item 2",
                 layouts: {
                   desktop: { x: 10, y: 10, width: 10, height: 6 },
-                  mobile: { x: 0, y: 0, width: 50, height: 6, customized: false },
+                  mobile: {
+                    x: 0,
+                    y: 0,
+                    width: 50,
+                    height: 6,
+                    customized: false,
+                  },
                 },
                 zIndex: 1,
                 config: {},
@@ -3326,7 +3378,13 @@ describe("grid-builder", () => {
                 name: "Bottom Item",
                 layouts: {
                   desktop: { x: 0, y: 30, width: 10, height: 6 }, // Bottom
-                  mobile: { x: 0, y: 0, width: 50, height: 6, customized: false },
+                  mobile: {
+                    x: 0,
+                    y: 0,
+                    width: 50,
+                    height: 6,
+                    customized: false,
+                  },
                 },
                 zIndex: 1,
                 config: {},
@@ -3338,7 +3396,13 @@ describe("grid-builder", () => {
                 name: "Top Item",
                 layouts: {
                   desktop: { x: 0, y: 0, width: 10, height: 6 }, // Top
-                  mobile: { x: 0, y: 0, width: 50, height: 6, customized: false },
+                  mobile: {
+                    x: 0,
+                    y: 0,
+                    width: 50,
+                    height: 6,
+                    customized: false,
+                  },
                 },
                 zIndex: 2,
                 config: {},
@@ -3350,7 +3414,13 @@ describe("grid-builder", () => {
                 name: "Middle Item",
                 layouts: {
                   desktop: { x: 0, y: 15, width: 10, height: 6 }, // Middle
-                  mobile: { x: 0, y: 0, width: 50, height: 6, customized: false },
+                  mobile: {
+                    x: 0,
+                    y: 0,
+                    width: 50,
+                    height: 6,
+                    customized: false,
+                  },
                 },
                 zIndex: 3,
                 config: {},
@@ -3989,7 +4059,9 @@ describe("grid-builder", () => {
 
       // Verify name matches definition
       const addedItem = gridState.canvases["canvas1"].items[0];
-      const headerDef = mockComponentDefinitions.find((c) => c.type === "header");
+      const headerDef = mockComponentDefinitions.find(
+        (c) => c.type === "header",
+      );
       expect(addedItem.name).toBe(headerDef.name);
     });
 

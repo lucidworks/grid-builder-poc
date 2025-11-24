@@ -143,13 +143,13 @@ import "../live-data-drag-clone/live-data-drag-clone";
  *      ...
  *    />
  *    ```
-
-
-
-
-
-
-
+ 
+ 
+ 
+ 
+ 
+ 
+ 
  *
  * 2. Access the Grid Builder API:
  *    ```typescript
@@ -438,7 +438,10 @@ export class BlogApp {
     // Listen for palette-item-click events from external palettes
     // Note: External palettes are siblings to grid-builder, so @Listen decorator
     // in grid-builder can't catch these events. We need to listen on document.
-    document.addEventListener('palette-item-click', this.handleExternalPaletteClick as EventListener);
+    document.addEventListener(
+      "palette-item-click",
+      this.handleExternalPaletteClick as EventListener,
+    );
   }
 
   /**
@@ -469,7 +472,10 @@ export class BlogApp {
     }
 
     // Remove palette-item-click listener
-    document.removeEventListener('palette-item-click', this.handleExternalPaletteClick as EventListener);
+    document.removeEventListener(
+      "palette-item-click",
+      this.handleExternalPaletteClick as EventListener,
+    );
 
     // Remove API event listeners
     if (this.api) {
@@ -602,7 +608,9 @@ export class BlogApp {
    * This demonstrates the pattern for using multiple external palettes with
    * grid-builder in custom layouts.
    */
-  private handleExternalPaletteClick = async (event: CustomEvent<{ componentType: string }>) => {
+  private handleExternalPaletteClick = async (
+    event: CustomEvent<{ componentType: string }>,
+  ) => {
     if (!this.api) {
       console.warn("API not ready for palette click");
       return;
@@ -621,11 +629,11 @@ export class BlogApp {
     // Since we're listening on document, we need to manually trigger
     // grid-builder's handler by dispatching to it directly.
 
-    const gridBuilderElement = document.querySelector('grid-builder');
+    const gridBuilderElement = document.querySelector("grid-builder");
     if (gridBuilderElement) {
       // Re-dispatch event to grid-builder so its @Listen decorator catches it
       // IMPORTANT: bubbles: false prevents infinite loop (event bubbling back to document)
-      const newEvent = new CustomEvent('palette-item-click', {
+      const newEvent = new CustomEvent("palette-item-click", {
         detail: { componentType },
         bubbles: false, // Don't bubble - prevents infinite loop
         composed: true,
@@ -931,10 +939,7 @@ export class BlogApp {
    * - Space key: Toggle category expand/collapse
    * - Prevents default behavior to avoid page scrolling on Space
    */
-  private handleCategoryKeyDown = (
-    event: KeyboardEvent,
-    category: string,
-  ) => {
+  private handleCategoryKeyDown = (event: KeyboardEvent, category: string) => {
     if (event.key === "Enter" || event.key === " ") {
       event.preventDefault();
       this.toggleCategory(category);
@@ -1023,7 +1028,7 @@ export class BlogApp {
             type: "blog-button",
             name: "Hero CTA",
             layouts: {
-              desktop: { x: 15, y: 7, width: 20, height: 4 },  // 4 units × 20px = 80px (matches CSS min-height)
+              desktop: { x: 15, y: 7, width: 20, height: 4 }, // 4 units × 20px = 80px (matches CSS min-height)
               mobile: {
                 x: null,
                 y: null,
@@ -1167,7 +1172,7 @@ export class BlogApp {
             type: "blog-button",
             name: "Subscribe Button",
             layouts: {
-              desktop: { x: 15, y: 5, width: 20, height: 4 },  // 4 units × 20px = 80px (matches CSS min-height)
+              desktop: { x: 15, y: 5, width: 20, height: 4 }, // 4 units × 20px = 80px (matches CSS min-height)
               mobile: {
                 x: null,
                 y: null,
@@ -1193,7 +1198,6 @@ export class BlogApp {
    *
    * Merges canvas metadata with preview state for rendering.
    * Preview state takes precedence over saved metadata for live preview.
-   *
    * @param canvasId - Canvas ID to get metadata for
    * @returns Merged metadata object with title and backgroundColor
    */

@@ -111,14 +111,12 @@ declare global {
      *
      * Loaded via CDN script tag in demo HTML
      * Used by drag-handler.ts and resize-handler.ts
-     *
      * @see https://interactjs.io/
      */
     interact?: typeof interact;
 
     /**
      * Grid reactive state
-     *
      * @stencil/store reactive state object
      * Attached to window for debugging and plugin access
      *
@@ -132,7 +130,6 @@ declare global {
      *
      * IntersectionObserver-based lazy rendering service
      * Attached to window for component access
-     *
      * @see virtual-renderer.ts
      */
     virtualRenderer?: VirtualRendererService;
@@ -159,7 +156,6 @@ declare global {
      *
      * Global event bus for component and plugin communication
      * Attached to window for plugin access
-     *
      * @see event-manager.ts
      */
     eventManager?: EventManager;

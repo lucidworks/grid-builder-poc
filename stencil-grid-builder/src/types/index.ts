@@ -4,7 +4,6 @@
  *
  * Central export point for all grid builder type definitions.
  * Import from this file for convenient access to all types.
- *
  * @example
  * ```typescript
  * import {

@@ -321,10 +321,8 @@ declare module "interactjs" {
    * Main interact function
    *
    * Creates an Interactable from a DOM element or CSS selector
-   *
    * @param target - DOM element or CSS selector
    * @returns Interactable instance for chaining configuration
-   *
    * @example
    * ```typescript
    * import interact from 'interactjs';

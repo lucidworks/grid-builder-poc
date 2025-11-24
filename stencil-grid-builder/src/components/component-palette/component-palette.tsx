@@ -28,8 +28,8 @@
  * **Chromeless mode (no header)**:
  * ```typescript
  * <component-palette
- *   components={componentDefinitions}
- *   showHeader={false}
+ * components={componentDefinitions}
+ * showHeader={false}
  * />
  * ```
  *
@@ -93,7 +93,6 @@
  *
  * **Optimization**: Drag clone uses `position: fixed` + `pointer-events: none`
  * to avoid triggering layout recalculations during drag.
- *
  * @module component-palette
  */
 
@@ -240,15 +239,14 @@ export class ComponentPalette {
    * **Example - Chromeless with custom wrapper**:
    * ```typescript
    * <div class="my-custom-sidebar">
-   *   <h3 class="my-title">Available Components</h3>
-   *   <p class="my-description">Drag to add</p>
-   *   <component-palette
-   *     components={componentDefinitions}
-   *     showHeader={false}
-   *   />
+   * <h3 class="my-title">Available Components</h3>
+   * <p class="my-description">Drag to add</p>
+   * <component-palette
+   * components={componentDefinitions}
+   * showHeader={false}
+   * />
    * </div>
    * ```
-   *
    * @default true
    */
   @Prop() showHeader?: boolean = true;
@@ -266,16 +264,16 @@ export class ComponentPalette {
    *
    * ```typescript
    * <component-palette
-   *   components={contentComponents}
-   *   paletteLabel="Content components"
+   * components={contentComponents}
+   * paletteLabel="Content components"
    * />
    * <component-palette
-   *   components={mediaComponents}
-   *   paletteLabel="Media components"
+   * components={mediaComponents}
+   * paletteLabel="Media components"
    * />
    * <component-palette
-   *   components={interactiveComponents}
-   *   paletteLabel="Interactive components"
+   * components={interactiveComponents}
+   * paletteLabel="Interactive components"
    * />
    * ```
    *
@@ -283,7 +281,6 @@ export class ComponentPalette {
    * - Screen readers announce: "Content components, toolbar"
    * - Users can navigate between palettes by their distinct labels
    * - Each palette has unique ARIA IDs to avoid conflicts
-   *
    * @default "Component palette"
    */
   @Prop() paletteLabel?: string = "Component palette";
@@ -328,7 +325,8 @@ export class ComponentPalette {
    * </div>
    * ```
    */
-  @State() private paletteId: string = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+  @State() private paletteId: string =
+    `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
   /**
    * Watch for components prop changes
@@ -442,13 +440,20 @@ export class ComponentPalette {
       return (
         <div class={paletteClasses}>
           {this.showHeader && <h2>Components</h2>}
-          <p class="palette-empty" role="status" aria-live="polite">No components available</p>
+          <p class="palette-empty" role="status" aria-live="polite">
+            No components available
+          </p>
         </div>
       );
     }
 
     return (
-      <div class={paletteClasses} role="toolbar" aria-label={this.paletteLabel} aria-orientation="vertical">
+      <div
+        class={paletteClasses}
+        role="toolbar"
+        aria-label={this.paletteLabel}
+        aria-orientation="vertical"
+      >
         {/* Screen reader help text with unique ID per instance */}
         <div id={helpTextId} class="sr-only">
           {this.config?.enableClickToAdd !== false
@@ -467,9 +472,10 @@ export class ComponentPalette {
           };
 
           // Improved aria-label with interaction methods
-          const ariaLabel = this.config?.enableClickToAdd !== false
-            ? `${component.name} component. Click to add to active canvas or drag to position`
-            : `${component.name} component. Drag to canvas`;
+          const ariaLabel =
+            this.config?.enableClickToAdd !== false
+              ? `${component.name} component. Click to add to active canvas or drag to position`
+              : `${component.name} component. Drag to canvas`;
 
           return (
             <div
@@ -480,7 +486,9 @@ export class ComponentPalette {
               tabindex={0}
               aria-label={ariaLabel}
               aria-describedby={helpTextId}
-              aria-pressed={this.draggingItemType === component.type ? "true" : "false"}
+              aria-pressed={
+                this.draggingItemType === component.type ? "true" : "false"
+              }
               onClick={(e) => this.handlePaletteItemClick(e)}
               onKeyDown={(e) => this.handlePaletteItemKeyDown(e)}
             >
@@ -498,7 +506,9 @@ export class ComponentPalette {
                       return (
                         <div
                           ref={(el) =>
-                            el && !el.hasChildNodes() && el.appendChild(rendered)
+                            el &&
+                            !el.hasChildNodes() &&
+                            el.appendChild(rendered)
                           }
                         />
                       );
@@ -553,8 +563,6 @@ export class ComponentPalette {
    * - No closure needed
    * - Automatic cleanup when element removed
    * - Per-element isolation (multiple drags)
-   *
-   * @private
    */
   private initializePaletteItems = () => {
     // IMPORTANT: Scope to only palette items within THIS component instance
@@ -614,7 +622,6 @@ export class ComponentPalette {
            * left = clientX - halfWidth
            * top = clientY - halfHeight
            * ```
-           *
            * @param event - interact.js drag start event
            */
           start: (event: any) => {
@@ -751,7 +758,6 @@ export class ComponentPalette {
            * - `position: fixed` + `pointer-events: none` avoids reflow
            * - No DOM queries (uses stored reference)
            * - Runs at ~60fps even with 100+ items on canvas
-           *
            * @param event - interact.js drag move event
            */
           move: (event: any) => {
@@ -792,7 +798,6 @@ export class ComponentPalette {
            * - Prevents memory leaks
            * - Allows garbage collection of clone element
            * - Clean state for next drag
-           *
            * @param event - interact.js drag end event
            */
           end: (event: any) => {
@@ -870,13 +875,11 @@ export class ComponentPalette {
    * ```typescript
    * @Listen('palette-item-click')
    * handlePaletteClick(event: CustomEvent<{ componentType: string }>) {
-   *   const { componentType } = event.detail;
-   *   this.addComponentToActiveCanvas(componentType);
+   * const { componentType } = event.detail;
+   * this.addComponentToActiveCanvas(componentType);
    * }
    * ```
-   *
    * @param event - Mouse click event
-   * @private
    */
   private handlePaletteItemClick = (event: MouseEvent) => {
     // Check if click-to-add is enabled (default: true)
@@ -891,20 +894,22 @@ export class ComponentPalette {
     }
 
     // Get the palette item element (in case event.target is a nested child)
-    const paletteItem = (event.target as HTMLElement).closest('.palette-item') as HTMLElement;
+    const paletteItem = (event.target as HTMLElement).closest(
+      ".palette-item",
+    ) as HTMLElement;
     if (!paletteItem) {
       return;
     }
 
     // Get component type from data attribute
-    const componentType = paletteItem.getAttribute('data-component-type');
+    const componentType = paletteItem.getAttribute("data-component-type");
     if (!componentType) {
-      console.warn('handlePaletteItemClick: Component type not found');
+      console.warn("handlePaletteItemClick: Component type not found");
       return;
     }
 
     // Dispatch event for grid-builder to handle
-    const clickEvent = new CustomEvent('palette-item-click', {
+    const clickEvent = new CustomEvent("palette-item-click", {
       detail: { componentType },
       bubbles: true,
       composed: true,
@@ -938,9 +943,7 @@ export class ComponentPalette {
    * **WCAG Compliance**:
    * - 2.1.1 Keyboard (Level A): All functionality available via keyboard
    * - 2.1.3 Keyboard (No Exception) (Level AAA): Enhanced keyboard access
-   *
    * @param event - Keyboard event
-   * @private
    */
   private handlePaletteItemKeyDown = (event: KeyboardEvent) => {
     // Check if click-to-add is enabled (default: true)
@@ -950,7 +953,7 @@ export class ComponentPalette {
     }
 
     // Handle Enter and Space keys
-    if (event.key === 'Enter' || event.key === ' ') {
+    if (event.key === "Enter" || event.key === " ") {
       // Prevent default Space behavior (page scroll)
       event.preventDefault();
 

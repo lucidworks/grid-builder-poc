@@ -50,7 +50,6 @@ export interface GridConfig {
    * **Impact**:
    * - Smaller % = more granular positioning
    * - Larger % = less granular, easier alignment
-   *
    * @default 2
    */
   gridSizePercent?: number;
@@ -71,7 +70,6 @@ export interface GridConfig {
    * **Impact**:
    * - Smaller value = more granular vertical positioning
    * - Larger value = less granular, larger minimum heights
-   *
    * @default 20
    */
   verticalGridSize?: number;
@@ -87,7 +85,6 @@ export interface GridConfig {
    * - 5: Allow very small grids (mobile)
    * - 10: Standard minimum ✅ Recommended
    * - 20: Larger minimum (desktop-only)
-   *
    * @default 10
    */
   minGridSize?: number;
@@ -103,7 +100,6 @@ export interface GridConfig {
    * - 30: Smaller maximum (fine positioning)
    * - 50: Standard maximum ✅ Recommended
    * - 100: Larger maximum (coarse positioning)
-   *
    * @default 50
    */
   maxGridSize?: number;
@@ -118,7 +114,6 @@ export interface GridConfig {
    * **Use cases**:
    * - true: Consistent alignment, easier UI building ✅ Recommended
    * - false: Precise control, artistic freedom
-   *
    * @default true
    */
   snapToGrid?: boolean;
@@ -136,7 +131,6 @@ export interface GridConfig {
    * - { width: 10, height: 8 }: Large minimum
    *
    * **Note**: Components can override with their own minSize in ComponentDefinition
-   *
    * @default { width: 5, height: 4 }
    */
   minItemSize?: {
@@ -154,7 +148,6 @@ export interface GridConfig {
    * **Use cases**:
    * - true: Helps users align items ✅ Recommended for building
    * - false: Cleaner look for presentations/previews
-   *
    * @default true
    */
   showGridLines?: boolean;
@@ -171,14 +164,14 @@ export interface GridConfig {
    *
    * **Recommended (percentage - adapts to screen size):**
    * - '20%' (default): Balanced - smooth loading on all devices ✅
-   *   - Mobile (667px): 133px margin
-   *   - Desktop (1080px): 216px margin
+   * - Mobile (667px): 133px margin
+   * - Desktop (1080px): 216px margin
    * - '30%': Aggressive - better for slow devices/connections, uses more memory
-   *   - Mobile: 200px margin
-   *   - Desktop: 324px margin
+   * - Mobile: 200px margin
+   * - Desktop: 324px margin
    * - '10%': Conservative - less memory, might see brief pop-in
-   *   - Mobile: 67px margin
-   *   - Desktop: 108px margin
+   * - Mobile: 67px margin
+   * - Desktop: 108px margin
    *
    * **Alternative (pixels - fixed distance):**
    * - '200px': Fixed 200px margin (good for desktop-only apps)
@@ -199,7 +192,6 @@ export interface GridConfig {
    * - Pre-render margin controls when components **start** rendering
    * - Once rendered, components **stay** rendered (no de-rendering)
    * - Virtual rendering is enabled by default (see enableVirtualRendering)
-   *
    * @default '20%'
    */
   virtualRenderMargin?: string;
@@ -233,28 +225,27 @@ export interface GridConfig {
    *
    * **Performance impact**:
    * - **With 100 components**:
-   *   - Enabled: ~200ms initial load, renders 10-20 components
-   *   - Disabled: ~2000ms initial load, renders all 100 components
+   * - Enabled: ~200ms initial load, renders 10-20 components
+   * - Disabled: ~2000ms initial load, renders all 100 components
    * - **With 500 components**:
-   *   - Enabled: ~300ms initial load, renders 20-40 components
-   *   - Disabled: ~10,000ms initial load, renders all 500 components
+   * - Enabled: ~300ms initial load, renders 20-40 components
+   * - Disabled: ~10,000ms initial load, renders all 500 components
    *
    * **Example - Disable for Storybook**:
    * ```typescript
    * const storybookConfig: GridConfig = {
-   *   enableVirtualRendering: false,  // Disable for Storybook iframe compatibility
-   *   virtualRenderMargin: '20%'      // Not used when disabled
+   * enableVirtualRendering: false,  // Disable for Storybook iframe compatibility
+   * virtualRenderMargin: '20%'      // Not used when disabled
    * };
    * ```
    *
    * **Example - Enable for production**:
    * ```typescript
    * const productionConfig: GridConfig = {
-   *   enableVirtualRendering: true,   // Default behavior
-   *   virtualRenderMargin: '30%'      // Aggressive pre-loading
+   * enableVirtualRendering: true,   // Default behavior
+   * virtualRenderMargin: '30%'      // Aggressive pre-loading
    * };
    * ```
-   *
    * @default true
    */
   enableVirtualRendering?: boolean;
@@ -294,18 +285,17 @@ export interface GridConfig {
    * **Example - Auto-save with debouncing**:
    * ```typescript
    * const config: GridConfig = {
-   *   eventDebounceDelay: 500  // Wait 500ms after last change before saving
+   * eventDebounceDelay: 500  // Wait 500ms after last change before saving
    * };
    *
    * api.on('stateChanged', async () => {
-   *   // This only fires 500ms after user stops making changes
-   *   await fetch('/api/save', {
-   *     method: 'POST',
-   *     body: JSON.stringify(await api.exportState())
-   *   });
+   * // This only fires 500ms after user stops making changes
+   * await fetch('/api/save', {
+   * method: 'POST',
+   * body: JSON.stringify(await api.exportState())
+   * });
    * });
    * ```
-   *
    * @default 300
    */
   eventDebounceDelay?: number;
@@ -337,10 +327,9 @@ export interface GridConfig {
    * **Example - Disable auto-scroll**:
    * ```typescript
    * const config: GridConfig = {
-   *   enableAutoScroll: false  // Disable if grid fits in viewport
+   * enableAutoScroll: false  // Disable if grid fits in viewport
    * };
    * ```
-   *
    * @default true
    */
   enableAutoScroll?: boolean;
@@ -377,11 +366,10 @@ export interface GridConfig {
    * **Example - Enable animations**:
    * ```typescript
    * const config: GridConfig = {
-   *   enableAnimations: true,       // Enable smooth transitions
-   *   animationDuration: 150        // Fast animations (150ms)
+   * enableAnimations: true,       // Enable smooth transitions
+   * animationDuration: 150        // Fast animations (150ms)
    * };
    * ```
-   *
    * @default true
    */
   enableAnimations?: boolean;
@@ -407,11 +395,10 @@ export interface GridConfig {
    * **Example - Fast animations**:
    * ```typescript
    * const config: GridConfig = {
-   *   enableAnimations: true,
-   *   animationDuration: 150  // Fast, snappy animations
+   * enableAnimations: true,
+   * animationDuration: 150  // Fast, snappy animations
    * };
    * ```
-   *
    * @default 100
    */
   animationDuration?: number;
@@ -444,10 +431,9 @@ export interface GridConfig {
    * **Example - Spacious canvas margins**:
    * ```typescript
    * const config: GridConfig = {
-   *   canvasBottomMargin: 10  // Extra space for new items
+   * canvasBottomMargin: 10  // Extra space for new items
    * };
    * ```
-   *
    * @default 5
    */
   canvasBottomMargin?: number;
@@ -482,8 +468,8 @@ export interface GridConfig {
    * **Example - Compact mobile canvas**:
    * ```typescript
    * const mobileConfig: GridConfig = {
-   *   canvasMinHeight: 15,     // Smaller minimum for mobile
-   *   verticalGridSize: 15     // Smaller grid for mobile
+   * canvasMinHeight: 15,     // Smaller minimum for mobile
+   * verticalGridSize: 15     // Smaller grid for mobile
    * };
    * // Result: 15 × 15px = 225px minimum height
    * ```
@@ -491,12 +477,11 @@ export interface GridConfig {
    * **Example - Spacious desktop canvas**:
    * ```typescript
    * const desktopConfig: GridConfig = {
-   *   canvasMinHeight: 25,     // Larger minimum for desktop
-   *   verticalGridSize: 20     // Standard grid
+   * canvasMinHeight: 25,     // Larger minimum for desktop
+   * verticalGridSize: 20     // Standard grid
    * };
    * // Result: 25 × 20px = 500px minimum height
    * ```
-   *
    * @default 20
    */
   canvasMinHeight?: number;
@@ -548,17 +533,17 @@ export interface GridConfig {
    * **Example - Disable click-to-add (drag-only)**:
    * ```typescript
    * const dragOnlyConfig: GridConfig = {
-   *   enableClickToAdd: false  // Only allow drag-and-drop
+   * enableClickToAdd: false  // Only allow drag-and-drop
    * };
    * ```
    *
    * **Example - Enable with custom settings**:
    * ```typescript
    * const clickToAddConfig: GridConfig = {
-   *   enableClickToAdd: true,        // Allow click-to-add
-   *   enableAnimations: true,        // Smooth animations for visual feedback
-   *   animationDuration: 200,        // Slightly longer for click feedback
-   *   canvasBottomMargin: 10         // Extra space for new items
+   * enableClickToAdd: true,        // Allow click-to-add
+   * enableAnimations: true,        // Smooth animations for visual feedback
+   * animationDuration: 200,        // Slightly longer for click feedback
+   * canvasBottomMargin: 10         // Extra space for new items
    * };
    * ```
    *
@@ -568,7 +553,6 @@ export interface GridConfig {
    * - Click-to-add: Automatic placement, faster workflow
    * - Both use same underlying api.addComponent()
    * - Both emit same events (componentAdded, canvasActivated)
-   *
    * @default true
    */
   enableClickToAdd?: boolean;

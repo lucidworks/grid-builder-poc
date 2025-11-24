@@ -297,8 +297,8 @@ describe("virtual-renderer", () => {
 
       // Mock getBoundingClientRect to make element appear outside viewport
       // This prevents the synchronous callback from firing
-      jest.spyOn(mockElement, 'getBoundingClientRect').mockReturnValue({
-        top: 2000,  // Far below viewport
+      jest.spyOn(mockElement, "getBoundingClientRect").mockReturnValue({
+        top: 2000, // Far below viewport
         bottom: 2100,
         left: 0,
         right: 100,
@@ -306,7 +306,7 @@ describe("virtual-renderer", () => {
         height: 100,
         x: 0,
         y: 2000,
-        toJSON: () => ({})
+        toJSON: () => ({}),
       } as DOMRect);
 
       service.observe(mockElement, "test-element", (visible) => {

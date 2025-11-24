@@ -21,15 +21,15 @@
  * Hybrid approach combining interact.js resize events with RAF-batched DOM updates:
  *
  * 1. **During resize** (60fps): Direct DOM updates via RAF batching
- *    - No state updates
- *    - No re-renders
- *    - Smooth visual feedback
- *    - Batched with requestAnimationFrame
+ * - No state updates
+ * - No re-renders
+ * - Smooth visual feedback
+ * - Batched with requestAnimationFrame
  *
  * 2. **After resize** (single operation): Update StencilJS state once
- *    - Trigger single re-render
- *    - Persist final dimensions
- *    - Emit undo/redo commands
+ * - Trigger single re-render
+ * - Persist final dimensions
+ * - Emit undo/redo commands
  *
  * ## Key Architecture Decisions
  *
@@ -51,10 +51,10 @@
  * **Pattern**:
  * ```typescript
  * handleResizeMove(event) {
- *   cancelAnimationFrame(this.rafId);
- *   this.rafId = requestAnimationFrame(() => {
- *     // Apply DOM updates once per frame
- *   });
+ * cancelAnimationFrame(this.rafId);
+ * this.rafId = requestAnimationFrame(() => {
+ * // Apply DOM updates once per frame
+ * });
  * }
  * ```
  *
@@ -78,8 +78,8 @@
  * **interact.js modifier**:
  * ```typescript
  * interact.modifiers.snap({
- *   targets: [interact.snappers.grid({ x: gridSizeX, y: gridSizeY })],
- *   endOnly: true  // Critical: prevents mid-resize jumps
+ * targets: [interact.snappers.grid({ x: gridSizeX, y: gridSizeY })],
+ * endOnly: true  // Critical: prevents mid-resize jumps
  * })
  * ```
  *
@@ -154,33 +154,33 @@
  *
  * ```typescript
  * class MyResizeHandler {
- *   private rafId: number | null = null;
- *   private startRect = { x: 0, y: 0, width: 0, height: 0 };
+ * private rafId: number | null = null;
+ * private startRect = { x: 0, y: 0, width: 0, height: 0 };
  *
- *   handleResizeMove(e) {
- *     // Cancel previous frame
- *     if (this.rafId) cancelAnimationFrame(this.rafId);
+ * handleResizeMove(e) {
+ * // Cancel previous frame
+ * if (this.rafId) cancelAnimationFrame(this.rafId);
  *
- *     // Batch with RAF
- *     this.rafId = requestAnimationFrame(() => {
- *       // Accumulate deltas
- *       this.startRect.x += e.deltaRect.left;
- *       this.startRect.y += e.deltaRect.top;
- *       this.startRect.width += e.deltaRect.width;
- *       this.startRect.height += e.deltaRect.height;
+ * // Batch with RAF
+ * this.rafId = requestAnimationFrame(() => {
+ * // Accumulate deltas
+ * this.startRect.x += e.deltaRect.left;
+ * this.startRect.y += e.deltaRect.top;
+ * this.startRect.width += e.deltaRect.width;
+ * this.startRect.height += e.deltaRect.height;
  *
- *       // Direct DOM update
- *       e.target.style.transform = `translate(${this.startRect.x}px, ${this.startRect.y}px)`;
- *       e.target.style.width = this.startRect.width + 'px';
- *       e.target.style.height = this.startRect.height + 'px';
- *     });
- *   }
+ * // Direct DOM update
+ * e.target.style.transform = `translate(${this.startRect.x}px, ${this.startRect.y}px)`;
+ * e.target.style.width = this.startRect.width + 'px';
+ * e.target.style.height = this.startRect.height + 'px';
+ * });
+ * }
  *
- *   handleResizeEnd(e) {
- *     cancelAnimationFrame(this.rafId);
- *     // Single state update
- *     this.updateState(this.startRect);
- *   }
+ * handleResizeEnd(e) {
+ * cancelAnimationFrame(this.rafId);
+ * // Single state update
+ * this.updateState(this.startRect);
+ * }
  * }
  * ```
  *
@@ -191,12 +191,15 @@
  * - **state-manager**: Single state update at resize end
  * - **undo-redo**: Command pushed via onUpdate callback
  * - **interact.js**: Event source for resize lifecycle + modifiers
- *
  * @module resize-handler
  */
 
 import type { InteractResizeEvent, Interactable } from "interactjs";
-import { GridItem, setActiveCanvas, gridState } from "../services/state-manager";
+import {
+  GridItem,
+  setActiveCanvas,
+  gridState,
+} from "../services/state-manager";
 import { ComponentDefinition } from "../types/component-definition";
 import { GridConfig } from "../types/grid-config";
 import { domCache } from "./dom-cache";
@@ -223,10 +226,8 @@ const debug = createDebugLogger("resize-handler");
  *
  * **Pattern shared with drag-handler**: Both drag and resize need base position
  * extraction, so this function is duplicated (could be extracted to shared utility).
- *
  * @param element - Element with transform style
  * @returns Current x,y position in pixels, or {0,0} if no transform
- *
  * @example
  * ```typescript
  * const el = document.getElementById('item-1');
@@ -278,7 +279,6 @@ function getTransformPosition(element: HTMLElement): { x: number; y: number } {
  * - High-frequency events (move): RAF-batched DOM updates
  * - Low-frequency events (start/end): State updates + event tracking
  * - Cancel pending RAF on each move (only last frame executes)
- *
  * @example
  * ```typescript
  * // In grid-item-wrapper.tsx
@@ -365,12 +365,10 @@ export class ResizeHandler {
    *
    * **Error handling**:
    * Warns but continues if styles missing (won't break app, just logs issue)
-   *
    * @param element - DOM element to make resizable (grid-item-wrapper)
    * @param item - Grid item data for dimension/position management
    * @param onUpdate - Callback invoked with updated item after resize ends
    * @param componentDefinition - Optional component definition for min/max size constraints
-   *
    * @example
    * ```typescript
    * // Typical usage in component
@@ -430,7 +428,6 @@ export class ResizeHandler {
    * 3. Safe to call multiple times (checks if instances exist)
    *
    * **Performance**: Very cheap operation (~0.1ms)
-   *
    * @example
    * ```typescript
    * // In grid-item-wrapper component
@@ -466,16 +463,16 @@ export class ResizeHandler {
    * Order matters! Modifiers are applied in sequence:
    *
    * 1. **restrictSize modifier**: Enforces minimum dimensions
-   *    - min width: 100px (~5 grid units)
-   *    - min height: 80px (~4 grid units)
-   *    - Prevents unusably small items
-   *    - No maximum (items can grow to canvas bounds)
+   * - min width: 100px (~5 grid units)
+   * - min height: 80px (~4 grid units)
+   * - Prevents unusably small items
+   * - No maximum (items can grow to canvas bounds)
    *
    * 2. **snap modifier with endOnly: true**:
-   *    - Snaps to grid ONLY at resize end
-   *    - **Critical**: endOnly prevents mid-resize jumping
-   *    - Uses function callbacks for dynamic grid sizes
-   *    - range: Infinity means always snap (no distance limit)
+   * - Snaps to grid ONLY at resize end
+   * - **Critical**: endOnly prevents mid-resize jumping
+   * - Uses function callbacks for dynamic grid sizes
+   * - range: Infinity means always snap (no distance limit)
    *
    * **Why function callbacks for grid sizes**:
    * ```typescript
@@ -494,9 +491,6 @@ export class ResizeHandler {
    * - Checks if interact.js loaded (from CDN)
    * - Fails gracefully with console warning
    * - Prevents app crash if CDN fails
-   *
-   * @private
-   *
    * @example
    * ```typescript
    * // interact.js resizable configuration
@@ -610,10 +604,10 @@ export class ResizeHandler {
    * **startRect structure**:
    * ```typescript
    * {
-   *   x: 100,      // Starting transform X
-   *   y: 150,      // Starting transform Y
-   *   width: 300,  // Starting width in pixels
-   *   height: 200  // Starting height in pixels
+   * x: 100,      // Starting transform X
+   * y: 150,      // Starting transform Y
+   * width: 300,  // Starting width in pixels
+   * height: 200  // Starting height in pixels
    * }
    * ```
    *
@@ -621,10 +615,7 @@ export class ResizeHandler {
    * - Optional perfMonitor integration
    * - Measures total resize duration (start → end)
    * - Helps identify performance regressions
-   *
-   * @private
    * @param event - interact.js resize start event
-   *
    * @example
    * ```typescript
    * // Event provides element reference
@@ -684,8 +675,8 @@ export class ResizeHandler {
    *
    * cancelAnimationFrame(oldId);  // Cancel previous pending frame
    * newId = requestAnimationFrame(() => {
-   *   // DOM updates execute once per browser paint (~60fps)
-   *   element.style.width = newWidth + 'px';
+   * // DOM updates execute once per browser paint (~60fps)
+   * element.style.width = newWidth + 'px';
    * });
    * ```
    *
@@ -720,9 +711,9 @@ export class ResizeHandler {
    * - Cancel previous RAF: ~0.01ms
    * - Schedule new RAF: ~0.01ms
    * - Actual DOM update (in RAF callback):
-   *   - 3 style updates (transform, width, height)
-   *   - No layout/reflow (transform is composited)
-   *   - ~0.5-1ms total
+   * - 3 style updates (transform, width, height)
+   * - No layout/reflow (transform is composited)
+   * - ~0.5-1ms total
    *
    * **Without RAF batching**:
    * - 200 updates/sec × 1ms = 200ms/sec wasted
@@ -731,10 +722,7 @@ export class ResizeHandler {
    * **With RAF batching**:
    * - 60 updates/sec × 1ms = 60ms/sec
    * - Smooth, no dropped frames
-   *
-   * @private
    * @param event - interact.js resize move event
-   *
    * @example
    * ```typescript
    * // Event provides deltaRect (cumulative changes)
@@ -936,10 +924,7 @@ export class ResizeHandler {
    * - Container not found → early exit (safety)
    * - Mobile view → mark as customized
    * - Pending RAF → cancelled before state update
-   *
-   * @private
    * @param event - interact.js resize end event
-   *
    * @example
    * ```typescript
    * // Example resize sequence (top-left handle):
@@ -1229,12 +1214,13 @@ export class ResizeHandler {
     // IMPORTANT: Get latest item from state to preserve any config changes
     // that occurred during resize (e.g., backgroundColor changes)
     const canvas = gridState.canvases[this.item.canvasId];
-    const latestItem = canvas?.items.find(i => i.id === this.item.id);
+    const latestItem = canvas?.items.find((i) => i.id === this.item.id);
     const itemToUpdate = latestItem || this.item; // Fallback to stored item if not found
 
     // Update item size and position in current viewport's layout (convert to grid units)
     const currentViewport = gridState.currentViewport || "desktop";
-    const layout = itemToUpdate.layouts[currentViewport as "desktop" | "mobile"];
+    const layout =
+      itemToUpdate.layouts[currentViewport as "desktop" | "mobile"];
 
     layout.width = pixelsToGridX(newWidth, itemToUpdate.canvasId, this.config);
     layout.height = pixelsToGridY(newHeight, this.config);

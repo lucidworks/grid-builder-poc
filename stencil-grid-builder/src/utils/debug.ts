@@ -45,7 +45,6 @@
  * - Production: debug.log() calls are no-ops (dead code elimination)
  * - Tree-shaking removes unused debug code
  * - Zero runtime overhead in production
- *
  * @module debug
  */
 
@@ -59,7 +58,6 @@
  * **Disabled when**:
  * - NODE_ENV === 'production'
  * - NODE_ENV === 'test' AND ENABLE_TEST_LOGS !== true
- *
  * @returns true if debug logging should be enabled
  */
 function isDebugEnabled(): boolean {
@@ -99,9 +97,7 @@ export const debug = {
    *
    * **Production**: No-op (dead code eliminated)
    * **Development**: console.log output
-   *
    * @param args - Arguments to pass to console.log
-   *
    * @example
    * ```typescript
    * debug.log('Item added:', item);
@@ -124,9 +120,7 @@ export const debug = {
    *
    * **Production**: No-op (dead code eliminated)
    * **Development**: console.warn output
-   *
    * @param args - Arguments to pass to console.warn
-   *
    * @example
    * ```typescript
    * debug.warn('Deprecated API usage:', methodName);
@@ -148,9 +142,7 @@ export const debug = {
    *
    * **Production**: No-op (dead code eliminated)
    * **Development**: console.error output
-   *
    * @param args - Arguments to pass to console.error
-   *
    * @example
    * ```typescript
    * debug.error('Failed to initialize drag handler:', error);
@@ -169,10 +161,8 @@ export const debug = {
    *
    * **Production**: No-op (dead code eliminated)
    * **Development**: console.group/groupEnd output
-   *
    * @param label - Group label
    * @param fn - Function to execute within group
-   *
    * @example
    * ```typescript
    * debug.group('Drag operation', () => {
@@ -194,9 +184,7 @@ export const debug = {
    * Check if debug mode is enabled
    *
    * **Use for**: Expensive debug operations that should be skipped in production
-   *
    * @returns true if debug logging is enabled
-   *
    * @example
    * ```typescript
    * if (debug.isEnabled()) {
@@ -215,10 +203,8 @@ export const debug = {
  * Create a namespaced debug logger
  *
  * **Use for**: Module-specific logging with consistent prefixes
- *
  * @param namespace - Namespace for log messages (e.g., 'drag-handler', 'grid-calculations')
  * @returns Debug logger with namespace prefix
- *
  * @example
  * ```typescript
  * // In drag-handler.ts

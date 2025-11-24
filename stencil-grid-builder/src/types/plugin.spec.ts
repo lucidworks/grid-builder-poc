@@ -18,7 +18,7 @@ class MockLoggerPlugin {
   api: GridBuilderAPI | null = null;
   initCalled = false;
   destroyCalled = false;
-  events: Array<{ type: string; data: any }> = [];
+  events: { type: string; data: any }[] = [];
 
   init(api: GridBuilderAPI): void {
     this.api = api;

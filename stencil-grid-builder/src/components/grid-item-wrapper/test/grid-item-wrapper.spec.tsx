@@ -207,7 +207,7 @@ describe("grid-item-wrapper - Active Canvas", () => {
           <grid-item-wrapper
             item={mockItem}
             componentRegistry={mockComponentRegistry}
-            viewerMode={true}
+            viewerMode
           />
         ),
       });
@@ -778,7 +778,7 @@ describe("grid-item-wrapper - Active Canvas", () => {
           <grid-item-wrapper
             item={mockItem}
             componentRegistry={mockComponentRegistry}
-            viewerMode={true}
+            viewerMode
           />
         ),
       });
@@ -800,7 +800,7 @@ describe("grid-item-wrapper - Active Canvas", () => {
           <grid-item-wrapper
             item={mockItem}
             componentRegistry={mockComponentRegistry}
-            viewerMode={true}
+            viewerMode
           />
         ),
       });

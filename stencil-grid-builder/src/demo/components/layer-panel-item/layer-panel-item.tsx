@@ -16,23 +16,29 @@
  *
  * ```typescript
  * <layer-panel-item
- *   itemId="item-123"
- *   canvasId="canvas1"
- *   name="Header Component"
- *   type="header"
- *   zIndex={5}
- *   isActive={false}
+ * itemId="item-123"
+ * canvasId="canvas1"
+ * name="Header Component"
+ * type="header"
+ * zIndex={5}
+ * isActive={false}
  * />
  * ```
- *
  * @module layer-panel-item
  */
 
-import { Component, h, Prop, Event, EventEmitter, Element } from '@stencil/core';
+import {
+  Component,
+  h,
+  Prop,
+  Event,
+  EventEmitter,
+  Element,
+} from "@stencil/core";
 
 @Component({
-  tag: 'layer-panel-item',
-  styleUrl: 'layer-panel-item.scss',
+  tag: "layer-panel-item",
+  styleUrl: "layer-panel-item.scss",
   shadow: false,
 })
 export class LayerPanelItem {
@@ -104,26 +110,27 @@ export class LayerPanelItem {
    *
    * Uses HTML5 drag and drop for list reordering.
    * Emits events for parent layer-panel to handle z-index updates.
-   *
-   * @private
    */
   private initializeDrag = () => {
     // Make the entire item draggable
-    this.hostElement.setAttribute('draggable', 'true');
+    this.hostElement.setAttribute("draggable", "true");
 
     // Drag start: store data and add visual feedback
-    this.hostElement.addEventListener('dragstart', (e: DragEvent) => {
+    this.hostElement.addEventListener("dragstart", (e: DragEvent) => {
       if (e.dataTransfer) {
-        e.dataTransfer.effectAllowed = 'move';
-        e.dataTransfer.setData('text/plain', JSON.stringify({
-          itemId: this.itemId,
-          canvasId: this.canvasId,
-          zIndex: this.zIndex,
-        }));
+        e.dataTransfer.effectAllowed = "move";
+        e.dataTransfer.setData(
+          "text/plain",
+          JSON.stringify({
+            itemId: this.itemId,
+            canvasId: this.canvasId,
+            zIndex: this.zIndex,
+          }),
+        );
       }
 
       // Add visual feedback
-      this.hostElement.classList.add('dragging');
+      this.hostElement.classList.add("dragging");
 
       // Emit drag start event
       this.layerItemDragStart.emit({
@@ -134,15 +141,20 @@ export class LayerPanelItem {
     });
 
     // Drag end: clean up
-    this.hostElement.addEventListener('dragend', () => {
-      this.hostElement.classList.remove('dragging', 'drop-above', 'drop-below', 'drop-target');
+    this.hostElement.addEventListener("dragend", () => {
+      this.hostElement.classList.remove(
+        "dragging",
+        "drop-above",
+        "drop-below",
+        "drop-target",
+      );
     });
 
     // Drag over: show drop indicator
-    this.hostElement.addEventListener('dragover', (e: DragEvent) => {
+    this.hostElement.addEventListener("dragover", (e: DragEvent) => {
       e.preventDefault(); // Allow drop
       if (e.dataTransfer) {
-        e.dataTransfer.dropEffect = 'move';
+        e.dataTransfer.dropEffect = "move";
       }
 
       // Show drop indicator based on cursor position
@@ -150,17 +162,24 @@ export class LayerPanelItem {
       const midpoint = rect.top + rect.height / 2;
       const dropAbove = e.clientY < midpoint;
 
-      this.hostElement.classList.remove('drop-above', 'drop-below');
-      this.hostElement.classList.add('drop-target', dropAbove ? 'drop-above' : 'drop-below');
+      this.hostElement.classList.remove("drop-above", "drop-below");
+      this.hostElement.classList.add(
+        "drop-target",
+        dropAbove ? "drop-above" : "drop-below",
+      );
     });
 
     // Drag leave: remove drop indicator
-    this.hostElement.addEventListener('dragleave', () => {
-      this.hostElement.classList.remove('drop-target', 'drop-above', 'drop-below');
+    this.hostElement.addEventListener("dragleave", () => {
+      this.hostElement.classList.remove(
+        "drop-target",
+        "drop-above",
+        "drop-below",
+      );
     });
 
     // Drop: handle the drop
-    this.hostElement.addEventListener('drop', (e: DragEvent) => {
+    this.hostElement.addEventListener("drop", (e: DragEvent) => {
       e.preventDefault();
       e.stopPropagation();
 
@@ -171,7 +190,7 @@ export class LayerPanelItem {
 
       // Emit drop event with target information
       // The parent layer-panel will handle the actual state update
-      const dropEvent = new CustomEvent('layer-item-dropped', {
+      const dropEvent = new CustomEvent("layer-item-dropped", {
         detail: {
           targetItemId: this.itemId,
           targetCanvasId: this.canvasId,
@@ -184,7 +203,11 @@ export class LayerPanelItem {
       this.hostElement.dispatchEvent(dropEvent);
 
       // Clean up visual feedback
-      this.hostElement.classList.remove('drop-above', 'drop-below', 'drop-target');
+      this.hostElement.classList.remove(
+        "drop-above",
+        "drop-below",
+        "drop-target",
+      );
     });
   };
 
@@ -213,29 +236,27 @@ export class LayerPanelItem {
    *
    * Maps component types to emoji icons for visual identification.
    * Fallback to generic icon for unknown types.
-   *
-   * @private
    */
   private getTypeIcon(): string {
     const iconMap: { [key: string]: string } = {
-      header: '📄',
-      text: '📝',
-      image: '🖼️',
-      button: '🔘',
-      gallery: '🖼️',
-      dashboard: '📊',
-      livedata: '📈',
-      card: '🃏',
-      list: '📋',
+      header: "📄",
+      text: "📝",
+      image: "🖼️",
+      button: "🔘",
+      gallery: "🖼️",
+      dashboard: "📊",
+      livedata: "📈",
+      card: "🃏",
+      list: "📋",
     };
 
-    return iconMap[this.type] || '📦';
+    return iconMap[this.type] || "📦";
   }
 
   render() {
     const itemClasses = {
-      'layer-item': true,
-      'layer-item--active': this.isActive,
+      "layer-item": true,
+      "layer-item--active": this.isActive,
     };
 
     return (

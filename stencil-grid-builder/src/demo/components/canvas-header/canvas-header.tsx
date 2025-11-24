@@ -14,14 +14,13 @@
  *
  * ```tsx
  * <canvas-header
- *   canvasId="hero-section"
- *   title="Hero Section"
- *   isDeletable={false}
- *   onHeaderClick={() => handleClick()}
- *   onDeleteClick={() => handleDelete()}
+ * canvasId="hero-section"
+ * title="Hero Section"
+ * isDeletable={false}
+ * onHeaderClick={() => handleClick()}
+ * onDeleteClick={() => handleDelete()}
  * />
  * ```
- *
  * @module canvas-header
  */
 

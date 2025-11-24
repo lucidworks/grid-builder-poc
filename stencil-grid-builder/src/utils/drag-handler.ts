@@ -887,12 +887,13 @@ export class DragHandler {
     // IMPORTANT: Get latest item from state to preserve any config changes
     // that occurred during drag (e.g., backgroundColor changes)
     const canvas = gridState.canvases[this.item.canvasId];
-    const latestItem = canvas?.items.find(i => i.id === this.item.id);
+    const latestItem = canvas?.items.find((i) => i.id === this.item.id);
     const itemToUpdate = latestItem || this.item; // Fallback to stored item if not found
 
     // Update item position in current viewport's layout (use constrained grid units)
     const currentViewport = gridState.currentViewport || "desktop";
-    const layout = itemToUpdate.layouts[currentViewport as "desktop" | "mobile"];
+    const layout =
+      itemToUpdate.layouts[currentViewport as "desktop" | "mobile"];
 
     layout.x = constrained.x;
     layout.y = constrained.y;
@@ -905,7 +906,8 @@ export class DragHandler {
         itemToUpdate.layouts.mobile.width = itemToUpdate.layouts.desktop.width;
       }
       if (itemToUpdate.layouts.mobile.height === null) {
-        itemToUpdate.layouts.mobile.height = itemToUpdate.layouts.desktop.height;
+        itemToUpdate.layouts.mobile.height =
+          itemToUpdate.layouts.desktop.height;
       }
     }
 
@@ -949,7 +951,6 @@ export class DragHandler {
    * **Transition**: 300ms cubic-bezier(0.4, 0.0, 0.2, 1) - Material Design standard
    * **Effect**: Grid item smoothly animates back to palette/original position
    * **User perception**: Clear indication that drop was invalid
-   *
    * @param event - interact.js drag end event
    */
   private snapBackToOriginalPosition(event: InteractDragEvent): void {

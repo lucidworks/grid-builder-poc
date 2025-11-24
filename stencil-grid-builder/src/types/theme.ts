@@ -67,7 +67,6 @@ export interface GridBuilderTheme {
    * - RGB: 'rgb(0, 123, 255)'
    * - RGBA: 'rgba(0, 123, 255, 0.8)'
    * - Named: 'blue'
-   *
    * @default '#007bff' (Bootstrap blue)
    */
   primaryColor?: string;
@@ -80,7 +79,6 @@ export interface GridBuilderTheme {
    * - Light gray: '#f5f5f5' ✅ Default
    * - White: '#ffffff'
    * - Dark: '#2d2d2d' (dark theme)
-   *
    * @default '#f5f5f5' (light gray)
    */
   paletteBackground?: string;
@@ -95,7 +93,6 @@ export interface GridBuilderTheme {
    * - Dark: '#2d2d2d' (dark theme)
    *
    * **Note**: Individual canvases can override with their own backgroundColor
-   *
    * @default '#ffffff' (white)
    */
   canvasBackground?: string;
@@ -110,7 +107,6 @@ export interface GridBuilderTheme {
    * - Light theme: 'rgba(0, 0, 0, 0.1)' ✅ Default (10% black)
    * - Dark theme: 'rgba(255, 255, 255, 0.1)' (10% white)
    * - Colored: 'rgba(0, 123, 255, 0.2)' (20% blue)
-   *
    * @default 'rgba(0, 0, 0, 0.1)' (subtle gray)
    */
   gridLineColor?: string;
@@ -125,7 +121,6 @@ export interface GridBuilderTheme {
    * - Primary: '#007bff' ✅ Default (matches primaryColor)
    * - Custom: '#ff6b6b' (brand color)
    * - Semi-transparent: 'rgba(0, 123, 255, 0.5)'
-   *
    * @default '#007bff' (blue)
    */
   selectionColor?: string;
@@ -140,7 +135,6 @@ export interface GridBuilderTheme {
    * - Primary: '#007bff' ✅ Default (matches primaryColor)
    * - Contrasting: '#ffffff' (white handles on dark theme)
    * - Custom: '#ff6b6b' (brand color)
-   *
    * @default '#007bff' (blue)
    */
   resizeHandleColor?: string;
@@ -158,7 +152,6 @@ export interface GridBuilderTheme {
    * - Sans-serif: 'Arial, Helvetica, sans-serif'
    * - Monospace: '"SF Mono", Monaco, "Courier New", monospace'
    * - Custom: '"Inter", sans-serif' (requires font loading)
-   *
    * @default '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif'
    */
   fontFamily?: string;
@@ -171,7 +164,6 @@ export interface GridBuilderTheme {
    * - Light gray: 'rgba(0, 0, 0, 0.05)' ✅ Default
    * - Primary color: '#007bff'
    * - Transparent: 'transparent'
-   *
    * @default 'rgba(0, 0, 0, 0.05)'
    */
   itemHeaderBackground?: string;
@@ -184,7 +176,6 @@ export interface GridBuilderTheme {
    * - Dark: '#333333' ✅ Default
    * - White: '#ffffff' (for dark header backgrounds)
    * - Primary: '#007bff'
-   *
    * @default '#333333'
    */
   itemHeaderColor?: string;
@@ -197,7 +188,6 @@ export interface GridBuilderTheme {
    * - Gray: '#999999' ✅ Default
    * - Primary: '#007bff'
    * - White: '#ffffff' (for dark themes)
-   *
    * @default '#999999'
    */
   itemDragHandleColor?: string;
@@ -210,7 +200,6 @@ export interface GridBuilderTheme {
    * - White: '#ffffff' ✅ Default
    * - Primary: '#007bff'
    * - Custom: '#333333'
-   *
    * @default '#ffffff'
    */
   itemControlButtonColor?: string;
@@ -223,7 +212,6 @@ export interface GridBuilderTheme {
    * - Primary: '#007bff' ✅ Default
    * - Gray: '#666666'
    * - Semi-transparent: 'rgba(0, 0, 0, 0.7)'
-   *
    * @default '#007bff'
    */
   itemControlButtonBackground?: string;
@@ -236,7 +224,6 @@ export interface GridBuilderTheme {
    * - Light gray: '#e0e0e0' ✅ Default
    * - Transparent: 'transparent' (no border)
    * - Primary: '#007bff'
-   *
    * @default '#e0e0e0'
    */
   itemBorderColor?: string;
@@ -256,24 +243,23 @@ export interface GridBuilderTheme {
    * **Example**:
    * ```typescript
    * customProperties: {
-   *   '--text-color': '#ffffff',
-   *   '--border-color': '#404040',
-   *   '--hover-background': 'rgba(255, 255, 255, 0.1)',
-   *   '--shadow': '0 4px 6px rgba(0, 0, 0, 0.3)',
-   *   '--transition-speed': '150ms'
+   * '--text-color': '#ffffff',
+   * '--border-color': '#404040',
+   * '--hover-background': 'rgba(255, 255, 255, 0.1)',
+   * '--shadow': '0 4px 6px rgba(0, 0, 0, 0.3)',
+   * '--transition-speed': '150ms'
    * }
    * ```
    *
    * **Access in component styles**:
    * ```scss
    * .my-component {
-   *   color: var(--text-color);
-   *   border: 1px solid var(--border-color);
-   *   box-shadow: var(--shadow);
-   *   transition: all var(--transition-speed);
+   * color: var(--text-color);
+   * border: 1px solid var(--border-color);
+   * box-shadow: var(--shadow);
+   * transition: all var(--transition-speed);
    * }
    * ```
-   *
    * @default undefined (no custom properties)
    */
   customProperties?: Record<string, string>;

@@ -25,7 +25,6 @@ import { GridItem } from "../services/state-manager";
  * - Validate component placement
  * - Auto-configure new components
  * - Sync with external systems
- *
  * @example
  * ```typescript
  * api.on('componentAdded', (event) => {
@@ -62,7 +61,6 @@ export interface ComponentAddedEvent {
  * - Cleanup associated resources
  * - Warn before destructive action
  * - Sync with external systems
- *
  * @example
  * ```typescript
  * api.on('componentDeleted', (event) => {
@@ -104,7 +102,6 @@ export interface ComponentDeletedEvent {
  * - Validate new position
  * - Auto-align with other components
  * - Detect cross-canvas moves
- *
  * @example
  * ```typescript
  * api.on('componentDragged', (event) => {
@@ -153,7 +150,6 @@ export interface ComponentDraggedEvent {
  * - Validate new size
  * - Auto-adjust content layout
  * - Detect size constraints violations
- *
  * @example
  * ```typescript
  * api.on('componentResized', (event) => {
@@ -202,7 +198,6 @@ export interface ComponentResizedEvent {
  * - Show custom selection UI
  * - Enable contextual actions
  * - Update config panel
- *
  * @example
  * ```typescript
  * api.on('componentSelected', (event) => {
@@ -242,7 +237,6 @@ export interface ComponentSelectedEvent {
  * - Remove custom selection UI
  * - Close config panels
  * - Clear selection state in plugins
- *
  * @example
  * ```typescript
  * api.on('componentDeselected', () => {
@@ -276,7 +270,6 @@ export interface ComponentDeselectedEvent {
  * - Validate configuration
  * - Sync with external systems
  * - Trigger dependent updates
- *
  * @example
  * ```typescript
  * api.on('configChanged', (event) => {
@@ -325,7 +318,6 @@ export interface ConfigChangedEvent {
  * - Show drag preview/ghost
  * - Disable other interactions
  * - Track drag start time
- *
  * @example
  * ```typescript
  * let dragStartTime: number;
@@ -372,7 +364,6 @@ export interface DragStartEvent {
  * - Hide drag preview/ghost
  * - Re-enable interactions
  * - Calculate drag metrics
- *
  * @example
  * ```typescript
  * api.on('dragEnd', (event) => {
@@ -409,7 +400,6 @@ export interface DragEndEvent {
  * - Show resize preview
  * - Disable other interactions
  * - Track resize start time
- *
  * @example
  * ```typescript
  * let resizeStartTime: number;
@@ -451,7 +441,6 @@ export interface ResizeStartEvent {
  * - Hide resize preview
  * - Re-enable interactions
  * - Calculate resize metrics
- *
  * @example
  * ```typescript
  * api.on('resizeEnd', (event) => {
@@ -489,7 +478,6 @@ export interface ResizeEndEvent {
  * - Adjust plugin UI for viewport
  * - Warn about mobile layout customization
  * - Update external preview
- *
  * @example
  * ```typescript
  * api.on('viewportChanged', (event) => {
@@ -527,7 +515,6 @@ export interface ViewportChangedEvent {
  * - Track undo usage (analytics)
  * - Sync undo with external systems
  * - Update custom UI state
- *
  * @example
  * ```typescript
  * api.on('undo', (event) => {
@@ -559,7 +546,6 @@ export interface UndoEvent {
  * - Track redo usage (analytics)
  * - Sync redo with external systems
  * - Update custom UI state
- *
  * @example
  * ```typescript
  * api.on('redo', (event) => {
@@ -591,7 +577,6 @@ export interface RedoEvent {
  * - Track batch operations (analytics)
  * - Show batch progress
  * - Optimize bulk operations
- *
  * @example
  * ```typescript
  * api.on('componentsBatchAdded', (event) => {
@@ -620,7 +605,6 @@ export interface ComponentsBatchAddedEvent {
  * - Track batch deletions (analytics)
  * - Warn before destructive batch action
  * - Cleanup resources
- *
  * @example
  * ```typescript
  * api.on('componentsBatchDeleted', (event) => {
@@ -653,7 +637,6 @@ export interface ComponentsBatchDeletedEvent {
  * - Track batch config changes (analytics)
  * - Optimize bulk updates
  * - Sync with external systems
- *
  * @example
  * ```typescript
  * api.on('configsBatchChanged', (event) => {
@@ -664,11 +647,11 @@ export interface ComponentsBatchDeletedEvent {
  */
 export interface ConfigsBatchChangedEvent {
   /** Array of { itemId, oldConfig, newConfig } update records */
-  updates: Array<{
+  updates: {
     itemId: string;
     oldConfig: Record<string, any>;
     newConfig: Record<string, any>;
-  }>;
+  }[];
 }
 
 /**
@@ -686,7 +669,6 @@ export interface ConfigsBatchChangedEvent {
  * - Validate cross-canvas placement
  * - Update layout structure
  * - Sync with external systems
- *
  * @example
  * ```typescript
  * api.on('componentMoved', (event) => {
@@ -733,7 +715,6 @@ export interface ComponentMovedEvent {
  * - Highlight active canvas in UI
  * - Enable canvas-specific actions
  * - Update contextual UI panels
- *
  * @example
  * ```typescript
  * api.on('canvasActivated', (event) => {
@@ -841,12 +822,12 @@ export interface ZIndexBatchChangedEvent {
    * - oldZIndex: Z-index before change
    * - newZIndex: Z-index after change
    */
-  changes: Array<{
+  changes: {
     itemId: string;
     canvasId: string;
     oldZIndex: number;
     newZIndex: number;
-  }>;
+  }[];
 }
 
 /**
@@ -942,7 +923,6 @@ export interface GridVisibilityChangedEvent {
  *
  * **Library emits**: canvasId only (no metadata)
  * **Host app responsibility**: Manage canvas metadata (title, colors, etc.) separately
- *
  * @example
  * ```typescript
  * // Host app maintains canvas metadata
@@ -969,7 +949,6 @@ export interface CanvasAddedEvent {
  *
  * **Library emits**: canvasId only
  * **Host app responsibility**: Clean up canvas metadata on removal
- *
  * @example
  * ```typescript
  * api.on('canvasRemoved', (event) => {
@@ -998,7 +977,6 @@ export interface StateChangedEvent {
  * =========================
  *
  * Fired when multiple items are added in a single batch operation via GridBuilderAPI.
- *
  * @example
  * ```typescript
  * api.on('itemsBatchAdded', (event) => {
@@ -1016,7 +994,6 @@ export interface ItemsBatchAddedEvent {
  * ===========================
  *
  * Fired when multiple items are deleted in a single batch operation via GridBuilderAPI.
- *
  * @example
  * ```typescript
  * api.on('itemsBatchDeleted', (event) => {
@@ -1034,7 +1011,6 @@ export interface ItemsBatchDeletedEvent {
  * ===========================
  *
  * Fired when multiple item configs are updated in a single batch operation via GridBuilderAPI.
- *
  * @example
  * ```typescript
  * api.on('itemsBatchUpdated', (event) => {
@@ -1044,11 +1020,11 @@ export interface ItemsBatchDeletedEvent {
  */
 export interface ItemsBatchUpdatedEvent {
   /** Array of { itemId, config } update records */
-  updates: Array<{
+  updates: {
     itemId: string;
     canvasId: string;
     config: Record<string, any>;
-  }>;
+  }[];
 }
 
 export interface GridBuilderEventMap {

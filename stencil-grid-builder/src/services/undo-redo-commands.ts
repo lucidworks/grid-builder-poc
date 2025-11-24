@@ -50,11 +50,11 @@
  *
  * ```typescript
  * class DeleteItemCommand {
- *   private itemIndex: number;  // Capture index before deletion
+ * private itemIndex: number;  // Capture index before deletion
  *
- *   undo() {
- *     canvas.items.splice(this.itemIndex, 0, item);  // Restore at index
- *   }
+ * undo() {
+ * canvas.items.splice(this.itemIndex, 0, item);  // Restore at index
+ * }
  * }
  * ```
  *
@@ -69,8 +69,8 @@
  *
  * ```typescript
  * if (gridState.selectedItemId === itemId) {
- *   gridState.selectedItemId = null;
- *   gridState.selectedCanvasId = null;
+ * gridState.selectedItemId = null;
+ * gridState.selectedCanvasId = null;
  * }
  * ```
  *
@@ -87,14 +87,14 @@
  *
  * ```typescript
  * class MoveItemCommand {
- *   sourceCanvasId: string;
- *   targetCanvasId: string;
+ * sourceCanvasId: string;
+ * targetCanvasId: string;
  *
- *   undo() {
- *     // Move from target back to source
- *     removeFrom(targetCanvasId);
- *     addTo(sourceCanvasId, sourceIndex);  // Restore position
- *   }
+ * undo() {
+ * // Move from target back to source
+ * removeFrom(targetCanvasId);
+ * addTo(sourceCanvasId, sourceIndex);  // Restore position
+ * }
  * }
  * ```
  *
@@ -121,27 +121,27 @@
  *
  * ```typescript
  * export class MyCommand implements Command {
- *   // Capture state needed for undo/redo
- *   private beforeState: any;
- *   private afterState: any;
+ * // Capture state needed for undo/redo
+ * private beforeState: any;
+ * private afterState: any;
  *
- *   constructor(params) {
- *     // Deep clone to prevent mutations
- *     this.beforeState = JSON.parse(JSON.stringify(before));
- *     this.afterState = JSON.parse(JSON.stringify(after));
- *   }
+ * constructor(params) {
+ * // Deep clone to prevent mutations
+ * this.beforeState = JSON.parse(JSON.stringify(before));
+ * this.afterState = JSON.parse(JSON.stringify(after));
+ * }
  *
- *   undo(): void {
- *     // Restore before state
- *     restoreState(this.beforeState);
- *     gridState.canvases = { ...gridState.canvases };  // Trigger reactivity
- *   }
+ * undo(): void {
+ * // Restore before state
+ * restoreState(this.beforeState);
+ * gridState.canvases = { ...gridState.canvases };  // Trigger reactivity
+ * }
  *
- *   redo(): void {
- *     // Apply after state
- *     restoreState(this.afterState);
- *     gridState.canvases = { ...gridState.canvases };
- *   }
+ * redo(): void {
+ * // Apply after state
+ * restoreState(this.afterState);
+ * gridState.canvases = { ...gridState.canvases };
+ * }
  * }
  * ```
  *
@@ -151,7 +151,6 @@
  * - Handle null cases (canvas/item not found)
  * - Clear selection if needed
  * - Preserve array indices for positional restore
- *
  * @module undo-redo-commands
  */
 
@@ -190,10 +189,8 @@ const debug = createDebugLogger("undo-redo-commands");
  *
  * **Selection clearing**:
  * Prevents dangling references and UI errors when selected item deleted.
- *
  * @param canvasId - Canvas containing the item
  * @param itemId - Item to remove
- *
  * @example
  * ```typescript
  * // Used internally by commands
@@ -201,8 +198,6 @@ const debug = createDebugLogger("undo-redo-commands");
  *   removeItemFromCanvas(this.canvasId, this.item.id);
  * }
  * ```
- *
- * @private
  */
 function removeItemFromCanvas(canvasId: string, itemId: string): void {
   const canvas = gridState.canvases[canvasId];
@@ -283,7 +278,6 @@ function removeItemFromCanvas(canvasId: string, itemId: string): void {
  * - **Canvas deleted**: redo() returns early if canvas not found
  * - **Item modified**: Command stores original state, not current
  * - **Selection**: undo() automatically clears selection via helper
- *
  * @example
  * ```typescript
  * // After palette drop
@@ -313,7 +307,6 @@ export class AddItemCommand implements Command {
    * **Important**: Call AFTER item added to canvas (not before)
    *
    * **Deep clones item**: Prevents future mutations from affecting snapshot
-   *
    * @param canvasId - Canvas where item was added
    * @param item - Item that was added (will be deep cloned)
    */
@@ -391,11 +384,11 @@ export class AddItemCommand implements Command {
  * **Implementation**:
  * ```typescript
  * constructor(canvasId, item, itemIndex) {
- *   this.itemIndex = itemIndex;  // Capture before deletion!
+ * this.itemIndex = itemIndex;  // Capture before deletion!
  * }
  *
  * undo() {
- *   canvas.items.splice(this.itemIndex, 0, itemCopy);  // Restore at index
+ * canvas.items.splice(this.itemIndex, 0, itemCopy);  // Restore at index
  * }
  * ```
  *
@@ -460,7 +453,6 @@ export class AddItemCommand implements Command {
  * - **Invalid index**: Falls back to push() if index out of bounds
  * - **Item modified before delete**: Command stores pre-deletion state
  * - **Multiple deletes**: Each command independently tracks its item
- *
  * @example
  * ```typescript
  * // Handle Delete key press
@@ -506,7 +498,6 @@ export class DeleteItemCommand implements Command {
    * **Deep clones item**: Preserves state before deletion
    *
    * **Captures index**: Critical for restoring at original position
-   *
    * @param canvasId - Canvas containing the item
    * @param item - Item being deleted (will be deep cloned)
    * @param itemIndex - Original array index (call indexOf before deletion!)
@@ -647,12 +638,12 @@ export class DeleteItemCommand implements Command {
  *
  * // 3. Create command with before/after state
  * const command = new MoveItemCommand(
- *   item.id,
- *   sourceCanvasId,
- *   targetCanvasId,  // May be same as source
- *   sourcePos,
- *   targetPos,       // New position after drag
- *   sourceIndex
+ * item.id,
+ * sourceCanvasId,
+ * targetCanvasId,  // May be same as source
+ * sourcePos,
+ * targetPos,       // New position after drag
+ * sourceIndex
  * );
  *
  * // 4. Push command for undo
@@ -725,7 +716,6 @@ export class DeleteItemCommand implements Command {
  * - **Item not found**: Returns early (defensive coding)
  * - **Same position move**: Creates valid command (user expectation)
  * - **Invalid source index**: Fallback to append (defensive)
- *
  * @example
  * ```typescript
  * // After drag end event
@@ -802,7 +792,6 @@ export class MoveItemCommand implements Command {
    * **Z-index handling**:
    * - Same canvas: sourceZIndex === targetZIndex (no change)
    * - Cross-canvas: targetZIndex assigned from targetCanvas.zIndexCounter++
-   *
    * @param itemId - ID of moved item
    * @param sourceCanvasId - Canvas where item started
    * @param targetCanvasId - Canvas where item ended
@@ -1258,19 +1247,19 @@ export class BatchDeleteCommand implements Command {
  * - Single state update, single re-render
  */
 export class BatchUpdateConfigCommand implements Command {
-  private updates: Array<{
+  private updates: {
     itemId: string;
     canvasId: string;
     oldItem: GridItem;
     newItem: GridItem;
-  }>;
+  }[];
 
   constructor(
-    updates: Array<{
+    updates: {
       itemId: string;
       canvasId: string;
       updates: Partial<GridItem>;
-    }>,
+    }[],
   ) {
     // Store old and new state for each item (deep clone to prevent mutations)
     this.updates = updates
@@ -1289,12 +1278,12 @@ export class BatchUpdateConfigCommand implements Command {
           newItem: JSON.parse(JSON.stringify({ ...item, ...itemUpdates })),
         };
       })
-      .filter(Boolean) as Array<{
+      .filter(Boolean) as {
       itemId: string;
       canvasId: string;
       oldItem: GridItem;
       newItem: GridItem;
-    }>;
+    }[];
   }
 
   undo(): void {
@@ -1340,7 +1329,7 @@ export class BatchUpdateConfigCommand implements Command {
  * ```typescript
  * // Host app maintains canvas metadata
  * const canvasMetadata = {
- *   'section-1': { title: 'Hero Section', backgroundColor: '#f0f4f8' }
+ * 'section-1': { title: 'Hero Section', backgroundColor: '#f0f4f8' }
  * };
  *
  * // Create canvas in library (just placement state)
@@ -1350,7 +1339,7 @@ export class BatchUpdateConfigCommand implements Command {
  *
  * // Host app listens to event and syncs its own state
  * api.on('canvasAdded', (event) => {
- *   // Host app can now add its own metadata
+ * // Host app can now add its own metadata
  * });
  * ```
  *
@@ -1358,8 +1347,6 @@ export class BatchUpdateConfigCommand implements Command {
  * - Library focuses on layout (items, positions, z-index)
  * - Host app owns presentation (styling, titles, metadata)
  * - Different apps can use library with different data models
- *
- * @module undo-redo-commands
  */
 export class AddCanvasCommand implements Command {
   description = "Add Canvas";
@@ -1420,15 +1407,15 @@ export class AddCanvasCommand implements Command {
  * ```typescript
  * // Host app listens to events and manages its own metadata
  * api.on('canvasRemoved', (event) => {
- *   // Host app removes its own metadata
- *   delete canvasMetadata[event.canvasId];
+ * // Host app removes its own metadata
+ * delete canvasMetadata[event.canvasId];
  * });
  *
  * api.on('canvasAdded', (event) => {
- *   // On undo of remove, host app restores metadata
- *   if (wasUndoOperation) {
- *     canvasMetadata[event.canvasId] = savedMetadata;
- *   }
+ * // On undo of remove, host app restores metadata
+ * if (wasUndoOperation) {
+ * canvasMetadata[event.canvasId] = savedMetadata;
+ * }
  * });
  *
  * // Remove canvas
@@ -1441,8 +1428,6 @@ export class AddCanvasCommand implements Command {
  * - Canvas doesn't exist: command becomes no-op
  * - Canvas has items: all items removed with canvas
  * - Undo restores items with original layouts and zIndex
- *
- * @module undo-redo-commands
  */
 export class RemoveCanvasCommand implements Command {
   description = "Remove Canvas";
@@ -1523,20 +1508,20 @@ export class RemoveCanvasCommand implements Command {
  * // Single item: Bring to front
  * const result = bringItemToFront('canvas1', 'item-3');
  * if (result) {
- *   const cmd = new ChangeZIndexCommand([{
- *     itemId: 'item-3',
- *     canvasId: 'canvas1',
- *     oldZIndex: result.oldZIndex,
- *     newZIndex: result.newZIndex
- *   }]);
- *   undoRedoManager.push(cmd);
+ * const cmd = new ChangeZIndexCommand([{
+ * itemId: 'item-3',
+ * canvasId: 'canvas1',
+ * oldZIndex: result.oldZIndex,
+ * newZIndex: result.newZIndex
+ * }]);
+ * undoRedoManager.push(cmd);
  * }
  *
  * // Swap operation: Move forward (affects 2 items)
  * // moveItemForward swaps z-index with next item
  * const changes = [
- *   { itemId: 'item-3', canvasId: 'canvas1', oldZIndex: 5, newZIndex: 7 },
- *   { itemId: 'item-7', canvasId: 'canvas1', oldZIndex: 7, newZIndex: 5 }
+ * { itemId: 'item-3', canvasId: 'canvas1', oldZIndex: 5, newZIndex: 7 },
+ * { itemId: 'item-7', canvasId: 'canvas1', oldZIndex: 7, newZIndex: 5 }
  * ];
  * const cmd = new ChangeZIndexCommand(changes);
  * undoRedoManager.push(cmd);
@@ -1547,25 +1532,23 @@ export class RemoveCanvasCommand implements Command {
  * - Canvas doesn't exist: skips that item
  * - Undo restores exact z-index values for all items
  * - Maintains visual layer order across all affected items
- *
- * @module undo-redo-commands
  */
 export class ChangeZIndexCommand implements Command {
   description: string;
-  private changes: Array<{
+  private changes: {
     itemId: string;
     canvasId: string;
     oldZIndex: number;
     newZIndex: number;
-  }>;
+  }[];
 
   constructor(
-    changes: Array<{
+    changes: {
       itemId: string;
       canvasId: string;
       oldZIndex: number;
       newZIndex: number;
-    }>,
+    }[],
   ) {
     this.changes = changes;
 

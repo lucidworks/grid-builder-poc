@@ -17,12 +17,12 @@
  * **Props-based API**:
  * ```typescript
  * <grid-builder
- *   components={componentDefinitions}     // Required: Component type registry
- *   config={gridConfig}                   // Optional: Grid system config
- *   theme={gridTheme}                     // Optional: Visual customization
- *   plugins={pluginInstances}             // Optional: Plugin extensions
- *   uiOverrides={customUIComponents}      // Optional: Custom UI rendering
- *   initialState={savedState}             // Optional: Restore saved layout
+ * components={componentDefinitions}     // Required: Component type registry
+ * config={gridConfig}                   // Optional: Grid system config
+ * theme={gridTheme}                     // Optional: Visual customization
+ * plugins={pluginInstances}             // Optional: Plugin extensions
+ * uiOverrides={customUIComponents}      // Optional: Custom UI rendering
+ * initialState={savedState}             // Optional: Restore saved layout
  * />
  * ```
  *
@@ -39,7 +39,6 @@
  * - Components subscribe via StencilJS reactivity
  * - Plugins access via GridBuilderAPI
  * - Clean separation of library vs consumer state
- *
  * @module grid-builder
  */
 
@@ -548,9 +547,7 @@ export class GridBuilder {
    * → Header component fades/scales in at position
    * → Canvas height adjusts if needed
    * ```
-   *
    * @param event - Custom event with { componentType: string }
-   * @private
    */
   @Listen("palette-item-click")
   async handlePaletteItemClick(event: CustomEvent<{ componentType: string }>) {
@@ -609,7 +606,9 @@ export class GridBuilder {
     );
 
     if (!position) {
-      console.error(`handlePaletteItemClick: Could not find space on canvas ${canvasId}`);
+      console.error(
+        `handlePaletteItemClick: Could not find space on canvas ${canvasId}`,
+      );
       return;
     }
 
@@ -641,7 +640,7 @@ export class GridBuilder {
         width: defaultSize.width,
         height: defaultSize.height,
       },
-      {} // Empty config object
+      {}, // Empty config object
     );
 
     if (!newItemId) {
@@ -666,12 +665,12 @@ export class GridBuilder {
     // Emit componentAdded event for plugins
     // Must include full item object to match ComponentAddedEvent interface
     const canvas = gridState.canvases[canvasId];
-    const newItem = canvas?.items.find(item => item.id === newItemId);
+    const newItem = canvas?.items.find((item) => item.id === newItemId);
 
     if (newItem) {
       eventManager.emit("componentAdded", {
         item: newItem,
-        canvasId: canvasId,
+        canvasId,
       });
     }
 
@@ -1013,15 +1012,17 @@ export class GridBuilder {
           const deletedCanvasId = gridState.selectedCanvasId;
 
           // Delete the selected item (async - respects onBeforeDelete hook)
-          this.api?.deleteComponent(gridState.selectedItemId).then((deleted) => {
-            if (deleted) {
-              // Announce deletion only if actually deleted (not cancelled by modal)
-              this.announce("Component deleted");
+          this.api
+            ?.deleteComponent(gridState.selectedItemId)
+            .then((deleted) => {
+              if (deleted) {
+                // Announce deletion only if actually deleted (not cancelled by modal)
+                this.announce("Component deleted");
 
-              // Move focus to next logical item for keyboard users
-              this.moveFocusAfterDeletion(deletedCanvasId, deletedItemId);
-            }
-          });
+                // Move focus to next logical item for keyboard users
+                this.moveFocusAfterDeletion(deletedCanvasId, deletedItemId);
+              }
+            });
 
           return;
         }
@@ -1357,7 +1358,7 @@ export class GridBuilder {
             const shouldDelete = await this.onBeforeDelete({
               item: targetItem,
               canvasId: targetCanvasId,
-              itemId: itemId,
+              itemId,
             });
 
             if (!shouldDelete) {
@@ -1388,7 +1389,10 @@ export class GridBuilder {
           }
 
           // Emit event
-          eventManager.emit("componentDeleted", { itemId, canvasId: targetCanvasId });
+          eventManager.emit("componentDeleted", {
+            itemId,
+            canvasId: targetCanvasId,
+          });
 
           return true;
         }
@@ -1435,12 +1439,12 @@ export class GridBuilder {
       // ======================
 
       addComponentsBatch: (
-        components: Array<{
+        components: {
           canvasId: string;
           type: string;
           position: { x: number; y: number; width: number; height: number };
           config?: Record<string, any>;
-        }>,
+        }[],
       ) => {
         // Convert API format to state-manager format
         const partialItems = components.map(
@@ -1515,7 +1519,7 @@ export class GridBuilder {
       },
 
       updateConfigsBatch: (
-        updates: Array<{ itemId: string; config: Record<string, any> }>,
+        updates: { itemId: string; config: Record<string, any> }[],
       ) => {
         // Convert to state-manager format (need canvasId)
         const batchUpdates = updates
@@ -1531,11 +1535,11 @@ export class GridBuilder {
               updates: { config: { ...item.config, ...config } },
             };
           })
-          .filter(Boolean) as Array<{
+          .filter(Boolean) as {
           itemId: string;
           canvasId: string;
           updates: Partial<any>;
-        }>;
+        }[];
 
         // Add to undo/redo history
         undoRedo.push(new BatchUpdateConfigCommand(batchUpdates));
@@ -1586,7 +1590,7 @@ export class GridBuilder {
         return undoRedo.canRedo();
       },
 
-      undoRedoState: undoRedoState,
+      undoRedoState,
 
       // ======================
       // Canvas Management
@@ -1792,7 +1796,6 @@ export class GridBuilder {
    * - Clears announcement after 100ms (prevents repeat announcements)
    *
    * **WCAG Compliance**: 4.1.3 Status Messages (Level AA)
-   *
    * @param message - Message to announce to screen reader users
    */
   private announce = (message: string) => {
@@ -1817,7 +1820,6 @@ export class GridBuilder {
    * 4. If canvas not found, focus the component palette
    *
    * **WCAG Compliance**: 2.4.3 Focus Order (Level A)
-   *
    * @param canvasId - Canvas that contained the deleted item
    * @param _deletedItemId - ID of the item that was deleted (unused, for documentation)
    */
@@ -1880,7 +1882,10 @@ export class GridBuilder {
     const nextItem = sortedItems[0];
     debug.log("⌨️ Focus: Focusing next item", {
       itemId: nextItem.id,
-      position: { x: nextItem.layouts.desktop.x, y: nextItem.layouts.desktop.y },
+      position: {
+        x: nextItem.layouts.desktop.x,
+        y: nextItem.layouts.desktop.y,
+      },
     });
 
     // Find the DOM element for the next item
@@ -1946,9 +1951,9 @@ export class GridBuilder {
    * const builder = document.querySelector('grid-builder');
    * const exportData = await builder.exportState();
    * await fetch('/api/layouts', {
-   *   method: 'POST',
-   *   headers: { 'Content-Type': 'application/json' },
-   *   body: JSON.stringify(exportData)
+   * method: 'POST',
+   * headers: { 'Content-Type': 'application/json' },
+   * body: JSON.stringify(exportData)
    * });
    * ```
    *
@@ -1957,7 +1962,6 @@ export class GridBuilder {
    * const exportData = await builder.exportState();
    * localStorage.setItem('grid-layout', JSON.stringify(exportData));
    * ```
-   *
    * @returns Promise<GridExport> - JSON-serializable export object
    */
   @Method()
@@ -2007,7 +2011,6 @@ export class GridBuilder {
    * const savedState = JSON.parse(localStorage.getItem('grid-layout'));
    * await builder.importState(savedState);
    * ```
-   *
    * @param state - GridExport or partial GridState object
    */
   @Method()
@@ -2027,7 +2030,6 @@ export class GridBuilder {
    * const state = await builder.getState();
    * console.log('Current viewport:', state.currentViewport);
    * ```
-   *
    * @returns Promise<GridState> - Current grid state
    */
   @Method()
@@ -2045,7 +2047,6 @@ export class GridBuilder {
    * const builder = document.querySelector('grid-builder');
    * await builder.addCanvas('new-section');
    * ```
-   *
    * @param canvasId - Unique canvas identifier
    */
   @Method()
@@ -2063,7 +2064,6 @@ export class GridBuilder {
    * const builder = document.querySelector('grid-builder');
    * await builder.removeCanvas('old-section');
    * ```
-   *
    * @param canvasId - Canvas identifier to remove
    */
   @Method()
@@ -2082,9 +2082,7 @@ export class GridBuilder {
    * - Show canvas-specific settings panel
    *
    * **Events triggered**: 'canvasActivated'
-   *
    * @param canvasId - Canvas to activate
-   *
    * @example
    * ```typescript
    * const builder = document.querySelector('grid-builder');
@@ -2100,9 +2098,7 @@ export class GridBuilder {
    * Get currently active canvas ID
    *
    * **Purpose**: Check which canvas is currently active/focused
-   *
    * @returns Promise<string | null> - Active canvas ID or null if none active
-   *
    * @example
    * ```typescript
    * const builder = document.querySelector('grid-builder');
@@ -2160,7 +2156,6 @@ export class GridBuilder {
    * const canUndo = await builder.canUndo();
    * undoButton.disabled = !canUndo;
    * ```
-   *
    * @returns Promise<boolean> - True if undo is available
    */
   @Method()
@@ -2179,7 +2174,6 @@ export class GridBuilder {
    * const canRedo = await builder.canRedo();
    * redoButton.disabled = !canRedo;
    * ```
-   *
    * @returns Promise<boolean> - True if redo is available
    */
   @Method()
@@ -2196,10 +2190,9 @@ export class GridBuilder {
    * ```typescript
    * const builder = document.querySelector('grid-builder');
    * const itemId = await builder.addComponent('canvas1', 'header', {
-   *   x: 10, y: 10, width: 30, height: 6
+   * x: 10, y: 10, width: 30, height: 6
    * }, { title: 'My Header' });
    * ```
-   *
    * @param canvasId - Canvas to add component to
    * @param componentType - Component type from registry
    * @param position - Grid position and size
@@ -2228,7 +2221,6 @@ export class GridBuilder {
    * const builder = document.querySelector('grid-builder');
    * const success = await builder.deleteComponent('item-123');
    * ```
-   *
    * @param itemId - Item ID to delete
    * @returns Promise<boolean> - True if deleted successfully
    */
@@ -2246,11 +2238,10 @@ export class GridBuilder {
    * ```typescript
    * const builder = document.querySelector('grid-builder');
    * const success = await builder.updateConfig('item-123', {
-   *   title: 'Updated Title',
-   *   color: '#ff0000'
+   * title: 'Updated Title',
+   * color: '#ff0000'
    * });
    * ```
-   *
    * @param itemId - Item ID to update
    * @param config - Configuration updates
    * @returns Promise<boolean> - True if updated successfully
@@ -2301,7 +2292,11 @@ export class GridBuilder {
           {this.announcement}
         </div>
 
-        <div class="grid-builder-container" role="application" aria-label="Grid builder">
+        <div
+          class="grid-builder-container"
+          role="application"
+          aria-label="Grid builder"
+        >
           {/* Component Palette */}
           <div class="palette-area">
             <component-palette
@@ -2326,15 +2321,20 @@ export class GridBuilder {
                 });
 
                 // Handle both vNode and HTMLElement returns
-                const headerContent = headerElement instanceof HTMLElement
-                  ? <div ref={(el) => {
-                      if (el) {
-                        // Clear existing children to allow updates when active state changes
-                        el.innerHTML = '';
-                        el.appendChild(headerElement);
-                      }
-                    }} />
-                  : headerElement;
+                const headerContent =
+                  headerElement instanceof HTMLElement ? (
+                    <div
+                      ref={(el) => {
+                        if (el) {
+                          // Clear existing children to allow updates when active state changes
+                          el.innerHTML = "";
+                          el.appendChild(headerElement);
+                        }
+                      }}
+                    />
+                  ) : (
+                    headerElement
+                  );
 
                 return (
                   <div key={canvasId} class="canvas-wrapper">

@@ -127,19 +127,19 @@
  *
  * ```typescript
  * {
- *   canvases: {
- *     'canvas1': {
- *       items: [GridItem, GridItem, ...],
- *       zIndexCounter: 5,
- *       backgroundColor: '#ffffff'
- *     },
- *     'canvas2': { ... },
- *     ...
- *   },
- *   selectedItemId: 'item-3' | null,
- *   selectedCanvasId: 'canvas1' | null,
- *   currentViewport: 'desktop' | 'mobile',
- *   showGrid: true | false
+ * canvases: {
+ * 'canvas1': {
+ * items: [GridItem, GridItem, ...],
+ * zIndexCounter: 5,
+ * backgroundColor: '#ffffff'
+ * },
+ * 'canvas2': { ... },
+ * ...
+ * },
+ * selectedItemId: 'item-3' | null,
+ * selectedCanvasId: 'canvas1' | null,
+ * currentViewport: 'desktop' | 'mobile',
+ * showGrid: true | false
  * }
  * ```
  *
@@ -178,16 +178,16 @@
  * import create from 'zustand';
  *
  * const useStore = create<GridState>((set) => ({
- *   ...initialState,
- *   addItem: (canvasId, item) => set((state) => ({
- *     canvases: {
- *       ...state.canvases,
- *       [canvasId]: {
- *         ...state.canvases[canvasId],
- *         items: [...state.canvases[canvasId].items, item]
- *       }
- *     }
- *   }))
+ * ...initialState,
+ * addItem: (canvasId, item) => set((state) => ({
+ * canvases: {
+ * ...state.canvases,
+ * [canvasId]: {
+ * ...state.canvases[canvasId],
+ * items: [...state.canvases[canvasId].items, item]
+ * }
+ * }
+ * }))
  * }));
  * ```
  *
@@ -196,37 +196,36 @@
  * import { defineStore } from 'pinia';
  *
  * export const useGridStore = defineStore('grid', {
- *   state: () => initialState,
- *   actions: {
- *     addItem(canvasId, item) {
- *       this.canvases[canvasId].items.push(item);
- *     }
- *   }
+ * state: () => initialState,
+ * actions: {
+ * addItem(canvasId, item) {
+ * this.canvases[canvasId].items.push(item);
+ * }
+ * }
  * });
  * ```
  *
  * **Angular + NgRx**:
  * ```typescript
  * export const addItem = createAction(
- *   '[Grid] Add Item',
- *   props<{ canvasId: string; item: GridItem }>()
+ * '[Grid] Add Item',
+ * props<{ canvasId: string; item: GridItem }>()
  * );
  *
  * export const gridReducer = createReducer(
- *   initialState,
- *   on(addItem, (state, { canvasId, item }) => ({
- *     ...state,
- *     canvases: {
- *       ...state.canvases,
- *       [canvasId]: {
- *         ...state.canvases[canvasId],
- *         items: [...state.canvases[canvasId].items, item]
- *       }
- *     }
- *   }))
+ * initialState,
+ * on(addItem, (state, { canvasId, item }) => ({
+ * ...state,
+ * canvases: {
+ * ...state.canvases,
+ * [canvasId]: {
+ * ...state.canvases[canvasId],
+ * items: [...state.canvases[canvasId].items, item]
+ * }
+ * }
+ * }))
  * );
  * ```
- *
  * @module state-manager
  */
 
@@ -826,7 +825,6 @@ const { state, onChange, dispose } = createStore<GridState>(initialState);
  * **Deep clone pattern**:
  * Uses `JSON.parse(JSON.stringify())` to create independent copy
  * of initial state. Prevents mutations from affecting initialState.
- *
  * @example
  * ```typescript
  * // Reset button handler
@@ -879,10 +877,8 @@ export { state as gridState, onChange, dispose };
  * This function doesn't assign z-index automatically.
  *
  * **Safety**: No-op if canvas doesn't exist
- *
  * @param canvasId - Target canvas ID
  * @param item - GridItem to add (should have zIndex assigned)
- *
  * @example
  * ```typescript
  * // Add new item from palette drop
@@ -927,10 +923,8 @@ export function addItemToCanvas(canvasId: string, item: GridItem) {
  * Other items' indexes shift down by 1.
  *
  * **Safety**: No-op if canvas or item doesn't exist
- *
  * @param canvasId - Canvas containing the item
  * @param itemId - Item ID to remove
- *
  * @example
  * ```typescript
  * // Delete selected item
@@ -970,21 +964,19 @@ export function removeItemFromCanvas(canvasId: string, itemId: string) {
  * ```typescript
  * // Update position after drag
  * updateItem(canvasId, itemId, {
- *   layouts: { ...item.layouts, desktop: { x: 10, y: 5, width: 20, height: 8 } }
+ * layouts: { ...item.layouts, desktop: { x: 10, y: 5, width: 20, height: 8 } }
  * });
  *
  * // Bring to front
  * updateItem(canvasId, itemId, {
- *   zIndex: gridState.canvases[canvasId].zIndexCounter++
+ * zIndex: gridState.canvases[canvasId].zIndexCounter++
  * });
  * ```
  *
  * **Safety**: No-op if canvas or item doesn't exist
- *
  * @param canvasId - Canvas containing the item
  * @param itemId - Item ID to update
  * @param updates - Partial GridItem with properties to update
- *
  * @example
  * ```typescript
  * // After drag end
@@ -1028,11 +1020,9 @@ export function updateItem(
  * To modify, use `updateItem()` to trigger reactivity.
  *
  * **Safety**: Returns null if canvas or item doesn't exist
- *
  * @param canvasId - Canvas containing the item
  * @param itemId - Item ID to retrieve
  * @returns GridItem or null if not found
- *
  * @example
  * ```typescript
  * // Check item before operation
@@ -1077,11 +1067,9 @@ export function getItem(canvasId: string, itemId: string): GridItem | null {
  * position fits within destination canvas bounds.
  *
  * **Safety**: No-op if either canvas doesn't exist or item not found
- *
  * @param fromCanvasId - Source canvas ID
  * @param toCanvasId - Destination canvas ID
  * @param itemId - Item to move
- *
  * @example
  * ```typescript
  * // Move item on cross-canvas drag
@@ -1153,9 +1141,7 @@ export let itemIdCounter = 0; // Start at 0 (library starts empty)
  *
  * **Thread safety**: Not thread-safe, but not an issue in
  * single-threaded JavaScript environment.
- *
  * @returns Unique item ID string
- *
  * @example
  * ```typescript
  * // Create new item from palette drop
@@ -1190,12 +1176,10 @@ export function generateItemId(): string {
  * 6. Return old/new values for undo/redo
  *
  * **Safety**: Returns null if canvas or item doesn't exist
- *
  * @param canvasId - Canvas containing the item
  * @param itemId - Item ID to update
  * @param newZIndex - New z-index value
  * @returns Object with old and new z-index, or null if not found
- *
  * @example
  * ```typescript
  * // Set specific z-index from layer panel
@@ -1249,11 +1233,9 @@ export function setItemZIndex(
  * **Operation**:
  * Finds next higher z-index and swaps with that item.
  * If already on top, does nothing.
- *
  * @param canvasId - Canvas containing the item
  * @param itemId - Item ID to move forward
  * @returns Object with old and new z-index, or null if not found/already on top
- *
  * @example
  * ```typescript
  * // Move item up one layer
@@ -1311,7 +1293,6 @@ export function moveItemForward(
  * **Operation**:
  * Finds next lower z-index and swaps with that item.
  * If already on bottom, does nothing.
- *
  * @param canvasId - Canvas containing the item
  * @param itemId - Item ID to move backward
  * @returns Object with old and new z-index, or null if not found/already on bottom
@@ -1363,7 +1344,6 @@ export function moveItemBackward(
  *
  * **Operation**:
  * Sets z-index to highest value in canvas + 1
- *
  * @param canvasId - Canvas containing the item
  * @param itemId - Item ID to bring to front
  * @returns Object with old and new z-index, or null if not found/already on top
@@ -1408,7 +1388,6 @@ export function bringItemToFront(
  *
  * **Operation**:
  * Sets z-index to lowest value in canvas - 1
- *
  * @param canvasId - Canvas containing the item
  * @param itemId - Item ID to send to back
  * @returns Object with old and new z-index, or null if not found/already on bottom
@@ -1463,10 +1442,8 @@ export function sendItemToBack(
  * - Components re-render with selection styles
  *
  * **Single selection**: Selecting new item automatically deselects previous
- *
  * @param itemId - Item to select
  * @param canvasId - Canvas containing the item
- *
  * @example
  * ```typescript
  * // Handle item click
@@ -1505,7 +1482,6 @@ export function selectItem(itemId: string, canvasId: string) {
  * - Components re-render without selection styles
  *
  * **Safety**: Safe to call even if nothing selected
- *
  * @example
  * ```typescript
  * // Handle canvas click (deselect)
@@ -1546,9 +1522,7 @@ export function deselectItem() {
  * - 'canvasActivated' event emitted
  *
  * **Reactivity**: Direct assignment (no spread needed for primitive)
- *
  * @param canvasId - Canvas ID to activate
- *
  * @example
  * ```typescript
  * // Handle item click (activate canvas)
@@ -1586,7 +1560,6 @@ export function setActiveCanvas(canvasId: string) {
  * - Components re-render without active state
  *
  * **Safety**: Safe to call even if no canvas active
- *
  * @example
  * ```typescript
  * // Reset button handler
@@ -1626,10 +1599,8 @@ export function clearActiveCanvas() {
  * 2. Add all items to cloned canvases
  * 3. Single state assignment triggers single re-render
  * 4. Single undo/redo command for entire batch
- *
  * @param items - Array of partial GridItem specs (missing id, zIndex auto-assigned)
  * @returns Array of created item IDs
- *
  * @example
  * ```typescript
  * // Add 100 items in stress test
@@ -1707,9 +1678,7 @@ export function addItemsBatch(items: Partial<GridItem>[]): string[] {
  * 2. Filter out all items from cloned canvases
  * 3. Single state assignment triggers single re-render
  * 4. Single undo/redo command for entire batch
- *
  * @param itemIds - Array of item IDs to delete
- *
  * @example
  * ```typescript
  * // Clear entire canvas
@@ -1754,9 +1723,7 @@ export function deleteItemsBatch(itemIds: string[]): void {
  * 2. Apply all updates to cloned canvases
  * 3. Single state assignment triggers single re-render
  * 4. Single undo/redo command for entire batch
- *
  * @param updates - Array of { itemId, canvasId, updates } objects
- *
  * @example
  * ```typescript
  * // Change all headers to blue
@@ -1774,11 +1741,11 @@ export function deleteItemsBatch(itemIds: string[]): void {
  * ```
  */
 export function updateItemsBatch(
-  updates: Array<{
+  updates: {
     itemId: string;
     canvasId: string;
     updates: Partial<GridItem>;
-  }>,
+  }[],
 ): void {
   const updatedCanvases = { ...state.canvases };
 

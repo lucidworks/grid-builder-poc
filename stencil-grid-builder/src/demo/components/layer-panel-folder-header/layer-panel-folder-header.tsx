@@ -17,23 +17,22 @@
  *
  * ```typescript
  * <layer-panel-folder-header
- *   canvasId="canvas1"
- *   canvasTitle="Hero Section"
- *   itemCount={12}
- *   isExpanded={true}
- *   isActive={false}
- *   isEmpty={false}
+ * canvasId="canvas1"
+ * canvasTitle="Hero Section"
+ * itemCount={12}
+ * isExpanded={true}
+ * isActive={false}
+ * isEmpty={false}
  * />
  * ```
- *
  * @module layer-panel-folder-header
  */
 
-import { Component, h, Prop, Event, EventEmitter } from '@stencil/core';
+import { Component, h, Prop, Event, EventEmitter } from "@stencil/core";
 
 @Component({
-  tag: 'layer-panel-folder-header',
-  styleUrl: 'layer-panel-folder-header.scss',
+  tag: "layer-panel-folder-header",
+  styleUrl: "layer-panel-folder-header.scss",
   shadow: false,
 })
 export class LayerPanelFolderHeader {
@@ -85,7 +84,6 @@ export class LayerPanelFolderHeader {
 
   /**
    * Handle toggle button click
-   * @private
    */
   private handleToggle = (e: Event) => {
     e.stopPropagation();
@@ -94,7 +92,6 @@ export class LayerPanelFolderHeader {
 
   /**
    * Handle folder header click to activate canvas
-   * @private
    */
   private handleClick = () => {
     this.activateCanvas.emit({ canvasId: this.canvasId });
@@ -102,15 +99,16 @@ export class LayerPanelFolderHeader {
 
   render() {
     const headerClasses = {
-      'layer-panel-folder-header': true,
-      'layer-panel-folder-header--active': this.isActive,
-      'layer-panel-folder-header--expanded': this.isExpanded,
-      'layer-panel-folder-header--empty': this.isEmpty,
+      "layer-panel-folder-header": true,
+      "layer-panel-folder-header--active": this.isActive,
+      "layer-panel-folder-header--expanded": this.isExpanded,
+      "layer-panel-folder-header--empty": this.isEmpty,
     };
 
     // Show "filtered / total" format during search, just count otherwise
     const countDisplay =
-      this.totalItemCount !== undefined && this.itemCount !== this.totalItemCount
+      this.totalItemCount !== undefined &&
+      this.itemCount !== this.totalItemCount
         ? `${this.itemCount} / ${this.totalItemCount}`
         : this.itemCount;
 
@@ -119,7 +117,7 @@ export class LayerPanelFolderHeader {
         <button
           class="layer-panel-folder-header__toggle"
           onClick={this.handleToggle}
-          title={this.isExpanded ? 'Collapse folder' : 'Expand folder'}
+          title={this.isExpanded ? "Collapse folder" : "Expand folder"}
         >
           <span class="layer-panel-folder-header__toggle-icon">▼</span>
         </button>

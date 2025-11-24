@@ -92,7 +92,6 @@ export interface ConfigPanelProps {
    * - Populate form inputs
    * - Live preview of changes
    * - Validation checks
-   *
    * @example
    * ```typescript
    * // For header component:
@@ -114,10 +113,8 @@ export interface ConfigPanelProps {
    * **Does NOT save**: Changes only committed when onSave() called
    *
    * **Pattern**: Call on onChange/onInput handlers
-   *
    * @param fieldName - Config field name (must match configSchema)
    * @param value - New value for field
-   *
    * @example
    * ```typescript
    * // Text input with live preview
@@ -156,7 +153,6 @@ export interface ConfigPanelProps {
    * - Adds undo command
    *
    * **Pattern**: Attach to primary action button
-   *
    * @example
    * ```typescript
    * <div class="actions">
@@ -180,7 +176,6 @@ export interface ConfigPanelProps {
    * - No undo command added
    *
    * **Pattern**: Attach to cancel button or close icon
-   *
    * @example
    * ```typescript
    * <div class="panel-header">
@@ -239,7 +234,6 @@ export interface ComponentPaletteProps {
    * - Group by category
    * - Filter/search
    * - Display component info
-   *
    * @example
    * ```typescript
    * // Group by category
@@ -263,10 +257,8 @@ export interface ComponentPaletteProps {
    * - Shows drag ghost/preview
    *
    * **Pattern**: Attach to draggable palette items
-   *
    * @param component - Component definition being dragged
    * @param event - Native drag event
-   *
    * @example
    * ```typescript
    * <div
@@ -490,7 +482,6 @@ export interface CanvasHeaderProps {
    * - Key for event handlers
    * - Look up canvas-specific data
    * - Target for API operations
-   *
    * @example
    * ```typescript
    * // Open section editor
@@ -517,7 +508,6 @@ export interface CanvasHeaderProps {
    * - Display section title
    * - Show background color preview
    * - Render custom metadata fields
-   *
    * @example
    * ```typescript
    * // Common metadata structure:
@@ -552,7 +542,6 @@ export interface CanvasHeaderProps {
    * - Highlight active header
    * - Show/hide canvas-specific controls
    * - Apply active styling
-   *
    * @example
    * ```typescript
    * // Conditional styling

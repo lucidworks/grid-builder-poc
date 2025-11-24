@@ -41,7 +41,7 @@
  *
  * // In grid-item-wrapper.tsx componentDidLoad:
  * virtualRenderer.observe(this.itemRef, this.item.id, (isVisible) => {
- *   this.isVisible = isVisible;  // Triggers re-render
+ * this.isVisible = isVisible;  // Triggers re-render
  * });
  * ```
  *
@@ -99,10 +99,10 @@
  * **Callback invocation**:
  * ```typescript
  * entries.forEach((entry) => {
- *   const callback = this.observedElements.get(elementId);
- *   if (callback) {
- *     callback(entry.isIntersecting);  // true when entering, false when exiting
- *   }
+ * const callback = this.observedElements.get(elementId);
+ * if (callback) {
+ * callback(entry.isIntersecting);  // true when entering, false when exiting
+ * }
  * });
  * ```
  *
@@ -110,18 +110,18 @@
  * ```typescript
  * // In grid-item-wrapper.tsx:
  * virtualRenderer.observe(this.itemRef, this.item.id, (isVisible) => {
- *   this.isVisible = isVisible;  // @State update triggers re-render
+ * this.isVisible = isVisible;  // @State update triggers re-render
  * });
  * ```
  *
  * **Render method**:
  * ```typescript
  * renderComponent() {
- *   if (!this.isVisible) {
- *     return <div class="component-placeholder">Loading...</div>;
- *   }
- *   // Render actual component (expensive)
- *   return <component-image-gallery itemId={this.item.id} />;
+ * if (!this.isVisible) {
+ * return <div class="component-placeholder">Loading...</div>;
+ * }
+ * // Render actual component (expensive)
+ * return <component-image-gallery itemId={this.item.id} />;
  * }
  * ```
  *
@@ -183,18 +183,18 @@
  * ```typescript
  * // In grid-item-wrapper.tsx:
  * componentDidLoad() {
- *   // Always observe, component decides if needed
- *   virtualRenderer.observe(this.itemRef, this.item.id, (isVisible) => {
- *     this.isVisible = isVisible;
- *   });
+ * // Always observe, component decides if needed
+ * virtualRenderer.observe(this.itemRef, this.item.id, (isVisible) => {
+ * this.isVisible = isVisible;
+ * });
  * }
  *
  * renderComponent() {
- *   // Simple components ignore isVisible flag
- *   if (!this.isVisible && this.item.type === 'imageGallery') {
- *     return <div class="component-placeholder">Loading...</div>;
- *   }
- *   // Complex types use isVisible guard
+ * // Simple components ignore isVisible flag
+ * if (!this.isVisible && this.item.type === 'imageGallery') {
+ * return <div class="component-placeholder">Loading...</div>;
+ * }
+ * // Complex types use isVisible guard
  * }
  * ```
  *
@@ -226,27 +226,27 @@
  * ```typescript
  * // 1. Create observer service
  * class VirtualRenderer {
- *   private observer: IntersectionObserver;
- *   private callbacks = new Map<string, (visible: boolean) => void>();
+ * private observer: IntersectionObserver;
+ * private callbacks = new Map<string, (visible: boolean) => void>();
  *
- *   constructor() {
- *     this.observer = new IntersectionObserver(
- *       (entries) => entries.forEach(e =>
- *         this.callbacks.get(e.target.id)?.(e.isIntersecting)
- *       ),
- *       { rootMargin: '200px', threshold: 0.01 }
- *     );
- *   }
+ * constructor() {
+ * this.observer = new IntersectionObserver(
+ * (entries) => entries.forEach(e =>
+ * this.callbacks.get(e.target.id)?.(e.isIntersecting)
+ * ),
+ * { rootMargin: '200px', threshold: 0.01 }
+ * );
+ * }
  *
- *   observe(el: Element, id: string, cb: (visible: boolean) => void) {
- *     this.callbacks.set(id, cb);
- *     this.observer.observe(el);
- *   }
+ * observe(el: Element, id: string, cb: (visible: boolean) => void) {
+ * this.callbacks.set(id, cb);
+ * this.observer.observe(el);
+ * }
  *
- *   unobserve(el: Element, id: string) {
- *     this.callbacks.delete(id);
- *     this.observer.unobserve(el);
- *   }
+ * unobserve(el: Element, id: string) {
+ * this.callbacks.delete(id);
+ * this.observer.unobserve(el);
+ * }
  * }
  *
  * // 2. Create singleton
@@ -254,8 +254,8 @@
  *
  * // 3. Use in component
  * useEffect(() => {
- *   virtualRenderer.observe(ref.current, id, setIsVisible);
- *   return () => virtualRenderer.unobserve(ref.current, id);
+ * virtualRenderer.observe(ref.current, id, setIsVisible);
+ * return () => virtualRenderer.unobserve(ref.current, id);
  * }, []);
  *
  * return isVisible ? <ComplexComponent /> : <Placeholder />;
@@ -286,7 +286,6 @@
  * threshold: 0.1       // Trigger when 10% visible
  * threshold: 0.5       // Trigger when 50% visible (not recommended)
  * ```
- *
  * @module virtual-renderer
  */
 
@@ -392,13 +391,13 @@ export class VirtualRendererService {
    * **Observer callback**:
    * ```typescript
    * (entries) => {
-   *   entries.forEach((entry) => {
-   *     const elementId = entry.target.id;
-   *     const callback = this.observedElements.get(elementId);
-   *     if (callback) {
-   *       callback(entry.isIntersecting);  // true = entering, false = exiting
-   *     }
-   *   });
+   * entries.forEach((entry) => {
+   * const elementId = entry.target.id;
+   * const callback = this.observedElements.get(elementId);
+   * if (callback) {
+   * callback(entry.isIntersecting);  // true = entering, false = exiting
+   * }
+   * });
    * }
    * ```
    *
@@ -462,8 +461,6 @@ export class VirtualRendererService {
    * - Map lookups O(1)
    * - No DOM queries needed
    * - Works well with 100+ elements
-   *
-   * @private
    */
   private initialize() {
     // Create observer with 200px margin (pre-render before entering viewport)
@@ -538,7 +535,7 @@ export class VirtualRendererService {
    * **Typical usage**:
    * ```typescript
    * virtualRenderer.observe(this.itemRef, this.item.id, (isVisible) => {
-   *   this.isVisible = isVisible;  // @State update → re-render
+   * this.isVisible = isVisible;  // @State update → re-render
    * });
    * ```
    *
@@ -586,11 +583,9 @@ export class VirtualRendererService {
    * - No error thrown
    * - Element renders immediately
    * - Graceful degradation
-   *
    * @param element - DOM element to observe (must have id attribute)
    * @param elementId - Unique ID for callback lookup (should match element.id)
    * @param callback - Function called when visibility changes
-   *
    * @example
    * ```typescript
    * // In grid-item-wrapper.tsx componentDidLoad:
@@ -621,16 +616,17 @@ export class VirtualRendererService {
     // Check if element is already in viewport and call callback synchronously
     // This prevents "Loading..." flash for items that are initially visible
     const rect = element.getBoundingClientRect();
-    const windowHeight = window.innerHeight || document.documentElement.clientHeight;
-    const windowWidth = window.innerWidth || document.documentElement.clientWidth;
+    const windowHeight =
+      window.innerHeight || document.documentElement.clientHeight;
+    const windowWidth =
+      window.innerWidth || document.documentElement.clientWidth;
 
     // Check if element is in viewport (with 200px margin matching rootMargin)
-    const isInViewport = (
+    const isInViewport =
       rect.top < windowHeight + 200 &&
       rect.bottom > -200 &&
       rect.left < windowWidth + 200 &&
-      rect.right > -200
-    );
+      rect.right > -200;
 
     // Call callback immediately if already visible
     if (isInViewport) {
@@ -742,10 +738,8 @@ export class VirtualRendererService {
    * - Sequential unobserve: ~11ms
    * - Observer.disconnect() + Map.clear(): ~1ms
    * - destroy() method more efficient for bulk
-   *
    * @param element - DOM element to stop observing
    * @param elementId - Element's ID for callback removal
-   *
    * @example
    * ```typescript
    * // In grid-item-wrapper.tsx disconnectedCallback:
@@ -782,8 +776,8 @@ export class VirtualRendererService {
    * **Disconnect observer**:
    * ```typescript
    * if (this.observer) {
-   *   this.observer.disconnect();  // Stop watching all elements
-   *   this.observer = null;         // Allow GC
+   * this.observer.disconnect();  // Stop watching all elements
+   * this.observer = null;         // Allow GC
    * }
    * ```
    *
@@ -884,7 +878,6 @@ export class VirtualRendererService {
    * - Callbacks freed
    * - Elements can be GC'd
    * - No memory leaks
-   *
    * @example
    * ```typescript
    * // On page unload:
@@ -943,8 +936,8 @@ export class VirtualRendererService {
  * **In grid-builder-app.tsx** (optional, for visibility):
  * ```typescript
  * componentDidLoad() {
- *   // Expose globally for debugging (optional)
- *   (window as any).virtualRenderer = virtualRenderer;
+ * // Expose globally for debugging (optional)
+ * (window as any).virtualRenderer = virtualRenderer;
  * }
  * ```
  *
@@ -953,13 +946,13 @@ export class VirtualRendererService {
  * import { virtualRenderer } from '../../services/virtual-renderer';
  *
  * componentDidLoad() {
- *   virtualRenderer.observe(this.itemRef, this.item.id, (isVisible) => {
- *     this.isVisible = isVisible;
+ * virtualRenderer.observe(this.itemRef, this.item.id, (isVisible) => {
+ * this.isVisible = isVisible;
  * });
  * }
  *
  * disconnectedCallback() {
- *   virtualRenderer.unobserve(this.itemRef, this.item.id);
+ * virtualRenderer.unobserve(this.itemRef, this.item.id);
  * }
  * ```
  *
@@ -995,7 +988,6 @@ export class VirtualRendererService {
  * - No context setup
  * - No DI container
  * - Works across frameworks
- *
  * @example
  * ```typescript
  * // Import and use directly:

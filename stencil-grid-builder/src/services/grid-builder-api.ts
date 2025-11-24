@@ -21,7 +21,7 @@
  *
  * // Listen for events
  * api.on('itemAdded', (event) => {
- *   console.log('Item added:', event.item);
+ * console.log('Item added:', event.item);
  * });
  *
  * // Add an item
@@ -29,10 +29,10 @@
  *
  * // Update item
  * api.updateItem('canvas1', item.id, {
- *   layouts: {
- *     desktop: { x: 15, y: 15, width: 25, height: 20 },
- *     mobile: { x: null, y: null, width: null, height: null, customized: false },
- *   },
+ * layouts: {
+ * desktop: { x: 15, y: 15, width: 25, height: 20 },
+ * mobile: { x: null, y: null, width: null, height: null, customized: false },
+ * },
  * });
  *
  * // Export state
@@ -42,10 +42,9 @@
  * // Import state
  * const json = localStorage.getItem('gridState');
  * if (json) {
- *   api.importState(json);
+ * api.importState(json);
  * }
  * ```
- *
  * @module grid-builder-api
  */
 
@@ -200,7 +199,6 @@ export class GridBuilderAPI {
    *
    * **Note**: Returns reference to state object. Mutations will affect the grid.
    * For read-only access, use `exportState()` and parse the JSON.
-   *
    * @returns Current grid state object
    */
   getState(): GridState {
@@ -209,7 +207,6 @@ export class GridBuilderAPI {
 
   /**
    * Get all canvases
-   *
    * @returns Object mapping canvas IDs to canvas data
    */
   getCanvases() {
@@ -218,7 +215,6 @@ export class GridBuilderAPI {
 
   /**
    * Get a specific canvas
-   *
    * @param canvasId - Canvas ID
    * @returns Canvas data or null if not found
    */
@@ -246,13 +242,13 @@ export class GridBuilderAPI {
    * ```typescript
    * // Host app maintains canvas metadata
    * const canvasMetadata = {
-   *   'hero-section': { title: 'Hero Section', backgroundColor: '#f0f4f8' }
+   * 'hero-section': { title: 'Hero Section', backgroundColor: '#f0f4f8' }
    * };
    *
    * // Listen to library events
    * api.on('canvasAdded', (event) => {
-   *   // Host app knows a canvas was created, can update UI
-   *   console.log('Canvas added:', event.canvasId);
+   * // Host app knows a canvas was created, can update UI
+   * console.log('Canvas added:', event.canvasId);
    * });
    *
    * // Create canvas in library (just placement state)
@@ -264,12 +260,9 @@ export class GridBuilderAPI {
    *
    * // Host app manages its own metadata undo/redo separately
    * ```
-   *
    * @param canvasId - Unique canvas identifier
-   *
-   * @emits canvasAdded - After canvas is created in library state
-   * @emits stateChanged - After state is updated
-   *
+   * @fires canvasAdded - After canvas is created in library state
+   * @fires stateChanged - After state is updated
    * @example
    * ```typescript
    * // Host app adds a new section
@@ -302,12 +295,9 @@ export class GridBuilderAPI {
    * - Listen to canvasRemoved event
    * - Update its own UI/state
    * - Handle cleanup of canvas-specific resources
-   *
    * @param canvasId - Canvas to remove
-   *
-   * @emits canvasRemoved - After canvas is removed
-   * @emits stateChanged - After state is updated
-   *
+   * @fires canvasRemoved - After canvas is removed
+   * @fires stateChanged - After state is updated
    * @example
    * ```typescript
    * // Host app removes a section
@@ -328,7 +318,6 @@ export class GridBuilderAPI {
 
   /**
    * Get a specific item from a canvas
-   *
    * @param canvasId - Canvas ID
    * @param itemId - Item ID
    * @returns Grid item or null if not found
@@ -339,7 +328,6 @@ export class GridBuilderAPI {
 
   /**
    * Get current viewport
-   *
    * @returns Current viewport ('desktop' or 'mobile')
    */
   getCurrentViewport() {
@@ -348,7 +336,6 @@ export class GridBuilderAPI {
 
   /**
    * Get grid visibility state
-   *
    * @returns True if grid is visible, false otherwise
    */
   getGridVisibility(): boolean {
@@ -357,7 +344,6 @@ export class GridBuilderAPI {
 
   /**
    * Get currently selected item
-   *
    * @returns Object with itemId and canvasId, or null if nothing selected
    */
   getSelectedItem(): { itemId: string; canvasId: string } | null {
@@ -379,7 +365,6 @@ export class GridBuilderAPI {
    *
    * Creates a new grid item with generated ID and adds it to the specified canvas.
    * This operation is undoable.
-   *
    * @param canvasId - Target canvas ID
    * @param componentType - Type of component to add
    * @param x - X position in grid units
@@ -388,8 +373,7 @@ export class GridBuilderAPI {
    * @param height - Height in grid units
    * @param config - Optional component configuration data
    * @returns Created grid item
-   *
-   * @emits itemAdded
+   * @fires itemAdded
    */
   addItem(
     canvasId: string,
@@ -432,11 +416,9 @@ export class GridBuilderAPI {
    * Remove an item from a canvas
    *
    * This operation is undoable.
-   *
    * @param canvasId - Canvas ID
    * @param itemId - Item ID to remove
-   *
-   * @emits itemRemoved
+   * @fires itemRemoved
    */
   removeItem(canvasId: string, itemId: string): void {
     const item = getItemFromState(canvasId, itemId);
@@ -458,12 +440,10 @@ export class GridBuilderAPI {
    * Update an item's properties
    *
    * This operation is undoable.
-   *
    * @param canvasId - Canvas ID
    * @param itemId - Item ID to update
    * @param updates - Partial item data to merge
-   *
-   * @emits itemUpdated
+   * @fires itemUpdated
    */
   updateItem(
     canvasId: string,
@@ -490,12 +470,10 @@ export class GridBuilderAPI {
    * Move an item from one canvas to another
    *
    * This operation is undoable.
-   *
    * @param fromCanvasId - Source canvas ID
    * @param toCanvasId - Target canvas ID
    * @param itemId - Item ID to move
-   *
-   * @emits itemMoved
+   * @fires itemMoved
    */
   moveItem(fromCanvasId: string, toCanvasId: string, itemId: string): void {
     const item = getItemFromState(fromCanvasId, itemId);
@@ -573,7 +551,6 @@ export class GridBuilderAPI {
    * - Group related operations for logical undo/redo units
    * - Keep batches under 1000 items for optimal performance
    * - Batch operations emit single `itemsBatchAdded` event (not individual `itemAdded`)
-   *
    * @param items - Array of item specifications with the following properties:
    *   - `canvasId` (string): Target canvas ID where item will be added
    *   - `type` (string): Component type identifier (must match a component definition)
@@ -582,12 +559,9 @@ export class GridBuilderAPI {
    *   - `width` (number): Width in grid units
    *   - `height` (number): Height in grid units
    *   - `config` (object, optional): Component-specific configuration data
-   *
    * @returns Array of created item IDs (in same order as input array)
-   *
-   * @emits itemsBatchAdded - Fired once after all items are added
-   * @emits stateChanged - Fired once after batch completes (inherited from state update)
-   *
+   * @fires itemsBatchAdded - Fired once after all items are added
+   * @fires stateChanged - Fired once after batch completes (inherited from state update)
    * @example
    * ```typescript
    * // Add a hero section and 3 article cards in one operation
@@ -630,11 +604,10 @@ export class GridBuilderAPI {
    * // Redo restores all 4 items in one operation
    * api.redo();
    * ```
-   *
    * @see https://github.com/yourusername/extraction-guide#phase-72-batch-operations
    */
   addItemsBatch(
-    items: Array<{
+    items: {
       canvasId: string;
       type: string;
       x: number;
@@ -642,7 +615,7 @@ export class GridBuilderAPI {
       width: number;
       height: number;
       config?: Record<string, any>;
-    }>,
+    }[],
   ): string[] {
     // Convert API format to state-manager format
     const partialItems = items.map(
@@ -707,14 +680,11 @@ export class GridBuilderAPI {
    * - Combine with batch add for "Replace All" operations
    * - Items are deleted across all canvases (itemIds can span multiple canvases)
    * - Batch operations emit single `itemsBatchDeleted` event (not individual `itemRemoved`)
-   *
    * @param itemIds - Array of item IDs to delete. Item IDs can belong to different
    *   canvases. Invalid or non-existent item IDs are silently ignored (no error thrown).
-   *
-   * @emits itemsBatchDeleted - Fired once after all items are deleted
-   * @emits selectionChanged - Fired if a selected item was deleted
-   * @emits stateChanged - Fired once after batch completes (inherited from state update)
-   *
+   * @fires itemsBatchDeleted - Fired once after all items are deleted
+   * @fires selectionChanged - Fired if a selected item was deleted
+   * @fires stateChanged - Fired once after batch completes (inherited from state update)
    * @example
    * ```typescript
    * // Delete all selected items in one operation
@@ -729,7 +699,6 @@ export class GridBuilderAPI {
    * const allItemIds = canvas.items.map(item => item.id);
    * api.deleteItemsBatch(allItemIds);
    * ```
-   *
    * @example
    * ```typescript
    * // Delete items across multiple canvases
@@ -740,7 +709,6 @@ export class GridBuilderAPI {
    *   'canvas2-item-6'
    * ]); // All 4 items deleted in one operation
    * ```
-   *
    * @see https://github.com/yourusername/extraction-guide#phase-72-batch-operations
    */
   deleteItemsBatch(itemIds: string[]): void {
@@ -792,14 +760,11 @@ export class GridBuilderAPI {
    * - Items can belong to different canvases
    * - Invalid item IDs log warnings but don't throw errors
    * - Batch operations emit single `itemsBatchUpdated` event (not individual `itemUpdated`)
-   *
    * @param updates - Array of config update specifications with the following properties:
    *   - `itemId` (string): ID of item to update
    *   - `config` (object): Partial config object to merge with existing config
-   *
-   * @emits itemsBatchUpdated - Fired once after all configs are updated
-   * @emits stateChanged - Fired once after batch completes (inherited from state update)
-   *
+   * @fires itemsBatchUpdated - Fired once after all configs are updated
+   * @fires stateChanged - Fired once after batch completes (inherited from state update)
    * @example
    * ```typescript
    * // Update theme colors across all header components
@@ -815,7 +780,6 @@ export class GridBuilderAPI {
    * // Redo applies blue theme again
    * api.redo();
    * ```
-   *
    * @example
    * ```typescript
    * // Bulk update text content
@@ -827,7 +791,6 @@ export class GridBuilderAPI {
    *   }))
    * );
    * ```
-   *
    * @example
    * ```typescript
    * // Config merging demonstration
@@ -841,11 +804,10 @@ export class GridBuilderAPI {
    * // Result: { title: 'New', fontSize: 16, color: 'blue' }
    * //          ^^^^^ updated    ^^^^^^^^ unchanged   ^^^^ updated
    * ```
-   *
    * @see https://github.com/yourusername/extraction-guide#phase-72-batch-operations
    */
   updateConfigsBatch(
-    updates: Array<{ itemId: string; config: Record<string, any> }>,
+    updates: { itemId: string; config: Record<string, any> }[],
   ): void {
     // Convert to state-manager format (need canvasId)
     const batchUpdates = updates
@@ -861,11 +823,11 @@ export class GridBuilderAPI {
           updates: { config: { ...item.config, ...config } },
         };
       })
-      .filter(Boolean) as Array<{
+      .filter(Boolean) as {
       itemId: string;
       canvasId: string;
       updates: Partial<GridItem>;
-    }>;
+    }[];
 
     // Add to undo/redo history
     const command = new BatchUpdateConfigCommand(batchUpdates);
@@ -885,7 +847,6 @@ export class GridBuilderAPI {
 
   /**
    * Helper method to find an item by ID across all canvases
-   *
    * @param itemId - Item ID to find
    * @returns Grid item or null if not found
    */
@@ -906,11 +867,9 @@ export class GridBuilderAPI {
 
   /**
    * Select an item
-   *
    * @param itemId - Item ID to select
    * @param canvasId - Canvas ID containing the item
-   *
-   * @emits selectionChanged
+   * @fires selectionChanged
    */
   selectItem(itemId: string, canvasId: string): void {
     selectItemInState(itemId, canvasId);
@@ -922,8 +881,7 @@ export class GridBuilderAPI {
 
   /**
    * Deselect the currently selected item
-   *
-   * @emits selectionChanged
+   * @fires selectionChanged
    */
   deselectItem(): void {
     deselectItem();
@@ -950,13 +908,10 @@ export class GridBuilderAPI {
    * in the target canvas (puts item on top by default).
    *
    * This operation is undoable.
-   *
    * @param canvasId - Canvas containing the item
    * @param itemId - Item to modify
    * @param newZIndex - New z-index value
-   *
-   * @emits zIndexChanged - If operation succeeds
-   *
+   * @fires zIndexChanged - If operation succeeds
    * @example
    * ```typescript
    * // Move item to specific layer position
@@ -996,12 +951,9 @@ export class GridBuilderAPI {
    * If item is already on top, does nothing.
    *
    * This operation is undoable.
-   *
    * @param canvasId - Canvas containing the item
    * @param itemId - Item to bring to front
-   *
-   * @emits zIndexChanged - If operation succeeds
-   *
+   * @fires zIndexChanged - If operation succeeds
    * @example
    * ```typescript
    * // Bring item to front
@@ -1041,12 +993,9 @@ export class GridBuilderAPI {
    * If item is already on bottom, does nothing.
    *
    * This operation is undoable.
-   *
    * @param canvasId - Canvas containing the item
    * @param itemId - Item to send to back
-   *
-   * @emits zIndexChanged - If operation succeeds
-   *
+   * @fires zIndexChanged - If operation succeeds
    * @example
    * ```typescript
    * // Send item to back
@@ -1088,12 +1037,9 @@ export class GridBuilderAPI {
    * **Batch operation**: Affects 2 items atomically (swap), emits zIndexBatchChanged.
    *
    * This operation is undoable.
-   *
    * @param canvasId - Canvas containing the item
    * @param itemId - Item to move forward
-   *
-   * @emits zIndexBatchChanged - Batch event with both items affected
-   *
+   * @fires zIndexBatchChanged - Batch event with both items affected
    * @example
    * ```typescript
    * // Move item forward one layer
@@ -1177,12 +1123,9 @@ export class GridBuilderAPI {
    * **Batch operation**: Affects 2 items atomically (swap), emits zIndexBatchChanged.
    *
    * This operation is undoable.
-   *
    * @param canvasId - Canvas containing the item
    * @param itemId - Item to move backward
-   *
-   * @emits zIndexBatchChanged - Batch event with both items affected
-   *
+   * @fires zIndexBatchChanged - Batch event with both items affected
    * @example
    * ```typescript
    * // Move item backward one layer
@@ -1272,14 +1215,11 @@ export class GridBuilderAPI {
    * **Performance**: Single state update and re-render for N items instead of N updates.
    *
    * This operation is undoable.
-   *
    * @param changes - Array of z-index changes with the following properties:
    *   - `itemId` (string): Item ID to update
    *   - `canvasId` (string): Canvas containing the item
    *   - `newZIndex` (number): New z-index value
-   *
-   * @emits zIndexBatchChanged - Fired once after all changes are applied
-   *
+   * @fires zIndexBatchChanged - Fired once after all changes are applied
    * @example
    * ```typescript
    * // Reorder items across multiple canvases in one operation
@@ -1295,11 +1235,11 @@ export class GridBuilderAPI {
    * ```
    */
   setItemsZIndexBatch(
-    changes: Array<{
+    changes: {
       itemId: string;
       canvasId: string;
       newZIndex: number;
-    }>,
+    }[],
   ): void {
     if (changes.length === 0) {
       return;
@@ -1318,7 +1258,9 @@ export class GridBuilderAPI {
 
         const item = canvas.items.find((i) => i.id === itemId);
         if (!item) {
-          console.warn(`Item ${itemId} not found in canvas ${canvasId}, skipping`);
+          console.warn(
+            `Item ${itemId} not found in canvas ${canvasId}, skipping`,
+          );
           return null;
         }
 
@@ -1336,12 +1278,12 @@ export class GridBuilderAPI {
           newZIndex,
         };
       })
-      .filter(Boolean) as Array<{
+      .filter(Boolean) as {
       itemId: string;
       canvasId: string;
       oldZIndex: number;
       newZIndex: number;
-    }>;
+    }[];
 
     // No valid changes after filtering
     if (changesWithOldValues.length === 0) {
@@ -1378,10 +1320,8 @@ export class GridBuilderAPI {
    * Change the current viewport
    *
    * This operation is undoable.
-   *
    * @param viewport - Target viewport ('desktop' or 'mobile')
-   *
-   * @emits viewportChanged
+   * @fires viewportChanged
    */
   setViewport(viewport: "desktop" | "mobile"): void {
     const oldViewport = gridState.currentViewport;
@@ -1399,10 +1339,8 @@ export class GridBuilderAPI {
    * Toggle grid visibility
    *
    * This operation is undoable.
-   *
    * @param visible - True to show grid, false to hide
-   *
-   * @emits gridVisibilityChanged
+   * @fires gridVisibilityChanged
    */
   toggleGrid(visible: boolean): void {
     const oldValue = gridState.showGrid;
@@ -1421,8 +1359,7 @@ export class GridBuilderAPI {
 
   /**
    * Undo the last action
-   *
-   * @emits stateChanged
+   * @fires stateChanged
    */
   undo(): void {
     undoInternal();
@@ -1431,8 +1368,7 @@ export class GridBuilderAPI {
 
   /**
    * Redo the last undone action
-   *
-   * @emits stateChanged
+   * @fires stateChanged
    */
   redo(): void {
     redoInternal();
@@ -1441,7 +1377,6 @@ export class GridBuilderAPI {
 
   /**
    * Check if undo is available
-   *
    * @returns True if undo is available
    */
   canUndo(): boolean {
@@ -1450,7 +1385,6 @@ export class GridBuilderAPI {
 
   /**
    * Check if redo is available
-   *
    * @returns True if redo is available
    */
   canRedo(): boolean {
@@ -1472,9 +1406,7 @@ export class GridBuilderAPI {
    * Export current grid state as JSON
    *
    * Useful for saving/loading grid configurations, persistence, etc.
-   *
    * @returns JSON string representation of grid state
-   *
    * @example
    * ```typescript
    * const json = api.exportState();
@@ -1490,13 +1422,9 @@ export class GridBuilderAPI {
    *
    * Replaces current state with imported state. This operation
    * clears undo/redo history.
-   *
    * @param json - JSON string from exportState()
-   *
    * @throws Error if JSON is invalid
-   *
-   * @emits stateChanged
-   *
+   * @fires stateChanged
    * @example
    * ```typescript
    * const json = localStorage.getItem('gridState');
@@ -1522,8 +1450,7 @@ export class GridBuilderAPI {
    *
    * Clears all canvases, resets viewport to desktop, shows grid.
    * This operation clears undo/redo history.
-   *
-   * @emits stateChanged
+   * @fires stateChanged
    */
   reset(): void {
     resetState();
@@ -1537,10 +1464,8 @@ export class GridBuilderAPI {
 
   /**
    * Register an event listener
-   *
    * @param event - Event name
    * @param listener - Event handler function
-   *
    * @example
    * ```typescript
    * api.on('itemAdded', (event) => {
@@ -1557,7 +1482,6 @@ export class GridBuilderAPI {
 
   /**
    * Unregister an event listener
-   *
    * @param event - Event name
    * @param listener - Event handler function to remove
    */
@@ -1572,10 +1496,8 @@ export class GridBuilderAPI {
    * Register a one-time event listener
    *
    * Listener is automatically removed after first invocation.
-   *
    * @param event - Event name
    * @param listener - Event handler function
-   *
    * @example
    * ```typescript
    * api.once('itemAdded', (event) => {

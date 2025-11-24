@@ -22,7 +22,6 @@
  * - Component registry lookup
  * - Fallback for unknown component types
  * - Pass GridConfig to grid calculations
- *
  * @module grid-item-wrapper
  */
 
@@ -734,8 +733,13 @@ export class GridItemWrapper {
     const selectionColor = definition?.selectionColor || "#f59e0b"; // Default yellow/gold
 
     // Get backgroundColor from config, or fall back to configSchema default
-    const backgroundColorField = definition?.configSchema?.find(f => f.name === 'backgroundColor');
-    const backgroundColor = this.item.config?.backgroundColor || backgroundColorField?.defaultValue || "transparent";
+    const backgroundColorField = definition?.configSchema?.find(
+      (f) => f.name === "backgroundColor",
+    );
+    const backgroundColor =
+      this.item.config?.backgroundColor ||
+      backgroundColorField?.defaultValue ||
+      "transparent";
 
     const itemStyle = {
       transform: `translate(${xPixels}px, ${yPixels}px)`,
@@ -763,9 +767,9 @@ export class GridItemWrapper {
         itemId: this.item.id,
         componentType: this.item.type,
         name: displayName,
-        icon: icon,
-        isSelected: isSelected,
-        contentSlotId: contentSlotId,
+        icon,
+        isSelected,
+        contentSlotId,
       });
 
       return (
@@ -858,7 +862,9 @@ export class GridItemWrapper {
             <button
               class="grid-item-delete"
               aria-label={`Delete ${displayName} component`}
-              onClick={() => this.handleDelete(itemIdForDelete, canvasIdForDelete)}
+              onClick={() =>
+                this.handleDelete(itemIdForDelete, canvasIdForDelete)
+              }
             >
               ×
             </button>
@@ -1120,7 +1126,6 @@ export class GridItemWrapper {
   /**
    * Handle delete from default wrapper button
    * Calls deletion hook if provided, then dispatches delete event if approved
-   *
    * @param itemId - Item ID captured at render time
    * @param canvasId - Canvas ID captured at render time
    */

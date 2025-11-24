@@ -167,7 +167,6 @@ export interface GridBuilderPlugin {
    * - Identifying plugin in logs
    * - Debugging
    * - Plugin management
-   *
    * @example 'performance-monitor', 'auto-save', 'analytics'
    */
   name: string;
@@ -180,7 +179,6 @@ export interface GridBuilderPlugin {
    * - Compatibility checking
    * - Debugging
    * - Update notifications
-   *
    * @example '1.0.0', '2.1.3'
    */
   version?: string;
@@ -200,9 +198,7 @@ export interface GridBuilderPlugin {
    *
    * **Important**: Must be synchronous or handle async internally.
    * Grid builder does not await plugin initialization.
-   *
    * @param api - Grid Builder API for interacting with the library
-   *
    * @example
    * ```typescript
    * init(api: GridBuilderAPI) {
@@ -243,7 +239,6 @@ export interface GridBuilderPlugin {
    * - Duplicate event handlers
    * - Orphaned DOM elements
    * - Background tasks continuing after unmount
-   *
    * @example
    * ```typescript
    * destroy() {

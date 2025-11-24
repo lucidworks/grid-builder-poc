@@ -10,10 +10,10 @@
  * **Collision Detection (AABB)**:
  * - Axis-Aligned Bounding Box collision test
  * - Two rectangles DON'T collide if:
- *   - One is completely to the left of the other
- *   - One is completely to the right of the other
- *   - One is completely above the other
- *   - One is completely below the other
+ * - One is completely to the left of the other
+ * - One is completely to the right of the other
+ * - One is completely above the other
+ * - One is completely below the other
  * - If none of these are true, they collide
  *
  * **Smart Space Finding (Hybrid Strategy)**:
@@ -28,11 +28,10 @@
  * - Find free space: O(n × m) where n = items, m = grid scan area
  * - Typical canvas (10 items): ~50-100ms for full grid scan
  * - Early exit optimization: Returns immediately on first free space
- *
  * @module space-finder
  */
 
-import { gridState } from '../services/state-manager';
+import { gridState } from "../services/state-manager";
 
 /**
  * Canvas width in grid units
@@ -81,23 +80,22 @@ const DEFAULT_BOTTOM_SPACING = 2;
  * ```typescript
  * // No collision (separated horizontally)
  * checkCollision(
- *   { x: 0, y: 0, width: 10, height: 10 },
- *   { x: 15, y: 0, width: 10, height: 10 }
+ * { x: 0, y: 0, width: 10, height: 10 },
+ * { x: 15, y: 0, width: 10, height: 10 }
  * ); // false
  *
  * // No collision (touching edges)
  * checkCollision(
- *   { x: 0, y: 0, width: 10, height: 10 },
- *   { x: 10, y: 0, width: 10, height: 10 }
+ * { x: 0, y: 0, width: 10, height: 10 },
+ * { x: 10, y: 0, width: 10, height: 10 }
  * ); // false (item1 ends at 10, item2 starts at 10 = touching, not overlapping)
  *
  * // Collision (overlapping)
  * checkCollision(
- *   { x: 0, y: 0, width: 10, height: 10 },
- *   { x: 5, y: 5, width: 10, height: 10 }
+ * { x: 0, y: 0, width: 10, height: 10 },
+ * { x: 5, y: 5, width: 10, height: 10 }
  * ); // true (actual overlap)
  * ```
- *
  * @param item1 - First rectangle (x, y, width, height)
  * @param item2 - Second rectangle (x, y, width, height)
  * @returns true if rectangles overlap, false if separated or just touching
@@ -134,7 +132,6 @@ export function checkCollision(
  * getCenteredPosition(20); // width=20 → x=15 (centered)
  * getCenteredPosition(50); // width=50 → x=0 (full width)
  * ```
- *
  * @param width - Component width in grid units
  * @returns Position { x, y } centered horizontally
  */
@@ -164,7 +161,6 @@ export function getCenteredPosition(width: number): { x: number; y: number } {
  * getBottomPosition('canvas1');
  * // Returns { x: 0, y: 0 }
  * ```
- *
  * @param canvasId - Canvas ID to check
  * @returns Position { x, y } at canvas bottom
  */
@@ -229,7 +225,6 @@ export function getBottomPosition(canvasId: string): { x: number; y: number } {
  * findFreeSpace('canvas1', 10, 6);
  * // Returns { x: 0, y: 25 } (bottom position)
  * ```
- *
  * @param canvasId - Canvas ID to search
  * @param width - Component width in grid units
  * @param height - Component height in grid units
@@ -284,7 +279,7 @@ export function findFreeSpace(
         return { itemId: item.id, itemType: item.type, collision };
       });
 
-      const hasCollision = collisions.some(c => c.collision);
+      const hasCollision = collisions.some((c) => c.collision);
 
       // Found free space → return immediately (early exit)
       if (!hasCollision) {

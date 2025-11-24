@@ -56,7 +56,6 @@
  * resizeObserver.observe(canvasContainer);
  * resizeObserver.addEventListener(() => clearGridSizeCache());
  * ```
- *
  * @module grid-calculations
  */
 
@@ -106,7 +105,6 @@ const gridSizeCache = new Map<string, number>();
  * **Performance note**:
  * Clearing cache is cheap (O(1)). The cost is in recalculation, which happens
  * lazily on next access.
- *
  * @example
  * ```typescript
  * resizeObserver.observe(canvasElement);
@@ -141,12 +139,10 @@ export function clearGridSizeCache() {
  * - `gridSizePercent`: Grid unit as % of width (default: 2% = 50 units per 100% width)
  * - `minGridSize`: Minimum size in pixels (default: 10px, prevents too small on mobile)
  * - `maxGridSize`: Maximum size in pixels (default: 50px, prevents too large on desktop)
- *
  * @param canvasId - The canvas element ID to calculate grid size for
  * @param config - Optional GridConfig for customization
  * @param forceRecalc - Set true to bypass cache and force fresh calculation
  * @returns Size of one horizontal grid unit in pixels (constrained by min/max)
- *
  * @example
  * ```typescript
  * // Default config (2% grid, 10px-50px)
@@ -208,10 +204,8 @@ export function getGridSizeHorizontal(
  * - Provides predictable, consistent heights across all viewports
  * - Simplifies calculations (no container dependency)
  * - Better UX for vertical spacing
- *
  * @param config Optional GridConfig with verticalGridSize
  * @returns Vertical grid size in pixels (config.verticalGridSize || 20)
- *
  * @example
  * ```typescript
  * const vSize = getGridSizeVertical(); // → 20 (default)
@@ -235,12 +229,10 @@ export function getGridSizeVertical(config?: GridConfig): number {
  *
  * **Rounding**:
  * Uses `Math.round()` to prevent subpixel rendering issues
- *
  * @param gridUnits - Number of grid units
  * @param canvasId - Canvas ID for responsive grid size calculation
  * @param config - Optional GridConfig for customization
  * @returns Pixel value
- *
  * @example
  * ```typescript
  * // Item at grid position x=10 (default 2% grid)
@@ -270,11 +262,9 @@ export function gridToPixelsX(
  *
  * **Configurable vertical grid**:
  * Uses config.verticalGridSize (default 20px) for calculation
- *
  * @param gridUnits - Number of grid units
  * @param config - Optional GridConfig with verticalGridSize
  * @returns Pixel value (gridUnits * verticalGridSize)
- *
  * @example
  * ```typescript
  * // Item at grid position y=5 (default 20px)
@@ -301,12 +291,10 @@ export function gridToPixelsY(gridUnits: number, config?: GridConfig): number {
  *
  * **Safety**:
  * Returns 0 if grid size is 0 (container not found/initialized)
- *
  * @param pixels - Pixel value to convert
  * @param canvasId - Canvas ID for responsive grid size calculation
  * @param config - Optional GridConfig for customization
  * @returns Number of grid units (rounded)
- *
  * @example
  * ```typescript
  * // Mouse drop at 250px (default 2% grid)
@@ -339,11 +327,9 @@ export function pixelsToGridX(
  *
  * **Rounding**:
  * Implements automatic grid snapping via `Math.round()`
- *
  * @param pixels - Pixel value to convert
  * @param config - Optional GridConfig with verticalGridSize
  * @returns Number of grid units (rounded)
- *
  * @example
  * ```typescript
  * // Mouse at 127px vertically (default 20px grid)

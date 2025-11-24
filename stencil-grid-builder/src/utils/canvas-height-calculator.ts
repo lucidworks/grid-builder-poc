@@ -34,7 +34,6 @@
  * const height = calculateCanvasHeight('canvas1');
  * canvas.style.height = height > 0 ? `${height}px` : '';
  * ```
- *
  * @module canvas-height-calculator
  */
 
@@ -83,7 +82,6 @@ const DEFAULT_BOTTOM_MARGIN_GRID_UNITS = 5;
  * × Grid size: 20px
  * = Height: 380px
  * ```
- *
  * @param items - Array of grid items
  * @param viewport - Current viewport ('desktop' | 'mobile')
  * @param config - Optional grid configuration (for custom bottom margin)
@@ -149,11 +147,9 @@ export function calculateCanvasHeightFromItems(
  *
  * **Bottom margin**:
  * - Configurable via GridConfig.canvasBottomMargin (default: 5 grid units)
- *
  * @param canvasId - Canvas identifier
  * @param config - Optional grid configuration (for custom bottom margin)
  * @returns Canvas height in pixels (0 if empty)
- *
  * @example
  * ```typescript
  * // Calculate height for canvas with 3 items (default margin)

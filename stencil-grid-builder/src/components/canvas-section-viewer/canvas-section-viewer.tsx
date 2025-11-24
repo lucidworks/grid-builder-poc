@@ -24,11 +24,11 @@
  * **No global state**: All data passed via props
  * ```typescript
  * <canvas-section-viewer
- *   canvasId="hero-section"
- *   items={items}
- *   currentViewport="desktop"
- *   config={gridConfig}
- *   componentRegistry={registry}
+ * canvasId="hero-section"
+ * items={items}
+ * currentViewport="desktop"
+ * config={gridConfig}
+ * componentRegistry={registry}
  * />
  * ```
  *
@@ -37,7 +37,6 @@
  * **ResizeObserver**: Clears grid cache on container resize
  * **Virtual rendering**: Items use VirtualRenderer for lazy loading
  * **Render version**: Forces item recalculation on resize
- *
  * @module canvas-section-viewer
  */
 
@@ -312,7 +311,7 @@ export class CanvasSectionViewer {
               renderVersion={this.renderVersion}
               config={this.config}
               componentRegistry={this.componentRegistry}
-              viewerMode={true}
+              viewerMode
               currentViewport={this.currentViewport}
               canvasItems={this.items}
             />

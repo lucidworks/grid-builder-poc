@@ -41,10 +41,8 @@ export interface DeletionHookContext {
  * - Make API calls to backend
  * - Perform validation
  * - Log the deletion
- *
  * @param context - Information about the component being deleted
  * @returns true to proceed with deletion, false to cancel, or a Promise
- *
  * @example
  * ```tsx
  * const onBeforeDelete = async (context) => {

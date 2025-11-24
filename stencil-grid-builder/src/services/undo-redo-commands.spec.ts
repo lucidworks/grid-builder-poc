@@ -310,7 +310,7 @@ describe("undo-redo-commands", () => {
         0,
         1, // sourceZIndex
         1, // targetZIndex
-    );
+      );
 
       // Redo should update position
       command.redo();
@@ -390,7 +390,7 @@ describe("undo-redo-commands", () => {
         0,
         1, // sourceZIndex
         1, // targetZIndex
-    );
+      );
 
       // Should not throw error
       command.undo();
@@ -413,7 +413,7 @@ describe("undo-redo-commands", () => {
         0,
         1, // sourceZIndex
         1, // targetZIndex
-    );
+      );
 
       // Should not throw error
       command.redo();
@@ -437,7 +437,7 @@ describe("undo-redo-commands", () => {
         0,
         1, // sourceZIndex
         1, // targetZIndex
-    );
+      );
 
       // After redo, item should have canvas2 as canvasId
       command.redo();
@@ -468,7 +468,7 @@ describe("undo-redo-commands", () => {
         0,
         99, // sourceZIndex (preserve original)
         99, // targetZIndex (preserve during cross-canvas move)
-    );
+      );
 
       command.redo();
       const movedItem = gridState.canvases.canvas2.items[0];
@@ -709,7 +709,7 @@ describe("undo-redo-commands", () => {
         0,
         1, // sourceZIndex
         1, // targetZIndex
-    );
+      );
       moveCmd.redo();
       expect(gridState.canvases.canvas1.items).toHaveLength(0);
       expect(gridState.canvases.canvas2.items).toHaveLength(1);

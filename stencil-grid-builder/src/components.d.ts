@@ -312,7 +312,7 @@ export namespace Components {
          */
         "config"?: GridConfig;
         /**
-          * Whether this canvas is currently active  **Purpose**: Indicate which canvas is currently focused/active **Source**: Computed from gridState.activeCanvasId in grid-builder **Default**: false **Visual effect**: Applies 'active' CSS class to grid-container  **Canvas becomes active when**: - User clicks item on canvas - User clicks canvas background - User starts dragging item on canvas - User starts resizing item on canvas - Programmatically via api.setActiveCanvas()  **Consumer styling hook**: Consumer can style active canvas via CSS: ```css .grid-container.active .canvas-title {   opacity: 1; } ```
+          * Whether this canvas is currently active  **Purpose**: Indicate which canvas is currently focused/active **Source**: Computed from gridState.activeCanvasId in grid-builder **Default**: false **Visual effect**: Applies 'active' CSS class to grid-container  **Canvas becomes active when**: - User clicks item on canvas - User clicks canvas background - User starts dragging item on canvas - User starts resizing item on canvas - Programmatically via api.setActiveCanvas()  **Consumer styling hook**: Consumer can style active canvas via CSS: ```css .grid-container.active .canvas-title { opacity: 1; } ```
           * @example ```tsx <canvas-section   canvasId="hero-section"   isActive={gridState.activeCanvasId === 'hero-section'} /> ```
           * @default false
          */
@@ -422,12 +422,12 @@ export namespace Components {
          */
         "config"?: GridConfig;
         /**
-          * Custom label for this palette instance  **Optional prop**: Provides a descriptive label for this specific palette **Default**: "Component palette" **Used for**: ARIA label on toolbar container  **Use case - Multiple palettes**: When multiple component palettes exist on the same page (e.g., categorized palettes), provide unique labels for screen reader users:  ```typescript <component-palette   components={contentComponents}   paletteLabel="Content components" /> <component-palette   components={mediaComponents}   paletteLabel="Media components" /> <component-palette   components={interactiveComponents}   paletteLabel="Interactive components" /> ```  **Accessibility benefit**: - Screen readers announce: "Content components, toolbar" - Users can navigate between palettes by their distinct labels - Each palette has unique ARIA IDs to avoid conflicts
+          * Custom label for this palette instance  **Optional prop**: Provides a descriptive label for this specific palette **Default**: "Component palette" **Used for**: ARIA label on toolbar container  **Use case - Multiple palettes**: When multiple component palettes exist on the same page (e.g., categorized palettes), provide unique labels for screen reader users:  ```typescript <component-palette components={contentComponents} paletteLabel="Content components" /> <component-palette components={mediaComponents} paletteLabel="Media components" /> <component-palette components={interactiveComponents} paletteLabel="Interactive components" /> ```  **Accessibility benefit**: - Screen readers announce: "Content components, toolbar" - Users can navigate between palettes by their distinct labels - Each palette has unique ARIA IDs to avoid conflicts
           * @default "Component palette"
          */
         "paletteLabel"?: string;
         /**
-          * Show palette header (title)  **Optional prop**: Controls whether the "Components" header is displayed **Default**: true (shows header for backward compatibility)  **Use cases**: - `showHeader={true}` (default): Standard palette with "Components" title - `showHeader={false}`: Chromeless mode - just the component list  **Chromeless mode benefits**: - Embed palette in custom layouts - Add your own headers/titles - Integrate into existing UI structures - More flexible component placement  **Example - Chromeless with custom wrapper**: ```typescript <div class="my-custom-sidebar">   <h3 class="my-title">Available Components</h3>   <p class="my-description">Drag to add</p>   <component-palette     components={componentDefinitions}     showHeader={false}   /> </div> ```
+          * Show palette header (title)  **Optional prop**: Controls whether the "Components" header is displayed **Default**: true (shows header for backward compatibility)  **Use cases**: - `showHeader={true}` (default): Standard palette with "Components" title - `showHeader={false}`: Chromeless mode - just the component list  **Chromeless mode benefits**: - Embed palette in custom layouts - Add your own headers/titles - Integrate into existing UI structures - More flexible component placement  **Example - Chromeless with custom wrapper**: ```typescript <div class="my-custom-sidebar"> <h3 class="my-title">Available Components</h3> <p class="my-description">Drag to add</p> <component-palette components={componentDefinitions} showHeader={false} /> </div> ```
           * @default true
          */
         "showHeader"?: boolean;
@@ -590,7 +590,7 @@ export namespace Components {
          */
         "addCanvas": (canvasId: string) => Promise<void>;
         /**
-          * Add a component programmatically  **Purpose**: Add new component to canvas without dragging from palette  **Example**: ```typescript const builder = document.querySelector('grid-builder'); const itemId = await builder.addComponent('canvas1', 'header', {   x: 10, y: 10, width: 30, height: 6 }, { title: 'My Header' }); ```
+          * Add a component programmatically  **Purpose**: Add new component to canvas without dragging from palette  **Example**: ```typescript const builder = document.querySelector('grid-builder'); const itemId = await builder.addComponent('canvas1', 'header', { x: 10, y: 10, width: 30, height: 6 }, { title: 'My Header' }); ```
           * @param canvasId - Canvas to add component to
           * @param componentType - Component type from registry
           * @param position - Grid position and size
@@ -632,7 +632,7 @@ export namespace Components {
          */
         "deleteComponent": (itemId: string) => Promise<boolean>;
         /**
-          * Export current state to JSON-serializable format  **Purpose**: Export grid layout for saving or transferring to viewer app  **Use Cases**: - Save layout to database/localStorage - Transfer layout to viewer app via API - Create layout templates/presets - Backup/restore functionality  **Example - Save to API**: ```typescript const builder = document.querySelector('grid-builder'); const exportData = await builder.exportState(); await fetch('/api/layouts', {   method: 'POST',   headers: { 'Content-Type': 'application/json' },   body: JSON.stringify(exportData) }); ```  **Example - Save to localStorage**: ```typescript const exportData = await builder.exportState(); localStorage.setItem('grid-layout', JSON.stringify(exportData)); ```
+          * Export current state to JSON-serializable format  **Purpose**: Export grid layout for saving or transferring to viewer app  **Use Cases**: - Save layout to database/localStorage - Transfer layout to viewer app via API - Create layout templates/presets - Backup/restore functionality  **Example - Save to API**: ```typescript const builder = document.querySelector('grid-builder'); const exportData = await builder.exportState(); await fetch('/api/layouts', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(exportData) }); ```  **Example - Save to localStorage**: ```typescript const exportData = await builder.exportState(); localStorage.setItem('grid-layout', JSON.stringify(exportData)); ```
           * @returns Promise<GridExport> - JSON-serializable export object
          */
         "exportState": () => Promise<GridExport>;
@@ -692,7 +692,7 @@ export namespace Components {
          */
         "undo": () => Promise<void>;
         /**
-          * Update component configuration  **Purpose**: Update component properties/config  **Example**: ```typescript const builder = document.querySelector('grid-builder'); const success = await builder.updateConfig('item-123', {   title: 'Updated Title',   color: '#ff0000' }); ```
+          * Update component configuration  **Purpose**: Update component properties/config  **Example**: ```typescript const builder = document.querySelector('grid-builder'); const success = await builder.updateConfig('item-123', { title: 'Updated Title', color: '#ff0000' }); ```
           * @param itemId - Item ID to update
           * @param config - Configuration updates
           * @returns Promise<boolean> - True if updated successfully
@@ -1936,7 +1936,7 @@ declare namespace LocalJSX {
          */
         "config"?: GridConfig;
         /**
-          * Whether this canvas is currently active  **Purpose**: Indicate which canvas is currently focused/active **Source**: Computed from gridState.activeCanvasId in grid-builder **Default**: false **Visual effect**: Applies 'active' CSS class to grid-container  **Canvas becomes active when**: - User clicks item on canvas - User clicks canvas background - User starts dragging item on canvas - User starts resizing item on canvas - Programmatically via api.setActiveCanvas()  **Consumer styling hook**: Consumer can style active canvas via CSS: ```css .grid-container.active .canvas-title {   opacity: 1; } ```
+          * Whether this canvas is currently active  **Purpose**: Indicate which canvas is currently focused/active **Source**: Computed from gridState.activeCanvasId in grid-builder **Default**: false **Visual effect**: Applies 'active' CSS class to grid-container  **Canvas becomes active when**: - User clicks item on canvas - User clicks canvas background - User starts dragging item on canvas - User starts resizing item on canvas - Programmatically via api.setActiveCanvas()  **Consumer styling hook**: Consumer can style active canvas via CSS: ```css .grid-container.active .canvas-title { opacity: 1; } ```
           * @example ```tsx <canvas-section   canvasId="hero-section"   isActive={gridState.activeCanvasId === 'hero-section'} /> ```
           * @default false
          */
@@ -2046,12 +2046,12 @@ declare namespace LocalJSX {
          */
         "config"?: GridConfig;
         /**
-          * Custom label for this palette instance  **Optional prop**: Provides a descriptive label for this specific palette **Default**: "Component palette" **Used for**: ARIA label on toolbar container  **Use case - Multiple palettes**: When multiple component palettes exist on the same page (e.g., categorized palettes), provide unique labels for screen reader users:  ```typescript <component-palette   components={contentComponents}   paletteLabel="Content components" /> <component-palette   components={mediaComponents}   paletteLabel="Media components" /> <component-palette   components={interactiveComponents}   paletteLabel="Interactive components" /> ```  **Accessibility benefit**: - Screen readers announce: "Content components, toolbar" - Users can navigate between palettes by their distinct labels - Each palette has unique ARIA IDs to avoid conflicts
+          * Custom label for this palette instance  **Optional prop**: Provides a descriptive label for this specific palette **Default**: "Component palette" **Used for**: ARIA label on toolbar container  **Use case - Multiple palettes**: When multiple component palettes exist on the same page (e.g., categorized palettes), provide unique labels for screen reader users:  ```typescript <component-palette components={contentComponents} paletteLabel="Content components" /> <component-palette components={mediaComponents} paletteLabel="Media components" /> <component-palette components={interactiveComponents} paletteLabel="Interactive components" /> ```  **Accessibility benefit**: - Screen readers announce: "Content components, toolbar" - Users can navigate between palettes by their distinct labels - Each palette has unique ARIA IDs to avoid conflicts
           * @default "Component palette"
          */
         "paletteLabel"?: string;
         /**
-          * Show palette header (title)  **Optional prop**: Controls whether the "Components" header is displayed **Default**: true (shows header for backward compatibility)  **Use cases**: - `showHeader={true}` (default): Standard palette with "Components" title - `showHeader={false}`: Chromeless mode - just the component list  **Chromeless mode benefits**: - Embed palette in custom layouts - Add your own headers/titles - Integrate into existing UI structures - More flexible component placement  **Example - Chromeless with custom wrapper**: ```typescript <div class="my-custom-sidebar">   <h3 class="my-title">Available Components</h3>   <p class="my-description">Drag to add</p>   <component-palette     components={componentDefinitions}     showHeader={false}   /> </div> ```
+          * Show palette header (title)  **Optional prop**: Controls whether the "Components" header is displayed **Default**: true (shows header for backward compatibility)  **Use cases**: - `showHeader={true}` (default): Standard palette with "Components" title - `showHeader={false}`: Chromeless mode - just the component list  **Chromeless mode benefits**: - Embed palette in custom layouts - Add your own headers/titles - Integrate into existing UI structures - More flexible component placement  **Example - Chromeless with custom wrapper**: ```typescript <div class="my-custom-sidebar"> <h3 class="my-title">Available Components</h3> <p class="my-description">Drag to add</p> <component-palette components={componentDefinitions} showHeader={false} /> </div> ```
           * @default true
          */
         "showHeader"?: boolean;

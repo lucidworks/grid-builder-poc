@@ -1,4 +1,5 @@
 // eslint.config.js
+const path = require('path');
 const globals = require('globals');
 const tsESLintParser = require('@typescript-eslint/parser');
 const eslintPlugins = {
@@ -37,8 +38,8 @@ module.exports = [
       parser: tsESLintParser,
       parserOptions: {
         sourceType: 'module',
-        project: './tsconfig.eslint.json',
-        tsconfigRootDir: './',
+        project: './tsconfig.eslint.json', // Type-aware linting enabled
+        tsconfigRootDir: __dirname,
         ecmaFeatures: {
           jsx: true, // Allows for the parsing of JSX
         },
@@ -161,7 +162,7 @@ module.exports = [
       '@typescript-eslint/adjacent-overload-signatures': 'error',
       '@typescript-eslint/array-type': 'error',
       '@typescript-eslint/consistent-type-assertions': 'error',
-      '@typescript-eslint/dot-notation': 'error',
+      '@typescript-eslint/dot-notation': 'error', // Type-aware rule enabled
       '@typescript-eslint/explicit-function-return-type': 'off',
       '@typescript-eslint/explicit-member-accessibility': [
         'off',
@@ -247,7 +248,7 @@ module.exports = [
       'react/jsx-no-bind': 'off',
       'react/no-string-refs': 'error',
       'react/self-closing-comp': 'error',
-      'sonarjs/no-invalid-await': 'warn',
+      // 'sonarjs/no-invalid-await': 'warn', // Disabled - rule not found in current sonarjs plugin version
       'sonarjs/todo-tag': 'warn',
       'sonarjs/public-static-readonly': 'warn',
       'sonarjs/function-return-type': 'warn',

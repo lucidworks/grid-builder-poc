@@ -58,8 +58,8 @@
  * **Stack-based with position pointer**:
  * ```
  * commandHistory = [cmd1, cmd2, cmd3, cmd4, cmd5]
- *                                  ↑
- *                            historyPosition = 2
+ * ↑
+ * historyPosition = 2
  * ```
  *
  * **Operations**:
@@ -70,13 +70,13 @@
  * **Branching behavior** (discarding future on new action):
  * ```
  * Initial:  [cmd1, cmd2, cmd3, cmd4, cmd5]
- *                         ↑ position = 2
+ * ↑ position = 2
  *
  * Undo 2x:  [cmd1, cmd2, cmd3, cmd4, cmd5]
- *                  ↑ position = 0
+ * ↑ position = 0
  *
  * New cmd:  [cmd1, cmd6]  ← cmd2-cmd5 discarded!
- *                  ↑ position = 1
+ * ↑ position = 1
  * ```
  *
  * **Why branching (not tree)**:
@@ -109,11 +109,11 @@
  * Each command stores **before/after snapshots**:
  * ```typescript
  * class MoveItemCommand implements Command {
- *   beforeState = JSON.parse(JSON.stringify(item));  // Deep clone
- *   afterState = JSON.parse(JSON.stringify(updatedItem));
+ * beforeState = JSON.parse(JSON.stringify(item));  // Deep clone
+ * afterState = JSON.parse(JSON.stringify(updatedItem));
  *
- *   undo() { restoreState(beforeState); }
- *   redo() { restoreState(afterState); }
+ * undo() { restoreState(beforeState); }
+ * redo() { restoreState(afterState); }
  * }
  * ```
  *
@@ -140,8 +140,8 @@
  * **Reactive state for buttons**:
  * ```typescript
  * undoRedoState = {
- *   canUndo: boolean,  // Enable/disable undo button
- *   canRedo: boolean   // Enable/disable redo button
+ * canUndo: boolean,  // Enable/disable undo button
+ * canRedo: boolean   // Enable/disable redo button
  * }
  * ```
  *
@@ -154,7 +154,7 @@
  * **Button rendering**:
  * ```tsx
  * <button disabled={!undoRedoState.canUndo} onClick={undo}>
- *   Undo
+ * Undo
  * </button>
  * ```
  *
@@ -165,46 +165,46 @@
  * **Minimal implementation**:
  * ```typescript
  * interface Command {
- *   undo(): void;
- *   redo(): void;
+ * undo(): void;
+ * redo(): void;
  * }
  *
  * class UndoRedoManager {
- *   private history: Command[] = [];
- *   private position = -1;
+ * private history: Command[] = [];
+ * private position = -1;
  *
- *   push(command: Command) {
- *     this.history.splice(this.position + 1);  // Discard future
- *     this.history.push(command);
- *     this.position++;
- *   }
+ * push(command: Command) {
+ * this.history.splice(this.position + 1);  // Discard future
+ * this.history.push(command);
+ * this.position++;
+ * }
  *
- *   undo() {
- *     if (this.position >= 0) {
- *       this.history[this.position].undo();
- *       this.position--;
- *     }
- *   }
+ * undo() {
+ * if (this.position >= 0) {
+ * this.history[this.position].undo();
+ * this.position--;
+ * }
+ * }
  *
- *   redo() {
- *     if (this.position < this.history.length - 1) {
- *       this.position++;
- *       this.history[this.position].redo();
- *     }
- *   }
+ * redo() {
+ * if (this.position < this.history.length - 1) {
+ * this.position++;
+ * this.history[this.position].redo();
+ * }
+ * }
  * }
  * ```
  *
  * **Example commands**:
  * ```typescript
  * class AddItemCommand implements Command {
- *   constructor(
- *     private canvasId: string,
- *     private item: GridItem
- *   ) {}
+ * constructor(
+ * private canvasId: string,
+ * private item: GridItem
+ * ) {}
  *
- *   undo() { removeItemFromCanvas(this.canvasId, this.item.id); }
- *   redo() { addItemToCanvas(this.canvasId, this.item); }
+ * undo() { removeItemFromCanvas(this.canvasId, this.item.id); }
+ * redo() { addItemToCanvas(this.canvasId, this.item); }
  * }
  * ```
  *
@@ -212,7 +212,6 @@
  * - React: Use useReducer or Zustand middleware
  * - Vue: Use Pinia plugin or custom composable
  * - Angular: Use NgRx effects or service
- *
  * @module undo-redo
  */
 
@@ -234,17 +233,17 @@ const debug = createDebugLogger("undo-redo");
  * **Typical implementation**:
  * ```typescript
  * class MyCommand implements Command {
- *   private beforeState: any;
- *   private afterState: any;
+ * private beforeState: any;
+ * private afterState: any;
  *
- *   constructor(initialState) {
- *     this.beforeState = JSON.parse(JSON.stringify(initialState));
- *     // ... perform operation ...
- *     this.afterState = JSON.parse(JSON.stringify(finalState));
- *   }
+ * constructor(initialState) {
+ * this.beforeState = JSON.parse(JSON.stringify(initialState));
+ * // ... perform operation ...
+ * this.afterState = JSON.parse(JSON.stringify(finalState));
+ * }
  *
- *   undo() { restoreState(this.beforeState); }
- *   redo() { restoreState(this.afterState); }
+ * undo() { restoreState(this.beforeState); }
+ * redo() { restoreState(this.afterState); }
  * }
  * ```
  *
@@ -258,7 +257,6 @@ const debug = createDebugLogger("undo-redo");
  * - DeleteItemCommand: Remove/restore grid item with index preservation
  * - MoveItemCommand: Update item position (cross-canvas support)
  * - ResizeCommand: Update item dimensions
- *
  * @example
  * ```typescript
  * class DeleteItemCommand implements Command {
@@ -363,7 +361,6 @@ export { undoRedoState };
  *
  * Provides a clear, namespaced API for undo/redo operations.
  * Use this instead of individual function imports for better clarity.
- *
  * @example
  * ```typescript
  * import { undoRedo } from './services/undo-redo';
@@ -416,7 +413,6 @@ export const undoRedo = {
  * **Growth**: Appends new commands to end
  * **Bounded**: Limited to MAX_HISTORY commands (50)
  * **Branching**: Discards commands after current position on new push
- *
  * @example
  * ```
  * [AddItemCommand, DeleteItemCommand, MoveItemCommand]
@@ -477,8 +473,6 @@ const MAX_HISTORY = 50;
  * - DRY principle (called from 4 places)
  * - Single responsibility (updating button states)
  * - Easier to extend (e.g., add logging, analytics)
- *
- * @private
  */
 function updateButtonStates(): void {
   undoRedoState.canUndo = historyPosition >= 0;
@@ -497,10 +491,10 @@ function updateButtonStates(): void {
  * **Branching behavior** (discards future):
  * ```
  * Before: [cmd1, cmd2, cmd3, cmd4]
- *                  ↑ position = 1 (undid twice)
+ * ↑ position = 1 (undid twice)
  *
  * Push cmd5: [cmd1, cmd2, cmd5]
- *                        ↑ position = 2
+ * ↑ position = 2
  *
  * Note: cmd3 and cmd4 discarded!
  * ```
@@ -531,9 +525,7 @@ function updateButtonStates(): void {
  * **Important**: Command should be fully constructed (with snapshots taken)
  * before being pushed. This function does NOT execute the command - it's
  * assumed the operation already happened.
- *
  * @param command - Fully constructed command with before/after snapshots
- *
  * @example
  * ```typescript
  * // Delete item example
@@ -604,16 +596,15 @@ export function pushCommand(command: Command): void {
  * **Position before/after**:
  * ```
  * Before: [cmd1, cmd2, cmd3]
- *                      ↑ position = 2
+ * ↑ position = 2
  *
  * After:  [cmd1, cmd2, cmd3]
- *                ↑ position = 1
+ * ↑ position = 1
  * ```
  *
  * **Safety**: No-op if historyPosition < 0 (nothing to undo)
  *
  * **Multiple undo**: Can be called repeatedly to undo multiple commands
- *
  * @example
  * ```typescript
  * // Keyboard shortcut handler
@@ -670,10 +661,10 @@ export function undo(): void {
  * **Position before/after**:
  * ```
  * Before: [cmd1, cmd2, cmd3]
- *                ↑ position = 1
+ * ↑ position = 1
  *
  * After:  [cmd1, cmd2, cmd3]
- *                      ↑ position = 2
+ * ↑ position = 2
  * ```
  *
  * **Safety**: No-op if no commands to redo (position at end)
@@ -682,7 +673,6 @@ export function undo(): void {
  *
  * **Redo after new action**: Redo becomes unavailable after new command
  * pushed (future history discarded)
- *
  * @example
  * ```typescript
  * // Keyboard shortcut handler
@@ -719,9 +709,7 @@ export function redo(): void {
  *
  * **Note**: Prefer using `undoRedoState.canUndo` in UI components
  * for automatic reactivity. This function is for imperative checks.
- *
  * @returns true if undo() can be called, false otherwise
- *
  * @example
  * ```typescript
  * // Imperative check
@@ -753,9 +741,7 @@ export function canUndo(): boolean {
  *
  * **Note**: Prefer using `undoRedoState.canRedo` in UI components
  * for automatic reactivity. This function is for imperative checks.
- *
  * @returns true if redo() can be called, false otherwise
- *
  * @example
  * ```typescript
  * // Imperative check
@@ -792,7 +778,6 @@ export function canRedo(): boolean {
  * **Cannot be undone**: This operation itself is not undoable
  *
  * **Safety**: Safe to call even if history already empty
- *
  * @example
  * ```typescript
  * // Reset application

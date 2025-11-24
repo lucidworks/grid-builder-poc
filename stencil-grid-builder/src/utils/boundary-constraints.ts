@@ -18,7 +18,6 @@
  * 1. Validate component can fit within canvas (respecting minSize)
  * 2. Adjust size to fit canvas if needed (respecting minSize/maxSize)
  * 3. Constrain position to keep component fully within bounds
- *
  * @module boundary-constraints
  */
 
@@ -68,11 +67,9 @@ export interface ConstrainedPlacement {
  *
  * Checks if component's minimum size is smaller than or equal to canvas size.
  * If component's minSize > canvas size, placement should be rejected.
- *
  * @param definition - Component definition with min/max size constraints
  * @param canvasWidth - Canvas width in grid units (default: 50)
  * @returns true if component can fit, false if too large
- *
  * @example
  * ```typescript
  * const hugeComponent = {
@@ -112,11 +109,9 @@ export function canComponentFitCanvas(
  *
  * **Width constraint**: Canvas width (50 units)
  * **Height constraint**: None (canvas height grows with content)
- *
  * @param definition - Component definition
  * @param canvasWidth - Canvas width in grid units (default: 50)
  * @returns Constrained size and adjustment flag
- *
  * @example
  * ```typescript
  * const wideComponent = {
@@ -185,14 +180,12 @@ export function constrainSizeToCanvas(
  * - Right edge: x + width <= canvasWidth
  * - Top edge: y >= 0
  * - Bottom edge: No constraint (canvas height grows)
- *
  * @param x - Desired x position in grid units
  * @param y - Desired y position in grid units
  * @param width - Component width in grid units
  * @param height - Component height in grid units
  * @param canvasWidth - Canvas width in grid units (default: 50)
  * @returns Constrained placement
- *
  * @example
  * ```typescript
  * // Component would extend beyond right edge
@@ -255,13 +248,11 @@ export function constrainPositionToCanvas(
  * 3. Constrain position to keep within bounds
  *
  * **Returns null if component cannot fit** (minSize > canvas)
- *
  * @param definition - Component definition
  * @param x - Desired x position in grid units
  * @param y - Desired y position in grid units
  * @param canvasWidth - Canvas width in grid units (default: 50)
  * @returns Constrained placement, or null if component too large
- *
  * @example
  * ```typescript
  * const definition = {

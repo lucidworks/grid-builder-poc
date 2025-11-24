@@ -30,13 +30,18 @@
  * ```
  *
  * The layer panel automatically subscribes to grid state and updates reactively.
- *
  * @module layer-panel
  */
 
-import { Component, h, State, Listen, Element, Prop } from '@stencil/core';
-import { gridState, onChange, setItemZIndex, moveItemToCanvas, type GridItem } from '../../../services/state-manager';
-import { eventManager } from '../../../services/event-manager';
+import { Component, h, State, Listen, Element, Prop } from "@stencil/core";
+import {
+  gridState,
+  onChange,
+  setItemZIndex,
+  moveItemToCanvas,
+  type GridItem,
+} from "../../../services/state-manager";
+import { eventManager } from "../../../services/event-manager";
 
 /**
  * Extended grid item with canvas information for display
@@ -49,15 +54,23 @@ interface LayerItem extends GridItem {
  * Virtual scrolling item with height information
  */
 interface VirtualItem {
-  type: 'folder' | 'item';
-  data: LayerItem | { canvasId: string; title: string; itemCount: number; totalItemCount?: number; isEmpty?: boolean };
+  type: "folder" | "item";
+  data:
+    | LayerItem
+    | {
+        canvasId: string;
+        title: string;
+        itemCount: number;
+        totalItemCount?: number;
+        isEmpty?: boolean;
+      };
   height: number;
   offset: number; // Cumulative offset from top
 }
 
 @Component({
-  tag: 'layer-panel',
-  styleUrl: 'layer-panel.scss',
+  tag: "layer-panel",
+  styleUrl: "layer-panel.scss",
   shadow: false,
 })
 export class LayerPanel {
@@ -112,7 +125,7 @@ export class LayerPanel {
   /**
    * Search query for filtering items
    */
-  @State() searchQuery: string = '';
+  @State() searchQuery: string = "";
 
   /**
    * Folder expand/collapse state
@@ -134,7 +147,7 @@ export class LayerPanel {
   /**
    * Event listener cleanup functions
    */
-  private cleanupFunctions: Array<() => void> = [];
+  private cleanupFunctions: (() => void)[] = [];
 
   /**
    * Drag state tracking
@@ -158,7 +171,7 @@ export class LayerPanel {
     this.refreshItems();
 
     // Subscribe to grid state changes
-    const unsubscribe = onChange('canvases', () => {
+    const unsubscribe = onChange("canvases", () => {
       this.refreshItems();
     });
     this.cleanupFunctions.push(unsubscribe);
@@ -167,24 +180,28 @@ export class LayerPanel {
     const zIndexHandler = () => {
       this.refreshItems();
     };
-    eventManager.on('zIndexChanged', zIndexHandler);
-    this.cleanupFunctions.push(() => eventManager.off('zIndexChanged', zIndexHandler));
+    eventManager.on("zIndexChanged", zIndexHandler);
+    this.cleanupFunctions.push(() =>
+      eventManager.off("zIndexChanged", zIndexHandler),
+    );
 
     const zIndexBatchHandler = () => {
       this.refreshItems();
     };
-    eventManager.on('zIndexBatchChanged', zIndexBatchHandler);
-    this.cleanupFunctions.push(() => eventManager.off('zIndexBatchChanged', zIndexBatchHandler));
+    eventManager.on("zIndexBatchChanged", zIndexBatchHandler);
+    this.cleanupFunctions.push(() =>
+      eventManager.off("zIndexBatchChanged", zIndexBatchHandler),
+    );
 
     // Subscribe to active canvas changes
-    const unsubActiveCanvas = onChange('activeCanvasId', () => {
+    const unsubActiveCanvas = onChange("activeCanvasId", () => {
       // Force re-render to update visual feedback
       this.allItems = [...this.allItems];
     });
     this.cleanupFunctions.push(unsubActiveCanvas);
 
     // Subscribe to selection changes
-    const unsubSelection = onChange('selectedItemId', () => {
+    const unsubSelection = onChange("selectedItemId", () => {
       // Force re-render to update visual feedback
       this.allItems = [...this.allItems];
     });
@@ -197,8 +214,6 @@ export class LayerPanel {
   /**
    * Initialize folder expanded state
    * Default: active canvas expanded, others collapsed
-   *
-   * @private
    */
   private initializeFolderState = () => {
     const activeCanvasId = gridState.activeCanvasId;
@@ -228,8 +243,6 @@ export class LayerPanel {
    *
    * Aggregates all items from all canvases and sorts by z-index (descending).
    * Top items (highest z-index) appear first in the list.
-   *
-   * @private
    */
   private refreshItems = () => {
     const items: LayerItem[] = [];
@@ -256,8 +269,6 @@ export class LayerPanel {
    *
    * Filters items by name (case-insensitive substring match).
    * Performance: <5ms for 1000 items, <10ms for 5000 items
-   *
-   * @private
    */
   private applySearchFilter = () => {
     if (!this.searchQuery) {
@@ -276,8 +287,6 @@ export class LayerPanel {
    *
    * Debounces search input using configurable delay (default 300ms)
    * to prevent excessive filtering on every keystroke.
-   *
-   * @private
    */
   private handleSearchInput = (event: Event) => {
     const input = event.target as HTMLInputElement;
@@ -297,10 +306,10 @@ export class LayerPanel {
 
   /**
    * Group items by canvas for folder rendering
-   *
-   * @private
    */
-  private groupItemsByCanvas = (items: LayerItem[]): Record<string, LayerItem[]> => {
+  private groupItemsByCanvas = (
+    items: LayerItem[],
+  ): Record<string, LayerItem[]> => {
     const grouped: Record<string, LayerItem[]> = {};
 
     items.forEach((item) => {
@@ -315,8 +324,6 @@ export class LayerPanel {
 
   /**
    * Get canvas title from metadata or fallback to canvasId
-   *
-   * @private
    */
   private getCanvasTitle = (canvasId: string): string => {
     return this.canvasMetadata?.[canvasId]?.title || canvasId;
@@ -324,8 +331,6 @@ export class LayerPanel {
 
   /**
    * Toggle folder expand/collapse state
-   *
-   * @private
    */
   private toggleFolder = (canvasId: string) => {
     this.folderExpandedState = {
@@ -341,15 +346,15 @@ export class LayerPanel {
    * Supports configurable item/folder heights and buffer zones.
    *
    * Performance target: <16ms per scroll frame (60fps)
-   *
-   * @private
    */
   private initializeVirtualScrolling = () => {
-    const scrollContainer = this.hostElement.querySelector('.layer-panel__list') as HTMLElement;
+    const scrollContainer = this.hostElement.querySelector(
+      ".layer-panel__list",
+    ) as HTMLElement;
     if (!scrollContainer) return;
 
     // Track scroll position for virtual rendering
-    scrollContainer.addEventListener('scroll', () => {
+    scrollContainer.addEventListener("scroll", () => {
       const scrollTop = scrollContainer.scrollTop;
       this.virtualScrollOffset = scrollTop;
     });
@@ -360,9 +365,7 @@ export class LayerPanel {
    *
    * Creates a flattened list of folders and items with their heights and cumulative offsets.
    * This allows for accurate virtual scrolling with variable-height items.
-   *
    * @returns Array of virtual items with position information
-   * @private
    */
   private buildVirtualItemsList = (): VirtualItem[] => {
     const virtualItems: VirtualItem[] = [];
@@ -381,7 +384,7 @@ export class LayerPanel {
 
       // Add folder header
       virtualItems.push({
-        type: 'folder',
+        type: "folder",
         data: {
           canvasId,
           title: this.getCanvasTitle(canvasId),
@@ -398,7 +401,7 @@ export class LayerPanel {
       if (isExpanded) {
         filteredCanvasItems.forEach((item) => {
           virtualItems.push({
-            type: 'item',
+            type: "item",
             data: item,
             height: this.itemHeight,
             offset: currentOffset,
@@ -418,9 +421,7 @@ export class LayerPanel {
    * Uses configurable heights and buffer zones for optimal performance.
    *
    * Performance: Reduces DOM nodes from 1000+ to ~50-100 (10-20× improvement)
-   *
    * @returns Object with visible items and total scroll height
-   * @private
    */
   private calculateVirtualScrolling = (): {
     visibleItems: VirtualItem[];
@@ -437,7 +438,9 @@ export class LayerPanel {
 
     // Find visible range with buffer
     const scrollTop = this.virtualScrollOffset;
-    const scrollContainer = this.hostElement.querySelector('.layer-panel__list') as HTMLElement;
+    const scrollContainer = this.hostElement.querySelector(
+      ".layer-panel__list",
+    ) as HTMLElement;
     const viewportHeight = scrollContainer?.clientHeight || 600;
 
     const startY = Math.max(0, scrollTop - this.virtualBufferPx);
@@ -471,11 +474,11 @@ export class LayerPanel {
    * Handle layer item selection
    *
    * Updates grid state to select the clicked item.
-   *
-   * @private
    */
-  @Listen('layerItemSelect')
-  handleLayerItemSelect(event: CustomEvent<{ itemId: string; canvasId: string }>) {
+  @Listen("layerItemSelect")
+  handleLayerItemSelect(
+    event: CustomEvent<{ itemId: string; canvasId: string }>,
+  ) {
     const { itemId, canvasId } = event.detail;
 
     // Update grid state
@@ -486,20 +489,16 @@ export class LayerPanel {
 
   /**
    * Handle folder toggle (expand/collapse)
-   *
-   * @private
    */
-  @Listen('toggleFolder')
+  @Listen("toggleFolder")
   handleToggleFolder(event: CustomEvent<{ canvasId: string }>) {
     this.toggleFolder(event.detail.canvasId);
   }
 
   /**
    * Handle canvas activation (set as active canvas)
-   *
-   * @private
    */
-  @Listen('activateCanvas')
+  @Listen("activateCanvas")
   handleActivateCanvas(event: CustomEvent<{ canvasId: string }>) {
     gridState.activeCanvasId = event.detail.canvasId;
   }
@@ -508,10 +507,8 @@ export class LayerPanel {
    * Handle drag start for layer item reordering
    *
    * Stores drag metadata for drop calculation.
-   *
-   * @private
    */
-  @Listen('layerItemDragStart')
+  @Listen("layerItemDragStart")
   handleLayerItemDragStart(
     event: CustomEvent<{ itemId: string; canvasId: string; zIndex: number }>,
   ) {
@@ -530,10 +527,8 @@ export class LayerPanel {
    *
    * Calculates new z-index and handles cross-canvas movement.
    * Supports Photoshop-like behavior: drop above/below target item.
-   *
-   * @private
    */
-  @Listen('layer-item-dropped')
+  @Listen("layer-item-dropped")
   handleLayerItemDropped(
     event: CustomEvent<{
       targetItemId: string;
@@ -544,8 +539,13 @@ export class LayerPanel {
   ) {
     if (!this.draggedItem) return;
 
-    const { targetItemId, targetCanvasId, targetZIndex, dropAbove } = event.detail;
-    const { itemId: draggedItemId, canvasId: draggedCanvasId, zIndex: draggedZIndex } = this.draggedItem;
+    const { targetItemId, targetCanvasId, targetZIndex, dropAbove } =
+      event.detail;
+    const {
+      itemId: draggedItemId,
+      canvasId: draggedCanvasId,
+      zIndex: draggedZIndex,
+    } = this.draggedItem;
 
     // Don't drop on self
     if (draggedItemId === targetItemId && draggedCanvasId === targetCanvasId) {
@@ -560,7 +560,9 @@ export class LayerPanel {
 
       // Get all items in target canvas sorted by z-index
       const targetCanvas = gridState.canvases[targetCanvasId];
-      const sortedItems = [...targetCanvas.items].sort((a, b) => a.zIndex - b.zIndex);
+      const sortedItems = [...targetCanvas.items].sort(
+        (a, b) => a.zIndex - b.zIndex,
+      );
 
       // Find target item index in sorted list
       const targetIndex = sortedItems.findIndex((i) => i.id === targetItemId);
@@ -662,14 +664,15 @@ export class LayerPanel {
     this.draggedItem = null;
 
     // Fire z-index changed event for undo/redo
-    eventManager.emit('zIndexChanged', {
+    eventManager.emit("zIndexChanged", {
       canvasId: targetCanvasId,
       itemId: draggedItemId,
       oldZIndex: draggedZIndex,
-      newZIndex: gridState.canvases[targetCanvasId]?.items.find((i) => i.id === draggedItemId)?.zIndex,
+      newZIndex: gridState.canvases[targetCanvasId]?.items.find(
+        (i) => i.id === draggedItemId,
+      )?.zIndex,
     });
   }
-
 
   render() {
     const { visibleItems, totalHeight } = this.calculateVirtualScrolling();
@@ -698,14 +701,14 @@ export class LayerPanel {
         <div class="layer-panel__list">
           <div
             class="layer-panel__list-inner"
-            style={{ height: `${totalHeight}px`, position: 'relative' }}
+            style={{ height: `${totalHeight}px`, position: "relative" }}
           >
             {visibleItems.length === 0 && (
               <div class="layer-panel__empty">No items found</div>
             )}
 
             {visibleItems.map((virtualItem) => {
-              if (virtualItem.type === 'folder') {
+              if (virtualItem.type === "folder") {
                 // Render folder header
                 const folderData = virtualItem.data as {
                   canvasId: string;
@@ -722,14 +725,16 @@ export class LayerPanel {
                     canvasTitle={folderData.title}
                     itemCount={folderData.itemCount}
                     totalItemCount={folderData.totalItemCount}
-                    isExpanded={this.folderExpandedState[folderData.canvasId] ?? true}
+                    isExpanded={
+                      this.folderExpandedState[folderData.canvasId] ?? true
+                    }
                     isActive={folderData.canvasId === gridState.activeCanvasId}
                     isEmpty={folderData.isEmpty}
                     style={{
-                      position: 'absolute',
+                      position: "absolute",
                       top: `${virtualItem.offset}px`,
-                      left: '0',
-                      right: '0',
+                      left: "0",
+                      right: "0",
                       height: `${virtualItem.height}px`,
                     }}
                   />
@@ -751,10 +756,10 @@ export class LayerPanel {
                       item.canvasId === gridState.selectedCanvasId
                     }
                     style={{
-                      position: 'absolute',
+                      position: "absolute",
                       top: `${virtualItem.offset}px`,
-                      left: '0',
-                      right: '0',
+                      left: "0",
+                      right: "0",
                       height: `${virtualItem.height}px`,
                     }}
                   />

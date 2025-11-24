@@ -21,12 +21,16 @@ export class ImageGallery {
     return (
       <Host>
         <div class="image-gallery">
-        {images.map((url, index) => (
-          <div class="gallery-item" key={index}>
-            <img src={url} alt={`Gallery image ${index + 1}`} loading="lazy" />
-          </div>
-        ))}
-      </div>
+          {images.map((url, index) => (
+            <div class="gallery-item" key={index}>
+              <img
+                src={url}
+                alt={`Gallery image ${index + 1}`}
+                loading="lazy"
+              />
+            </div>
+          ))}
+        </div>
       </Host>
     );
   }

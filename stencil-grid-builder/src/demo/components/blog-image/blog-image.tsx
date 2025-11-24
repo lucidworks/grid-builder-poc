@@ -39,34 +39,34 @@ export class BlogImage {
     return (
       <Host>
         <div class="blog-image-content">
-        <div class="image-container">
-          {!this.imageLoaded && !this.imageError && (
-            <div class="image-placeholder">
-              <div class="spinner"></div>
-            </div>
-          )}
-          {this.imageError && (
-            <div class="image-error">
-              <span class="error-icon">🖼️</span>
-              <span class="error-text">Failed to load image</span>
-            </div>
-          )}
-          <img
-            ref={(el) => (this.imgRef = el)}
-            src={this.src}
-            alt={this.alt}
-            class={{
-              "blog-image": true,
-              loaded: this.imageLoaded,
-              "fit-contain": this.objectFit === "contain",
-              "fit-cover": this.objectFit === "cover",
-            }}
-            onLoad={this.handleImageLoad}
-            onError={this.handleImageError}
-          />
+          <div class="image-container">
+            {!this.imageLoaded && !this.imageError && (
+              <div class="image-placeholder">
+                <div class="spinner" />
+              </div>
+            )}
+            {this.imageError && (
+              <div class="image-error">
+                <span class="error-icon">🖼️</span>
+                <span class="error-text">Failed to load image</span>
+              </div>
+            )}
+            <img
+              ref={(el) => (this.imgRef = el)}
+              src={this.src}
+              alt={this.alt}
+              class={{
+                "blog-image": true,
+                loaded: this.imageLoaded,
+                "fit-contain": this.objectFit === "contain",
+                "fit-cover": this.objectFit === "cover",
+              }}
+              onLoad={this.handleImageLoad}
+              onError={this.handleImageError}
+            />
+          </div>
+          {this.caption && <div class="image-caption">{this.caption}</div>}
         </div>
-        {this.caption && <div class="image-caption">{this.caption}</div>}
-      </div>
       </Host>
     );
   }

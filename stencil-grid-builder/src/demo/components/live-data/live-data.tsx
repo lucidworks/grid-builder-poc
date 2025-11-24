@@ -44,41 +44,41 @@ export class LiveData {
     return (
       <Host>
         <div class="live-data">
-        <div class="temperature-display">
-          <div class="temperature-label">🌡️ Temperature</div>
-          <div class="temperature-value">{this.temperature}°C</div>
-        </div>
+          <div class="temperature-display">
+            <div class="temperature-label">🌡️ Temperature</div>
+            <div class="temperature-value">{this.temperature}°C</div>
+          </div>
 
-        <div class="metric">
-          <div class="metric-header">
-            <span class="metric-label">CPU</span>
-            <span class="metric-percentage">{this.cpu}%</span>
+          <div class="metric">
+            <div class="metric-header">
+              <span class="metric-label">CPU</span>
+              <span class="metric-percentage">{this.cpu}%</span>
+            </div>
+            <div class="progress-bar">
+              <div
+                class="progress-fill progress-primary"
+                style={{ width: `${this.cpu}%` }}
+              />
+            </div>
           </div>
-          <div class="progress-bar">
-            <div
-              class="progress-fill progress-primary"
-              style={{ width: `${this.cpu}%` }}
-            ></div>
-          </div>
-        </div>
 
-        <div class="metric">
-          <div class="metric-header">
-            <span class="metric-label">Memory</span>
-            <span class="metric-percentage">{this.memory}%</span>
+          <div class="metric">
+            <div class="metric-header">
+              <span class="metric-label">Memory</span>
+              <span class="metric-percentage">{this.memory}%</span>
+            </div>
+            <div class="progress-bar">
+              <div
+                class="progress-fill progress-success"
+                style={{ width: `${this.memory}%` }}
+              />
+            </div>
           </div>
-          <div class="progress-bar">
-            <div
-              class="progress-fill progress-success"
-              style={{ width: `${this.memory}%` }}
-            ></div>
-          </div>
-        </div>
 
-        <div class="update-info">
-          Updated {this.updateCount} times • Last: {this.lastUpdate}
+          <div class="update-info">
+            Updated {this.updateCount} times • Last: {this.lastUpdate}
+          </div>
         </div>
-      </div>
       </Host>
     );
   }

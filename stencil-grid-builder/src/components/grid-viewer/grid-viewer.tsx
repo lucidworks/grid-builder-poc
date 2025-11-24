@@ -48,7 +48,6 @@
  * **Builder**: ~150KB (includes interact.js ~45KB)
  * **Viewer**: ~30KB (no interact.js, no editing logic)
  * **Reduction**: 80% smaller bundle
- *
  * @module grid-viewer
  */
 

@@ -218,7 +218,7 @@ export const WithCustomTheme = (args) => {
             },
             zIndex: 2,
             config: {
-              text: "Click components to see the custom selection color. Check the palette on the left for the custom background!"
+              text: "Click components to see the custom selection color. Check the palette on the left for the custom background!",
             },
           },
           {
@@ -250,43 +250,69 @@ export const WithCustomTheme = (args) => {
   };
 
   return html`
-    <div style="font-family: system-ui, -apple-system, sans-serif; padding: 20px;">
+    <div
+      style="font-family: system-ui, -apple-system, sans-serif; padding: 20px;"
+    >
       <h2 style="margin-top: 0; color: #333;">Custom Theme Demo</h2>
       <p style="color: #666; margin-bottom: 20px;">
-        Customize the grid builder's appearance to match your brand or application design.
+        Customize the grid builder's appearance to match your brand or
+        application design.
         <br />
-        <strong>Try it:</strong> Use the controls below to change colors in real-time!
+        <strong>Try it:</strong> Use the controls below to change colors in
+        real-time!
       </p>
 
-      <div style="width: 100%; height: 600px; border: 2px solid ${args.primaryColor}; border-radius: 8px; overflow: hidden;">
+      <div
+        style="width: 100%; height: 600px; border: 2px solid ${args.primaryColor}; border-radius: 8px; overflow: hidden;"
+      >
         ${builderEl}
       </div>
 
-      <div style="margin-top: 20px; padding: 20px; background: #f8f9fa; border-radius: 8px; border-left: 4px solid ${args.primaryColor};">
-        <h4 style="margin-top: 0; color: ${args.primaryColor};">🎨 What Each Color Controls</h4>
+      <div
+        style="margin-top: 20px; padding: 20px; background: #f8f9fa; border-radius: 8px; border-left: 4px solid ${args.primaryColor};"
+      >
+        <h4 style="margin-top: 0; color: ${args.primaryColor};">
+          🎨 What Each Color Controls
+        </h4>
         <ul style="margin-bottom: 0; padding-left: 20px; line-height: 1.8;">
           <li>
             <strong style="color: ${args.primaryColor};">Primary Color</strong>
-            → Controls UI accents, buttons, and active states throughout the builder
+            → Controls UI accents, buttons, and active states throughout the
+            builder
           </li>
           <li>
-            <strong style="background: ${args.paletteBackground}; padding: 2px 8px; border-radius: 3px;">Palette Background</strong>
+            <strong
+              style="background: ${args.paletteBackground}; padding: 2px 8px; border-radius: 3px;"
+              >Palette Background</strong
+            >
             → The background color of the component palette sidebar (left side)
           </li>
           <li>
-            <strong style="color: ${args.selectionColor};">Selection Color</strong>
-            → The outline color when components are selected (click a component to see it!)
+            <strong style="color: ${args.selectionColor};"
+              >Selection Color</strong
+            >
+            → The outline color when components are selected (click a component
+            to see it!)
           </li>
         </ul>
       </div>
 
-      <div style="margin-top: 20px; padding: 20px; background: #e7f3ff; border-radius: 8px; border-left: 4px solid #0288d1;">
+      <div
+        style="margin-top: 20px; padding: 20px; background: #e7f3ff; border-radius: 8px; border-left: 4px solid #0288d1;"
+      >
         <h4 style="margin-top: 0; color: #01579b;">💼 Real-World Use Cases</h4>
         <ul style="margin-bottom: 0; padding-left: 20px; line-height: 1.8;">
-          <li><strong>White-labeling:</strong> Match your client's brand colors</li>
-          <li><strong>Multi-tenant apps:</strong> Different themes for different customers</li>
+          <li>
+            <strong>White-labeling:</strong> Match your client's brand colors
+          </li>
+          <li>
+            <strong>Multi-tenant apps:</strong> Different themes for different
+            customers
+          </li>
           <li><strong>Dark mode:</strong> Provide alternative color schemes</li>
-          <li><strong>Brand consistency:</strong> Align with your design system</li>
+          <li>
+            <strong>Brand consistency:</strong> Align with your design system
+          </li>
         </ul>
       </div>
     </div>
@@ -294,15 +320,16 @@ export const WithCustomTheme = (args) => {
 };
 
 WithCustomTheme.args = {
-  primaryColor: "#9c27b0",      // Vibrant purple (was subtle red)
-  paletteBackground: "#f3e5f5",  // Light purple (was barely visible pink)
-  selectionColor: "#ff6f00",     // Bright orange (was same as primary)
+  primaryColor: "#9c27b0", // Vibrant purple (was subtle red)
+  paletteBackground: "#f3e5f5", // Light purple (was barely visible pink)
+  selectionColor: "#ff6f00", // Bright orange (was same as primary)
 };
 
 WithCustomTheme.argTypes = {
   primaryColor: {
     control: "color",
-    description: "Primary theme color for UI elements (buttons, accents, active states)",
+    description:
+      "Primary theme color for UI elements (buttons, accents, active states)",
     table: {
       category: "Theme",
       defaultValue: { summary: "#9c27b0" },
@@ -318,7 +345,8 @@ WithCustomTheme.argTypes = {
   },
   selectionColor: {
     control: "color",
-    description: "Color for selected component outline (click a component to see it)",
+    description:
+      "Color for selected component outline (click a component to see it)",
     table: {
       category: "Theme",
       defaultValue: { summary: "#ff6f00" },
@@ -702,7 +730,11 @@ export const WithCanvasMetadataAndCustomHeaders = () => {
   builderEl.uiOverrides = {
     CanvasHeader: ({ canvasId, metadata, isActive }) => {
       // Debug logging
-      console.log('CanvasHeader called with:', { canvasId, metadata, isActive });
+      console.log("CanvasHeader called with:", {
+        canvasId,
+        metadata,
+        isActive,
+      });
 
       const headerDiv = document.createElement("div");
       headerDiv.style.cssText = `
@@ -730,9 +762,10 @@ export const WithCanvasMetadataAndCustomHeaders = () => {
 
       const title = document.createElement("span");
       // More defensive: handle all edge cases
-      const titleText = (metadata && metadata.title) || canvasId || 'Unknown Canvas';
+      const titleText =
+        (metadata && metadata.title) || canvasId || "Unknown Canvas";
       title.textContent = titleText;
-      console.log('Setting title to:', titleText);
+      console.log("Setting title to:", titleText);
 
       headerDiv.appendChild(badge);
       headerDiv.appendChild(title);
@@ -749,7 +782,7 @@ export const WithCanvasMetadataAndCustomHeaders = () => {
   setTimeout(() => {
     const api = (window as any).gridBuilderAPI;
     if (api) {
-      api.setActiveCanvas('hero-section');
+      api.setActiveCanvas("hero-section");
     }
   }, 500);
 
@@ -2033,10 +2066,17 @@ export const EventsDemo = () => {
       >
         <h4 style="margin-top: 0; color: #856404;">💡 How to Use</h4>
         <ol style="margin-bottom: 0; padding-left: 20px; line-height: 1.8;">
-          <li>Open the <strong>Actions</strong> panel at the bottom of Storybook</li>
-          <li>Interact with the grid builder (drag, resize, add, delete components)</li>
+          <li>
+            Open the <strong>Actions</strong> panel at the bottom of Storybook
+          </li>
+          <li>
+            Interact with the grid builder (drag, resize, add, delete
+            components)
+          </li>
           <li>Watch the Actions panel populate with event data in real-time</li>
-          <li>Click on any action to see the full event payload (data structure)</li>
+          <li>
+            Click on any action to see the full event payload (data structure)
+          </li>
           <li>Use this to understand what data is passed with each event</li>
         </ol>
       </div>
@@ -2044,9 +2084,7 @@ export const EventsDemo = () => {
       <div
         style="margin-top: 20px; padding: 20px; background: #d1ecf1; border-radius: 8px; border-left: 4px solid #0c5460;"
       >
-        <h4 style="margin-top: 0; color: #0c5460;">
-          🔧 Integration Example
-        </h4>
+        <h4 style="margin-top: 0; color: #0c5460;">🔧 Integration Example</h4>
         <pre
           style="background: white; padding: 15px; border-radius: 4px; overflow-x: auto; font-size: 12px; line-height: 1.4; margin: 0;"
         >
@@ -2330,7 +2368,9 @@ export const ClickToAddFeature = () => {
               },
             },
             zIndex: 2,
-            config: { text: "Existing text block to demonstrate collision avoidance" },
+            config: {
+              text: "Existing text block to demonstrate collision avoidance",
+            },
           },
           {
             id: "existing-3",
@@ -2370,21 +2410,42 @@ export const ClickToAddFeature = () => {
     >
       <h2 style="margin: 0 0 10px 0; color: #333;">Click-to-Add Feature</h2>
       <p style="color: #666; margin: 0 0 20px 0;">
-        <strong>New in this release!</strong> Click palette items to add them instantly with smart collision detection and visual feedback.
+        <strong>New in this release!</strong> Click palette items to add them
+        instantly with smart collision detection and visual feedback.
         <br />
-        Compare the convenience of clicking vs dragging for precise component placement.
+        Compare the convenience of clicking vs dragging for precise component
+        placement.
       </p>
 
       <div
         style="padding: 16px; background: linear-gradient(135deg, #e0f2fe 0%, #dbeafe 100%); border-radius: 8px; border-left: 4px solid #0ea5e9; margin-bottom: 20px;"
       >
-        <h4 style="margin: 0 0 12px 0; color: #0369a1; font-size: 15px;">💡 Try This:</h4>
-        <ol style="margin: 0; padding-left: 20px; color: #075985; font-size: 14px; line-height: 1.8;">
-          <li><strong>Click</strong> a palette item (no dragging needed!) to add it to the canvas</li>
-          <li>Watch the <strong>visual feedback</strong>: canvas pulse + ghost outline + fade-in animation</li>
-          <li>Notice <strong>smart positioning</strong>: automatically avoids existing components</li>
-          <li>Try <strong>keyboard navigation</strong>: Tab to palette items, press Enter/Space to add</li>
-          <li>Compare <strong>speed</strong>: Click is faster for precise placement than drag-and-drop</li>
+        <h4 style="margin: 0 0 12px 0; color: #0369a1; font-size: 15px;">
+          💡 Try This:
+        </h4>
+        <ol
+          style="margin: 0; padding-left: 20px; color: #075985; font-size: 14px; line-height: 1.8;"
+        >
+          <li>
+            <strong>Click</strong> a palette item (no dragging needed!) to add
+            it to the canvas
+          </li>
+          <li>
+            Watch the <strong>visual feedback</strong>: canvas pulse + ghost
+            outline + fade-in animation
+          </li>
+          <li>
+            Notice <strong>smart positioning</strong>: automatically avoids
+            existing components
+          </li>
+          <li>
+            Try <strong>keyboard navigation</strong>: Tab to palette items,
+            press Enter/Space to add
+          </li>
+          <li>
+            Compare <strong>speed</strong>: Click is faster for precise
+            placement than drag-and-drop
+          </li>
         </ol>
       </div>
 
@@ -2398,10 +2459,14 @@ export const ClickToAddFeature = () => {
         style="margin-top: 20px; padding: 20px; background: #f0fdf4; border-radius: 8px; border-left: 4px solid #22c55e;"
       >
         <h4 style="margin-top: 0; color: #15803d;">✨ Features Demonstrated</h4>
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; font-size: 14px;">
+        <div
+          style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; font-size: 14px;"
+        >
           <div>
             <strong style="color: #15803d;">Smart Positioning:</strong>
-            <ul style="margin: 5px 0 0 0; padding-left: 20px; line-height: 1.6;">
+            <ul
+              style="margin: 5px 0 0 0; padding-left: 20px; line-height: 1.6;"
+            >
               <li>Empty canvas → centers horizontally</li>
               <li>Tries top-left position (2, 2)</li>
               <li>Scans grid to find free space</li>
@@ -2410,7 +2475,9 @@ export const ClickToAddFeature = () => {
           </div>
           <div>
             <strong style="color: #15803d;">Visual Feedback:</strong>
-            <ul style="margin: 5px 0 0 0; padding-left: 20px; line-height: 1.6;">
+            <ul
+              style="margin: 5px 0 0 0; padding-left: 20px; line-height: 1.6;"
+            >
               <li>Canvas pulse animation (250ms)</li>
               <li>Ghost outline showing position</li>
               <li>Component fade-in (300ms)</li>
@@ -2423,26 +2490,54 @@ export const ClickToAddFeature = () => {
       <div
         style="margin-top: 20px; padding: 20px; background: #fef3c7; border-radius: 8px; border-left: 4px solid #f59e0b;"
       >
-        <h4 style="margin-top: 0; color: #92400e;">🎯 Click vs Drag Comparison</h4>
+        <h4 style="margin-top: 0; color: #92400e;">
+          🎯 Click vs Drag Comparison
+        </h4>
         <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
           <thead>
             <tr style="background: rgba(245, 158, 11, 0.1);">
-              <th style="padding: 10px; text-align: left; border-bottom: 2px solid #f59e0b;">Method</th>
-              <th style="padding: 10px; text-align: left; border-bottom: 2px solid #f59e0b;">Best For</th>
-              <th style="padding: 10px; text-align: left; border-bottom: 2px solid #f59e0b;">Precision</th>
-              <th style="padding: 10px; text-align: left; border-bottom: 2px solid #f59e0b;">Speed</th>
+              <th
+                style="padding: 10px; text-align: left; border-bottom: 2px solid #f59e0b;"
+              >
+                Method
+              </th>
+              <th
+                style="padding: 10px; text-align: left; border-bottom: 2px solid #f59e0b;"
+              >
+                Best For
+              </th>
+              <th
+                style="padding: 10px; text-align: left; border-bottom: 2px solid #f59e0b;"
+              >
+                Precision
+              </th>
+              <th
+                style="padding: 10px; text-align: left; border-bottom: 2px solid #f59e0b;"
+              >
+                Speed
+              </th>
             </tr>
           </thead>
           <tbody>
             <tr>
-              <td style="padding: 10px; border-bottom: 1px solid #fbbf24;"><strong>Click-to-Add</strong></td>
-              <td style="padding: 10px; border-bottom: 1px solid #fbbf24;">Quick placement, accessibility, keyboard users</td>
-              <td style="padding: 10px; border-bottom: 1px solid #fbbf24;">⭐⭐⭐⭐ (smart positioning)</td>
-              <td style="padding: 10px; border-bottom: 1px solid #fbbf24;">⚡⚡⚡⚡⚡ (instant)</td>
+              <td style="padding: 10px; border-bottom: 1px solid #fbbf24;">
+                <strong>Click-to-Add</strong>
+              </td>
+              <td style="padding: 10px; border-bottom: 1px solid #fbbf24;">
+                Quick placement, accessibility, keyboard users
+              </td>
+              <td style="padding: 10px; border-bottom: 1px solid #fbbf24;">
+                ⭐⭐⭐⭐ (smart positioning)
+              </td>
+              <td style="padding: 10px; border-bottom: 1px solid #fbbf24;">
+                ⚡⚡⚡⚡⚡ (instant)
+              </td>
             </tr>
             <tr>
               <td style="padding: 10px;"><strong>Drag-and-Drop</strong></td>
-              <td style="padding: 10px;">Exact manual positioning, visual control</td>
+              <td style="padding: 10px;">
+                Exact manual positioning, visual control
+              </td>
               <td style="padding: 10px;">⭐⭐⭐⭐⭐ (pixel-perfect)</td>
               <td style="padding: 10px;">⚡⚡⚡ (slower for precision)</td>
             </tr>
@@ -2453,13 +2548,32 @@ export const ClickToAddFeature = () => {
       <div
         style="margin-top: 20px; padding: 20px; background: #f3e5f5; border-radius: 8px; border-left: 4px solid #9c27b0;"
       >
-        <h4 style="margin-top: 0; color: #6a1b9a;">♿ Accessibility Benefits</h4>
-        <ul style="margin-bottom: 0; padding-left: 20px; line-height: 1.8; font-size: 14px;">
-          <li><strong>Keyboard Users:</strong> Full navigation with Tab, Enter, Space keys</li>
-          <li><strong>Screen Readers:</strong> ARIA labels announce "Click to add" functionality</li>
-          <li><strong>Motor Impairments:</strong> Clicking is easier than precise dragging</li>
-          <li><strong>Touch Devices:</strong> Tap-to-add works better than drag on mobile</li>
-          <li><strong>WCAG 2.1 Level AAA:</strong> All functionality available via keyboard</li>
+        <h4 style="margin-top: 0; color: #6a1b9a;">
+          ♿ Accessibility Benefits
+        </h4>
+        <ul
+          style="margin-bottom: 0; padding-left: 20px; line-height: 1.8; font-size: 14px;"
+        >
+          <li>
+            <strong>Keyboard Users:</strong> Full navigation with Tab, Enter,
+            Space keys
+          </li>
+          <li>
+            <strong>Screen Readers:</strong> ARIA labels announce "Click to add"
+            functionality
+          </li>
+          <li>
+            <strong>Motor Impairments:</strong> Clicking is easier than precise
+            dragging
+          </li>
+          <li>
+            <strong>Touch Devices:</strong> Tap-to-add works better than drag on
+            mobile
+          </li>
+          <li>
+            <strong>WCAG 2.1 Level AAA:</strong> All functionality available via
+            keyboard
+          </li>
         </ul>
       </div>
 
@@ -2636,16 +2750,25 @@ export const ExportImportWorkflow = () => {
   // Save to file button
   const saveFileBtn = document.createElement("button");
   saveFileBtn.textContent = "💾 Save to File";
-  saveFileBtn.style.cssText = exportBtn.style.cssText.replace("#28a745", "#17a2b8");
+  saveFileBtn.style.cssText = exportBtn.style.cssText.replace(
+    "#28a745",
+    "#17a2b8",
+  );
   saveFileBtn.onclick = () => {
-    if (!exportDiv.textContent || exportDiv.textContent === 'Click "Export State" to see JSON output...') {
-      statusDiv.textContent = "⚠️ Please export state first before saving to file";
+    if (
+      !exportDiv.textContent ||
+      exportDiv.textContent === 'Click "Export State" to see JSON output...'
+    ) {
+      statusDiv.textContent =
+        "⚠️ Please export state first before saving to file";
       statusDiv.style.background = "#fff3cd";
       return;
     }
 
     // Create blob from JSON
-    const blob = new Blob([exportDiv.textContent], { type: "application/json" });
+    const blob = new Blob([exportDiv.textContent], {
+      type: "application/json",
+    });
     const url = URL.createObjectURL(blob);
 
     // Create download link
@@ -2664,7 +2787,10 @@ export const ExportImportWorkflow = () => {
   // Load from file button
   const loadFileBtn = document.createElement("button");
   loadFileBtn.textContent = "📂 Load from File";
-  loadFileBtn.style.cssText = exportBtn.style.cssText.replace("#28a745", "#6f42c1");
+  loadFileBtn.style.cssText = exportBtn.style.cssText.replace(
+    "#28a745",
+    "#6f42c1",
+  );
   loadFileBtn.onclick = () => {
     // Create hidden file input
     const fileInput = document.createElement("input");
@@ -2711,9 +2837,11 @@ export const ExportImportWorkflow = () => {
         Demonstrates persisting and restoring layouts. Build a layout, export it
         as JSON, then re-import it later.
         <br />
-        <strong>Try it:</strong> Add/modify components, export, save to file, load from file, or re-import!
+        <strong>Try it:</strong> Add/modify components, export, save to file,
+        load from file, or re-import!
         <br />
-        <strong>File support:</strong> Save layouts as .json files and load them back for testing persistence.
+        <strong>File support:</strong> Save layouts as .json files and load them
+        back for testing persistence.
       </p>
 
       ${statusDiv}
@@ -2722,9 +2850,7 @@ export const ExportImportWorkflow = () => {
         ${exportBtn} ${importBtn} ${clearBtn} ${copyBtn}
       </div>
 
-      <div style="margin: 10px 0;">
-        ${saveFileBtn} ${loadFileBtn}
-      </div>
+      <div style="margin: 10px 0;">${saveFileBtn} ${loadFileBtn}</div>
 
       <div
         style="width: 100%; height: 400px; border: 2px solid #28a745; border-radius: 8px; overflow: hidden; margin: 20px 0;"
@@ -2774,7 +2900,8 @@ export const ExportImportWorkflow = () => {
           <li><strong>Duplication:</strong> Clone layouts between projects</li>
           <li><strong>Migration:</strong> Move layouts between environments</li>
           <li>
-            <strong>File-based workflows:</strong> Save/load .json files for testing, backup, or sharing
+            <strong>File-based workflows:</strong> Save/load .json files for
+            testing, backup, or sharing
           </li>
         </ul>
       </div>
