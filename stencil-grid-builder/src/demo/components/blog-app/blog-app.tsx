@@ -923,6 +923,25 @@ export class BlogApp {
   };
 
   /**
+   * Handle Category Header Keyboard Events
+   * ----------------------------------------
+   *
+   * Accessibility: Support keyboard navigation for category headers.
+   * - Enter key: Toggle category expand/collapse
+   * - Space key: Toggle category expand/collapse
+   * - Prevents default behavior to avoid page scrolling on Space
+   */
+  private handleCategoryKeyDown = (
+    event: KeyboardEvent,
+    category: string,
+  ) => {
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      this.toggleCategory(category);
+    }
+  };
+
+  /**
    * Toggle Preview Mode
    * -------------------
    *
@@ -1286,60 +1305,100 @@ export class BlogApp {
               <div class="palette-category">
                 <div
                   class="category-header"
+                  role="button"
+                  tabindex={0}
+                  aria-expanded={this.categoryStates.content ? "true" : "false"}
+                  aria-controls="content-palette-panel"
+                  aria-label="Content components category"
                   onClick={() => this.toggleCategory("content")}
+                  onKeyDown={(e) => this.handleCategoryKeyDown(e, "content")}
                 >
-                  <span class="category-icon">
+                  <span class="category-icon" aria-hidden="true">
                     {this.categoryStates.content ? "▼" : "▶"}
                   </span>
                   <span class="category-name">Content</span>
                 </div>
-                {this.categoryStates.content && (
-                  <component-palette
-                    components={contentComponents}
-                    showHeader={false}
-                    config={this.paletteConfig}
-                  />
-                )}
+                <div
+                  id="content-palette-panel"
+                  role="region"
+                  aria-labelledby="content-category-header"
+                >
+                  {this.categoryStates.content && (
+                    <component-palette
+                      components={contentComponents}
+                      showHeader={false}
+                      config={this.paletteConfig}
+                    />
+                  )}
+                </div>
               </div>
 
               {/* Interactive Category */}
               <div class="palette-category">
                 <div
                   class="category-header"
+                  role="button"
+                  tabindex={0}
+                  aria-expanded={
+                    this.categoryStates.interactive ? "true" : "false"
+                  }
+                  aria-controls="interactive-palette-panel"
+                  aria-label="Interactive components category"
                   onClick={() => this.toggleCategory("interactive")}
+                  onKeyDown={(e) =>
+                    this.handleCategoryKeyDown(e, "interactive")
+                  }
                 >
-                  <span class="category-icon">
+                  <span class="category-icon" aria-hidden="true">
                     {this.categoryStates.interactive ? "▼" : "▶"}
                   </span>
                   <span class="category-name">Interactive</span>
                 </div>
-                {this.categoryStates.interactive && (
-                  <component-palette
-                    components={interactiveComponents}
-                    showHeader={false}
-                    config={this.paletteConfig}
-                  />
-                )}
+                <div
+                  id="interactive-palette-panel"
+                  role="region"
+                  aria-labelledby="interactive-category-header"
+                >
+                  {this.categoryStates.interactive && (
+                    <component-palette
+                      components={interactiveComponents}
+                      showHeader={false}
+                      config={this.paletteConfig}
+                    />
+                  )}
+                </div>
               </div>
 
               {/* Media Category */}
               <div class="palette-category">
                 <div
                   class="category-header"
+                  role="button"
+                  tabindex={0}
+                  aria-expanded={this.categoryStates.media ? "true" : "false"}
+                  aria-controls="media-palette-panel"
+                  aria-label="Media components category"
                   onClick={() => this.toggleCategory("media")}
+                  onKeyDown={(e) => this.handleCategoryKeyDown(e, "media")}
                 >
-                  <span class="category-icon">
+                  <span class="category-icon" aria-hidden="true">
                     {this.categoryStates.media ? "▼" : "▶"}
                   </span>
                   <span class="category-name">Media</span>
                 </div>
-                {this.categoryStates.media && (
-                  <component-palette
-                    components={mediaComponents}
-                    showHeader={false}
-                    config={this.paletteConfig}
-                  />
-                )}
+                <div
+                  id="media-palette-panel"
+                  role="region"
+                  aria-labelledby="media-category-header"
+                >
+                  {this.categoryStates.media && (
+                    <component-palette
+                      components={mediaComponents}
+                      showHeader={false}
+                      config={this.paletteConfig}
+                    />
+                  )}
+                </div>
               </div>
             </div>
           )}
