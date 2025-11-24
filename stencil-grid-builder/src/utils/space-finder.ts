@@ -242,28 +242,14 @@ export function findFreeSpace(
 ): { x: number; y: number } | null {
   const canvas = gridState.canvases[canvasId];
 
-  console.log(`[findFreeSpace] Finding space for ${width}x${height} on ${canvasId}`);
-  console.log(`[findFreeSpace] Existing items:`, canvas?.items.map(item => ({
-    id: item.id,
-    type: item.type,
-    x: item.layouts.desktop.x,
-    y: item.layouts.desktop.y,
-    width: item.layouts.desktop.width,
-    height: item.layouts.desktop.height,
-    occupiesY: `${item.layouts.desktop.y} to ${item.layouts.desktop.y + item.layouts.desktop.height}`
-  })));
-
   // Canvas doesn't exist
   if (!canvas) {
-    console.log(`[findFreeSpace] Canvas ${canvasId} doesn't exist`);
     return null;
   }
 
   // Empty canvas → center horizontally
   if (canvas.items.length === 0) {
-    const position = getCenteredPosition(width);
-    console.log(`[findFreeSpace] Empty canvas, centering at:`, position);
-    return position;
+    return getCenteredPosition(width);
   }
 
   // Try top-left position (preferred)
@@ -283,13 +269,8 @@ export function findFreeSpace(
     });
 
     if (!hasCollisionAtTopLeft) {
-      console.log(`[findFreeSpace] Top-left position is free:`, { x: DEFAULT_LEFT_MARGIN, y: DEFAULT_TOP_MARGIN });
       return { x: DEFAULT_LEFT_MARGIN, y: DEFAULT_TOP_MARGIN };
-    } else {
-      console.log(`[findFreeSpace] Top-left position occupied, scanning grid...`);
     }
-  } else {
-    console.log(`[findFreeSpace] Component too wide for top-left position (width=${width}), scanning grid...`);
   }
 
   // Scan grid for free space (top-to-bottom, left-to-right)
@@ -307,20 +288,11 @@ export function findFreeSpace(
 
       // Found free space → return immediately (early exit)
       if (!hasCollision) {
-        console.log(`[findFreeSpace] Found free space at:`, { x, y });
         return { x, y };
-      } else if (y >= 7 && y <= 12) {
-        // Log collision details when scanning near button positions
-        const collidingItems = collisions.filter(c => c.collision);
-        if (collidingItems.some(c => c.itemType === 'blog-button')) {
-          console.log(`[findFreeSpace] Position (${x}, ${y}) collides with:`, collidingItems);
-        }
       }
     }
   }
 
   // No free space found → place at bottom (canvas will auto-expand)
-  const bottomPosition = getBottomPosition(canvasId);
-  console.log(`[findFreeSpace] No free space in scan, placing at bottom:`, bottomPosition);
-  return bottomPosition;
+  return getBottomPosition(canvasId);
 }
