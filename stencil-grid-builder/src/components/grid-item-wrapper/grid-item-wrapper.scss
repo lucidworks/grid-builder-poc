@@ -136,7 +136,7 @@
 /* Item Header - tab on selection border that only shows when selected */
 .grid-item-header {
   position: absolute;
-  z-index: 9999; /* Always on top of all grid items for dragging */
+  z-index: 100; /* Above resize handles by default */
   top: -26px; /* Position above the border (adjust based on content height) */
   left: 12px; /* Offset from left edge */
   display: flex;
@@ -169,6 +169,7 @@
   top: -27px; /* Adjust for 3px border instead of 2px */
   border: 3px solid var(--selection-color);
   border-bottom: none;
+  z-index: 9999; /* Elevated z-index for selected component only */
 }
 
 /* Item Content */
@@ -201,7 +202,7 @@
 /* Item Controls */
 .grid-item-controls {
   position: absolute;
-  z-index: 9999; /* Always on top of all grid items */
+  z-index: 10; /* Above item content by default */
   top: -16px; /* Float above the component */
   right: 8px;
   display: flex;
@@ -218,6 +219,7 @@
 .grid-item.selected .grid-item-controls {
   top: -16px; /* Keep floating above even with thicker border */
   right: 8px;
+  z-index: 9999; /* Elevated z-index for selected component only */
 }
 
 .grid-item-control-btn {
@@ -264,7 +266,7 @@
 /* Resize Handles - Circular corners and pill-shaped sides */
 .resize-handle {
   position: absolute;
-  z-index: 9999; /* Always on top of all grid items */
+  z-index: 10; /* Above item content by default */
   width: 14px;
   height: 14px;
   border: 2px solid white;
@@ -283,6 +285,11 @@
 .grid-item.selected .resize-handle,
 .grid-item:hover .resize-handle {
   opacity: 1;
+}
+
+/* Elevate resize handles z-index for selected component only */
+.grid-item.selected .resize-handle {
+  z-index: 9999; /* Elevated z-index for selected component only */
 }
 
 .resize-handle.nw {
