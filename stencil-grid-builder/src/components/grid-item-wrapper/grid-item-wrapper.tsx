@@ -967,6 +967,19 @@ export class GridItemWrapper {
         const sourceIndex =
           sourceCanvas?.items.findIndex((i) => i.id === this.item.id) || 0;
 
+        // Handle cross-canvas z-index assignment
+        const sourceZIndex = snapshot.zIndex;
+        let targetZIndex = sourceZIndex; // Same canvas = same z-index
+
+        // If moving to different canvas, assign new z-index from target canvas
+        if (snapshot.canvasId !== updatedItem.canvasId) {
+          const targetCanvas = gridState.canvases[updatedItem.canvasId];
+          if (targetCanvas) {
+            targetZIndex = targetCanvas.zIndexCounter++;
+            updatedItem.zIndex = targetZIndex; // Update item's z-index
+          }
+        }
+
         // Push undo command before updating state
         // Include size tracking for resize operations (also handles resize with position change)
         pushCommand(
@@ -983,6 +996,8 @@ export class GridItemWrapper {
               y: updatedItem.layouts.desktop.y,
             },
             sourceIndex,
+            sourceZIndex,
+            targetZIndex,
             // Include size for resize tracking (position and size can both change)
             isResize
               ? {

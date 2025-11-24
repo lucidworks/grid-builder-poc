@@ -1174,6 +1174,277 @@ export function generateItemId(): string {
 }
 
 /**
+ * Set z-index for an item
+ *
+ * **Use cases**:
+ * - Layer panel drag-to-reorder
+ * - Bring to front / send to back operations
+ * - Manual z-index adjustment
+ *
+ * **Operation flow**:
+ * 1. Find item in canvas
+ * 2. Store old z-index for undo/redo
+ * 3. Update item's zIndex property
+ * 4. Update canvas zIndexCounter if needed
+ * 5. Trigger reactivity
+ * 6. Return old/new values for undo/redo
+ *
+ * **Safety**: Returns null if canvas or item doesn't exist
+ *
+ * @param canvasId - Canvas containing the item
+ * @param itemId - Item ID to update
+ * @param newZIndex - New z-index value
+ * @returns Object with old and new z-index, or null if not found
+ *
+ * @example
+ * ```typescript
+ * // Set specific z-index from layer panel
+ * const result = setItemZIndex('canvas1', 'item-3', 10);
+ * if (result) {
+ *   undoRedoManager.push(new ChangeZIndexCommand(
+ *     'item-3', 'canvas1', result.oldZIndex, result.newZIndex
+ *   ));
+ * }
+ * ```
+ */
+export function setItemZIndex(
+  canvasId: string,
+  itemId: string,
+  newZIndex: number,
+): { oldZIndex: number; newZIndex: number } | null {
+  const canvas = state.canvases[canvasId];
+  if (!canvas) {
+    return null;
+  }
+
+  const item = canvas.items.find((i) => i.id === itemId);
+  if (!item) {
+    return null;
+  }
+
+  const oldZIndex = item.zIndex;
+
+  // Update z-index
+  item.zIndex = newZIndex;
+
+  // Update counter if needed (maintain monotonically increasing counter)
+  if (newZIndex >= canvas.zIndexCounter) {
+    canvas.zIndexCounter = newZIndex + 1;
+  }
+
+  // Trigger reactivity
+  state.canvases = { ...state.canvases };
+
+  return { oldZIndex, newZIndex };
+}
+
+/**
+ * Move item forward in z-index (one layer up)
+ *
+ * **Use cases**:
+ * - Layer panel "move up" button
+ * - Keyboard shortcut (e.g., Ctrl+Up)
+ * - Context menu "Bring forward"
+ *
+ * **Operation**:
+ * Finds next higher z-index and swaps with that item.
+ * If already on top, does nothing.
+ *
+ * @param canvasId - Canvas containing the item
+ * @param itemId - Item ID to move forward
+ * @returns Object with old and new z-index, or null if not found/already on top
+ *
+ * @example
+ * ```typescript
+ * // Move item up one layer
+ * const result = moveItemForward('canvas1', 'item-3');
+ * if (result) {
+ *   console.log(`Moved from z-index ${result.oldZIndex} to ${result.newZIndex}`);
+ * }
+ * ```
+ */
+export function moveItemForward(
+  canvasId: string,
+  itemId: string,
+): { oldZIndex: number; newZIndex: number } | null {
+  const canvas = state.canvases[canvasId];
+  if (!canvas) {
+    return null;
+  }
+
+  const item = canvas.items.find((i) => i.id === itemId);
+  if (!item) {
+    return null;
+  }
+
+  // Find next higher z-index
+  const sortedItems = [...canvas.items].sort((a, b) => a.zIndex - b.zIndex);
+  const currentIndex = sortedItems.findIndex((i) => i.id === itemId);
+
+  // Already on top
+  if (currentIndex === sortedItems.length - 1) {
+    return null;
+  }
+
+  const nextItem = sortedItems[currentIndex + 1];
+  const oldZIndex = item.zIndex;
+  const newZIndex = nextItem.zIndex;
+
+  // Swap z-index values
+  item.zIndex = newZIndex;
+  nextItem.zIndex = oldZIndex;
+
+  // Trigger reactivity
+  state.canvases = { ...state.canvases };
+
+  return { oldZIndex, newZIndex };
+}
+
+/**
+ * Move item backward in z-index (one layer down)
+ *
+ * **Use cases**:
+ * - Layer panel "move down" button
+ * - Keyboard shortcut (e.g., Ctrl+Down)
+ * - Context menu "Send backward"
+ *
+ * **Operation**:
+ * Finds next lower z-index and swaps with that item.
+ * If already on bottom, does nothing.
+ *
+ * @param canvasId - Canvas containing the item
+ * @param itemId - Item ID to move backward
+ * @returns Object with old and new z-index, or null if not found/already on bottom
+ */
+export function moveItemBackward(
+  canvasId: string,
+  itemId: string,
+): { oldZIndex: number; newZIndex: number } | null {
+  const canvas = state.canvases[canvasId];
+  if (!canvas) {
+    return null;
+  }
+
+  const item = canvas.items.find((i) => i.id === itemId);
+  if (!item) {
+    return null;
+  }
+
+  // Find next lower z-index
+  const sortedItems = [...canvas.items].sort((a, b) => a.zIndex - b.zIndex);
+  const currentIndex = sortedItems.findIndex((i) => i.id === itemId);
+
+  // Already on bottom
+  if (currentIndex === 0) {
+    return null;
+  }
+
+  const prevItem = sortedItems[currentIndex - 1];
+  const oldZIndex = item.zIndex;
+  const newZIndex = prevItem.zIndex;
+
+  // Swap z-index values
+  item.zIndex = newZIndex;
+  prevItem.zIndex = oldZIndex;
+
+  // Trigger reactivity
+  state.canvases = { ...state.canvases };
+
+  return { oldZIndex, newZIndex };
+}
+
+/**
+ * Bring item to front (highest z-index)
+ *
+ * **Use cases**:
+ * - Layer panel "bring to front" button
+ * - Context menu "Bring to front"
+ * - Double-click to bring to front
+ *
+ * **Operation**:
+ * Sets z-index to highest value in canvas + 1
+ *
+ * @param canvasId - Canvas containing the item
+ * @param itemId - Item ID to bring to front
+ * @returns Object with old and new z-index, or null if not found/already on top
+ */
+export function bringItemToFront(
+  canvasId: string,
+  itemId: string,
+): { oldZIndex: number; newZIndex: number } | null {
+  const canvas = state.canvases[canvasId];
+  if (!canvas) {
+    return null;
+  }
+
+  const item = canvas.items.find((i) => i.id === itemId);
+  if (!item) {
+    return null;
+  }
+
+  const oldZIndex = item.zIndex;
+  const maxZIndex = Math.max(...canvas.items.map((i) => i.zIndex));
+
+  // Already on top
+  if (oldZIndex === maxZIndex) {
+    return null;
+  }
+
+  const newZIndex = canvas.zIndexCounter++;
+  item.zIndex = newZIndex;
+
+  // Trigger reactivity
+  state.canvases = { ...state.canvases };
+
+  return { oldZIndex, newZIndex };
+}
+
+/**
+ * Send item to back (lowest z-index)
+ *
+ * **Use cases**:
+ * - Layer panel "send to back" button
+ * - Context menu "Send to back"
+ *
+ * **Operation**:
+ * Sets z-index to lowest value in canvas - 1
+ *
+ * @param canvasId - Canvas containing the item
+ * @param itemId - Item ID to send to back
+ * @returns Object with old and new z-index, or null if not found/already on bottom
+ */
+export function sendItemToBack(
+  canvasId: string,
+  itemId: string,
+): { oldZIndex: number; newZIndex: number } | null {
+  const canvas = state.canvases[canvasId];
+  if (!canvas) {
+    return null;
+  }
+
+  const item = canvas.items.find((i) => i.id === itemId);
+  if (!item) {
+    return null;
+  }
+
+  const oldZIndex = item.zIndex;
+  const minZIndex = Math.min(...canvas.items.map((i) => i.zIndex));
+
+  // Already on bottom
+  if (oldZIndex === minZIndex) {
+    return null;
+  }
+
+  const newZIndex = minZIndex - 1;
+  item.zIndex = newZIndex;
+
+  // Trigger reactivity
+  state.canvases = { ...state.canvases };
+
+  return { oldZIndex, newZIndex };
+}
+
+/**
  * Select item and set active canvas
  *
  * **Use cases**:

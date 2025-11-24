@@ -255,6 +255,8 @@ describe("undo-redo-commands", () => {
         { x: 0, y: 0 },
         { x: 10, y: 10 },
         0,
+        1, // sourceZIndex
+        1, // targetZIndex
       );
 
       // Undo should move item back to canvas1
@@ -280,6 +282,8 @@ describe("undo-redo-commands", () => {
         { x: 0, y: 0 },
         { x: 10, y: 10 },
         0,
+        1, // sourceZIndex
+        1, // targetZIndex
       );
 
       // Redo should move item to canvas2
@@ -304,7 +308,9 @@ describe("undo-redo-commands", () => {
         { x: 0, y: 0 },
         { x: 20, y: 20 },
         0,
-      );
+        1, // sourceZIndex
+        1, // targetZIndex
+    );
 
       // Redo should update position
       command.redo();
@@ -338,6 +344,8 @@ describe("undo-redo-commands", () => {
         { x: 5, y: 5 },
         { x: 10, y: 10 },
         1, // Original index in canvas1
+        1, // sourceZIndex
+        1, // targetZIndex
       );
 
       // Undo should restore item2 to index 1 in canvas1
@@ -363,6 +371,8 @@ describe("undo-redo-commands", () => {
         { x: 0, y: 0 },
         { x: 10, y: 10 },
         -1, // Invalid index
+        1, // sourceZIndex
+        1, // targetZIndex
       );
 
       // Undo with invalid index should append to end
@@ -378,7 +388,9 @@ describe("undo-redo-commands", () => {
         { x: 0, y: 0 },
         { x: 10, y: 10 },
         0,
-      );
+        1, // sourceZIndex
+        1, // targetZIndex
+    );
 
       // Should not throw error
       command.undo();
@@ -399,7 +411,9 @@ describe("undo-redo-commands", () => {
         { x: 0, y: 0 },
         { x: 10, y: 10 },
         0,
-      );
+        1, // sourceZIndex
+        1, // targetZIndex
+    );
 
       // Should not throw error
       command.redo();
@@ -421,7 +435,9 @@ describe("undo-redo-commands", () => {
         { x: 0, y: 0 },
         { x: 10, y: 10 },
         0,
-      );
+        1, // sourceZIndex
+        1, // targetZIndex
+    );
 
       // After redo, item should have canvas2 as canvasId
       command.redo();
@@ -450,7 +466,9 @@ describe("undo-redo-commands", () => {
         { x: 0, y: 0 },
         { x: 10, y: 10 },
         0,
-      );
+        99, // sourceZIndex (preserve original)
+        99, // targetZIndex (preserve during cross-canvas move)
+    );
 
       command.redo();
       const movedItem = gridState.canvases.canvas2.items[0];
@@ -476,6 +494,9 @@ describe("undo-redo-commands", () => {
         { x: 10, y: 10 },
         { x: 10, y: 10 },
         0,
+        1, // sourceZIndex
+        1, // targetZIndex
+
         { width: 20, height: 15 }, // source size
         { width: 30, height: 25 }, // target size
       );
@@ -509,6 +530,9 @@ describe("undo-redo-commands", () => {
         { x: 10, y: 10 },
         { x: 10, y: 10 },
         0,
+        1, // sourceZIndex
+        1, // targetZIndex
+
         { width: 20, height: 15 }, // source size
         { width: 30, height: 25 }, // target size
       );
@@ -544,6 +568,9 @@ describe("undo-redo-commands", () => {
         { x: 10, y: 10 },
         { x: 5, y: 5 },
         0,
+        1, // sourceZIndex
+        1, // targetZIndex
+
         { width: 20, height: 15 }, // source size
         { width: 25, height: 20 }, // target size
       );
@@ -587,6 +614,9 @@ describe("undo-redo-commands", () => {
         { x: 0, y: 0 },
         { x: 0, y: 0 },
         0,
+        1, // sourceZIndex
+        1, // targetZIndex
+
         { width: 10, height: 6 },
         { width: 20, height: 12 },
       );
@@ -628,6 +658,8 @@ describe("undo-redo-commands", () => {
         { x: 0, y: 0 },
         { x: 20, y: 20 },
         0,
+        1, // sourceZIndex
+        1, // targetZIndex
         // No size parameters
       );
 
@@ -675,7 +707,9 @@ describe("undo-redo-commands", () => {
         { x: 0, y: 0 },
         { x: 10, y: 10 },
         0,
-      );
+        1, // sourceZIndex
+        1, // targetZIndex
+    );
       moveCmd.redo();
       expect(gridState.canvases.canvas1.items).toHaveLength(0);
       expect(gridState.canvases.canvas2.items).toHaveLength(1);

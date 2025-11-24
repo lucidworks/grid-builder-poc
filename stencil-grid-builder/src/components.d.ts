@@ -191,6 +191,10 @@ export namespace Components {
     interface BlogArticle {
         "author"?: string;
         /**
+          * @default "#fff9c4"
+         */
+        "backgroundColor"?: string;
+        /**
           * @default "Article content goes here"
          */
         "content": string;
@@ -199,6 +203,10 @@ export namespace Components {
     interface BlogArticleDragClone {
     }
     interface BlogButton {
+        /**
+          * @default "#bbdefb"
+         */
+        "backgroundColor"?: string;
         "href"?: string;
         /**
           * @default "Click me!"
@@ -213,6 +221,10 @@ export namespace Components {
     }
     interface BlogHeader {
         /**
+          * @default "#e8eaf6"
+         */
+        "backgroundColor"?: string;
+        /**
           * @default "Default Header"
          */
         "headerTitle": string;
@@ -225,6 +237,10 @@ export namespace Components {
           * @default "Placeholder image"
          */
         "alt": string;
+        /**
+          * @default "#c8e6c9"
+         */
+        "backgroundColor"?: string;
         "caption"?: string;
         /**
           * @default "contain"
@@ -552,6 +568,10 @@ export namespace Components {
         "name": string;
     }
     interface DashboardWidget {
+        /**
+          * @default "#ffccbc"
+         */
+        "backgroundColor"?: string;
     }
     interface DashboardWidgetDragClone {
     }
@@ -759,13 +779,113 @@ export namespace Components {
     }
     interface ImageGallery {
         /**
+          * @default "#f5f5f5"
+         */
+        "backgroundColor"?: string;
+        /**
           * @default 6
          */
         "imageCount": number;
     }
     interface ImageGalleryDragClone {
     }
+    interface LayerPanel {
+        /**
+          * Canvas metadata for folder titles Map of canvasId → { title: string }
+          * @default {}
+         */
+        "canvasMetadata"?: Record<string, { title: string }>;
+        /**
+          * Height of folder header in pixels
+          * @default 40
+         */
+        "folderHeight"?: number;
+        /**
+          * Height of layer item in pixels
+          * @default 40
+         */
+        "itemHeight"?: number;
+        /**
+          * Search input debounce delay in milliseconds
+          * @default 300
+         */
+        "searchDebounceMs"?: number;
+        /**
+          * Pre-render buffer in pixels (renders items outside viewport)
+          * @default 200
+         */
+        "virtualBufferPx"?: number;
+        /**
+          * Number of items to render in virtual window
+          * @default 50
+         */
+        "virtualWindowSize"?: number;
+    }
+    interface LayerPanelFolderHeader {
+        /**
+          * Canvas ID this folder represents
+         */
+        "canvasId": string;
+        /**
+          * Display title for the canvas
+         */
+        "canvasTitle": string;
+        /**
+          * Whether this canvas is the active canvas
+          * @default false
+         */
+        "isActive"?: boolean;
+        /**
+          * Whether this folder has no items matching current search When true, folder appears dimmed
+          * @default false
+         */
+        "isEmpty"?: boolean;
+        /**
+          * Whether this folder is currently expanded
+          * @default true
+         */
+        "isExpanded"?: boolean;
+        /**
+          * Number of items in this canvas
+         */
+        "itemCount": number;
+        /**
+          * Total item count (for showing "0 / 15" during search)
+         */
+        "totalItemCount"?: number;
+    }
+    interface LayerPanelItem {
+        /**
+          * Canvas ID containing this item
+         */
+        "canvasId": string;
+        /**
+          * Whether this item is currently active/selected
+          * @default false
+         */
+        "isActive"?: boolean;
+        /**
+          * Unique ID of the grid item this represents
+         */
+        "itemId": string;
+        /**
+          * Display name of the item
+         */
+        "name": string;
+        /**
+          * Component type (for icon display)
+         */
+        "type": string;
+        /**
+          * Current z-index value
+         */
+        "zIndex": number;
+    }
     interface LiveData {
+        /**
+          * @default "#b2ebf2"
+         */
+        "backgroundColor"?: string;
     }
     interface LiveDataDragClone {
     }
@@ -823,6 +943,14 @@ export interface CanvasHeaderCustomEvent<T> extends CustomEvent<T> {
 export interface ConfirmationModalCustomEvent<T> extends CustomEvent<T> {
     detail: T;
     target: HTMLConfirmationModalElement;
+}
+export interface LayerPanelFolderHeaderCustomEvent<T> extends CustomEvent<T> {
+    detail: T;
+    target: HTMLLayerPanelFolderHeaderElement;
+}
+export interface LayerPanelItemCustomEvent<T> extends CustomEvent<T> {
+    detail: T;
+    target: HTMLLayerPanelItemElement;
 }
 export interface SectionEditorPanelCustomEvent<T> extends CustomEvent<T> {
     detail: T;
@@ -1355,6 +1483,58 @@ declare global {
         prototype: HTMLImageGalleryDragCloneElement;
         new (): HTMLImageGalleryDragCloneElement;
     };
+    interface HTMLLayerPanelElement extends Components.LayerPanel, HTMLStencilElement {
+    }
+    var HTMLLayerPanelElement: {
+        prototype: HTMLLayerPanelElement;
+        new (): HTMLLayerPanelElement;
+    };
+    interface HTMLLayerPanelFolderHeaderElementEventMap {
+        "toggleFolder": { canvasId: string };
+        "activateCanvas": { canvasId: string };
+    }
+    interface HTMLLayerPanelFolderHeaderElement extends Components.LayerPanelFolderHeader, HTMLStencilElement {
+        addEventListener<K extends keyof HTMLLayerPanelFolderHeaderElementEventMap>(type: K, listener: (this: HTMLLayerPanelFolderHeaderElement, ev: LayerPanelFolderHeaderCustomEvent<HTMLLayerPanelFolderHeaderElementEventMap[K]>) => any, options?: boolean | AddEventListenerOptions): void;
+        addEventListener<K extends keyof DocumentEventMap>(type: K, listener: (this: Document, ev: DocumentEventMap[K]) => any, options?: boolean | AddEventListenerOptions): void;
+        addEventListener<K extends keyof HTMLElementEventMap>(type: K, listener: (this: HTMLElement, ev: HTMLElementEventMap[K]) => any, options?: boolean | AddEventListenerOptions): void;
+        addEventListener(type: string, listener: EventListenerOrEventListenerObject, options?: boolean | AddEventListenerOptions): void;
+        removeEventListener<K extends keyof HTMLLayerPanelFolderHeaderElementEventMap>(type: K, listener: (this: HTMLLayerPanelFolderHeaderElement, ev: LayerPanelFolderHeaderCustomEvent<HTMLLayerPanelFolderHeaderElementEventMap[K]>) => any, options?: boolean | EventListenerOptions): void;
+        removeEventListener<K extends keyof DocumentEventMap>(type: K, listener: (this: Document, ev: DocumentEventMap[K]) => any, options?: boolean | EventListenerOptions): void;
+        removeEventListener<K extends keyof HTMLElementEventMap>(type: K, listener: (this: HTMLElement, ev: HTMLElementEventMap[K]) => any, options?: boolean | EventListenerOptions): void;
+        removeEventListener(type: string, listener: EventListenerOrEventListenerObject, options?: boolean | EventListenerOptions): void;
+    }
+    var HTMLLayerPanelFolderHeaderElement: {
+        prototype: HTMLLayerPanelFolderHeaderElement;
+        new (): HTMLLayerPanelFolderHeaderElement;
+    };
+    interface HTMLLayerPanelItemElementEventMap {
+        "layerItemSelect": { itemId: string; canvasId: string };
+        "layerItemDragStart": {
+    itemId: string;
+    canvasId: string;
+    zIndex: number;
+  };
+        "layerItemDrop": {
+    itemId: string;
+    canvasId: string;
+    oldZIndex: number;
+    newZIndex: number;
+  };
+    }
+    interface HTMLLayerPanelItemElement extends Components.LayerPanelItem, HTMLStencilElement {
+        addEventListener<K extends keyof HTMLLayerPanelItemElementEventMap>(type: K, listener: (this: HTMLLayerPanelItemElement, ev: LayerPanelItemCustomEvent<HTMLLayerPanelItemElementEventMap[K]>) => any, options?: boolean | AddEventListenerOptions): void;
+        addEventListener<K extends keyof DocumentEventMap>(type: K, listener: (this: Document, ev: DocumentEventMap[K]) => any, options?: boolean | AddEventListenerOptions): void;
+        addEventListener<K extends keyof HTMLElementEventMap>(type: K, listener: (this: HTMLElement, ev: HTMLElementEventMap[K]) => any, options?: boolean | AddEventListenerOptions): void;
+        addEventListener(type: string, listener: EventListenerOrEventListenerObject, options?: boolean | AddEventListenerOptions): void;
+        removeEventListener<K extends keyof HTMLLayerPanelItemElementEventMap>(type: K, listener: (this: HTMLLayerPanelItemElement, ev: LayerPanelItemCustomEvent<HTMLLayerPanelItemElementEventMap[K]>) => any, options?: boolean | EventListenerOptions): void;
+        removeEventListener<K extends keyof DocumentEventMap>(type: K, listener: (this: Document, ev: DocumentEventMap[K]) => any, options?: boolean | EventListenerOptions): void;
+        removeEventListener<K extends keyof HTMLElementEventMap>(type: K, listener: (this: HTMLElement, ev: HTMLElementEventMap[K]) => any, options?: boolean | EventListenerOptions): void;
+        removeEventListener(type: string, listener: EventListenerOrEventListenerObject, options?: boolean | EventListenerOptions): void;
+    }
+    var HTMLLayerPanelItemElement: {
+        prototype: HTMLLayerPanelItemElement;
+        new (): HTMLLayerPanelItemElement;
+    };
     interface HTMLLiveDataElement extends Components.LiveData, HTMLStencilElement {
     }
     var HTMLLiveDataElement: {
@@ -1454,6 +1634,9 @@ declare global {
         "grid-viewer": HTMLGridViewerElement;
         "image-gallery": HTMLImageGalleryElement;
         "image-gallery-drag-clone": HTMLImageGalleryDragCloneElement;
+        "layer-panel": HTMLLayerPanelElement;
+        "layer-panel-folder-header": HTMLLayerPanelFolderHeaderElement;
+        "layer-panel-item": HTMLLayerPanelItemElement;
         "live-data": HTMLLiveDataElement;
         "live-data-drag-clone": HTMLLiveDataDragCloneElement;
         "section-editor-panel": HTMLSectionEditorPanelElement;
@@ -1623,6 +1806,10 @@ declare namespace LocalJSX {
     interface BlogArticle {
         "author"?: string;
         /**
+          * @default "#fff9c4"
+         */
+        "backgroundColor"?: string;
+        /**
           * @default "Article content goes here"
          */
         "content"?: string;
@@ -1631,6 +1818,10 @@ declare namespace LocalJSX {
     interface BlogArticleDragClone {
     }
     interface BlogButton {
+        /**
+          * @default "#bbdefb"
+         */
+        "backgroundColor"?: string;
         "href"?: string;
         /**
           * @default "Click me!"
@@ -1646,6 +1837,10 @@ declare namespace LocalJSX {
     }
     interface BlogHeader {
         /**
+          * @default "#e8eaf6"
+         */
+        "backgroundColor"?: string;
+        /**
           * @default "Default Header"
          */
         "headerTitle"?: string;
@@ -1658,6 +1853,10 @@ declare namespace LocalJSX {
           * @default "Placeholder image"
          */
         "alt"?: string;
+        /**
+          * @default "#c8e6c9"
+         */
+        "backgroundColor"?: string;
         "caption"?: string;
         /**
           * @default "contain"
@@ -2001,6 +2200,10 @@ declare namespace LocalJSX {
         "name": string;
     }
     interface DashboardWidget {
+        /**
+          * @default "#ffccbc"
+         */
+        "backgroundColor"?: string;
     }
     interface DashboardWidgetDragClone {
     }
@@ -2131,13 +2334,142 @@ declare namespace LocalJSX {
     }
     interface ImageGallery {
         /**
+          * @default "#f5f5f5"
+         */
+        "backgroundColor"?: string;
+        /**
           * @default 6
          */
         "imageCount"?: number;
     }
     interface ImageGalleryDragClone {
     }
+    interface LayerPanel {
+        /**
+          * Canvas metadata for folder titles Map of canvasId → { title: string }
+          * @default {}
+         */
+        "canvasMetadata"?: Record<string, { title: string }>;
+        /**
+          * Height of folder header in pixels
+          * @default 40
+         */
+        "folderHeight"?: number;
+        /**
+          * Height of layer item in pixels
+          * @default 40
+         */
+        "itemHeight"?: number;
+        /**
+          * Search input debounce delay in milliseconds
+          * @default 300
+         */
+        "searchDebounceMs"?: number;
+        /**
+          * Pre-render buffer in pixels (renders items outside viewport)
+          * @default 200
+         */
+        "virtualBufferPx"?: number;
+        /**
+          * Number of items to render in virtual window
+          * @default 50
+         */
+        "virtualWindowSize"?: number;
+    }
+    interface LayerPanelFolderHeader {
+        /**
+          * Canvas ID this folder represents
+         */
+        "canvasId": string;
+        /**
+          * Display title for the canvas
+         */
+        "canvasTitle": string;
+        /**
+          * Whether this canvas is the active canvas
+          * @default false
+         */
+        "isActive"?: boolean;
+        /**
+          * Whether this folder has no items matching current search When true, folder appears dimmed
+          * @default false
+         */
+        "isEmpty"?: boolean;
+        /**
+          * Whether this folder is currently expanded
+          * @default true
+         */
+        "isExpanded"?: boolean;
+        /**
+          * Number of items in this canvas
+         */
+        "itemCount": number;
+        /**
+          * Emitted when user clicks the folder header to activate canvas
+         */
+        "onActivateCanvas"?: (event: LayerPanelFolderHeaderCustomEvent<{ canvasId: string }>) => void;
+        /**
+          * Emitted when user clicks the expand/collapse toggle
+         */
+        "onToggleFolder"?: (event: LayerPanelFolderHeaderCustomEvent<{ canvasId: string }>) => void;
+        /**
+          * Total item count (for showing "0 / 15" during search)
+         */
+        "totalItemCount"?: number;
+    }
+    interface LayerPanelItem {
+        /**
+          * Canvas ID containing this item
+         */
+        "canvasId": string;
+        /**
+          * Whether this item is currently active/selected
+          * @default false
+         */
+        "isActive"?: boolean;
+        /**
+          * Unique ID of the grid item this represents
+         */
+        "itemId": string;
+        /**
+          * Display name of the item
+         */
+        "name": string;
+        /**
+          * Emitted when user starts dragging this item for reordering
+         */
+        "onLayerItemDragStart"?: (event: LayerPanelItemCustomEvent<{
+    itemId: string;
+    canvasId: string;
+    zIndex: number;
+  }>) => void;
+        /**
+          * Emitted when user drops this item at a new position
+         */
+        "onLayerItemDrop"?: (event: LayerPanelItemCustomEvent<{
+    itemId: string;
+    canvasId: string;
+    oldZIndex: number;
+    newZIndex: number;
+  }>) => void;
+        /**
+          * Emitted when user clicks on this item
+         */
+        "onLayerItemSelect"?: (event: LayerPanelItemCustomEvent<{ itemId: string; canvasId: string }>) => void;
+        /**
+          * Component type (for icon display)
+         */
+        "type": string;
+        /**
+          * Current z-index value
+         */
+        "zIndex": number;
+    }
     interface LiveData {
+        /**
+          * @default "#b2ebf2"
+         */
+        "backgroundColor"?: string;
     }
     interface LiveDataDragClone {
     }
@@ -2239,6 +2571,9 @@ declare namespace LocalJSX {
         "grid-viewer": GridViewer;
         "image-gallery": ImageGallery;
         "image-gallery-drag-clone": ImageGalleryDragClone;
+        "layer-panel": LayerPanel;
+        "layer-panel-folder-header": LayerPanelFolderHeader;
+        "layer-panel-item": LayerPanelItem;
         "live-data": LiveData;
         "live-data-drag-clone": LiveDataDragClone;
         "section-editor-panel": SectionEditorPanel;
@@ -2614,6 +2949,9 @@ declare module "@stencil/core" {
             "grid-viewer": LocalJSX.GridViewer & JSXBase.HTMLAttributes<HTMLGridViewerElement>;
             "image-gallery": LocalJSX.ImageGallery & JSXBase.HTMLAttributes<HTMLImageGalleryElement>;
             "image-gallery-drag-clone": LocalJSX.ImageGalleryDragClone & JSXBase.HTMLAttributes<HTMLImageGalleryDragCloneElement>;
+            "layer-panel": LocalJSX.LayerPanel & JSXBase.HTMLAttributes<HTMLLayerPanelElement>;
+            "layer-panel-folder-header": LocalJSX.LayerPanelFolderHeader & JSXBase.HTMLAttributes<HTMLLayerPanelFolderHeaderElement>;
+            "layer-panel-item": LocalJSX.LayerPanelItem & JSXBase.HTMLAttributes<HTMLLayerPanelItemElement>;
             "live-data": LocalJSX.LiveData & JSXBase.HTMLAttributes<HTMLLiveDataElement>;
             "live-data-drag-clone": LocalJSX.LiveDataDragClone & JSXBase.HTMLAttributes<HTMLLiveDataDragCloneElement>;
             /**

@@ -900,27 +900,31 @@ export class GridBuilder {
 
       const targetPosition = { x: gridX, y: gridY };
 
-      // 5. Update item position in desktop layout
+      // 5. Capture source z-index before modification
+      const sourceZIndex = item.zIndex;
+
+      // 6. Update item position in desktop layout
       item.layouts.desktop.x = gridX;
       item.layouts.desktop.y = gridY;
 
-      // 6. Move item between canvases (updates canvasId, removes from source, adds to target)
+      // 7. Move item between canvases (updates canvasId, removes from source, adds to target)
       moveItemToCanvas(sourceCanvasId, targetCanvasId, itemId);
 
-      // 7. Assign new z-index in target canvas
+      // 8. Assign new z-index in target canvas (prevents z-index conflicts)
       const targetCanvas = gridState.canvases[targetCanvasId];
-      item.zIndex = targetCanvas.zIndexCounter++;
+      const targetZIndex = targetCanvas.zIndexCounter++;
+      item.zIndex = targetZIndex;
       gridState.canvases = { ...gridState.canvases }; // Trigger reactivity
 
-      // 8. Set target canvas as active
+      // 9. Set target canvas as active
       setActiveCanvas(targetCanvasId);
 
-      // 9. Update selection state if item was selected
+      // 10. Update selection state if item was selected
       if (gridState.selectedItemId === itemId) {
         gridState.selectedCanvasId = targetCanvasId;
       }
 
-      // 10. Create undo/redo command
+      // 11. Create undo/redo command with z-index tracking
       const command = new MoveItemCommand(
         itemId,
         sourceCanvasId,
@@ -928,6 +932,8 @@ export class GridBuilder {
         sourcePosition,
         targetPosition,
         itemIndex,
+        sourceZIndex,
+        targetZIndex,
       );
       undoRedo.push(command);
 
@@ -1119,7 +1125,7 @@ export class GridBuilder {
       layout.x = constrainedX;
       layout.y = constrainedY;
 
-      // Create undo command for nudge
+      // Create undo command for nudge (same canvas = z-index unchanged)
       const nudgeCommand = new MoveItemCommand(
         item.id,
         gridState.selectedCanvasId,
@@ -1127,6 +1133,8 @@ export class GridBuilder {
         { x: oldX, y: oldY },
         { x: constrainedX, y: constrainedY },
         canvas.items.findIndex((i) => i.id === item.id),
+        item.zIndex, // sourceZIndex
+        item.zIndex, // targetZIndex (same canvas = no change)
       );
       undoRedo.push(nudgeCommand);
 

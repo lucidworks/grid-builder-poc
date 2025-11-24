@@ -1400,6 +1400,16 @@ export class BlogApp {
                   )}
                 </div>
               </div>
+
+              {/* Layer Panel - shows z-index stacking order */}
+              <div class="palette-section">
+                <div class="palette-section-header">
+                  <h3 class="palette-section-title">Layers</h3>
+                </div>
+                <div class="layer-panel-container">
+                  <layer-panel canvasMetadata={mergedCanvasMetadata} />
+                </div>
+              </div>
             </div>
           )}
 

@@ -268,6 +268,35 @@ blog-app {
       }
     }
 
+    /* Layer Panel Section */
+    .palette-section {
+      border-top: 2px solid #e0e0e0;
+      background: #fafafa;
+
+      .palette-section-header {
+        padding: 12px 20px;
+        background: #f8f9fa;
+        border-bottom: 1px solid #e0e0e0;
+
+        .palette-section-title {
+          margin: 0;
+          color: #495057;
+          font-size: 14px;
+          font-weight: 600;
+        }
+      }
+
+      .layer-panel-container {
+        height: 400px; // Fixed height for layer panel
+        overflow: hidden;
+
+        layer-panel {
+          display: block;
+          height: 100%;
+        }
+      }
+    }
+
     /* Grid Builder Area */
     .grid-builder-area {
       flex: 1; /* Take remaining space */

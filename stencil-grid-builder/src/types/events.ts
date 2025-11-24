@@ -752,6 +752,104 @@ export interface CanvasActivatedEvent {
 }
 
 /**
+ * Z-Index Changed Event
+ * =====================
+ *
+ * Emitted when an item's z-index (layer order) changes.
+ *
+ * **Triggers**:
+ * - Layer panel drag-to-reorder
+ * - Bring to front / send to back operations
+ * - Move forward / move backward operations
+ * - Manual z-index assignment
+ * - Undo/redo of z-index operations
+ *
+ * **Use cases**:
+ * - Update layer panel UI to reflect new layer order
+ * - Sync layer visualization across multiple panels
+ * - Log layer reordering for analytics
+ * - Trigger animations on layer reorder
+ *
+ * **Multi-item operations**:
+ * When swap operations occur (move forward/backward), multiple
+ * zIndexChanged events are emitted - one per affected item.
+ *
+ * **Example**:
+ * ```typescript
+ * api.on<ZIndexChangedEvent>('zIndexChanged', (event) => {
+ *   console.log(`Item ${event.itemId} z-index: ${event.oldZIndex} → ${event.newZIndex}`);
+ *   updateLayerPanelUI(event.itemId, event.newZIndex);
+ * });
+ * ```
+ */
+export interface ZIndexChangedEvent {
+  /** ID of item whose z-index changed */
+  itemId: string;
+
+  /** Canvas ID containing the item */
+  canvasId: string;
+
+  /** Z-index value before change */
+  oldZIndex: number;
+
+  /** Z-index value after change */
+  newZIndex: number;
+}
+
+/**
+ * Z-Index Batch Changed Event
+ * ============================
+ *
+ * Emitted when multiple items' z-index values change atomically in a single operation.
+ *
+ * **Triggers**:
+ * - Swap operations (move forward/backward affecting 2 items)
+ * - Multi-select layer reordering
+ * - Batch z-index assignments
+ * - Undo/redo of multi-item z-index operations
+ *
+ * **Use cases**:
+ * - Update layer panel UI once for all affected items (more efficient)
+ * - Atomic updates prevent intermediate states
+ * - Better event logging for multi-item operations
+ * - Single animation trigger for batch reorder
+ *
+ * **Why separate from ZIndexChangedEvent**:
+ * - Subscribers can distinguish between single and batch operations
+ * - Batch operations need atomic handling (update all or none)
+ * - More efficient than N individual events for N items
+ * - Clearer intent in event logs
+ *
+ * **Example**:
+ * ```typescript
+ * // Swap forward: item-A (z:5 → z:7) and item-B (z:7 → z:5)
+ * api.on<ZIndexBatchChangedEvent>('zIndexBatchChanged', (event) => {
+ *   console.log(`Batch z-index change: ${event.changes.length} items`);
+ *   event.changes.forEach(change => {
+ *     updateLayerPanelUI(change.itemId, change.newZIndex);
+ *   });
+ * });
+ * ```
+ */
+export interface ZIndexBatchChangedEvent {
+  /**
+   * Array of z-index changes that occurred atomically
+   *
+   * Each change contains:
+   * - itemId: ID of affected item
+   * - canvasId: Canvas containing the item
+   * - oldZIndex: Z-index before change
+   * - newZIndex: Z-index after change
+   */
+  changes: Array<{
+    itemId: string;
+    canvasId: string;
+    oldZIndex: number;
+    newZIndex: number;
+  }>;
+}
+
+/**
  * Event Map
  * ==========
  *
@@ -781,6 +879,8 @@ export interface EventMap {
   resizeEnd: ResizeEndEvent;
   viewportChanged: ViewportChangedEvent;
   canvasActivated: CanvasActivatedEvent;
+  zIndexChanged: ZIndexChangedEvent;
+  zIndexBatchChanged: ZIndexBatchChangedEvent;
   undo: UndoEvent;
   redo: RedoEvent;
   componentsBatchAdded: ComponentsBatchAddedEvent;
@@ -962,6 +1062,10 @@ export interface GridBuilderEventMap {
   itemsBatchAdded: ItemsBatchAddedEvent;
   itemsBatchDeleted: ItemsBatchDeletedEvent;
   itemsBatchUpdated: ItemsBatchUpdatedEvent;
+
+  // Z-index events
+  zIndexChanged: ZIndexChangedEvent;
+  zIndexBatchChanged: ZIndexBatchChangedEvent;
 
   // Selection events
   selectionChanged: SelectionChangedEvent;

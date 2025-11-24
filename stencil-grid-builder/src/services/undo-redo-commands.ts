@@ -159,6 +159,7 @@ import {
   addItemToCanvas,
   GridItem,
   gridState,
+  setItemZIndex,
   updateItem as updateItemInState,
   deleteItemsBatch,
   updateItemsBatch,
@@ -767,6 +768,23 @@ export class MoveItemCommand implements Command {
   /** Size after operation (grid units) - optional for resize tracking */
   private targetSize?: { width: number; height: number };
 
+  /** Z-index in source canvas (for undo restoration) */
+  private sourceZIndex: number;
+
+  /**
+   * Z-index in target canvas (assigned during cross-canvas move)
+   *
+   * **Cross-canvas behavior**:
+   * - Same canvas move: sourceZIndex === targetZIndex (no change)
+   * - Cross-canvas move: targetZIndex = targetCanvas.zIndexCounter++ (new z-index)
+   *
+   * **Why needed**:
+   * - Prevents z-index conflicts between canvases
+   * - Each canvas has independent z-index space
+   * - Undo must restore original z-index in source canvas
+   */
+  private targetZIndex: number;
+
   /** Original array index in source canvas (for undo restoration) */
   private sourceIndex: number;
 
@@ -781,12 +799,18 @@ export class MoveItemCommand implements Command {
    *
    * **Resize support**: Optional size parameters track width/height changes
    *
+   * **Z-index handling**:
+   * - Same canvas: sourceZIndex === targetZIndex (no change)
+   * - Cross-canvas: targetZIndex assigned from targetCanvas.zIndexCounter++
+   *
    * @param itemId - ID of moved item
    * @param sourceCanvasId - Canvas where item started
    * @param targetCanvasId - Canvas where item ended
    * @param sourcePosition - Position before drag (will be shallow cloned)
    * @param targetPosition - Position after drag (will be shallow cloned)
    * @param sourceIndex - Original array index in source canvas
+   * @param sourceZIndex - Z-index in source canvas (for undo restoration)
+   * @param targetZIndex - Z-index in target canvas (assigned during move)
    * @param sourceSize - Optional: Size before operation (for resize tracking)
    * @param targetSize - Optional: Size after operation (for resize tracking)
    */
@@ -797,6 +821,8 @@ export class MoveItemCommand implements Command {
     sourcePosition: { x: number; y: number },
     targetPosition: { x: number; y: number },
     sourceIndex: number,
+    sourceZIndex: number,
+    targetZIndex: number,
     sourceSize?: { width: number; height: number },
     targetSize?: { width: number; height: number },
   ) {
@@ -805,9 +831,11 @@ export class MoveItemCommand implements Command {
     this.targetCanvasId = targetCanvasId;
     this.sourcePosition = { ...sourcePosition };
     this.targetPosition = { ...targetPosition };
+    this.sourceIndex = sourceIndex;
+    this.sourceZIndex = sourceZIndex;
+    this.targetZIndex = targetZIndex;
     this.sourceSize = sourceSize ? { ...sourceSize } : undefined;
     this.targetSize = targetSize ? { ...targetSize } : undefined;
-    this.sourceIndex = sourceIndex;
   }
 
   /**
@@ -871,14 +899,16 @@ export class MoveItemCommand implements Command {
     // Remove from current canvas (wherever it is)
     targetCanvas.items = targetCanvas.items.filter((i) => i.id !== this.itemId);
 
-    // Update item's position and canvasId back to source
+    // Update item's position, z-index, and canvasId back to source
     item.canvasId = this.sourceCanvasId;
     item.layouts.desktop.x = this.sourcePosition.x;
     item.layouts.desktop.y = this.sourcePosition.y;
+    item.zIndex = this.sourceZIndex;
 
-    debug.log("  ✅ Updated item position to:", {
+    debug.log("  ✅ Updated item position and z-index to:", {
       x: item.layouts.desktop.x,
       y: item.layouts.desktop.y,
+      zIndex: item.zIndex,
     });
 
     // Restore size if it was tracked (for resize operations)
@@ -963,14 +993,16 @@ export class MoveItemCommand implements Command {
     // Remove from source canvas
     sourceCanvas.items = sourceCanvas.items.filter((i) => i.id !== this.itemId);
 
-    // Update item's position and canvasId to target
+    // Update item's position, z-index, and canvasId to target
     item.canvasId = this.targetCanvasId;
     item.layouts.desktop.x = this.targetPosition.x;
     item.layouts.desktop.y = this.targetPosition.y;
+    item.zIndex = this.targetZIndex;
 
-    debug.log("  ✅ Updated item position to:", {
+    debug.log("  ✅ Updated item position and z-index to:", {
       x: item.layouts.desktop.x,
       y: item.layouts.desktop.y,
+      zIndex: item.zIndex,
     });
 
     // Restore size if it was tracked (for resize operations)
@@ -1454,5 +1486,171 @@ export class RemoveCanvasCommand implements Command {
 
     // Emit event so host app can sync its metadata
     eventManager.emit("canvasRemoved", { canvasId: this.canvasId });
+  }
+}
+
+/**
+ * Change Z-Index Command
+ * ======================
+ *
+ * Handles undo/redo for z-index changes (layer reordering).
+ * Supports both single-item changes and multi-item swaps.
+ *
+ * **Use cases**:
+ * - Layer panel drag-to-reorder (swap with other item)
+ * - Bring to front / send to back (single item)
+ * - Move forward / move backward (swap with adjacent item)
+ * - Direct z-index assignment (single item)
+ *
+ * **What it captures**:
+ * - Array of z-index changes (supports cascading/swap operations)
+ * - Each change: { itemId, canvasId, oldZIndex, newZIndex }
+ *
+ * **Why array-based**:
+ * - Move forward/backward swaps z-index with adjacent item (2 items affected)
+ * - Drag-to-reorder can shuffle multiple items
+ * - Undo must atomically restore all affected items
+ *
+ * **Operation**:
+ * - Uses `setItemZIndex` from state-manager for each item
+ * - Updates all items' zIndex properties in single undo/redo operation
+ * - Maintains canvas zIndexCounter
+ * - Triggers reactivity once for UI updates
+ * - Emits events for layer panel to update
+ *
+ * **Example usage**:
+ * ```typescript
+ * // Single item: Bring to front
+ * const result = bringItemToFront('canvas1', 'item-3');
+ * if (result) {
+ *   const cmd = new ChangeZIndexCommand([{
+ *     itemId: 'item-3',
+ *     canvasId: 'canvas1',
+ *     oldZIndex: result.oldZIndex,
+ *     newZIndex: result.newZIndex
+ *   }]);
+ *   undoRedoManager.push(cmd);
+ * }
+ *
+ * // Swap operation: Move forward (affects 2 items)
+ * // moveItemForward swaps z-index with next item
+ * const changes = [
+ *   { itemId: 'item-3', canvasId: 'canvas1', oldZIndex: 5, newZIndex: 7 },
+ *   { itemId: 'item-7', canvasId: 'canvas1', oldZIndex: 7, newZIndex: 5 }
+ * ];
+ * const cmd = new ChangeZIndexCommand(changes);
+ * undoRedoManager.push(cmd);
+ * ```
+ *
+ * **Edge case handling**:
+ * - Item doesn't exist: skips that item (doesn't fail entire command)
+ * - Canvas doesn't exist: skips that item
+ * - Undo restores exact z-index values for all items
+ * - Maintains visual layer order across all affected items
+ *
+ * @module undo-redo-commands
+ */
+export class ChangeZIndexCommand implements Command {
+  description: string;
+  private changes: Array<{
+    itemId: string;
+    canvasId: string;
+    oldZIndex: number;
+    newZIndex: number;
+  }>;
+
+  constructor(
+    changes: Array<{
+      itemId: string;
+      canvasId: string;
+      oldZIndex: number;
+      newZIndex: number;
+    }>,
+  ) {
+    this.changes = changes;
+
+    // Descriptive message for command history
+    if (changes.length === 1) {
+      const change = changes[0];
+      this.description = `Change Z-Index (${change.oldZIndex} → ${change.newZIndex})`;
+    } else {
+      this.description = `Reorder ${changes.length} Layers`;
+    }
+  }
+
+  undo(): void {
+    // Restore old z-index for all affected items
+    this.changes.forEach((change) => {
+      const result = setItemZIndex(
+        change.canvasId,
+        change.itemId,
+        change.oldZIndex,
+      );
+
+      if (result) {
+        debug.log(
+          `Undo z-index change: ${change.itemId} from ${result.newZIndex} to ${result.oldZIndex}`,
+        );
+      }
+    });
+
+    // Emit single event (batch or individual based on change count)
+    if (this.changes.length === 1) {
+      const change = this.changes[0];
+      eventManager.emit("zIndexChanged", {
+        itemId: change.itemId,
+        canvasId: change.canvasId,
+        oldZIndex: change.newZIndex, // Swapped for undo
+        newZIndex: change.oldZIndex,
+      });
+    } else {
+      // Emit batch event for atomic update
+      eventManager.emit("zIndexBatchChanged", {
+        changes: this.changes.map((change) => ({
+          itemId: change.itemId,
+          canvasId: change.canvasId,
+          oldZIndex: change.newZIndex, // Swapped for undo
+          newZIndex: change.oldZIndex,
+        })),
+      });
+    }
+  }
+
+  redo(): void {
+    // Reapply new z-index for all affected items
+    this.changes.forEach((change) => {
+      const result = setItemZIndex(
+        change.canvasId,
+        change.itemId,
+        change.newZIndex,
+      );
+
+      if (result) {
+        debug.log(
+          `Redo z-index change: ${change.itemId} from ${result.oldZIndex} to ${result.newZIndex}`,
+        );
+      }
+    });
+
+    // Emit single event (batch or individual based on change count)
+    if (this.changes.length === 1) {
+      const change = this.changes[0];
+      eventManager.emit("zIndexChanged", {
+        itemId: change.itemId,
+        canvasId: change.canvasId,
+        oldZIndex: change.oldZIndex,
+        newZIndex: change.newZIndex,
+      });
+    } else {
+      // Emit batch event for atomic update
+      eventManager.emit("zIndexBatchChanged", {
+        changes: this.changes.map((change) => ({
+          itemId: change.itemId,
+          canvasId: change.canvasId,
+          oldZIndex: change.oldZIndex,
+          newZIndex: change.newZIndex,
+        })),
+      });
+    }
   }
 }

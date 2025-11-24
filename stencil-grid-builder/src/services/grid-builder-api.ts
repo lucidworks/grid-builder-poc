@@ -51,6 +51,7 @@
 
 import {
   addItemsBatch,
+  bringItemToFront as bringItemToFrontInternal,
   deleteItemsBatch,
   deselectItem,
   generateItemId,
@@ -58,8 +59,12 @@ import {
   GridItem,
   gridState,
   GridState,
+  moveItemBackward as moveItemBackwardInternal,
+  moveItemForward as moveItemForwardInternal,
   reset as resetState,
   selectItem as selectItemInState,
+  sendItemToBack as sendItemToBackInternal,
+  setItemZIndex as setItemZIndexInternal,
   updateItemsBatch,
 } from "./state-manager";
 import {
@@ -68,6 +73,7 @@ import {
   BatchAddCommand,
   BatchDeleteCommand,
   BatchUpdateConfigCommand,
+  ChangeZIndexCommand,
   MoveItemCommand,
   RemoveCanvasCommand,
   RemoveItemCommand,
@@ -504,6 +510,7 @@ export class GridBuilderAPI {
     }
 
     const sourceIndex = sourceCanvas.items.findIndex((i) => i.id === itemId);
+    const sourceZIndex = item.zIndex;
     const sourcePosition = {
       x: item.layouts.desktop.x,
       y: item.layouts.desktop.y,
@@ -513,6 +520,15 @@ export class GridBuilderAPI {
       y: item.layouts.desktop.y,
     };
 
+    // Calculate target z-index (new z-index for cross-canvas moves)
+    let targetZIndex = sourceZIndex; // Same canvas = same z-index
+    if (fromCanvasId !== toCanvasId) {
+      const targetCanvas = gridState.canvases[toCanvasId];
+      if (targetCanvas) {
+        targetZIndex = targetCanvas.zIndexCounter; // Will be incremented in redo()
+      }
+    }
+
     const command = new MoveItemCommand(
       itemId,
       fromCanvasId,
@@ -520,8 +536,10 @@ export class GridBuilderAPI {
       sourcePosition,
       targetPosition,
       sourceIndex,
+      sourceZIndex,
+      targetZIndex,
     );
-    command.redo(); // Execute command first
+    command.redo(); // Execute command first (applies targetZIndex)
     pushCommand(command); // Then add to history
 
     this.eventEmitter.emit("itemMoved", {
@@ -913,6 +931,443 @@ export class GridBuilderAPI {
       itemId: null,
       canvasId: null,
     } as SelectionChangedEvent);
+  }
+
+  // ============================================================================
+  // Z-Index Management Methods
+  // ============================================================================
+
+  /**
+   * Set item's z-index to a specific value
+   *
+   * **Use cases**:
+   * - Layer panel drag-to-reorder
+   * - Programmatic layer reordering
+   *
+   * **Cross-canvas note**: Z-index is **relative** to other items in the same canvas.
+   * When moving items between canvases, z-index values don't carry semantic meaning
+   * across canvas boundaries. Cross-canvas moves automatically assign a new z-index
+   * in the target canvas (puts item on top by default).
+   *
+   * This operation is undoable.
+   *
+   * @param canvasId - Canvas containing the item
+   * @param itemId - Item to modify
+   * @param newZIndex - New z-index value
+   *
+   * @emits zIndexChanged - If operation succeeds
+   *
+   * @example
+   * ```typescript
+   * // Move item to specific layer position
+   * api.setItemZIndex('canvas1', 'item-5', 10);
+   * ```
+   */
+  setItemZIndex(canvasId: string, itemId: string, newZIndex: number): void {
+    const result = setItemZIndexInternal(canvasId, itemId, newZIndex);
+    if (!result) {
+      return; // Item not found or already at that z-index
+    }
+
+    // Create undo/redo command
+    const command = new ChangeZIndexCommand([
+      {
+        itemId,
+        canvasId,
+        oldZIndex: result.oldZIndex,
+        newZIndex: result.newZIndex,
+      },
+    ]);
+    pushCommand(command);
+
+    // Emit single item event
+    this.eventEmitter.emit("zIndexChanged", {
+      itemId,
+      canvasId,
+      oldZIndex: result.oldZIndex,
+      newZIndex: result.newZIndex,
+    });
+  }
+
+  /**
+   * Bring item to front (highest z-index in canvas)
+   *
+   * Sets item's z-index to highest value in its canvas + 1.
+   * If item is already on top, does nothing.
+   *
+   * This operation is undoable.
+   *
+   * @param canvasId - Canvas containing the item
+   * @param itemId - Item to bring to front
+   *
+   * @emits zIndexChanged - If operation succeeds
+   *
+   * @example
+   * ```typescript
+   * // Bring item to front
+   * api.bringItemToFront('canvas1', 'item-3');
+   * ```
+   */
+  bringItemToFront(canvasId: string, itemId: string): void {
+    const result = bringItemToFrontInternal(canvasId, itemId);
+    if (!result) {
+      return; // Item not found or already on top
+    }
+
+    // Create undo/redo command
+    const command = new ChangeZIndexCommand([
+      {
+        itemId,
+        canvasId,
+        oldZIndex: result.oldZIndex,
+        newZIndex: result.newZIndex,
+      },
+    ]);
+    pushCommand(command);
+
+    // Emit single item event
+    this.eventEmitter.emit("zIndexChanged", {
+      itemId,
+      canvasId,
+      oldZIndex: result.oldZIndex,
+      newZIndex: result.newZIndex,
+    });
+  }
+
+  /**
+   * Send item to back (lowest z-index in canvas)
+   *
+   * Sets item's z-index to lowest value in its canvas - 1.
+   * If item is already on bottom, does nothing.
+   *
+   * This operation is undoable.
+   *
+   * @param canvasId - Canvas containing the item
+   * @param itemId - Item to send to back
+   *
+   * @emits zIndexChanged - If operation succeeds
+   *
+   * @example
+   * ```typescript
+   * // Send item to back
+   * api.sendItemToBack('canvas1', 'item-3');
+   * ```
+   */
+  sendItemToBack(canvasId: string, itemId: string): void {
+    const result = sendItemToBackInternal(canvasId, itemId);
+    if (!result) {
+      return; // Item not found or already on bottom
+    }
+
+    // Create undo/redo command
+    const command = new ChangeZIndexCommand([
+      {
+        itemId,
+        canvasId,
+        oldZIndex: result.oldZIndex,
+        newZIndex: result.newZIndex,
+      },
+    ]);
+    pushCommand(command);
+
+    // Emit single item event
+    this.eventEmitter.emit("zIndexChanged", {
+      itemId,
+      canvasId,
+      oldZIndex: result.oldZIndex,
+      newZIndex: result.newZIndex,
+    });
+  }
+
+  /**
+   * Move item forward one layer (swap with next higher z-index)
+   *
+   * Finds the item with the next higher z-index and swaps with it.
+   * If item is already on top, does nothing.
+   *
+   * **Batch operation**: Affects 2 items atomically (swap), emits zIndexBatchChanged.
+   *
+   * This operation is undoable.
+   *
+   * @param canvasId - Canvas containing the item
+   * @param itemId - Item to move forward
+   *
+   * @emits zIndexBatchChanged - Batch event with both items affected
+   *
+   * @example
+   * ```typescript
+   * // Move item forward one layer
+   * api.moveItemForward('canvas1', 'item-3');
+   * // Items item-3 and item-7 swap z-index values
+   * ```
+   */
+  moveItemForward(canvasId: string, itemId: string): void {
+    // Get items before the swap to capture both affected items
+    const canvas = gridState.canvases[canvasId];
+    if (!canvas) {
+      return;
+    }
+
+    const item = canvas.items.find((i) => i.id === itemId);
+    if (!item) {
+      return;
+    }
+
+    // Find next higher z-index item
+    const sortedItems = [...canvas.items].sort((a, b) => a.zIndex - b.zIndex);
+    const currentIndex = sortedItems.findIndex((i) => i.id === itemId);
+
+    // Already on top
+    if (currentIndex === sortedItems.length - 1) {
+      return;
+    }
+
+    const nextItem = sortedItems[currentIndex + 1];
+    const oldZIndex1 = item.zIndex;
+    const oldZIndex2 = nextItem.zIndex;
+
+    // Perform the swap
+    const result = moveItemForwardInternal(canvasId, itemId);
+    if (!result) {
+      return;
+    }
+
+    // Create undo/redo command for BOTH items (batch operation)
+    const command = new ChangeZIndexCommand([
+      {
+        itemId: item.id,
+        canvasId,
+        oldZIndex: oldZIndex1,
+        newZIndex: result.newZIndex,
+      },
+      {
+        itemId: nextItem.id,
+        canvasId,
+        oldZIndex: oldZIndex2,
+        newZIndex: oldZIndex1, // Swapped to item's old z-index
+      },
+    ]);
+    pushCommand(command);
+
+    // Emit batch event (2 items affected atomically)
+    this.eventEmitter.emit("zIndexBatchChanged", {
+      changes: [
+        {
+          itemId: item.id,
+          canvasId,
+          oldZIndex: oldZIndex1,
+          newZIndex: result.newZIndex,
+        },
+        {
+          itemId: nextItem.id,
+          canvasId,
+          oldZIndex: oldZIndex2,
+          newZIndex: oldZIndex1,
+        },
+      ],
+    });
+  }
+
+  /**
+   * Move item backward one layer (swap with next lower z-index)
+   *
+   * Finds the item with the next lower z-index and swaps with it.
+   * If item is already on bottom, does nothing.
+   *
+   * **Batch operation**: Affects 2 items atomically (swap), emits zIndexBatchChanged.
+   *
+   * This operation is undoable.
+   *
+   * @param canvasId - Canvas containing the item
+   * @param itemId - Item to move backward
+   *
+   * @emits zIndexBatchChanged - Batch event with both items affected
+   *
+   * @example
+   * ```typescript
+   * // Move item backward one layer
+   * api.moveItemBackward('canvas1', 'item-3');
+   * // Items item-3 and item-5 swap z-index values
+   * ```
+   */
+  moveItemBackward(canvasId: string, itemId: string): void {
+    // Get items before the swap to capture both affected items
+    const canvas = gridState.canvases[canvasId];
+    if (!canvas) {
+      return;
+    }
+
+    const item = canvas.items.find((i) => i.id === itemId);
+    if (!item) {
+      return;
+    }
+
+    // Find next lower z-index item
+    const sortedItems = [...canvas.items].sort((a, b) => a.zIndex - b.zIndex);
+    const currentIndex = sortedItems.findIndex((i) => i.id === itemId);
+
+    // Already on bottom
+    if (currentIndex === 0) {
+      return;
+    }
+
+    const prevItem = sortedItems[currentIndex - 1];
+    const oldZIndex1 = item.zIndex;
+    const oldZIndex2 = prevItem.zIndex;
+
+    // Perform the swap
+    const result = moveItemBackwardInternal(canvasId, itemId);
+    if (!result) {
+      return;
+    }
+
+    // Create undo/redo command for BOTH items (batch operation)
+    const command = new ChangeZIndexCommand([
+      {
+        itemId: item.id,
+        canvasId,
+        oldZIndex: oldZIndex1,
+        newZIndex: result.newZIndex,
+      },
+      {
+        itemId: prevItem.id,
+        canvasId,
+        oldZIndex: oldZIndex2,
+        newZIndex: oldZIndex1, // Swapped to item's old z-index
+      },
+    ]);
+    pushCommand(command);
+
+    // Emit batch event (2 items affected atomically)
+    this.eventEmitter.emit("zIndexBatchChanged", {
+      changes: [
+        {
+          itemId: item.id,
+          canvasId,
+          oldZIndex: oldZIndex1,
+          newZIndex: result.newZIndex,
+        },
+        {
+          itemId: prevItem.id,
+          canvasId,
+          oldZIndex: oldZIndex2,
+          newZIndex: oldZIndex1,
+        },
+      ],
+    });
+  }
+
+  /**
+   * Set z-index for multiple items in a single batch operation
+   *
+   * **Multi-canvas support**: Items can belong to different canvases.
+   * All z-index changes are applied atomically in a single undo/redo operation.
+   *
+   * **Use cases**:
+   * - Global layer panel showing items from all canvases
+   * - Drag-to-reorder across multiple canvases
+   * - Bulk z-index adjustments
+   * - Cross-canvas layer organization
+   *
+   * **Performance**: Single state update and re-render for N items instead of N updates.
+   *
+   * This operation is undoable.
+   *
+   * @param changes - Array of z-index changes with the following properties:
+   *   - `itemId` (string): Item ID to update
+   *   - `canvasId` (string): Canvas containing the item
+   *   - `newZIndex` (number): New z-index value
+   *
+   * @emits zIndexBatchChanged - Fired once after all changes are applied
+   *
+   * @example
+   * ```typescript
+   * // Reorder items across multiple canvases in one operation
+   * api.setItemsZIndexBatch([
+   *   { itemId: 'canvas1-item-1', canvasId: 'canvas1', newZIndex: 10 },
+   *   { itemId: 'canvas1-item-2', canvasId: 'canvas1', newZIndex: 20 },
+   *   { itemId: 'canvas2-item-5', canvasId: 'canvas2', newZIndex: 15 },
+   *   { itemId: 'canvas2-item-6', canvasId: 'canvas2', newZIndex: 25 }
+   * ]);
+   *
+   * // Undo reverts all 4 changes in one operation
+   * api.undo();
+   * ```
+   */
+  setItemsZIndexBatch(
+    changes: Array<{
+      itemId: string;
+      canvasId: string;
+      newZIndex: number;
+    }>,
+  ): void {
+    if (changes.length === 0) {
+      return;
+    }
+
+    // Capture old z-index values before making changes
+    const changesWithOldValues = changes
+      .map(({ itemId, canvasId, newZIndex }) => {
+        const canvas = gridState.canvases[canvasId];
+        if (!canvas) {
+          console.warn(
+            `Canvas ${canvasId} not found for item ${itemId}, skipping`,
+          );
+          return null;
+        }
+
+        const item = canvas.items.find((i) => i.id === itemId);
+        if (!item) {
+          console.warn(`Item ${itemId} not found in canvas ${canvasId}, skipping`);
+          return null;
+        }
+
+        const oldZIndex = item.zIndex;
+
+        // Skip if already at target z-index
+        if (oldZIndex === newZIndex) {
+          return null;
+        }
+
+        return {
+          itemId,
+          canvasId,
+          oldZIndex,
+          newZIndex,
+        };
+      })
+      .filter(Boolean) as Array<{
+      itemId: string;
+      canvasId: string;
+      oldZIndex: number;
+      newZIndex: number;
+    }>;
+
+    // No valid changes after filtering
+    if (changesWithOldValues.length === 0) {
+      return;
+    }
+
+    // Apply all changes
+    changesWithOldValues.forEach(({ itemId, canvasId, newZIndex }) => {
+      const canvas = gridState.canvases[canvasId];
+      const item = canvas.items.find((i) => i.id === itemId);
+      if (item) {
+        item.zIndex = newZIndex;
+      }
+    });
+
+    // Trigger reactivity (single state update for all changes)
+    gridState.canvases = { ...gridState.canvases };
+
+    // Create undo/redo command for all changes
+    const command = new ChangeZIndexCommand(changesWithOldValues);
+    pushCommand(command);
+
+    // Emit batch event (all items affected atomically)
+    this.eventEmitter.emit("zIndexBatchChanged", {
+      changes: changesWithOldValues,
+    });
   }
 
   // ============================================================================
