@@ -251,15 +251,22 @@ export class GridItemWrapper {
     // Set up virtual rendering observer (both builder and viewer modes)
     // Virtual rendering improves performance for long pages with many components
     // Can be disabled via config for Storybook or testing scenarios
-    if (this.config?.enableVirtualRendering !== false) {
-      // Virtual rendering enabled (default behavior)
-      virtualRenderer.observe(this.itemRef, this.item.id, (isVisible) => {
-        this.isVisible = isVisible;
-      });
-    } else {
-      // Virtual rendering disabled - render immediately
-      this.isVisible = true;
-    }
+    //
+    // IMPORTANT: Defer observer setup to avoid state change during componentDidLoad()
+    // The IntersectionObserver callback fires immediately if the element is in viewport,
+    // which would cause a state change and trigger Stencil warning about extra re-renders.
+    // Using requestAnimationFrame defers setup until after lifecycle completes.
+    requestAnimationFrame(() => {
+      if (this.config?.enableVirtualRendering !== false) {
+        // Virtual rendering enabled (default behavior)
+        virtualRenderer.observe(this.itemRef, this.item.id, (isVisible) => {
+          this.isVisible = isVisible;
+        });
+      } else {
+        // Virtual rendering disabled - render immediately
+        this.isVisible = true;
+      }
+    });
 
     // Inject component content into custom wrapper's content slot if needed
     this.injectComponentContent();
