@@ -196,7 +196,7 @@
  */
 
 import type { InteractResizeEvent, Interactable } from "interactjs";
-import { GridItem, setActiveCanvas } from "../services/state-manager";
+import { GridItem, setActiveCanvas, gridState } from "../services/state-manager";
 import { ComponentDefinition } from "../types/component-definition";
 import { GridConfig } from "../types/grid-config";
 import { domCache } from "./dom-cache";
@@ -1226,13 +1226,19 @@ export class ResizeHandler {
       height: `${newHeight}px`,
     });
 
-    // Update item size and position in current viewport's layout (convert to grid units)
-    const currentViewport = window.gridState?.currentViewport || "desktop";
-    const layout = this.item.layouts[currentViewport as "desktop" | "mobile"];
+    // IMPORTANT: Get latest item from state to preserve any config changes
+    // that occurred during resize (e.g., backgroundColor changes)
+    const canvas = gridState.canvases[this.item.canvasId];
+    const latestItem = canvas?.items.find(i => i.id === this.item.id);
+    const itemToUpdate = latestItem || this.item; // Fallback to stored item if not found
 
-    layout.width = pixelsToGridX(newWidth, this.item.canvasId, this.config);
+    // Update item size and position in current viewport's layout (convert to grid units)
+    const currentViewport = gridState.currentViewport || "desktop";
+    const layout = itemToUpdate.layouts[currentViewport as "desktop" | "mobile"];
+
+    layout.width = pixelsToGridX(newWidth, itemToUpdate.canvasId, this.config);
     layout.height = pixelsToGridY(newHeight, this.config);
-    layout.x = pixelsToGridX(newX, this.item.canvasId, this.config);
+    layout.x = pixelsToGridX(newX, itemToUpdate.canvasId, this.config);
     layout.y = pixelsToGridY(newY, this.config);
 
     debug.log("  finalGridUnits:", {
@@ -1245,7 +1251,7 @@ export class ResizeHandler {
 
     // If in mobile view, mark as customized
     if (currentViewport === "mobile") {
-      this.item.layouts.mobile.customized = true;
+      itemToUpdate.layouts.mobile.customized = true;
     }
 
     // End performance tracking
@@ -1254,6 +1260,6 @@ export class ResizeHandler {
     }
 
     // Trigger StencilJS update (single re-render at end)
-    this.onUpdate(this.item);
+    this.onUpdate(itemToUpdate);
   }
 }

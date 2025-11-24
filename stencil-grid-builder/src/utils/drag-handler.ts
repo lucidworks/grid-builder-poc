@@ -136,6 +136,7 @@ import {
   GridItem,
   selectItem,
   setActiveCanvas,
+  gridState,
 } from "../services/state-manager";
 import { GridConfig } from "../types/grid-config";
 import { domCache } from "./dom-cache";
@@ -883,22 +884,28 @@ export class DragHandler {
     newX = constrained.x * gridSizeXForConversion;
     newY = constrained.y * gridSizeYForConversion;
 
+    // IMPORTANT: Get latest item from state to preserve any config changes
+    // that occurred during drag (e.g., backgroundColor changes)
+    const canvas = gridState.canvases[this.item.canvasId];
+    const latestItem = canvas?.items.find(i => i.id === this.item.id);
+    const itemToUpdate = latestItem || this.item; // Fallback to stored item if not found
+
     // Update item position in current viewport's layout (use constrained grid units)
-    const currentViewport = window.gridState?.currentViewport || "desktop";
-    const layout = this.item.layouts[currentViewport as "desktop" | "mobile"];
+    const currentViewport = gridState.currentViewport || "desktop";
+    const layout = itemToUpdate.layouts[currentViewport as "desktop" | "mobile"];
 
     layout.x = constrained.x;
     layout.y = constrained.y;
 
     // If in mobile view, mark as customized
     if (currentViewport === "mobile") {
-      this.item.layouts.mobile.customized = true;
+      itemToUpdate.layouts.mobile.customized = true;
       // Set width/height if not already set (copy from desktop)
-      if (this.item.layouts.mobile.width === null) {
-        this.item.layouts.mobile.width = this.item.layouts.desktop.width;
+      if (itemToUpdate.layouts.mobile.width === null) {
+        itemToUpdate.layouts.mobile.width = itemToUpdate.layouts.desktop.width;
       }
-      if (this.item.layouts.mobile.height === null) {
-        this.item.layouts.mobile.height = this.item.layouts.desktop.height;
+      if (itemToUpdate.layouts.mobile.height === null) {
+        itemToUpdate.layouts.mobile.height = itemToUpdate.layouts.desktop.height;
       }
     }
 
@@ -920,7 +927,7 @@ export class DragHandler {
       }
 
       // Trigger StencilJS update (single re-render at end)
-      this.onUpdate(this.item);
+      this.onUpdate(itemToUpdate);
     });
   }
 
