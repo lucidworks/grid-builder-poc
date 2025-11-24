@@ -395,19 +395,20 @@
  * Click-to-Add Component Animation
  * ========================================
  * Pulse animation on selection outline when components are added via click-to-add.
- * Component appears instantly; only the selection border pulses to draw attention.
- * This prevents the confusing "flash in/out/in" effect of fading the entire component.
+ * Component appears instantly; selection outline stays visible but pulses from
+ * 2px to 6px glow to draw attention. This prevents the confusing "flash in/out/in"
+ * effect of fading the entire component.
  */
 
 /* Component Pulse Animation - Only pulses selection outline, not content */
 @keyframes component-animate-in {
   0%, 100% {
     border-color: var(--selection-color);
-    box-shadow: 0 0 0 0 rgba(74, 144, 226, 0.4);
+    box-shadow: 0 0 0 2px rgba(74, 144, 226, 0.5);
   }
   50% {
     border-color: var(--selection-color);
-    box-shadow: 0 0 0 4px rgba(74, 144, 226, 0.4);
+    box-shadow: 0 0 0 6px rgba(74, 144, 226, 0.7);
   }
 }
 

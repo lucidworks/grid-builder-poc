@@ -227,8 +227,8 @@ export function showPositionIndicator(
  *
  * **Visual Effect**:
  * - Clears position indicators (prevents blue flash)
- * - Scrolls component into view smoothly
- * - Pulse selection outline (border + box-shadow)
+ * - Scrolls component into view with smooth animation (centers in viewport)
+ * - Selection outline stays visible throughout, pulsing from 2px to 6px glow
  * - Component appears instantly (no opacity fade to prevent confusing flash)
  * - Duration: 600ms
  * - Easing: ease-out
@@ -236,7 +236,7 @@ export function showPositionIndicator(
  * **Implementation**:
  * 1. Find grid item element by ID
  * 2. Clear all position indicators immediately
- * 3. Scroll component into view (smooth animation)
+ * 3. Scroll component to center of viewport (smooth animation)
  * 4. Add `.component-animate-in` class (triggers CSS animation)
  * 5. Remove class after animation completes
  *
@@ -245,11 +245,11 @@ export function showPositionIndicator(
  * @keyframes component-animate-in {
  *   0%, 100% {
  *     border-color: var(--selection-color);
- *     box-shadow: 0 0 0 0 rgba(74, 144, 226, 0.4);
+ *     box-shadow: 0 0 0 2px rgba(74, 144, 226, 0.5);
  *   }
  *   50% {
  *     border-color: var(--selection-color);
- *     box-shadow: 0 0 0 4px rgba(74, 144, 226, 0.4);
+ *     box-shadow: 0 0 0 6px rgba(74, 144, 226, 0.7);
  *   }
  * }
  *
@@ -263,7 +263,7 @@ export function showPositionIndicator(
  * ```typescript
  * // After adding component with id 'item-123'
  * animateComponentIn('item-123');
- * // → Position indicators cleared, component scrolls into view and fades in
+ * // → Position indicators cleared, component scrolls to center and outline pulses
  * ```
  *
  * **Note**: Call this AFTER the component has been added to the DOM.
@@ -290,20 +290,12 @@ export function animateComponentIn(itemId: string): void {
     });
 
     // Scroll component into view (with smooth animation)
-    // Use scrollIntoViewIfNeeded if available (Chrome/Safari), otherwise scrollIntoView
-    const scrollOptions: ScrollIntoViewOptions = {
+    // Always use standard scrollIntoView for consistent animated scrolling
+    itemElement.scrollIntoView({
       behavior: 'smooth',
-      block: 'nearest',
+      block: 'center',
       inline: 'nearest',
-    };
-
-    if ('scrollIntoViewIfNeeded' in itemElement) {
-      // Chrome/Safari - only scrolls if not visible
-      (itemElement as any).scrollIntoViewIfNeeded({ behavior: 'smooth' });
-    } else {
-      // Standard scrollIntoView (Firefox, Edge)
-      itemElement.scrollIntoView(scrollOptions);
-    }
+    });
 
     // Add animation class (triggers CSS animation)
     itemElement.classList.add('component-animate-in');
