@@ -33,6 +33,7 @@ import {
 import { clearHistory } from "../../../services/undo-redo";
 import { eventManager } from "../../../services/event-manager";
 import { mockDragClone } from "../../../utils/test-helpers";
+import { ComponentDefinition } from "../../../types/component-definition";
 
 // Mock component definitions for tests
 const mockComponentDefinitions = [

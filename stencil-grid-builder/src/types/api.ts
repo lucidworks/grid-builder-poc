@@ -351,21 +351,22 @@ export interface GridBuilderAPI {
    *
    * **Events triggered**: 'componentDeleted'
    * **Deselects**: If deleting selected item
+   * **Async**: Returns Promise because it may trigger onBeforeDelete hook
    *
    * @param itemId - Item to delete
-   * @returns true if deleted, false if item not found
+   * @returns Promise<true> if deleted, Promise<false> if item not found or deletion cancelled
    *
    * @example
    * ```typescript
    * // Delete all headers in canvas1
    * const items = api.getItems('canvas1');
    * const headers = items.filter(item => item.type === 'header');
-   * headers.forEach(item => {
-   *   api.deleteComponent(item.id);
-   * });
+   * for (const item of headers) {
+   *   await api.deleteComponent(item.id);
+   * }
    * ```
    */
-  deleteComponent(itemId: string): boolean;
+  deleteComponent(itemId: string): Promise<boolean>;
 
   /**
    * Update component configuration

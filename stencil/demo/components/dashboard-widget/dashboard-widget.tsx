@@ -1,8 +1,8 @@
-import { Component, h } from '@stencil/core';
+import { Component, h } from "@stencil/core";
 
 @Component({
-  tag: 'dashboard-widget',
-  styleUrl: 'dashboard-widget.scss',
+  tag: "dashboard-widget",
+  styleUrl: "dashboard-widget.scss",
   shadow: false,
 })
 export class DashboardWidget {
@@ -23,13 +23,13 @@ export class DashboardWidget {
         <div class="chart-container">
           <div class="chart-title">Activity Chart</div>
           <div class="chart-bars">
-            <div class="chart-bar" style={{ height: '60%' }}></div>
-            <div class="chart-bar" style={{ height: '80%' }}></div>
-            <div class="chart-bar" style={{ height: '40%' }}></div>
-            <div class="chart-bar" style={{ height: '90%' }}></div>
-            <div class="chart-bar" style={{ height: '70%' }}></div>
-            <div class="chart-bar" style={{ height: '85%' }}></div>
-            <div class="chart-bar" style={{ height: '95%' }}></div>
+            <div class="chart-bar" style={{ height: "60%" }}></div>
+            <div class="chart-bar" style={{ height: "80%" }}></div>
+            <div class="chart-bar" style={{ height: "40%" }}></div>
+            <div class="chart-bar" style={{ height: "90%" }}></div>
+            <div class="chart-bar" style={{ height: "70%" }}></div>
+            <div class="chart-bar" style={{ height: "85%" }}></div>
+            <div class="chart-bar" style={{ height: "95%" }}></div>
           </div>
         </div>
 

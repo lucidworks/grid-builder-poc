@@ -1,16 +1,16 @@
-import { Component, h, State } from '@stencil/core';
+import { Component, h, State } from "@stencil/core";
 
 @Component({
-  tag: 'live-data',
-  styleUrl: 'live-data.scss',
+  tag: "live-data",
+  styleUrl: "live-data.scss",
   shadow: false,
 })
 export class LiveData {
-  @State() temperature: string = '20.0';
-  @State() cpu: string = '0';
-  @State() memory: string = '40';
+  @State() temperature: string = "20.0";
+  @State() cpu: string = "0";
+  @State() memory: string = "40";
   @State() updateCount: number = 0;
-  @State() lastUpdate: string = '';
+  @State() lastUpdate: string = "";
 
   private intervalId?: number;
 
@@ -52,7 +52,10 @@ export class LiveData {
             <span class="metric-percentage">{this.cpu}%</span>
           </div>
           <div class="progress-bar">
-            <div class="progress-fill progress-primary" style={{ width: `${this.cpu}%` }}></div>
+            <div
+              class="progress-fill progress-primary"
+              style={{ width: `${this.cpu}%` }}
+            ></div>
           </div>
         </div>
 
@@ -62,7 +65,10 @@ export class LiveData {
             <span class="metric-percentage">{this.memory}%</span>
           </div>
           <div class="progress-bar">
-            <div class="progress-fill progress-success" style={{ width: `${this.memory}%` }}></div>
+            <div
+              class="progress-fill progress-success"
+              style={{ width: `${this.memory}%` }}
+            ></div>
           </div>
         </div>
 

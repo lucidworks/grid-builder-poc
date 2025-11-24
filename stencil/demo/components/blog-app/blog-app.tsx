@@ -1,12 +1,29 @@
-import { Component, h, State } from '@stencil/core';
-import { blogComponentDefinitions, contentComponents, interactiveComponents, mediaComponents } from '../../component-definitions';
-import { GridBuilderAPI } from '../../../types/api';
-import { SectionEditorData } from '../../types/section-editor-data';
-import { ConfirmationModalData } from '../../types/confirmation-modal-data';
-import { DeletionHookContext } from '../../../types/deletion-hook';
-import { getGridSizeVertical, clearGridSizeCache } from '../../../utils/grid-calculations';
-import { domCache } from '../../../utils/dom-cache';
-import { setActiveCanvas } from '../../../services/state-manager';
+import { Component, h, State, Watch } from "@stencil/core";
+import {
+  blogComponentDefinitions,
+  contentComponents,
+  interactiveComponents,
+  mediaComponents,
+} from "../../component-definitions";
+import { GridBuilderAPI, CanvasHeaderProps } from "../../../types/api";
+import { SectionEditorData } from "../../types/section-editor-data";
+import { ConfirmationModalData } from "../../types/confirmation-modal-data";
+import { DeletionHookContext } from "../../../types/deletion-hook";
+import {
+  getGridSizeVertical,
+  clearGridSizeCache,
+} from "../../../utils/grid-calculations";
+import { domCache } from "../../../utils/dom-cache";
+import { setActiveCanvas } from "../../../services/state-manager";
+
+// Pre-import drag clone components to ensure they're eagerly loaded (not lazy)
+import "../blog-header-drag-clone/blog-header-drag-clone";
+import "../blog-article-drag-clone/blog-article-drag-clone";
+import "../blog-button-drag-clone/blog-button-drag-clone";
+import "../blog-image-drag-clone/blog-image-drag-clone";
+import "../image-gallery-drag-clone/image-gallery-drag-clone";
+import "../dashboard-widget-drag-clone/dashboard-widget-drag-clone";
+import "../live-data-drag-clone/live-data-drag-clone";
 
 /**
  * Blog App Demo - Host Application for grid-builder Library
@@ -204,8 +221,8 @@ import { setActiveCanvas } from '../../../services/state-manager';
  */
 
 @Component({
-  tag: 'blog-app',
-  styleUrl: 'blog-app.scss',
+  tag: "blog-app",
+  styleUrl: "blog-app.scss",
   shadow: false,
 })
 export class BlogApp {
@@ -214,6 +231,26 @@ export class BlogApp {
    * Must be @State to trigger re-render when API becomes available
    */
   @State() private api!: GridBuilderAPI;
+
+  /**
+   * Watch API Property for Changes
+   * --------------------------------
+   *
+   * StencilJS Pattern: Use @Watch decorator for reactive initialization
+   *
+   * When API is assigned from window.gridBuilderAPI, this watcher automatically
+   * triggers setupGridBuilderIntegration(). This replaces polling pattern with
+   * reactive state management.
+   *
+   * Fires when: componentDidLoad assigns this.api = window.gridBuilderAPI
+   */
+  @Watch("api")
+  handleApiChange(newApi: GridBuilderAPI) {
+    if (newApi) {
+      console.log("🔧 blog-app API watcher triggered, initializing...");
+      this.setupGridBuilderIntegration();
+    }
+  }
 
   /**
    * Local undo/redo state (synced from API)
@@ -232,6 +269,27 @@ export class BlogApp {
   @State() private canRedo: boolean = false;
 
   private sectionCounter = 1;
+
+  /**
+   * Event Handler References for Cleanup
+   * -------------------------------------
+   *
+   * Store references to event handlers so they can be removed in disconnectedCallback.
+   * This prevents memory leaks when the component is unmounted.
+   */
+  private gridBuilder: HTMLElement | null = null;
+  private eventsToWatch = [
+    "componentAdded",
+    "componentDeleted",
+    "componentDragged",
+    "componentResized",
+    "componentsBatchAdded",
+    "componentsBatchDeleted",
+    "canvasAdded",
+    "canvasRemoved",
+    "undoExecuted",
+    "redoExecuted",
+  ];
 
   /**
    * Canvas Metadata State
@@ -254,18 +312,21 @@ export class BlogApp {
    * - Canvas add/remove operations support undo/redo (handled by library)
    * - Color changes are immediate (no undo for now - could be added)
    */
-  @State() canvasMetadata: Record<string, { title: string; backgroundColor: string }> = {
-    'hero-section': {
-      title: 'Hero Section',
-      backgroundColor: '#f0f4f8',
+  @State() canvasMetadata: Record<
+    string,
+    { title: string; backgroundColor: string }
+  > = {
+    "hero-section": {
+      title: "Hero Section",
+      backgroundColor: "#f0f4f8",
     },
-    'articles-grid': {
-      title: 'Articles Grid',
-      backgroundColor: '#ffffff',
+    "articles-grid": {
+      title: "Articles Grid",
+      backgroundColor: "#ffffff",
     },
-    'footer-section': {
-      title: 'Footer Section',
-      backgroundColor: '#e8f0f2',
+    "footer-section": {
+      title: "Footer Section",
+      backgroundColor: "#e8f0f2",
     },
   };
 
@@ -348,63 +409,76 @@ export class BlogApp {
    */
   @State() isSidebarCollapsed: boolean = false;
 
-  componentWillLoad() {
-    // Grid-builder components are built alongside the demo
-    this.updateCanvasStyles();
-  }
+  /**
+   * Preview Metadata State
+   * -----------------------
+   *
+   * Temporary preview values for live preview (replaces DOM manipulation).
+   * - Stores title/backgroundColor during section editing
+   * - Merged with canvasMetadata for rendering
+   * - Cleared when panel closes
+   */
+  @State() previewMetadata: Record<
+    string,
+    { title?: string; backgroundColor?: string }
+  > = {};
 
   componentDidLoad() {
-    // Wait for grid-builder to initialize and expose API on window
-    // Check every 50ms for up to 2 seconds
-    let attempts = 0;
-    const maxAttempts = 40; // 2 seconds / 50ms
-
-    const checkForAPI = () => {
-      attempts++;
-
+    // Grid-builder exposes API on window after componentDidLoad
+    // Use requestAnimationFrame to wait for next render cycle
+    requestAnimationFrame(() => {
       if ((window as any).gridBuilderAPI) {
-        console.log('🔧 blog-app found API on window, initializing...');
+        console.log("🔧 blog-app found API on window, assigning...");
         this.api = (window as any).gridBuilderAPI;
-        this.setupGridBuilderIntegration();
-      } else if (attempts < maxAttempts) {
-        setTimeout(checkForAPI, 50);
       } else {
-        console.warn('⚠️ blog-app timeout waiting for API');
+        console.warn("⚠️ API not available on window.gridBuilderAPI");
       }
-    };
-
-    checkForAPI();
+    });
   }
 
   /**
-   * Track whether we've initialized the API integration
+   * Lifecycle: Component Disconnected
+   * ----------------------------------
+   *
+   * StencilJS Pattern: Clean up event listeners in disconnectedCallback
+   *
+   * This lifecycle method is called when the component is removed from the DOM.
+   * Clean up all event listeners to prevent memory leaks.
+   *
+   * Event Listeners to Clean Up:
+   * - DOM event listener on grid-builder element (canvas-click)
+   * - API event listeners (canvasAdded, canvasRemoved, undo/redo events)
    */
-  private apiInitialized = false;
+  disconnectedCallback() {
+    console.log(
+      "🔧 blog-app disconnectedCallback - cleaning up event listeners",
+    );
 
-  private setupGridBuilderIntegration() {
-    console.log('🔧 blog-app setupGridBuilderIntegration called', {
-      apiInitialized: this.apiInitialized,
-      hasApi: !!this.api,
-      apiType: typeof this.api,
-    });
-
-    // Only initialize once, and only when API is available
-    if (this.apiInitialized || !this.api) {
-      console.log('  ⏭️ Skipping setup -', {
-        alreadyInitialized: this.apiInitialized,
-        noApi: !this.api,
-      });
-      return;
+    // Remove DOM event listener
+    if (this.gridBuilder) {
+      this.gridBuilder.removeEventListener(
+        "canvas-click",
+        this.handleCanvasClick as EventListener,
+      );
+      this.gridBuilder = null;
     }
 
-    console.log('  ✅ Proceeding with API setup');
-    this.apiInitialized = true;
+    // Remove API event listeners
+    if (this.api) {
+      this.api.off("canvasAdded", this.handleCanvasAdded);
+      this.api.off("canvasRemoved", this.handleCanvasRemoved);
 
-    // Inject canvas headers after initial render
-    // This is demo-specific UI (not part of library)
-    setTimeout(() => {
-      this.injectCanvasHeaders();
-    }, 100);
+      // Remove undo/redo event listeners
+      this.eventsToWatch.forEach((eventName) => {
+        this.api.off(eventName, this.syncUndoRedoState);
+      });
+    }
+
+    console.log("  ✅ Event listeners cleaned up");
+  }
+
+  private setupGridBuilderIntegration() {
+    console.log("🔧 blog-app setupGridBuilderIntegration called");
 
     /**
      * Listen to canvas-click Events
@@ -419,15 +493,15 @@ export class BlogApp {
      * - etc.
      *
      * These events allow host apps to respond to user interactions.
+     *
+     * Note: Store grid-builder reference for cleanup in disconnectedCallback.
      */
-    const gridBuilder = document.querySelector('grid-builder');
-    if (gridBuilder) {
-      gridBuilder.addEventListener('canvas-click', ((event: CustomEvent) => {
-        const { canvasId } = event.detail;
-        console.log('Canvas clicked:', canvasId);
-        // In a real app, this would show a canvas settings panel
-        // For now, we just log it to demonstrate the event
-      }) as EventListener);
+    this.gridBuilder = document.querySelector("grid-builder");
+    if (this.gridBuilder) {
+      this.gridBuilder.addEventListener(
+        "canvas-click",
+        this.handleCanvasClick as EventListener,
+      );
     }
 
     /**
@@ -448,37 +522,11 @@ export class BlogApp {
      * - Library fires events when canvases are added/removed
      * - Host app adds/removes metadata in response to events
      * - This keeps host app metadata in sync with library state
+     *
+     * Note: Use class method handlers for cleanup in disconnectedCallback.
      */
-    this.api.on('canvasAdded', (event) => {
-      const { canvasId } = event;
-      // Add metadata for new canvas if it doesn't exist
-      if (!this.canvasMetadata[canvasId]) {
-        const title = `Custom Section ${this.sectionCounter++}`;
-        this.canvasMetadata = {
-          ...this.canvasMetadata,
-          [canvasId]: {
-            title,
-            backgroundColor: '#f5f5f5',
-          },
-        };
-      }
-    });
-
-    this.api.on('canvasRemoved', (event) => {
-      const { canvasId } = event;
-      console.log('🗑️ canvasRemoved event received:', canvasId);
-
-      // Remove metadata when canvas is removed
-      // This keeps metadata in sync with library state
-      const updated = { ...this.canvasMetadata };
-      delete updated[canvasId];
-      this.canvasMetadata = updated;
-      console.log('  ✅ Metadata removed for:', canvasId);
-
-      // Remove injected header (demo-specific UI)
-      this.removeCanvasHeader(canvasId);
-      console.log('  ✅ Header removal attempted for:', canvasId);
-    });
+    this.api.on("canvasAdded", this.handleCanvasAdded);
+    this.api.on("canvasRemoved", this.handleCanvasRemoved);
 
     /**
      * Sync undo/redo button state
@@ -494,26 +542,14 @@ export class BlogApp {
      * - canvasAdded, canvasRemoved (modify history)
      *
      * This ensures undo/redo buttons update correctly in the demo.
+     *
+     * Note: Use class method handler for cleanup in disconnectedCallback.
      */
-
     // Initial sync
     this.syncUndoRedoState();
 
     // Listen to all events that modify history
-    const eventsToWatch = [
-      'componentAdded',
-      'componentDeleted',
-      'componentDragged',
-      'componentResized',
-      'componentsBatchAdded',
-      'componentsBatchDeleted',
-      'canvasAdded',
-      'canvasRemoved',
-      'undoExecuted',  // Library emits this when undo() is called
-      'redoExecuted'   // Library emits this when redo() is called
-    ];
-
-    eventsToWatch.forEach(eventName => {
+    this.eventsToWatch.forEach((eventName) => {
       this.api.on(eventName, this.syncUndoRedoState);
     });
   }
@@ -533,91 +569,60 @@ export class BlogApp {
     }
   };
 
-  componentDidUpdate() {
-    // Update canvas styles whenever metadata changes
-    this.updateCanvasStyles();
-    // Inject canvas headers
-    this.injectCanvasHeaders();
-  }
-
-  private updateCanvasStyles = () => {
-    // Apply canvas background colors via CSS custom properties
-    Object.keys(this.canvasMetadata).forEach((canvasId) => {
-      const canvas = document.querySelector(`[data-canvas-id="${canvasId}"] .grid-container`) as HTMLElement;
-      if (canvas) {
-        canvas.style.backgroundColor = this.canvasMetadata[canvasId].backgroundColor;
-      }
-    });
+  /**
+   * Canvas Click Event Handler
+   * ----------------------------
+   *
+   * Handles canvas-click events from grid-builder.
+   * Stored as class method for cleanup in disconnectedCallback.
+   */
+  private handleCanvasClick = (event: CustomEvent) => {
+    const { canvasId } = event.detail;
+    console.log("Canvas clicked:", canvasId);
+    // In a real app, this would show a canvas settings panel
+    // For now, we just log it to demonstrate the event
   };
 
-  private removeCanvasHeader = (canvasId: string) => {
-    console.log('🔍 removeCanvasHeader called for:', canvasId);
-    // Find and remove the header for this canvas
-    const headers = document.querySelectorAll('.canvas-header');
-    console.log('  📋 Total headers found:', headers.length);
-
-    let removed = false;
-    headers.forEach((header) => {
-      const headerCanvasId = header.getAttribute('data-canvas-id');
-      console.log('  🔎 Checking header with data-canvas-id:', headerCanvasId);
-
-      if (headerCanvasId === canvasId) {
-        console.log('  ✅ Match found! Removing header for:', canvasId);
-        header.remove();
-        removed = true;
-      }
-    });
-
-    if (!removed) {
-      console.warn('  ⚠️ No matching header found for:', canvasId);
+  /**
+   * Canvas Added Event Handler
+   * ---------------------------
+   *
+   * Handles canvasAdded events from API.
+   * Adds metadata for newly created canvases.
+   */
+  private handleCanvasAdded = (event: any) => {
+    const { canvasId } = event;
+    // Add metadata for new canvas if it doesn't exist
+    if (!this.canvasMetadata[canvasId]) {
+      const title = `Custom Section ${this.sectionCounter++}`;
+      this.canvasMetadata = {
+        ...this.canvasMetadata,
+        [canvasId]: {
+          title,
+          backgroundColor: "#f5f5f5",
+        },
+      };
     }
   };
 
-  private injectCanvasHeaders = () => {
-    // Inject section headers before each canvas-section
-    Object.keys(this.canvasMetadata).forEach((canvasId) => {
-      // Find canvas-section by looking for the inner div with data-canvas-id
-      const innerDiv = document.querySelector(`[data-canvas-id="${canvasId}"]`) as HTMLElement;
-      if (!innerDiv) return;
+  /**
+   * Canvas Removed Event Handler
+   * -----------------------------
+   *
+   * Handles canvasRemoved events from API.
+   * Removes metadata when canvases are deleted.
+   */
+  private handleCanvasRemoved = (event: any) => {
+    const { canvasId } = event;
+    console.log("🗑️ canvasRemoved event received:", canvasId);
 
-      const canvasSection = innerDiv.closest('canvas-section') as HTMLElement;
-      if (!canvasSection) return;
-
-      // Check if header already exists
-      let header = canvasSection.previousElementSibling as HTMLElement;
-      if (header && header.tagName.toLowerCase() === 'canvas-header') {
-        // Update existing header component - update sectionTitle prop
-        (header as any).sectionTitle = this.canvasMetadata[canvasId]?.title || canvasId;
-      } else {
-        // Create new header component
-        header = this.createCanvasHeader(canvasId);
-        canvasSection.parentElement?.insertBefore(header, canvasSection);
-      }
-    });
-  };
-
-  private createCanvasHeader = (canvasId: string): HTMLElement => {
-    // Create canvas-header component element
-    const header = document.createElement('canvas-header') as any;
-
-    // Set component properties
-    header.canvasId = canvasId;
-    header.sectionTitle = this.canvasMetadata[canvasId]?.title || canvasId;
-    header.isDeletable = !['hero-section', 'articles-grid', 'footer-section'].includes(canvasId);
-
-    // Add event listeners
-    header.addEventListener('headerClick', () => {
-      // Activate the canvas (adds visual highlight)
-      setActiveCanvas(canvasId);
-      // Open section editor panel
-      this.handleOpenSectionEditor(canvasId);
-    });
-
-    header.addEventListener('deleteClick', () => {
-      this.handleDeleteSection(canvasId);
-    });
-
-    return header;
+    // Remove metadata when canvas is removed
+    // This keeps metadata in sync with library state
+    // Headers automatically update via reactive rendering
+    const updated = { ...this.canvasMetadata };
+    delete updated[canvasId];
+    this.canvasMetadata = updated;
+    console.log("  ✅ Metadata removed for:", canvasId);
   };
 
   private handleOpenSectionEditor = (canvasId: string) => {
@@ -635,9 +640,17 @@ export class BlogApp {
   private handleClosePanel = () => {
     this.isPanelOpen = false;
     this.editingSection = null;
+    // Clear preview state when closing panel
+    this.previewMetadata = {};
   };
 
-  private handleUpdateSection = (event: CustomEvent<{ canvasId: string; title: string; backgroundColor: string }>) => {
+  private handleUpdateSection = (
+    event: CustomEvent<{
+      canvasId: string;
+      title: string;
+      backgroundColor: string;
+    }>,
+  ) => {
     const { canvasId, title, backgroundColor } = event.detail;
     this.canvasMetadata = {
       ...this.canvasMetadata,
@@ -646,44 +659,53 @@ export class BlogApp {
         backgroundColor,
       },
     };
+    // Clear preview state for this canvas after saving
+    const { [canvasId]: _, ...rest } = this.previewMetadata;
+    this.previewMetadata = rest;
   };
 
   /**
    * Preview Color Change Handler
    * ------------------------------
    *
-   * Handles live preview of background color changes.
-   * Updates canvas background immediately without saving to metadata.
-   * This allows real-time preview while editing, with revert on cancel.
+   * Handles live preview of background color changes using reactive state.
+   * Updates preview state which triggers re-render with new color.
+   * Allows real-time preview while editing, with revert on cancel.
    */
-  private handlePreviewColorChange = (event: CustomEvent<{ canvasId: string; backgroundColor: string }>) => {
+  private handlePreviewColorChange = (
+    event: CustomEvent<{ canvasId: string; backgroundColor: string }>,
+  ) => {
     const { canvasId, backgroundColor } = event.detail;
-    // Directly update canvas background color (don't update metadata yet)
-    const canvas = document.querySelector(`[data-canvas-id="${canvasId}"] .grid-container`) as HTMLElement;
-    if (canvas) {
-      canvas.style.backgroundColor = backgroundColor;
-    }
+    // Update preview state (triggers re-render)
+    this.previewMetadata = {
+      ...this.previewMetadata,
+      [canvasId]: {
+        ...this.previewMetadata[canvasId],
+        backgroundColor,
+      },
+    };
   };
 
   /**
    * Preview Title Change Handler
    * -----------------------------
    *
-   * Handles live preview of section title changes.
-   * Updates canvas title immediately without saving to metadata.
-   * This allows real-time preview while editing, with revert on cancel.
+   * Handles live preview of section title changes using reactive state.
+   * Updates preview state which triggers re-render with new title.
+   * Allows real-time preview while editing, with revert on cancel.
    */
-  private handlePreviewTitleChange = (event: CustomEvent<{ canvasId: string; title: string }>) => {
+  private handlePreviewTitleChange = (
+    event: CustomEvent<{ canvasId: string; title: string }>,
+  ) => {
     const { canvasId, title } = event.detail;
-    // Find the canvas header for this canvas
-    const header = document.querySelector(`.canvas-header[data-canvas-id="${canvasId}"]`) as HTMLElement;
-    if (header) {
-      const titleEl = header.querySelector('.canvas-title') as HTMLElement;
-      if (titleEl) {
-        // Directly update title text (don't update metadata yet)
-        titleEl.textContent = title;
-      }
-    }
+    // Update preview state (triggers re-render)
+    this.previewMetadata = {
+      ...this.previewMetadata,
+      [canvasId]: {
+        ...this.previewMetadata[canvasId],
+        title,
+      },
+    };
   };
 
   /**
@@ -730,7 +752,9 @@ export class BlogApp {
    * - Validation logic
    * - Analytics tracking
    */
-  private handleBeforeDelete = (context: DeletionHookContext): Promise<boolean> => {
+  private handleBeforeDelete = (
+    context: DeletionHookContext,
+  ): Promise<boolean> => {
     return new Promise((resolve) => {
       // Store the Promise resolve function
       // We'll call this from the modal confirm/cancel handlers
@@ -744,7 +768,7 @@ export class BlogApp {
       // Show confirmation modal with component info
       // This is demo-specific - you can use any modal library
       this.confirmModalData = {
-        title: 'Delete Component?',
+        title: "Delete Component?",
         message: `Are you sure you want to delete "${componentName}"? This action cannot be undone.`,
       };
       this.isConfirmModalOpen = true;
@@ -788,7 +812,7 @@ export class BlogApp {
 
   private handleAddSection = () => {
     if (!this.api) {
-      console.error('API not ready');
+      console.error("API not ready");
       return;
     }
 
@@ -802,13 +826,15 @@ export class BlogApp {
 
   private handleDeleteSection = (canvasId: string) => {
     if (!this.api) {
-      console.error('API not ready');
+      console.error("API not ready");
       return;
     }
 
     // Prevent deleting initial sections
-    if (['hero-section', 'articles-grid', 'footer-section'].includes(canvasId)) {
-      alert('Cannot delete initial sections');
+    if (
+      ["hero-section", "articles-grid", "footer-section"].includes(canvasId)
+    ) {
+      alert("Cannot delete initial sections");
       return;
     }
 
@@ -822,7 +848,9 @@ export class BlogApp {
   /**
    * Handle section deletion from editor panel
    */
-  private handleDeleteSectionFromPanel = (event: CustomEvent<{ canvasId: string }>) => {
+  private handleDeleteSectionFromPanel = (
+    event: CustomEvent<{ canvasId: string }>,
+  ) => {
     const { canvasId } = event.detail;
     this.handleDeleteSection(canvasId);
     // Close the panel (already handled in section-editor-panel, but ensure it's closed)
@@ -884,142 +912,193 @@ export class BlogApp {
 
   @State() initialState = {
     canvases: {
-      'hero-section': {
+      "hero-section": {
         zIndexCounter: 2,
         items: [
           {
-            id: 'hero-header',
-            canvasId: 'hero-section',
-            type: 'blog-header',
-            name: 'Hero Header',
+            id: "hero-header",
+            canvasId: "hero-section",
+            type: "blog-header",
+            name: "Hero Header",
             layouts: {
               desktop: { x: 0, y: 0, width: 50, height: 6 },
-              mobile: { x: null, y: null, width: null, height: null, customized: false },
+              mobile: {
+                x: null,
+                y: null,
+                width: null,
+                height: null,
+                customized: false,
+              },
             },
             zIndex: 1,
             config: {
-              title: 'Welcome to My Blog',
-              subtitle: 'Exploring technology, design, and development',
+              title: "Welcome to My Blog",
+              subtitle: "Exploring technology, design, and development",
             },
           },
           {
-            id: 'hero-button',
-            canvasId: 'hero-section',
-            type: 'blog-button',
-            name: 'Hero CTA',
+            id: "hero-button",
+            canvasId: "hero-section",
+            type: "blog-button",
+            name: "Hero CTA",
             layouts: {
               desktop: { x: 15, y: 7, width: 20, height: 3 },
-              mobile: { x: null, y: null, width: null, height: null, customized: false },
+              mobile: {
+                x: null,
+                y: null,
+                width: null,
+                height: null,
+                customized: false,
+              },
             },
             zIndex: 2,
             config: {
-              label: 'Start Reading',
-              variant: 'primary',
+              label: "Start Reading",
+              variant: "primary",
             },
           },
         ],
       },
-      'articles-grid': {
+      "articles-grid": {
         zIndexCounter: 4,
         items: [
           {
-            id: 'article-1',
-            canvasId: 'articles-grid',
-            type: 'blog-article',
-            name: 'First Article',
+            id: "article-1",
+            canvasId: "articles-grid",
+            type: "blog-article",
+            name: "First Article",
             layouts: {
               desktop: { x: 0, y: 0, width: 25, height: 12 },
-              mobile: { x: null, y: null, width: null, height: null, customized: false },
+              mobile: {
+                x: null,
+                y: null,
+                width: null,
+                height: null,
+                customized: false,
+              },
             },
             zIndex: 1,
             config: {
-              content: 'This is my first blog post about using the grid-builder library!',
-              author: 'Jane Doe',
-              date: '2025-01-15',
+              content:
+                "This is my first blog post about using the grid-builder library!",
+              author: "Jane Doe",
+              date: "2025-01-15",
             },
           },
           {
-            id: 'article-2',
-            canvasId: 'articles-grid',
-            type: 'blog-article',
-            name: 'Second Article',
+            id: "article-2",
+            canvasId: "articles-grid",
+            type: "blog-article",
+            name: "Second Article",
             layouts: {
               desktop: { x: 25, y: 0, width: 25, height: 12 },
-              mobile: { x: null, y: null, width: null, height: null, customized: false },
+              mobile: {
+                x: null,
+                y: null,
+                width: null,
+                height: null,
+                customized: false,
+              },
             },
             zIndex: 2,
             config: {
-              content: 'Another interesting post about custom Stencil components.',
-              author: 'John Smith',
-              date: '2025-01-14',
+              content:
+                "Another interesting post about custom Stencil components.",
+              author: "John Smith",
+              date: "2025-01-14",
             },
           },
           {
-            id: 'featured-image',
-            canvasId: 'articles-grid',
-            type: 'blog-image',
-            name: 'Featured Image',
+            id: "featured-image",
+            canvasId: "articles-grid",
+            type: "blog-image",
+            name: "Featured Image",
             layouts: {
               desktop: { x: 0, y: 13, width: 12, height: 15 },
-              mobile: { x: null, y: null, width: null, height: null, customized: false },
+              mobile: {
+                x: null,
+                y: null,
+                width: null,
+                height: null,
+                customized: false,
+              },
             },
             zIndex: 3,
             config: {
-              src: 'https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=800&h=600&fit=crop',
-              alt: 'Developer workspace with laptop and code',
-              caption: 'A modern development environment',
-              objectFit: 'cover',
+              src: "https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=800&h=600&fit=crop",
+              alt: "Developer workspace with laptop and code",
+              caption: "A modern development environment",
+              objectFit: "cover",
             },
           },
           {
-            id: 'article-3',
-            canvasId: 'articles-grid',
-            type: 'blog-article',
-            name: 'Third Article',
+            id: "article-3",
+            canvasId: "articles-grid",
+            type: "blog-article",
+            name: "Third Article",
             layouts: {
               desktop: { x: 12, y: 13, width: 26, height: 12 },
-              mobile: { x: null, y: null, width: null, height: null, customized: false },
+              mobile: {
+                x: null,
+                y: null,
+                width: null,
+                height: null,
+                customized: false,
+              },
             },
             zIndex: 4,
             config: {
-              content: 'Learn how to build amazing layouts with drag-and-drop functionality.',
-              author: 'Alex Chen',
-              date: '2025-01-13',
+              content:
+                "Learn how to build amazing layouts with drag-and-drop functionality.",
+              author: "Alex Chen",
+              date: "2025-01-13",
             },
           },
         ],
       },
-      'footer-section': {
+      "footer-section": {
         zIndexCounter: 2,
         items: [
           {
-            id: 'footer-header',
-            canvasId: 'footer-section',
-            type: 'blog-header',
-            name: 'Footer Header',
+            id: "footer-header",
+            canvasId: "footer-section",
+            type: "blog-header",
+            name: "Footer Header",
             layouts: {
               desktop: { x: 0, y: 0, width: 50, height: 4 },
-              mobile: { x: null, y: null, width: null, height: null, customized: false },
+              mobile: {
+                x: null,
+                y: null,
+                width: null,
+                height: null,
+                customized: false,
+              },
             },
             zIndex: 1,
             config: {
-              title: 'Stay Connected',
-              subtitle: 'Subscribe for updates',
+              title: "Stay Connected",
+              subtitle: "Subscribe for updates",
             },
           },
           {
-            id: 'footer-button',
-            canvasId: 'footer-section',
-            type: 'blog-button',
-            name: 'Subscribe Button',
+            id: "footer-button",
+            canvasId: "footer-section",
+            type: "blog-button",
+            name: "Subscribe Button",
             layouts: {
               desktop: { x: 15, y: 5, width: 20, height: 3 },
-              mobile: { x: null, y: null, width: null, height: null, customized: false },
+              mobile: {
+                x: null,
+                y: null,
+                width: null,
+                height: null,
+                customized: false,
+              },
             },
             zIndex: 2,
             config: {
-              label: 'Subscribe Now',
-              variant: 'primary',
+              label: "Subscribe Now",
+              variant: "primary",
             },
           },
         ],
@@ -1027,32 +1106,75 @@ export class BlogApp {
     },
   };
 
+  /**
+   * Get Merged Canvas Metadata
+   * ---------------------------
+   *
+   * Merges canvas metadata with preview state for rendering.
+   * Preview state takes precedence over saved metadata for live preview.
+   *
+   * @param canvasId - Canvas ID to get metadata for
+   * @returns Merged metadata object with title and backgroundColor
+   */
+  private getMergedMetadata(canvasId: string) {
+    const baseMetadata = this.canvasMetadata[canvasId] || {
+      title: canvasId,
+      backgroundColor: "#ffffff",
+    };
+    const preview = this.previewMetadata[canvasId] || {};
+
+    return {
+      title: preview.title !== undefined ? preview.title : baseMetadata.title,
+      backgroundColor:
+        preview.backgroundColor !== undefined
+          ? preview.backgroundColor
+          : baseMetadata.backgroundColor,
+    };
+  }
+
   render() {
     // Calculate canvas header overlay margin from grid size (1.4 grid units)
     const verticalGridSize = getGridSizeVertical();
     const canvasHeaderOverlayMargin = -(verticalGridSize * 1.4);
 
+    // Build merged metadata (canvas metadata + preview state) for all canvases
+    const canvasIds = Object.keys(this.canvasMetadata);
+    const mergedCanvasMetadata = canvasIds.reduce(
+      (acc, canvasId) => {
+        acc[canvasId] = this.getMergedMetadata(canvasId);
+        return acc;
+      },
+      {} as Record<string, { title: string; backgroundColor: string }>,
+    );
+
     return (
       <div
-        class={`blog-app-container ${this.isPreviewMode ? 'preview-mode' : ''}`}
-        style={{
-          '--canvas-header-overlay-margin': `${canvasHeaderOverlayMargin}px`,
-        } as any}
+        class={`blog-app-container ${this.isPreviewMode ? "preview-mode" : ""}`}
+        style={
+          {
+            "--canvas-header-overlay-margin": `${canvasHeaderOverlayMargin}px`,
+          } as any
+        }
       >
         <div class="app-header">
           <div class="app-header-content">
             <h1 class="app-title">Blog Layout Builder Demo</h1>
             <p class="app-subtitle">
-              Using custom Stencil components with @lucidworks/stencil-grid-builder
+              Using custom Stencil components with
+              @lucidworks/stencil-grid-builder
             </p>
           </div>
           <div class="global-controls">
             <button
               class="preview-toggle-btn"
               onClick={this.togglePreviewMode}
-              title={this.isPreviewMode ? 'Switch to Edit Mode' : 'Switch to Preview Mode'}
+              title={
+                this.isPreviewMode
+                  ? "Switch to Edit Mode"
+                  : "Switch to Preview Mode"
+              }
             >
-              {this.isPreviewMode ? '✏️ Edit Mode' : '👁️ Preview'}
+              {this.isPreviewMode ? "✏️ Edit Mode" : "👁️ Preview"}
             </button>
             {!this.isPreviewMode && (
               <div class="metadata-undo-redo">
@@ -1102,9 +1224,11 @@ export class BlogApp {
               <div class="palette-category">
                 <div
                   class="category-header"
-                  onClick={() => this.toggleCategory('content')}
+                  onClick={() => this.toggleCategory("content")}
                 >
-                  <span class="category-icon">{this.categoryStates.content ? '▼' : '▶'}</span>
+                  <span class="category-icon">
+                    {this.categoryStates.content ? "▼" : "▶"}
+                  </span>
                   <span class="category-name">Content</span>
                 </div>
                 {this.categoryStates.content && (
@@ -1119,9 +1243,11 @@ export class BlogApp {
               <div class="palette-category">
                 <div
                   class="category-header"
-                  onClick={() => this.toggleCategory('interactive')}
+                  onClick={() => this.toggleCategory("interactive")}
                 >
-                  <span class="category-icon">{this.categoryStates.interactive ? '▼' : '▶'}</span>
+                  <span class="category-icon">
+                    {this.categoryStates.interactive ? "▼" : "▶"}
+                  </span>
                   <span class="category-name">Interactive</span>
                 </div>
                 {this.categoryStates.interactive && (
@@ -1136,9 +1262,11 @@ export class BlogApp {
               <div class="palette-category">
                 <div
                   class="category-header"
-                  onClick={() => this.toggleCategory('media')}
+                  onClick={() => this.toggleCategory("media")}
                 >
-                  <span class="category-icon">{this.categoryStates.media ? '▼' : '▶'}</span>
+                  <span class="category-icon">
+                    {this.categoryStates.media ? "▼" : "▶"}
+                  </span>
                   <span class="category-name">Media</span>
                 </div>
                 {this.categoryStates.media && (
@@ -1169,7 +1297,7 @@ export class BlogApp {
                 key="viewer"
                 components={blogComponentDefinitions}
                 initialState={this.currentGridState || this.initialState}
-                canvasMetadata={this.canvasMetadata}
+                canvasMetadata={mergedCanvasMetadata}
               />
             ) : (
               <grid-builder
@@ -1180,8 +1308,35 @@ export class BlogApp {
                   animationDuration: 100,
                 }}
                 initialState={this.initialState}
-                canvasMetadata={this.canvasMetadata}
+                canvasMetadata={mergedCanvasMetadata}
                 onBeforeDelete={this.handleBeforeDelete}
+                uiOverrides={{
+                  CanvasHeader: ({
+                    canvasId,
+                    metadata,
+                    isActive,
+                  }: CanvasHeaderProps) => {
+                    const isDeletable = ![
+                      "hero-section",
+                      "articles-grid",
+                      "footer-section",
+                    ].includes(canvasId);
+
+                    return (
+                      <canvas-header
+                        canvasId={canvasId}
+                        sectionTitle={metadata.title}
+                        isDeletable={isDeletable}
+                        isActive={isActive}
+                        onHeaderClick={() => {
+                          setActiveCanvas(canvasId);
+                          this.handleOpenSectionEditor(canvasId);
+                        }}
+                        onDeleteClick={() => this.handleDeleteSection(canvasId)}
+                      />
+                    );
+                  },
+                }}
               />
             )}
           </div>

@@ -25,7 +25,7 @@
  * @module canvas-header
  */
 
-import { Component, Event, EventEmitter, h, Prop } from '@stencil/core';
+import { Component, Event, EventEmitter, h, Prop } from "@stencil/core";
 
 /**
  * CanvasHeader Component
@@ -37,8 +37,8 @@ import { Component, Event, EventEmitter, h, Prop } from '@stencil/core';
  * **Shadow DOM**: Disabled (matches blog-app styling)
  */
 @Component({
-  tag: 'canvas-header',
-  styleUrl: 'canvas-header.scss',
+  tag: "canvas-header",
+  styleUrl: "canvas-header.scss",
   shadow: false,
 })
 export class CanvasHeader {
@@ -67,6 +67,14 @@ export class CanvasHeader {
    * **Note**: Default sections (hero, articles, footer) should set to false
    */
   @Prop() isDeletable: boolean = true;
+
+  /**
+   * Whether this canvas is currently active
+   *
+   * **Purpose**: Control header opacity (active = full opacity, inactive = dimmed)
+   * **Default**: false
+   */
+  @Prop() isActive: boolean = false;
 
   /**
    * Event emitted when header title is clicked
@@ -102,8 +110,10 @@ export class CanvasHeader {
    * Render component template
    */
   render() {
+    const headerClass = `canvas-header ${this.isActive ? "is-active" : ""}`;
+
     return (
-      <div class="canvas-header" data-canvas-id={this.canvasId}>
+      <div class={headerClass} data-canvas-id={this.canvasId}>
         <div class="canvas-actions">
           {/* Section title badge (clickable) */}
           <span class="canvas-title" onClick={this.handleTitleClick}>

@@ -582,7 +582,7 @@ export namespace Components {
           * Custom API exposure configuration  **Optional prop**: Control where and how the Grid Builder API is exposed **Default**: `{ target: window, key: 'gridBuilderAPI' }` **Purpose**: Allows multiple grid-builder instances and flexible API access patterns  **Options**: 1. **Custom key on window** (multiple instances): ```typescript <grid-builder api-ref={{ key: 'gridAPI1' }}></grid-builder> <grid-builder api-ref={{ key: 'gridAPI2' }}></grid-builder> // Access: window.gridAPI1, window.gridAPI2 ```  2. **Custom storage object**: ```typescript const myStore = {}; <grid-builder api-ref={{ target: myStore, key: 'api' }}></grid-builder> // Access: myStore.api ```  3. **Disable automatic exposure** (use ref instead): ```typescript <grid-builder api-ref={null}></grid-builder> // Access via ref: <grid-builder ref={el => this.api = el?.api}></grid-builder> ```
           * @default {     key: "gridBuilderAPI",   }
          */
-        "apiRef"?: { key?: string } | null;
+        "apiRef"?: { key?: string; target?: any } | null;
         /**
           * Check if redo is available  **Purpose**: Determine if there are actions to redo  **Example**: ```typescript const builder = document.querySelector('grid-builder'); const canRedo = await builder.canRedo(); redoButton.disabled = !canRedo; ```
           * @returns Promise<boolean> - True if redo is available
@@ -2017,7 +2017,7 @@ declare namespace LocalJSX {
           * Custom API exposure configuration  **Optional prop**: Control where and how the Grid Builder API is exposed **Default**: `{ target: window, key: 'gridBuilderAPI' }` **Purpose**: Allows multiple grid-builder instances and flexible API access patterns  **Options**: 1. **Custom key on window** (multiple instances): ```typescript <grid-builder api-ref={{ key: 'gridAPI1' }}></grid-builder> <grid-builder api-ref={{ key: 'gridAPI2' }}></grid-builder> // Access: window.gridAPI1, window.gridAPI2 ```  2. **Custom storage object**: ```typescript const myStore = {}; <grid-builder api-ref={{ target: myStore, key: 'api' }}></grid-builder> // Access: myStore.api ```  3. **Disable automatic exposure** (use ref instead): ```typescript <grid-builder api-ref={null}></grid-builder> // Access via ref: <grid-builder ref={el => this.api = el?.api}></grid-builder> ```
           * @default {     key: "gridBuilderAPI",   }
          */
-        "apiRef"?: { key?: string } | null;
+        "apiRef"?: { key?: string; target?: any } | null;
         /**
           * Canvas metadata storage (host app responsibility)  **Optional prop**: Store canvas-level presentation metadata **Purpose**: Host app owns canvas metadata (titles, colors, settings)  **Separation of concerns**: - Library owns placement state (items, layouts, zIndex) - Host app owns presentation state (colors, titles, custom metadata)  **Structure**: Record<canvasId, any>  **Example**: ```typescript const canvasMetadata = {   'hero-section': {     title: 'Hero Section',     backgroundColor: '#f0f4f8',     customSettings: { ... }   },   'articles-grid': {     title: 'Articles Grid',     backgroundColor: '#ffffff'   } }; <grid-builder canvasMetadata={canvasMetadata} ... /> ```  **Use with canvas-click events**: - Library fires canvas-click event when canvas background clicked - Host app shows canvas settings panel - Host app updates canvasMetadata state - Library passes metadata to canvas-section via props
          */

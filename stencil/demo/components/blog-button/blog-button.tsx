@@ -1,13 +1,13 @@
-import { Component, h, Prop, Event, EventEmitter } from '@stencil/core';
+import { Component, h, Prop, Event, EventEmitter } from "@stencil/core";
 
 @Component({
-  tag: 'blog-button',
-  styleUrl: 'blog-button.scss',
+  tag: "blog-button",
+  styleUrl: "blog-button.scss",
   shadow: false,
 })
 export class BlogButton {
-  @Prop() label: string = 'Click me!';
-  @Prop() variant: 'primary' | 'secondary' = 'primary';
+  @Prop() label: string = "Click me!";
+  @Prop() variant: "primary" | "secondary" = "primary";
   @Prop() href?: string;
 
   @Event() buttonClick: EventEmitter<void>;

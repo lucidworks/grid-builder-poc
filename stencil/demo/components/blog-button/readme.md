@@ -10,8 +10,8 @@
 | Property  | Attribute | Description | Type                       | Default       |
 | --------- | --------- | ----------- | -------------------------- | ------------- |
 | `href`    | `href`    |             | `string`                   | `undefined`   |
-| `label`   | `label`   |             | `string`                   | `'Click me!'` |
-| `variant` | `variant` |             | `"primary" \| "secondary"` | `'primary'`   |
+| `label`   | `label`   |             | `string`                   | `"Click me!"` |
+| `variant` | `variant` |             | `"primary" \| "secondary"` | `"primary"`   |
 
 
 ## Events

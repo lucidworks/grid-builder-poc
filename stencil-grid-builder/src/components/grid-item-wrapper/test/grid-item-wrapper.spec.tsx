@@ -826,7 +826,8 @@ describe("grid-item-wrapper - Active Canvas", () => {
             defaultSize: { width: 20, height: 6 },
             minSize: { width: 10, height: 3 },
             render: () => <div>Header Component</div>,
-            renderItemWrapper: ({ contentSlotId, itemId }) => (
+            renderDragClone: () => <div>Header</div>,
+            renderItemWrapper: ({ contentSlotId, _itemId }) => (
               <div class="custom-wrapper">
                 <div id={contentSlotId}>Content Slot</div>
               </div>

@@ -1,1 +1,0 @@
-{"version":3,"file":"version.js","sourceRoot":"","sources":["../../src/utils/version.ts"],"names":[],"mappings":"AAAA,MAAM,CAAC,MAAM,eAAe,GAAG,0BAA0B,CAAC","sourcesContent":["export const BUILD_TIMESTAMP = '2025-11-22T23:41:23.520Z';\n"]}

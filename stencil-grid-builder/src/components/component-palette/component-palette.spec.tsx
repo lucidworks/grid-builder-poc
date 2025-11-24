@@ -10,6 +10,7 @@
  * - Config-based feature toggling
  */
 
+import { h } from '@stencil/core';
 import { newSpecPage } from '@stencil/core/testing';
 import { ComponentPalette } from './component-palette';
 import { ComponentDefinition } from '../../types/component-definition';

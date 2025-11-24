@@ -1,5 +1,13 @@
-import { Component, h, Prop, Event, EventEmitter, State, Watch } from '@stencil/core';
-import { SectionEditorData } from '../../types/section-editor-data';
+import {
+  Component,
+  h,
+  Prop,
+  Event,
+  EventEmitter,
+  State,
+  Watch,
+} from "@stencil/core";
+import { SectionEditorData } from "../../types/section-editor-data";
 
 /**
  * Section Editor Panel Component
@@ -38,8 +46,8 @@ import { SectionEditorData } from '../../types/section-editor-data';
  * - Complete flexibility over settings panel design
  */
 @Component({
-  tag: 'section-editor-panel',
-  styleUrl: 'section-editor-panel.scss',
+  tag: "section-editor-panel",
+  styleUrl: "section-editor-panel.scss",
   shadow: false,
 })
 export class SectionEditorPanel {
@@ -66,21 +74,31 @@ export class SectionEditorPanel {
    * Fired when user clicks Save with edited values
    * Parent updates canvasMetadata state in response
    */
-  @Event() updateSection: EventEmitter<{ canvasId: string; title: string; backgroundColor: string }>;
+  @Event() updateSection: EventEmitter<{
+    canvasId: string;
+    title: string;
+    backgroundColor: string;
+  }>;
 
   /**
    * Event: Preview color change
    * Fired when user changes color picker (live preview)
    * Parent temporarily updates canvas background
    */
-  @Event() previewColorChange: EventEmitter<{ canvasId: string; backgroundColor: string }>;
+  @Event() previewColorChange: EventEmitter<{
+    canvasId: string;
+    backgroundColor: string;
+  }>;
 
   /**
    * Event: Preview title change
    * Fired when user types in title input (live preview)
    * Parent temporarily updates canvas title
    */
-  @Event() previewTitleChange: EventEmitter<{ canvasId: string; title: string }>;
+  @Event() previewTitleChange: EventEmitter<{
+    canvasId: string;
+    title: string;
+  }>;
 
   /**
    * Event: Delete section
@@ -93,17 +111,17 @@ export class SectionEditorPanel {
    * Internal editing state
    * These track user's changes before saving
    */
-  @State() editedTitle: string = '';
-  @State() editedColor: string = '';
+  @State() editedTitle: string = "";
+  @State() editedColor: string = "";
 
   /**
    * Original values when modal opened
    * Used to revert on cancel
    */
-  private originalColor: string = '';
-  private originalTitle: string = '';
+  private originalColor: string = "";
+  private originalTitle: string = "";
 
-  @Watch('sectionData')
+  @Watch("sectionData")
   handleSectionDataChange(newData: SectionEditorData | null) {
     if (newData) {
       this.editedTitle = newData.title;

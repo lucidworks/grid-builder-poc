@@ -76,6 +76,7 @@ import {
 import {
   gridState,
   GridState,
+  GridItem,
   generateItemId,
   deleteItemsBatch,
   addItemsBatch,
@@ -401,7 +402,7 @@ export class GridBuilder {
    * // Access via ref: <grid-builder ref={el => this.api = el?.api}></grid-builder>
    * ```
    */
-  @Prop() apiRef?: { key?: string } | null = {
+  @Prop() apiRef?: { key?: string; target?: any } | null = {
     key: "gridBuilderAPI",
   };
 
@@ -1728,7 +1729,7 @@ export class GridBuilder {
     });
 
     // Component deleted
-    eventManager.on("componentDeleted", (data: ComponentDeletedEvent) => {
+    eventManager.on("componentDeleted", (_data: ComponentDeletedEvent) => {
       this.announce(`Component deleted`);
     });
 
@@ -1800,11 +1801,11 @@ export class GridBuilder {
    * **WCAG Compliance**: 2.4.3 Focus Order (Level A)
    *
    * @param canvasId - Canvas that contained the deleted item
-   * @param deletedItemId - ID of the item that was deleted
+   * @param _deletedItemId - ID of the item that was deleted (unused, for documentation)
    */
   private moveFocusAfterDeletion = (
     canvasId: string,
-    deletedItemId: string,
+    _deletedItemId: string,
   ) => {
     // Get the canvas that contained the deleted item
     const canvas = gridState.canvases[canvasId];
