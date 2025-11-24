@@ -41,7 +41,7 @@ import { virtualRenderer } from "../../services/virtual-renderer";
 import { eventManager } from "../../services/event-manager";
 import { DragHandler } from "../../utils/drag-handler";
 import { ResizeHandler } from "../../utils/resize-handler";
-import { gridToPixelsX, gridToPixelsY, getGridSizeHorizontal, getGridSizeVertical } from "../../utils/grid-calculations";
+import { gridToPixelsX, gridToPixelsY } from "../../utils/grid-calculations";
 import { GridConfig } from "../../types/grid-config";
 import { ComponentDefinition } from "../../types/component-definition";
 import { createDebugLogger } from "../../utils/debug";
@@ -302,39 +302,6 @@ export class GridItemWrapper {
   componentDidUpdate() {
     // Re-inject component content if custom wrapper re-rendered
     this.injectComponentContent();
-
-    // Debug: Log actual rendered position for hero-button
-    if (this.item.id === 'hero-button' && this.itemRef) {
-      requestAnimationFrame(() => {
-        const rect = this.itemRef.getBoundingClientRect();
-        const canvasElement = document.getElementById(this.item.canvasId);
-        const canvasRect = canvasElement?.getBoundingClientRect();
-
-        console.log('🔵 Hero CTA Button ACTUAL Rendered Position:', {
-          itemId: this.item.id,
-          actualPosition: {
-            top: rect.top,
-            left: rect.left,
-            width: rect.width,
-            height: rect.height,
-            bottom: rect.bottom,
-            right: rect.right
-          },
-          canvasPosition: canvasRect ? {
-            top: canvasRect.top,
-            left: canvasRect.left
-          } : 'canvas not found',
-          relativeToCanvas: canvasRect ? {
-            top: rect.top - canvasRect.top,
-            left: rect.left - canvasRect.left
-          } : 'N/A',
-          computedStyle: {
-            transform: window.getComputedStyle(this.itemRef).transform,
-            position: window.getComputedStyle(this.itemRef).position
-          }
-        });
-      });
-    }
   }
 
   /**
@@ -752,39 +719,6 @@ export class GridItemWrapper {
       this.config,
     );
     const heightPixels = gridToPixelsY(actualLayout.height);
-
-    // Debug logging for Hero CTA button positioning
-    if (this.item.id === 'hero-button') {
-      const gridSizeH = getGridSizeHorizontal(this.item.canvasId, this.config);
-      const gridSizeV = getGridSizeVertical(this.config);
-      console.log('🔵 Hero CTA Button Position Debug:', {
-        itemId: this.item.id,
-        canvasId: this.item.canvasId,
-        gridPosition: {
-          x: actualLayout.x,
-          y: actualLayout.y,
-          width: actualLayout.width,
-          height: actualLayout.height
-        },
-        pixelPosition: {
-          x: xPixels,
-          y: yPixels,
-          width: widthPixels,
-          height: heightPixels
-        },
-        gridSize: {
-          horizontal: gridSizeH,
-          vertical: gridSizeV
-        },
-        transform: `translate(${xPixels}px, ${yPixels}px)`,
-        calculations: {
-          xCalc: `${actualLayout.x} × ${gridSizeH} = ${xPixels}`,
-          yCalc: `${actualLayout.y} × ${gridSizeV} = ${yPixels}`,
-          widthCalc: `${actualLayout.width} × ${gridSizeH} = ${widthPixels}`,
-          heightCalc: `${actualLayout.height} × ${gridSizeV} = ${heightPixels}`
-        }
-      });
-    }
 
     // Get component definition for icon, name, and selection color
     const definition = this.componentRegistry?.get(this.item.type);
