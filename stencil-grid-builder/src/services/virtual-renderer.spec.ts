@@ -103,6 +103,8 @@ describe("virtual-renderer", () => {
   describe("unobserve", () => {
     beforeEach(() => {
       service.observe(mockElement, "test-element", callback);
+      // Clear the call from observe() sync callback
+      callback.mockClear();
     });
 
     it("should unobserve element and remove callback", () => {
@@ -142,6 +144,8 @@ describe("virtual-renderer", () => {
   describe("destroy", () => {
     beforeEach(() => {
       service.observe(mockElement, "test-element", callback);
+      // Clear the call from observe() sync callback
+      callback.mockClear();
     });
 
     it("should disconnect observer", () => {
@@ -178,6 +182,8 @@ describe("virtual-renderer", () => {
   describe("Intersection Callbacks", () => {
     beforeEach(() => {
       service.observe(mockElement, "test-element", callback);
+      // Clear the call from observe() sync callback
+      callback.mockClear();
     });
 
     it("should call callback with true when element becomes visible", () => {
@@ -289,11 +295,25 @@ describe("virtual-renderer", () => {
     it("should support lazy loading pattern", () => {
       let isVisible = false;
 
+      // Mock getBoundingClientRect to make element appear outside viewport
+      // This prevents the synchronous callback from firing
+      jest.spyOn(mockElement, 'getBoundingClientRect').mockReturnValue({
+        top: 2000,  // Far below viewport
+        bottom: 2100,
+        left: 0,
+        right: 100,
+        width: 100,
+        height: 100,
+        x: 0,
+        y: 2000,
+        toJSON: () => ({})
+      } as DOMRect);
+
       service.observe(mockElement, "test-element", (visible) => {
         isVisible = visible;
       });
 
-      // Initially not visible
+      // Initially not visible (element is outside viewport)
       expect(isVisible).toBe(false);
 
       // Becomes visible
