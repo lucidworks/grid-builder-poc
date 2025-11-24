@@ -394,20 +394,24 @@
 /* ========================================
  * Click-to-Add Component Animation
  * ========================================
- * Fade + scale animation when components are added via click-to-add feature.
- * Provides visual feedback that component has been successfully added.
+ * Pulse animation on selection outline when components are added via click-to-add.
+ * Component appears instantly; only the selection border pulses to draw attention.
+ * This prevents the confusing "flash in/out/in" effect of fading the entire component.
  */
 
-/* Component Fade Animation (no scale to avoid overriding position transform) */
+/* Component Pulse Animation - Only pulses selection outline, not content */
 @keyframes component-animate-in {
-  0% {
-    opacity: 0;
+  0%, 100% {
+    border-color: var(--selection-color);
+    box-shadow: 0 0 0 0 rgba(74, 144, 226, 0.4);
   }
-  100% {
-    opacity: 1;
+  50% {
+    border-color: var(--selection-color);
+    box-shadow: 0 0 0 4px rgba(74, 144, 226, 0.4);
   }
 }
 
 .component-animate-in {
-  animation: component-animate-in 400ms ease-out;
+  animation: component-animate-in 600ms ease-out;
+  border-color: var(--selection-color); /* Show selection during animation */
 }

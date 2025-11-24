@@ -48,9 +48,9 @@ const POSITION_INDICATOR_DURATION = 800;
 
 /**
  * Component animation duration (milliseconds)
- * Duration of fade + scale animation for new components
+ * Duration of selection outline pulse animation for new components
  */
-const COMPONENT_ANIMATION_DURATION = 400;
+const COMPONENT_ANIMATION_DURATION = 600;
 
 /**
  * Highlight canvas with pulse animation
@@ -220,7 +220,7 @@ export function showPositionIndicator(
 }
 
 /**
- * Animate component in (fade animation with scroll into view)
+ * Animate component in (pulse animation with scroll into view)
  *
  * Adds visual feedback when component is added via click-to-add.
  * Draws attention to newly created item and ensures it's visible.
@@ -228,8 +228,9 @@ export function showPositionIndicator(
  * **Visual Effect**:
  * - Clears position indicators (prevents blue flash)
  * - Scrolls component into view smoothly
- * - Fade in: opacity 0 → 1
- * - Duration: 400ms
+ * - Pulse selection outline (border + box-shadow)
+ * - Component appears instantly (no opacity fade to prevent confusing flash)
+ * - Duration: 600ms
  * - Easing: ease-out
  *
  * **Implementation**:
@@ -242,12 +243,19 @@ export function showPositionIndicator(
  * **CSS Animation** (defined in grid-item-wrapper.scss):
  * ```scss
  * @keyframes component-animate-in {
- *   0% { opacity: 0; }
- *   100% { opacity: 1; }
+ *   0%, 100% {
+ *     border-color: var(--selection-color);
+ *     box-shadow: 0 0 0 0 rgba(74, 144, 226, 0.4);
+ *   }
+ *   50% {
+ *     border-color: var(--selection-color);
+ *     box-shadow: 0 0 0 4px rgba(74, 144, 226, 0.4);
+ *   }
  * }
  *
  * .component-animate-in {
- *   animation: component-animate-in 400ms ease-out;
+ *   animation: component-animate-in 600ms ease-out;
+ *   border-color: var(--selection-color);
  * }
  * ```
  *
