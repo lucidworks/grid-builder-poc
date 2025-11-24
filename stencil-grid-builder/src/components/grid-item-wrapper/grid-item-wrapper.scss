@@ -136,7 +136,7 @@
 /* Item Header - tab on selection border that only shows when selected */
 .grid-item-header {
   position: absolute;
-  z-index: 100; /* Well above resize handles (z-index: 10) */
+  z-index: 9999; /* Always on top of all grid items for dragging */
   top: -26px; /* Position above the border (adjust based on content height) */
   left: 12px; /* Offset from left edge */
   display: flex;
@@ -201,7 +201,7 @@
 /* Item Controls */
 .grid-item-controls {
   position: absolute;
-  z-index: 10; /* Ensure controls appear above item content */
+  z-index: 9999; /* Always on top of all grid items */
   top: -16px; /* Float above the component */
   right: 8px;
   display: flex;
@@ -264,7 +264,7 @@
 /* Resize Handles - Circular corners and pill-shaped sides */
 .resize-handle {
   position: absolute;
-  z-index: 10; /* Ensure handles appear above item content */
+  z-index: 9999; /* Always on top of all grid items */
   width: 14px;
   height: 14px;
   border: 2px solid white;

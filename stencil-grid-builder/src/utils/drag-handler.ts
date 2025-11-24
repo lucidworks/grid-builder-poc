@@ -132,7 +132,11 @@
  */
 
 import type { InteractDragEvent, Interactable } from "interactjs";
-import { GridItem, setActiveCanvas } from "../services/state-manager";
+import {
+  GridItem,
+  selectItem,
+  setActiveCanvas,
+} from "../services/state-manager";
 import { GridConfig } from "../types/grid-config";
 import { domCache } from "./dom-cache";
 import {
@@ -511,8 +515,9 @@ export class DragHandler {
     // Store the original canvas ID at drag start
     this.dragStartCanvasId = this.item.canvasId;
 
-    // Set this canvas as active
+    // Set this canvas as active and select this item
     setActiveCanvas(this.item.canvasId);
+    selectItem(this.item.id, this.item.canvasId);
 
     // Store the base position from transform of the main element
     const elementToRead = this.dragHandleElement ? this.element : event.target;
