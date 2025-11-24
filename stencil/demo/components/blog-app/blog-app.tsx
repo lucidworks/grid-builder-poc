@@ -434,6 +434,11 @@ export class BlogApp {
         console.warn("⚠️ API not available on window.gridBuilderAPI");
       }
     });
+
+    // Listen for palette-item-click events from external palettes
+    // Note: External palettes are siblings to grid-builder, so @Listen decorator
+    // in grid-builder can't catch these events. We need to listen on document.
+    document.addEventListener('palette-item-click', this.handleExternalPaletteClick as EventListener);
   }
 
   /**
@@ -462,6 +467,9 @@ export class BlogApp {
       );
       this.gridBuilder = null;
     }
+
+    // Remove palette-item-click listener
+    document.removeEventListener('palette-item-click', this.handleExternalPaletteClick as EventListener);
 
     // Remove API event listeners
     if (this.api) {
@@ -581,6 +589,49 @@ export class BlogApp {
     console.log("Canvas clicked:", canvasId);
     // In a real app, this would show a canvas settings panel
     // For now, we just log it to demonstrate the event
+  };
+
+  /**
+   * External Palette Click Handler
+   * --------------------------------
+   *
+   * Handles palette-item-click events from external component-palette instances.
+   * These palettes are siblings to grid-builder (not children), so we need
+   * to listen on document instead of relying on grid-builder's @Listen decorator.
+   *
+   * This demonstrates the pattern for using multiple external palettes with
+   * grid-builder in custom layouts.
+   */
+  private handleExternalPaletteClick = async (event: CustomEvent<{ componentType: string }>) => {
+    if (!this.api) {
+      console.warn("API not ready for palette click");
+      return;
+    }
+
+    const { componentType } = event.detail;
+    console.log("🖱️ External palette click:", componentType);
+
+    // The grid-builder's internal logic will handle:
+    // - Finding/creating active canvas
+    // - Finding free space
+    // - Adding component via API
+    // - Visual feedback (pulse, ghost outline, fade-in)
+    //
+    // We just need to ensure the event reaches grid-builder.
+    // Since we're listening on document, we need to manually trigger
+    // grid-builder's handler by dispatching to it directly.
+
+    const gridBuilderElement = document.querySelector('grid-builder');
+    if (gridBuilderElement) {
+      // Re-dispatch event to grid-builder so its @Listen decorator catches it
+      // IMPORTANT: bubbles: false prevents infinite loop (event bubbling back to document)
+      const newEvent = new CustomEvent('palette-item-click', {
+        detail: { componentType },
+        bubbles: false, // Don't bubble - prevents infinite loop
+        composed: true,
+      });
+      gridBuilderElement.dispatchEvent(newEvent);
+    }
   };
 
   /**
@@ -910,6 +961,17 @@ export class BlogApp {
     this.isSidebarCollapsed = !this.isSidebarCollapsed;
   };
 
+  /**
+   * Palette Config
+   * ---------------
+   *
+   * Configuration shared across all component palettes.
+   * Enables click-to-add functionality for all palette instances.
+   */
+  private paletteConfig = {
+    enableClickToAdd: true,
+  };
+
   @State() initialState = {
     canvases: {
       "hero-section": {
@@ -942,7 +1004,7 @@ export class BlogApp {
             type: "blog-button",
             name: "Hero CTA",
             layouts: {
-              desktop: { x: 15, y: 7, width: 20, height: 3 },
+              desktop: { x: 15, y: 7, width: 20, height: 4 },  // 4 units × 20px = 80px (matches CSS min-height)
               mobile: {
                 x: null,
                 y: null,
@@ -1086,7 +1148,7 @@ export class BlogApp {
             type: "blog-button",
             name: "Subscribe Button",
             layouts: {
-              desktop: { x: 15, y: 5, width: 20, height: 3 },
+              desktop: { x: 15, y: 5, width: 20, height: 4 },  // 4 units × 20px = 80px (matches CSS min-height)
               mobile: {
                 x: null,
                 y: null,
@@ -1235,6 +1297,7 @@ export class BlogApp {
                   <component-palette
                     components={contentComponents}
                     showHeader={false}
+                    config={this.paletteConfig}
                   />
                 )}
               </div>
@@ -1254,6 +1317,7 @@ export class BlogApp {
                   <component-palette
                     components={interactiveComponents}
                     showHeader={false}
+                    config={this.paletteConfig}
                   />
                 )}
               </div>
@@ -1273,6 +1337,7 @@ export class BlogApp {
                   <component-palette
                     components={mediaComponents}
                     showHeader={false}
+                    config={this.paletteConfig}
                   />
                 )}
               </div>

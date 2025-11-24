@@ -174,8 +174,8 @@ export const interactiveComponents: ComponentDefinition[] = [
     type: "blog-button",
     name: "Blog Button",
     icon: "🔘",
-    defaultSize: { width: 20, height: 3 },
-    minSize: { width: 10, height: 2 },
+    defaultSize: { width: 20, height: 4 },  // 4 units × 20px = 80px (matches CSS min-height)
+    minSize: { width: 5, height: 4 },       // 5 units × 20px = 100px width, 4 units × 20px = 80px height (matches CSS)
     maxSize: { width: 30, height: 5 },
     selectionColor: "#ef4444",
     renderPaletteItem: ({ componentType, name, icon }) => (
