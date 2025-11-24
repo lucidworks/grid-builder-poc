@@ -54,6 +54,15 @@ const mockComponentDefinitions = [
     renderDragClone: () => <div>Text Clone</div>,
     render: () => <div>Text</div>,
   },
+  {
+    type: "button",
+    name: "Button",
+    icon: "🔘",
+    defaultSize: { width: 10, height: 5 },
+    minSize: { width: 5, height: 3 },
+    renderDragClone: () => <div>Button Clone</div>,
+    render: () => <div>Button</div>,
+  },
 ];
 
 describe("grid-builder", () => {
@@ -85,7 +94,7 @@ describe("grid-builder", () => {
       component.components = mockComponentDefinitions;
 
       expect(component.components).toBeDefined();
-      expect(component.components.length).toBe(2);
+      expect(component.components.length).toBe(3);
       expect(component.components[0].type).toBe("header");
     });
 
@@ -2191,6 +2200,7 @@ describe("grid-builder", () => {
         const mockHostElement = {
           addEventListener: jest.fn(),
           removeEventListener: jest.fn(),
+          querySelector: jest.fn(() => null), // Return null - no elements to focus
         };
         Object.defineProperty(component, "hostElement", {
           value: mockHostElement,
@@ -2200,10 +2210,8 @@ describe("grid-builder", () => {
         component.componentWillLoad();
         component.componentDidLoad();
 
-        // Get the keyboard handler
-        const keyboardHandler = (document as any).addEventListener.mock?.calls?.find(
-          (call: any) => call[0] === "keydown",
-        )?.[1];
+        // Get the keyboard handler from component instance
+        const keyboardHandler = (component as any).keyboardHandler;
 
         expect(keyboardHandler).toBeDefined();
 
@@ -2253,6 +2261,7 @@ describe("grid-builder", () => {
         const mockHostElement = {
           addEventListener: jest.fn(),
           removeEventListener: jest.fn(),
+          querySelector: jest.fn(() => null), // Return null - no elements to focus
         };
         Object.defineProperty(component, "hostElement", {
           value: mockHostElement,
@@ -2262,10 +2271,8 @@ describe("grid-builder", () => {
         component.componentWillLoad();
         component.componentDidLoad();
 
-        // Get the keyboard handler
-        const keyboardHandler = (document as any).addEventListener.mock?.calls?.find(
-          (call: any) => call[0] === "keydown",
-        )?.[1];
+        // Get the keyboard handler from component instance
+        const keyboardHandler = (component as any).keyboardHandler;
 
         // Simulate Backspace key press
         const backspaceEvent = new KeyboardEvent("keydown", { key: "Backspace" });
@@ -2318,10 +2325,8 @@ describe("grid-builder", () => {
         component.componentWillLoad();
         component.componentDidLoad();
 
-        // Get the keyboard handler
-        const keyboardHandler = (document as any).addEventListener.mock?.calls?.find(
-          (call: any) => call[0] === "keydown",
-        )?.[1];
+        // Get the keyboard handler from component instance
+        const keyboardHandler = (component as any).keyboardHandler;
 
         // Simulate Delete key press
         const deleteEvent = new KeyboardEvent("keydown", { key: "Delete" });
@@ -2370,10 +2375,8 @@ describe("grid-builder", () => {
         component.componentWillLoad();
         component.componentDidLoad();
 
-        // Get the keyboard handler
-        const keyboardHandler = (document as any).addEventListener.mock?.calls?.find(
-          (call: any) => call[0] === "keydown",
-        )?.[1];
+        // Get the keyboard handler from component instance
+        const keyboardHandler = (component as any).keyboardHandler;
 
         // Simulate Escape key press
         const escapeEvent = new KeyboardEvent("keydown", { key: "Escape" });
@@ -2407,10 +2410,8 @@ describe("grid-builder", () => {
         component.componentWillLoad();
         component.componentDidLoad();
 
-        // Get the keyboard handler
-        const keyboardHandler = (document as any).addEventListener.mock?.calls?.find(
-          (call: any) => call[0] === "keydown",
-        )?.[1];
+        // Get the keyboard handler from component instance
+        const keyboardHandler = (component as any).keyboardHandler;
 
         // Create a spy on preventDefault
         const preventDefaultSpy = jest.fn();
@@ -2457,6 +2458,7 @@ describe("grid-builder", () => {
         const mockHostElement = {
           addEventListener: jest.fn(),
           removeEventListener: jest.fn(),
+          querySelector: jest.fn(() => null), // Return null - no elements to focus
         };
         Object.defineProperty(component, "hostElement", {
           value: mockHostElement,
@@ -2466,10 +2468,8 @@ describe("grid-builder", () => {
         component.componentWillLoad();
         component.componentDidLoad();
 
-        // Get the keyboard handler
-        const keyboardHandler = (document as any).addEventListener.mock?.calls?.find(
-          (call: any) => call[0] === "keydown",
-        )?.[1];
+        // Get the keyboard handler from component instance
+        const keyboardHandler = (component as any).keyboardHandler;
 
         // Simulate Delete key press
         const deleteEvent = new KeyboardEvent("keydown", { key: "Delete" });
@@ -2523,6 +2523,7 @@ describe("grid-builder", () => {
         const mockHostElement = {
           addEventListener: jest.fn(),
           removeEventListener: jest.fn(),
+          querySelector: jest.fn(() => null), // Return null - no elements to focus
         };
         Object.defineProperty(component, "hostElement", {
           value: mockHostElement,
@@ -2532,10 +2533,8 @@ describe("grid-builder", () => {
         component.componentWillLoad();
         component.componentDidLoad();
 
-        // Get the keyboard handler
-        const keyboardHandler = (document as any).addEventListener.mock?.calls?.find(
-          (call: any) => call[0] === "keydown",
-        )?.[1];
+        // Get the keyboard handler from component instance
+        const keyboardHandler = (component as any).keyboardHandler;
 
         // Simulate Delete key press
         const deleteEvent = new KeyboardEvent("keydown", { key: "Delete" });
@@ -2943,6 +2942,1122 @@ describe("grid-builder", () => {
 
         consoleErrorSpy.mockRestore();
       });
+    });
+
+    /**
+     * Focus Management Tests
+     * ======================
+     *
+     * Tests for keyboard focus management after deletion and undo/redo operations.
+     *
+     * **Features Tested**:
+     * - Focus moves to next logical item after deletion
+     * - Focus moves to canvas when no items left
+     * - Focus moves to palette as fallback
+     * - Focus restores after undo operation
+     * - Focus restores after redo operation
+     * - tabindex attributes in editing vs viewer mode
+     *
+     * **WCAG Compliance**: 2.4.3 Focus Order (Level A)
+     */
+    describe("Focus Management", () => {
+      /**
+       * Helper to create a mock hostElement with required methods
+       */
+      const createMockHostElement = (querySelectorFn: (selector: string) => any) => ({
+        querySelector: jest.fn(querySelectorFn),
+        addEventListener: jest.fn(),
+        removeEventListener: jest.fn(),
+      });
+      it("should move focus to next item after deletion", async () => {
+        // Create component with multiple items
+        const component = new GridBuilder();
+        component.components = mockComponentDefinitions;
+
+        // Setup gridState with 3 items at different positions
+        gridState.canvases = {
+          canvas1: {
+            items: [
+              {
+                id: "item-1",
+                canvasId: "canvas1",
+                type: "header",
+                name: "Item 1",
+                layouts: {
+                  desktop: { x: 0, y: 0, width: 10, height: 6 },
+                  mobile: { x: 0, y: 0, width: 50, height: 6, customized: false },
+                },
+                zIndex: 1,
+                config: {},
+              },
+              {
+                id: "item-2",
+                canvasId: "canvas1",
+                type: "text",
+                name: "Item 2",
+                layouts: {
+                  desktop: { x: 0, y: 10, width: 10, height: 6 },
+                  mobile: { x: 0, y: 10, width: 50, height: 6, customized: false },
+                },
+                zIndex: 2,
+                config: {},
+              },
+              {
+                id: "item-3",
+                canvasId: "canvas1",
+                type: "button",
+                name: "Item 3",
+                layouts: {
+                  desktop: { x: 0, y: 20, width: 10, height: 6 },
+                  mobile: { x: 0, y: 20, width: 50, height: 6, customized: false },
+                },
+                zIndex: 3,
+                config: {},
+              },
+            ],
+            zIndexCounter: 4,
+          },
+        };
+
+        // Select first item
+        gridState.selectedItemId = "item-1";
+        gridState.selectedCanvasId = "canvas1";
+
+        // Mock DOM elements and focus method
+        const mockItem2Element = {
+          focus: jest.fn(),
+        };
+
+        const mockHostElement = createMockHostElement((selector: string) => {
+          if (selector === "#item-2") {
+            return mockItem2Element;
+          }
+          return null;
+        });
+
+        Object.defineProperty(component, "hostElement", {
+          value: mockHostElement,
+        });
+
+        component.componentWillLoad();
+        component.componentDidLoad();
+
+        const api = (component as any).api;
+
+        // Delete item-1
+        await api.deleteComponent("item-1");
+
+        // Call moveFocusAfterDeletion manually (normally called from keyboard handler)
+        (component as any).moveFocusAfterDeletion("canvas1", "item-1");
+
+        // Verify focus moved to item-2 (next item in sorted order)
+        expect(mockItem2Element.focus).toHaveBeenCalled();
+
+        // Verify item-2 is now selected
+        expect(gridState.selectedItemId).toBe("item-2");
+        expect(gridState.selectedCanvasId).toBe("canvas1");
+      });
+
+      it("should move focus to canvas when no items left after deletion", async () => {
+        // Create component with single item
+        const component = new GridBuilder();
+        component.components = mockComponentDefinitions;
+
+        // Setup gridState with 1 item
+        gridState.canvases = {
+          canvas1: {
+            items: [
+              {
+                id: "item-1",
+                canvasId: "canvas1",
+                type: "header",
+                name: "Item 1",
+                layouts: {
+                  desktop: { x: 0, y: 0, width: 10, height: 6 },
+                  mobile: { x: 0, y: 0, width: 50, height: 6, customized: false },
+                },
+                zIndex: 1,
+                config: {},
+              },
+            ],
+            zIndexCounter: 2,
+          },
+        };
+
+        gridState.selectedItemId = "item-1";
+        gridState.selectedCanvasId = "canvas1";
+
+        // Mock DOM elements and focus method
+        const mockCanvasElement = {
+          focus: jest.fn(),
+        };
+
+        const mockHostElement = createMockHostElement((selector: string) => {
+          if (selector === 'canvas-section[canvas-id="canvas1"]') {
+            return mockCanvasElement;
+          }
+          return null;
+        });
+
+        Object.defineProperty(component, "hostElement", {
+          value: mockHostElement,
+        });
+
+        component.componentWillLoad();
+        component.componentDidLoad();
+
+        const api = (component as any).api;
+
+        // Delete last item
+        await api.deleteComponent("item-1");
+
+        // Call moveFocusAfterDeletion manually
+        (component as any).moveFocusAfterDeletion("canvas1", "item-1");
+
+        // Verify focus moved to canvas
+        expect(mockCanvasElement.focus).toHaveBeenCalled();
+      });
+
+      it("should move focus to palette as fallback when canvas not found", async () => {
+        // Create component
+        const component = new GridBuilder();
+        component.components = mockComponentDefinitions;
+
+        // Setup empty gridState (canvas doesn't exist)
+        gridState.canvases = {};
+
+        // Mock DOM elements and focus method
+        const mockPaletteElement = {
+          focus: jest.fn(),
+        };
+
+        const mockHostElement = createMockHostElement((selector: string) => {
+          if (selector === "component-palette") {
+            return mockPaletteElement;
+          }
+          return null;
+        });
+
+        Object.defineProperty(component, "hostElement", {
+          value: mockHostElement,
+        });
+
+        component.componentWillLoad();
+        component.componentDidLoad();
+
+        // Call moveFocusAfterDeletion with non-existent canvas
+        (component as any).moveFocusAfterDeletion("canvas1", "item-1");
+
+        // Verify focus moved to palette as fallback
+        expect(mockPaletteElement.focus).toHaveBeenCalled();
+      });
+
+      it("should restore focus to selected item after undo operation", async () => {
+        // Create component
+        const component = new GridBuilder();
+        component.components = mockComponentDefinitions;
+
+        // Setup gridState with item
+        gridState.canvases = {
+          canvas1: {
+            items: [
+              {
+                id: "item-1",
+                canvasId: "canvas1",
+                type: "header",
+                name: "Item 1",
+                layouts: {
+                  desktop: { x: 0, y: 0, width: 10, height: 6 },
+                  mobile: { x: 0, y: 0, width: 50, height: 6, customized: false },
+                },
+                zIndex: 1,
+                config: {},
+              },
+            ],
+            zIndexCounter: 2,
+          },
+        };
+
+        gridState.selectedItemId = "item-1";
+        gridState.selectedCanvasId = "canvas1";
+
+        // Mock DOM elements and focus method
+        const mockItemElement = {
+          focus: jest.fn(),
+        };
+
+        const mockHostElement = createMockHostElement((selector: string) => {
+          if (selector === "#item-1") {
+            return mockItemElement;
+          }
+          return null;
+        });
+
+        Object.defineProperty(component, "hostElement", {
+          value: mockHostElement,
+        });
+
+        component.componentWillLoad();
+        component.componentDidLoad();
+
+        // Call restoreFocusToSelection manually (normally called from undo event handler)
+        // Need to wait for setTimeout to execute
+        (component as any).restoreFocusToSelection();
+
+        // Wait for setTimeout(10ms) to complete
+        await new Promise((resolve) => setTimeout(resolve, 20));
+
+        // Verify focus was restored to selected item
+        expect(mockItemElement.focus).toHaveBeenCalled();
+      });
+
+      it("should restore focus to selected item after redo operation", async () => {
+        // Create component
+        const component = new GridBuilder();
+        component.components = mockComponentDefinitions;
+
+        // Setup gridState with item
+        gridState.canvases = {
+          canvas1: {
+            items: [
+              {
+                id: "item-2",
+                canvasId: "canvas1",
+                type: "text",
+                name: "Item 2",
+                layouts: {
+                  desktop: { x: 10, y: 10, width: 10, height: 6 },
+                  mobile: { x: 0, y: 0, width: 50, height: 6, customized: false },
+                },
+                zIndex: 1,
+                config: {},
+              },
+            ],
+            zIndexCounter: 2,
+          },
+        };
+
+        gridState.selectedItemId = "item-2";
+        gridState.selectedCanvasId = "canvas1";
+
+        // Mock DOM elements and focus method
+        const mockItemElement = {
+          focus: jest.fn(),
+        };
+
+        const mockHostElement = createMockHostElement((selector: string) => {
+          if (selector === "#item-2") {
+            return mockItemElement;
+          }
+          return null;
+        });
+
+        Object.defineProperty(component, "hostElement", {
+          value: mockHostElement,
+        });
+
+        component.componentWillLoad();
+        component.componentDidLoad();
+
+        // Call restoreFocusToSelection manually (normally called from redo event handler)
+        (component as any).restoreFocusToSelection();
+
+        // Wait for setTimeout(10ms) to complete
+        await new Promise((resolve) => setTimeout(resolve, 20));
+
+        // Verify focus was restored to selected item
+        expect(mockItemElement.focus).toHaveBeenCalled();
+      });
+
+      it("should not restore focus when no item is selected", async () => {
+        // Create component
+        const component = new GridBuilder();
+        component.components = mockComponentDefinitions;
+
+        // Setup gridState with no selection
+        gridState.canvases = {
+          canvas1: {
+            items: [],
+            zIndexCounter: 1,
+          },
+        };
+
+        gridState.selectedItemId = null;
+        gridState.selectedCanvasId = null;
+
+        // Mock DOM elements and focus method
+        const mockFocus = jest.fn();
+        const mockHostElement = createMockHostElement(() => ({
+          focus: mockFocus,
+        }));
+
+        Object.defineProperty(component, "hostElement", {
+          value: mockHostElement,
+        });
+
+        component.componentWillLoad();
+        component.componentDidLoad();
+
+        // Call restoreFocusToSelection
+        (component as any).restoreFocusToSelection();
+
+        // Wait for setTimeout(10ms) to complete
+        await new Promise((resolve) => setTimeout(resolve, 20));
+
+        // Verify querySelector was not called (no selection)
+        expect(mockHostElement.querySelector).not.toHaveBeenCalled();
+        expect(mockFocus).not.toHaveBeenCalled();
+      });
+
+      it("should sort items by position when finding next item to focus", async () => {
+        // Create component with items in mixed positions
+        const component = new GridBuilder();
+        component.components = mockComponentDefinitions;
+
+        // Setup gridState with items NOT in position order
+        gridState.canvases = {
+          canvas1: {
+            items: [
+              {
+                id: "item-bottom",
+                canvasId: "canvas1",
+                type: "header",
+                name: "Bottom Item",
+                layouts: {
+                  desktop: { x: 0, y: 30, width: 10, height: 6 }, // Bottom
+                  mobile: { x: 0, y: 0, width: 50, height: 6, customized: false },
+                },
+                zIndex: 1,
+                config: {},
+              },
+              {
+                id: "item-top",
+                canvasId: "canvas1",
+                type: "text",
+                name: "Top Item",
+                layouts: {
+                  desktop: { x: 0, y: 0, width: 10, height: 6 }, // Top
+                  mobile: { x: 0, y: 0, width: 50, height: 6, customized: false },
+                },
+                zIndex: 2,
+                config: {},
+              },
+              {
+                id: "item-middle",
+                canvasId: "canvas1",
+                type: "button",
+                name: "Middle Item",
+                layouts: {
+                  desktop: { x: 0, y: 15, width: 10, height: 6 }, // Middle
+                  mobile: { x: 0, y: 0, width: 50, height: 6, customized: false },
+                },
+                zIndex: 3,
+                config: {},
+              },
+            ],
+            zIndexCounter: 4,
+          },
+        };
+
+        // Delete item-top
+        gridState.selectedItemId = "item-top";
+        gridState.selectedCanvasId = "canvas1";
+
+        // Mock DOM elements - should focus item-middle (next in position order)
+        const mockItemMiddleElement = {
+          focus: jest.fn(),
+        };
+
+        const mockHostElement = createMockHostElement((selector: string) => {
+          if (selector === "#item-middle") {
+            return mockItemMiddleElement;
+          }
+          return null;
+        });
+
+        Object.defineProperty(component, "hostElement", {
+          value: mockHostElement,
+        });
+
+        component.componentWillLoad();
+        component.componentDidLoad();
+
+        const api = (component as any).api;
+
+        // Delete top item
+        await api.deleteComponent("item-top");
+
+        // Call moveFocusAfterDeletion
+        (component as any).moveFocusAfterDeletion("canvas1", "item-top");
+
+        // Verify focus moved to middle item (first in sorted order after deletion)
+        expect(mockItemMiddleElement.focus).toHaveBeenCalled();
+        expect(gridState.selectedItemId).toBe("item-middle");
+      });
+    });
+  });
+
+  /**
+   * Click-to-Add Functionality Tests
+   * =================================
+   *
+   * Tests for the click-to-add feature that allows users to click
+   * palette items to add components to the active canvas.
+   */
+  describe("click-to-add functionality", () => {
+    it("should add component to active canvas when palette item is clicked", async () => {
+      const component = new GridBuilder();
+      component.components = mockComponentDefinitions;
+
+      // Setup canvases
+      gridState.canvases = {
+        canvas1: {
+          items: [],
+          zIndexCounter: 0,
+        },
+      };
+      gridState.activeCanvasId = "canvas1";
+
+      component.componentWillLoad();
+      component.componentDidLoad();
+
+      // Simulate palette item click event
+      const event = new CustomEvent("palette-item-click", {
+        detail: { componentType: "header" },
+        bubbles: true,
+        composed: true,
+      });
+
+      await (component as any).handlePaletteItemClick(event);
+
+      // Verify component was added
+      expect(gridState.canvases["canvas1"].items.length).toBe(1);
+      expect(gridState.canvases["canvas1"].items[0].type).toBe("header");
+    });
+
+    it("should auto-select first canvas when no active canvas", async () => {
+      const component = new GridBuilder();
+      component.components = mockComponentDefinitions;
+
+      // Setup canvases with NO active canvas
+      gridState.canvases = {
+        canvas1: {
+          items: [],
+          zIndexCounter: 0,
+        },
+        canvas2: {
+          items: [],
+          zIndexCounter: 0,
+        },
+      };
+      gridState.activeCanvasId = null;
+
+      component.componentWillLoad();
+      component.componentDidLoad();
+
+      // Simulate palette item click
+      const event = new CustomEvent("palette-item-click", {
+        detail: { componentType: "header" },
+        bubbles: true,
+        composed: true,
+      });
+
+      await (component as any).handlePaletteItemClick(event);
+
+      // Verify first canvas was auto-selected and component added
+      expect(gridState.activeCanvasId).toBe("canvas1");
+      expect(gridState.canvases["canvas1"].items.length).toBe(1);
+    });
+
+    it("should respect enableClickToAdd config flag when true", async () => {
+      const component = new GridBuilder();
+      component.components = mockComponentDefinitions;
+      component.config = { enableClickToAdd: true };
+
+      gridState.canvases = {
+        canvas1: {
+          items: [],
+          zIndexCounter: 0,
+        },
+      };
+      gridState.activeCanvasId = "canvas1";
+
+      component.componentWillLoad();
+      component.componentDidLoad();
+
+      const event = new CustomEvent("palette-item-click", {
+        detail: { componentType: "header" },
+        bubbles: true,
+        composed: true,
+      });
+
+      await (component as any).handlePaletteItemClick(event);
+
+      // Component should be added
+      expect(gridState.canvases["canvas1"].items.length).toBe(1);
+    });
+
+    it("should respect enableClickToAdd config flag when false", async () => {
+      const component = new GridBuilder();
+      component.components = mockComponentDefinitions;
+      component.config = { enableClickToAdd: false };
+
+      gridState.canvases = {
+        canvas1: {
+          items: [],
+          zIndexCounter: 0,
+        },
+      };
+      gridState.activeCanvasId = "canvas1";
+
+      component.componentWillLoad();
+      component.componentDidLoad();
+
+      const event = new CustomEvent("palette-item-click", {
+        detail: { componentType: "header" },
+        bubbles: true,
+        composed: true,
+      });
+
+      await (component as any).handlePaletteItemClick(event);
+
+      // Component should NOT be added
+      expect(gridState.canvases["canvas1"].items.length).toBe(0);
+    });
+
+    it("should handle missing component type gracefully", async () => {
+      const component = new GridBuilder();
+      component.components = mockComponentDefinitions;
+
+      gridState.canvases = {
+        canvas1: {
+          items: [],
+          zIndexCounter: 0,
+        },
+      };
+      gridState.activeCanvasId = "canvas1";
+
+      component.componentWillLoad();
+      component.componentDidLoad();
+
+      // Spy on console.warn
+      const warnSpy = jest.spyOn(console, "warn").mockImplementation();
+
+      // Event with missing componentType
+      const event = new CustomEvent("palette-item-click", {
+        detail: {} as any,
+        bubbles: true,
+        composed: true,
+      });
+
+      await (component as any).handlePaletteItemClick(event);
+
+      // Verify warning was logged
+      expect(warnSpy).toHaveBeenCalledWith(
+        "handlePaletteItemClick: Component type not provided",
+      );
+
+      // Verify no component was added
+      expect(gridState.canvases["canvas1"].items.length).toBe(0);
+
+      warnSpy.mockRestore();
+    });
+
+    it("should handle missing component definition gracefully", async () => {
+      const component = new GridBuilder();
+      component.components = mockComponentDefinitions;
+
+      gridState.canvases = {
+        canvas1: {
+          items: [],
+          zIndexCounter: 0,
+        },
+      };
+      gridState.activeCanvasId = "canvas1";
+
+      component.componentWillLoad();
+      component.componentDidLoad();
+
+      // Spy on console.error
+      const errorSpy = jest.spyOn(console, "error").mockImplementation();
+
+      // Event with non-existent component type
+      const event = new CustomEvent("palette-item-click", {
+        detail: { componentType: "non-existent-type" },
+        bubbles: true,
+        composed: true,
+      });
+
+      await (component as any).handlePaletteItemClick(event);
+
+      // Verify error was logged
+      expect(errorSpy).toHaveBeenCalledWith(
+        expect.stringContaining("Component definition not found"),
+      );
+
+      // Verify no component was added
+      expect(gridState.canvases["canvas1"].items.length).toBe(0);
+
+      errorSpy.mockRestore();
+    });
+
+    it("should handle no canvases available gracefully", async () => {
+      const component = new GridBuilder();
+      component.components = mockComponentDefinitions;
+
+      // No canvases
+      gridState.canvases = {};
+      gridState.activeCanvasId = null;
+
+      component.componentWillLoad();
+      component.componentDidLoad();
+
+      // Spy on console.warn
+      const warnSpy = jest.spyOn(console, "warn").mockImplementation();
+
+      const event = new CustomEvent("palette-item-click", {
+        detail: { componentType: "header" },
+        bubbles: true,
+        composed: true,
+      });
+
+      await (component as any).handlePaletteItemClick(event);
+
+      // Verify warning was logged
+      expect(warnSpy).toHaveBeenCalledWith(
+        "handlePaletteItemClick: No canvases available",
+      );
+
+      warnSpy.mockRestore();
+    });
+
+    it("should use component definition defaultSize", async () => {
+      const component = new GridBuilder();
+      component.components = mockComponentDefinitions;
+
+      gridState.canvases = {
+        canvas1: {
+          items: [],
+          zIndexCounter: 0,
+        },
+      };
+      gridState.activeCanvasId = "canvas1";
+
+      component.componentWillLoad();
+      component.componentDidLoad();
+
+      const event = new CustomEvent("palette-item-click", {
+        detail: { componentType: "header" },
+        bubbles: true,
+        composed: true,
+      });
+
+      await (component as any).handlePaletteItemClick(event);
+
+      // Verify size matches definition (header = 50×6)
+      const addedItem = gridState.canvases["canvas1"].items[0];
+      expect(addedItem.layouts.desktop.width).toBe(50);
+      expect(addedItem.layouts.desktop.height).toBe(6);
+    });
+
+    it("should set newly added component as selected", async () => {
+      const component = new GridBuilder();
+      component.components = mockComponentDefinitions;
+
+      gridState.canvases = {
+        canvas1: {
+          items: [],
+          zIndexCounter: 0,
+        },
+      };
+      gridState.activeCanvasId = "canvas1";
+      gridState.selectedItemId = null;
+      gridState.selectedCanvasId = null;
+
+      component.componentWillLoad();
+      component.componentDidLoad();
+
+      const event = new CustomEvent("palette-item-click", {
+        detail: { componentType: "header" },
+        bubbles: true,
+        composed: true,
+      });
+
+      await (component as any).handlePaletteItemClick(event);
+
+      // Verify selection was updated
+      const addedItem = gridState.canvases["canvas1"].items[0];
+      expect(gridState.selectedItemId).toBe(addedItem.id);
+      expect(gridState.selectedCanvasId).toBe("canvas1");
+    });
+
+    it("should emit componentAdded event", async () => {
+      const component = new GridBuilder();
+      component.components = mockComponentDefinitions;
+
+      gridState.canvases = {
+        canvas1: {
+          items: [],
+          zIndexCounter: 0,
+        },
+      };
+      gridState.activeCanvasId = "canvas1";
+
+      component.componentWillLoad();
+      component.componentDidLoad();
+
+      // Spy on eventManager.emit
+      const emitSpy = jest.spyOn(eventManager, "emit");
+
+      const event = new CustomEvent("palette-item-click", {
+        detail: { componentType: "header" },
+        bubbles: true,
+        composed: true,
+      });
+
+      await (component as any).handlePaletteItemClick(event);
+
+      // Verify event was emitted
+      expect(emitSpy).toHaveBeenCalledWith("componentAdded", {
+        itemId: expect.any(String),
+        canvasId: "canvas1",
+        componentType: "header",
+      });
+
+      emitSpy.mockRestore();
+    });
+
+    it("should create mobile layout with full width", async () => {
+      const component = new GridBuilder();
+      component.components = mockComponentDefinitions;
+
+      gridState.canvases = {
+        canvas1: {
+          items: [],
+          zIndexCounter: 0,
+        },
+      };
+      gridState.activeCanvasId = "canvas1";
+
+      component.componentWillLoad();
+      component.componentDidLoad();
+
+      const event = new CustomEvent("palette-item-click", {
+        detail: { componentType: "header" },
+        bubbles: true,
+        composed: true,
+      });
+
+      await (component as any).handlePaletteItemClick(event);
+
+      // Verify mobile layout
+      const addedItem = gridState.canvases["canvas1"].items[0];
+      expect(addedItem.layouts.mobile.width).toBe(50); // Full width
+      expect(addedItem.layouts.mobile.customized).toBe(false);
+    });
+
+    it("should assign correct z-index", async () => {
+      const component = new GridBuilder();
+      component.components = mockComponentDefinitions;
+
+      gridState.canvases = {
+        canvas1: {
+          items: [
+            {
+              id: "existing-item",
+              canvasId: "canvas1",
+              type: "text",
+              name: "Text",
+              layouts: {
+                desktop: { x: 0, y: 0, width: 10, height: 6 },
+                mobile: { x: 0, y: 0, width: 50, height: 6, customized: false },
+              },
+              zIndex: 1,
+              config: {},
+            },
+          ],
+          zIndexCounter: 1,
+        },
+      };
+      gridState.activeCanvasId = "canvas1";
+
+      component.componentWillLoad();
+      component.componentDidLoad();
+
+      const event = new CustomEvent("palette-item-click", {
+        detail: { componentType: "header" },
+        bubbles: true,
+        composed: true,
+      });
+
+      await (component as any).handlePaletteItemClick(event);
+
+      // Verify z-index is higher than existing item
+      const addedItem = gridState.canvases["canvas1"].items[1];
+      expect(addedItem.zIndex).toBe(2); // zIndexCounter was 1, so new item gets 2
+    });
+
+    it("should handle multiple rapid clicks", async () => {
+      const component = new GridBuilder();
+      component.components = mockComponentDefinitions;
+
+      gridState.canvases = {
+        canvas1: {
+          items: [],
+          zIndexCounter: 0,
+        },
+      };
+      gridState.activeCanvasId = "canvas1";
+
+      component.componentWillLoad();
+      component.componentDidLoad();
+
+      // Simulate 3 rapid clicks
+      const event1 = new CustomEvent("palette-item-click", {
+        detail: { componentType: "header" },
+        bubbles: true,
+        composed: true,
+      });
+      const event2 = new CustomEvent("palette-item-click", {
+        detail: { componentType: "text" },
+        bubbles: true,
+        composed: true,
+      });
+      const event3 = new CustomEvent("palette-item-click", {
+        detail: { componentType: "button" },
+        bubbles: true,
+        composed: true,
+      });
+
+      await (component as any).handlePaletteItemClick(event1);
+      await (component as any).handlePaletteItemClick(event2);
+      await (component as any).handlePaletteItemClick(event3);
+
+      // Verify all 3 components were added
+      expect(gridState.canvases["canvas1"].items.length).toBe(3);
+      expect(gridState.canvases["canvas1"].items[0].type).toBe("header");
+      expect(gridState.canvases["canvas1"].items[1].type).toBe("text");
+      expect(gridState.canvases["canvas1"].items[2].type).toBe("button");
+    });
+
+    it("should place components without collision", async () => {
+      const component = new GridBuilder();
+      component.components = mockComponentDefinitions;
+
+      // Setup canvas with existing item at top-left
+      gridState.canvases = {
+        canvas1: {
+          items: [
+            {
+              id: "existing-item",
+              canvasId: "canvas1",
+              type: "text",
+              name: "Text",
+              layouts: {
+                desktop: { x: 0, y: 0, width: 20, height: 8 },
+                mobile: { x: 0, y: 0, width: 50, height: 6, customized: false },
+              },
+              zIndex: 1,
+              config: {},
+            },
+          ],
+          zIndexCounter: 1,
+        },
+      };
+      gridState.activeCanvasId = "canvas1";
+
+      component.componentWillLoad();
+      component.componentDidLoad();
+
+      const event = new CustomEvent("palette-item-click", {
+        detail: { componentType: "header" },
+        bubbles: true,
+        composed: true,
+      });
+
+      await (component as any).handlePaletteItemClick(event);
+
+      // Verify new component was placed without collision
+      const addedItem = gridState.canvases["canvas1"].items[1];
+      expect(addedItem).toBeDefined();
+
+      // New item should NOT be at (0,0) since that's occupied
+      const isColliding =
+        addedItem.layouts.desktop.x === 0 && addedItem.layouts.desktop.y === 0;
+      expect(isColliding).toBe(false);
+    });
+
+    it("should assign unique IDs to each component", async () => {
+      const component = new GridBuilder();
+      component.components = mockComponentDefinitions;
+
+      gridState.canvases = {
+        canvas1: {
+          items: [],
+          zIndexCounter: 0,
+        },
+      };
+      gridState.activeCanvasId = "canvas1";
+
+      component.componentWillLoad();
+      component.componentDidLoad();
+
+      // Add 3 components
+      const event1 = new CustomEvent("palette-item-click", {
+        detail: { componentType: "header" },
+        bubbles: true,
+        composed: true,
+      });
+      const event2 = new CustomEvent("palette-item-click", {
+        detail: { componentType: "text" },
+        bubbles: true,
+        composed: true,
+      });
+      const event3 = new CustomEvent("palette-item-click", {
+        detail: { componentType: "button" },
+        bubbles: true,
+        composed: true,
+      });
+
+      await (component as any).handlePaletteItemClick(event1);
+      await (component as any).handlePaletteItemClick(event2);
+      await (component as any).handlePaletteItemClick(event3);
+
+      // Verify all IDs are unique
+      const ids = gridState.canvases["canvas1"].items.map((item) => item.id);
+      const uniqueIds = new Set(ids);
+      expect(uniqueIds.size).toBe(3); // All IDs should be unique
+    });
+
+    it("should handle empty component type string", async () => {
+      const component = new GridBuilder();
+      component.components = mockComponentDefinitions;
+
+      gridState.canvases = {
+        canvas1: {
+          items: [],
+          zIndexCounter: 0,
+        },
+      };
+      gridState.activeCanvasId = "canvas1";
+
+      component.componentWillLoad();
+      component.componentDidLoad();
+
+      // Spy on console.warn
+      const warnSpy = jest.spyOn(console, "warn").mockImplementation();
+
+      // Event with empty string componentType
+      const event = new CustomEvent("palette-item-click", {
+        detail: { componentType: "" },
+        bubbles: true,
+        composed: true,
+      });
+
+      await (component as any).handlePaletteItemClick(event);
+
+      // Should be treated as missing type
+      expect(warnSpy).toHaveBeenCalled();
+      expect(gridState.canvases["canvas1"].items.length).toBe(0);
+
+      warnSpy.mockRestore();
+    });
+
+    it("should set component name from definition", async () => {
+      const component = new GridBuilder();
+      component.components = mockComponentDefinitions;
+
+      gridState.canvases = {
+        canvas1: {
+          items: [],
+          zIndexCounter: 0,
+        },
+      };
+      gridState.activeCanvasId = "canvas1";
+
+      component.componentWillLoad();
+      component.componentDidLoad();
+
+      const event = new CustomEvent("palette-item-click", {
+        detail: { componentType: "header" },
+        bubbles: true,
+        composed: true,
+      });
+
+      await (component as any).handlePaletteItemClick(event);
+
+      // Verify name matches definition
+      const addedItem = gridState.canvases["canvas1"].items[0];
+      const headerDef = mockComponentDefinitions.find((c) => c.type === "header");
+      expect(addedItem.name).toBe(headerDef.name);
+    });
+
+    it("should initialize component config as empty object", async () => {
+      const component = new GridBuilder();
+      component.components = mockComponentDefinitions;
+
+      gridState.canvases = {
+        canvas1: {
+          items: [],
+          zIndexCounter: 0,
+        },
+      };
+      gridState.activeCanvasId = "canvas1";
+
+      component.componentWillLoad();
+      component.componentDidLoad();
+
+      const event = new CustomEvent("palette-item-click", {
+        detail: { componentType: "header" },
+        bubbles: true,
+        composed: true,
+      });
+
+      await (component as any).handlePaletteItemClick(event);
+
+      // Verify config is initialized as empty object
+      const addedItem = gridState.canvases["canvas1"].items[0];
+      expect(addedItem.config).toEqual({});
+      expect(typeof addedItem.config).toBe("object");
+    });
+
+    it("should use fallback size when defaultSize not in definition", async () => {
+      const component = new GridBuilder();
+
+      // Component with no defaultSize
+      const componentWithoutSize: ComponentDefinition = {
+        type: "no-size",
+        name: "No Size",
+        icon: "❓",
+        render: () => <div>No size</div>,
+        renderDragClone: () => <div>Clone</div>,
+      };
+
+      component.components = [componentWithoutSize];
+
+      gridState.canvases = {
+        canvas1: {
+          items: [],
+          zIndexCounter: 0,
+        },
+      };
+      gridState.activeCanvasId = "canvas1";
+
+      component.componentWillLoad();
+      component.componentDidLoad();
+
+      const event = new CustomEvent("palette-item-click", {
+        detail: { componentType: "no-size" },
+        bubbles: true,
+        composed: true,
+      });
+
+      await (component as any).handlePaletteItemClick(event);
+
+      // Verify fallback size is used (10×6)
+      const addedItem = gridState.canvases["canvas1"].items[0];
+      expect(addedItem.layouts.desktop.width).toBe(10);
+      expect(addedItem.layouts.desktop.height).toBe(6);
     });
   });
 });

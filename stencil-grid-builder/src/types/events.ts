@@ -672,6 +672,86 @@ export interface ConfigsBatchChangedEvent {
 }
 
 /**
+ * Component Moved Event
+ * ======================
+ *
+ * Fired when a component is moved from one canvas to another (cross-canvas move).
+ *
+ * **Triggers**:
+ * - User drags component across canvas boundaries
+ * - Programmatic cross-canvas move
+ *
+ * **Use cases**:
+ * - Track cross-canvas moves (analytics)
+ * - Validate cross-canvas placement
+ * - Update layout structure
+ * - Sync with external systems
+ *
+ * @example
+ * ```typescript
+ * api.on('componentMoved', (event) => {
+ *   console.log(`Moved ${event.item.type} from ${event.sourceCanvasId} to ${event.targetCanvasId}`);
+ *   analytics.track('Component Moved Between Canvases', {
+ *     itemId: event.itemId,
+ *     sourceCanvas: event.sourceCanvasId,
+ *     targetCanvas: event.targetCanvasId
+ *   });
+ * });
+ * ```
+ */
+export interface ComponentMovedEvent {
+  /** ID of moved component */
+  itemId: string;
+
+  /** Canvas ID where component came from */
+  sourceCanvasId: string;
+
+  /** Canvas ID where component was moved to */
+  targetCanvasId: string;
+
+  /** Component state after move */
+  item: GridItem;
+
+  /** Final position in target canvas (grid units) */
+  position: { x: number; y: number };
+}
+
+/**
+ * Canvas Activated Event
+ * =======================
+ *
+ * Fired when a canvas becomes the active canvas (receives focus/interaction).
+ *
+ * **Triggers**:
+ * - User clicks on canvas
+ * - User drops component into canvas
+ * - Programmatic activation via API.setActiveCanvas()
+ * - Cross-canvas component move
+ *
+ * **Use cases**:
+ * - Track canvas focus (analytics)
+ * - Highlight active canvas in UI
+ * - Enable canvas-specific actions
+ * - Update contextual UI panels
+ *
+ * @example
+ * ```typescript
+ * api.on('canvasActivated', (event) => {
+ *   console.log(`Canvas ${event.canvasId} is now active`);
+ *
+ *   // Highlight active canvas
+ *   document.querySelectorAll('.canvas').forEach(canvas => {
+ *     canvas.classList.toggle('active', canvas.id === event.canvasId);
+ *   });
+ * });
+ * ```
+ */
+export interface CanvasActivatedEvent {
+  /** Canvas ID that was activated */
+  canvasId: string;
+}
+
+/**
  * Event Map
  * ==========
  *
@@ -693,12 +773,14 @@ export interface EventMap {
   componentResized: ComponentResizedEvent;
   componentSelected: ComponentSelectedEvent;
   componentDeselected: ComponentDeselectedEvent;
+  componentMoved: ComponentMovedEvent;
   configChanged: ConfigChangedEvent;
   dragStart: DragStartEvent;
   dragEnd: DragEndEvent;
   resizeStart: ResizeStartEvent;
   resizeEnd: ResizeEndEvent;
   viewportChanged: ViewportChangedEvent;
+  canvasActivated: CanvasActivatedEvent;
   undo: UndoEvent;
   redo: RedoEvent;
   componentsBatchAdded: ComponentsBatchAddedEvent;

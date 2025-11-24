@@ -741,7 +741,7 @@ export class GridItemWrapper {
 
     // ARIA description text for screen readers (only in builder mode)
     const ariaDescription = !this.viewerMode
-      ? "Use arrow keys to nudge position, drag header to move, resize handles to change size, or press Delete to remove"
+      ? "Use arrow keys to nudge position, drag header to move, resize handles to change size, Delete to remove. Drag components from palette to add new items."
       : null;
 
     // Check if custom item wrapper is provided

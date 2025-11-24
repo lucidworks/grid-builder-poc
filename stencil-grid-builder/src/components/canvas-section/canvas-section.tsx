@@ -85,6 +85,7 @@ import {
 import { calculateCanvasHeight } from "../../utils/canvas-height-calculator";
 import { GridConfig } from "../../types/grid-config";
 import { ComponentDefinition } from "../../types/component-definition";
+import { DeletionHook } from "../../types/deletion-hook";
 
 /**
  * CanvasSection Component
@@ -204,7 +205,7 @@ export class CanvasSection {
    * **Purpose**: Pass through to grid-item-wrapper for deletion interception
    * **Optional**: If not provided, components delete immediately
    */
-  @Prop() onBeforeDelete?: (context: any) => boolean | Promise<boolean>;
+  @Prop() onBeforeDelete?: DeletionHook;
 
   /**
    * Canvas state (reactive)

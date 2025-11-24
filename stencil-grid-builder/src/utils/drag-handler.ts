@@ -423,7 +423,7 @@ export class DragHandler {
     // Check if auto-scroll is enabled (default: true)
     const enableAutoScroll = this.config?.enableAutoScroll ?? true;
 
-    const config: any = {
+    const config: Record<string, any> = {
       inertia: false,
       // Auto-scroll configuration
       autoScroll: enableAutoScroll

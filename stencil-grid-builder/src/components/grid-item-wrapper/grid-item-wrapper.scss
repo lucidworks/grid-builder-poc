@@ -390,3 +390,26 @@
 .grid-item.resize-height-disabled .resize-handle.s {
   display: none;
 }
+
+/* ========================================
+ * Click-to-Add Component Animation
+ * ========================================
+ * Fade + scale animation when components are added via click-to-add feature.
+ * Provides visual feedback that component has been successfully added.
+ */
+
+/* Component Fade + Scale Animation */
+@keyframes component-animate-in {
+  0% {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.component-animate-in {
+  animation: component-animate-in 400ms ease-out;
+}

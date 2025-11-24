@@ -65,6 +65,12 @@ import { UIComponentOverrides } from "../../types/ui-overrides";
 import { GridBuilderAPI } from "../../types/api";
 import { DeletionHook } from "../../types/deletion-hook";
 import { GridExport } from "../../types/grid-export";
+import {
+  ComponentAddedEvent,
+  ComponentDeletedEvent,
+  ComponentMovedEvent,
+  CanvasActivatedEvent,
+} from "../../types/events";
 
 // Service imports
 import {
@@ -395,8 +401,7 @@ export class GridBuilder {
    * // Access via ref: <grid-builder ref={el => this.api = el?.api}></grid-builder>
    * ```
    */
-  @Prop() apiRef?: { target?: any; key?: string } | null = {
-    target: undefined,
+  @Prop() apiRef?: { key?: string } | null = {
     key: "gridBuilderAPI",
   };
 
@@ -502,6 +507,164 @@ export class GridBuilder {
       // Use API method instead of direct deleteItemsBatch to enable undo/redo
       this.api?.deleteComponent(itemId);
     }
+  }
+
+  /**
+   * Handle palette item click (click-to-add feature)
+   *
+   * **Triggered**: User clicks palette item (emitted by component-palette)
+   * **Purpose**: Add component to active canvas using smart positioning
+   *
+   * ## Implementation Steps
+   *
+   * 1. **Check if enabled**: Only proceed if `config.enableClickToAdd !== false`
+   * 2. **Get active canvas**: Use gridState.activeCanvasId or auto-select first
+   * 3. **Find component definition**: Look up in component registry
+   * 4. **Find free space**: Use findFreeSpace() for collision-free placement
+   * 5. **Create grid item**: Generate ID, build item object with found position
+   * 6. **Add to state**: Use api.addComponent() for undo/redo support
+   * 7. **Visual feedback**: Highlight canvas, show position indicator, animate component
+   * 8. **Emit event**: componentAdded event for plugins
+   *
+   * ## Edge Cases Handled
+   *
+   * - **No active canvas**: Auto-selects first canvas
+   * - **No canvases exist**: Logs warning, exits gracefully
+   * - **Component definition not found**: Logs error, exits
+   * - **No free space**: Places at canvas bottom (auto-expands canvas)
+   *
+   * ## Visual Feedback Sequence
+   *
+   * 1. **Canvas highlight** (600ms pulse on border)
+   * 2. **Position indicator** (800ms ghost outline at target position)
+   * 3. **Component animation** (400ms fade + scale when added)
+   *
+   * **Example flow**:
+   * ```
+   * User clicks "Header" in palette
+   * → Canvas border pulses
+   * → Ghost outline shows where header will appear
+   * → Header component fades/scales in at position
+   * → Canvas height adjusts if needed
+   * ```
+   *
+   * @param event - Custom event with { componentType: string }
+   * @private
+   */
+  @Listen("palette-item-click")
+  async handlePaletteItemClick(event: CustomEvent<{ componentType: string }>) {
+    debug.log("➕ @Listen(palette-item-click) in grid-builder", {
+      detail: event.detail,
+    });
+
+    // Check if click-to-add is enabled (default: true)
+    const enableClickToAdd = this.config?.enableClickToAdd ?? true;
+    if (!enableClickToAdd) {
+      debug.log("  ⏭️ Click-to-add disabled via config");
+      return;
+    }
+
+    const { componentType } = event.detail;
+    if (!componentType) {
+      console.warn("handlePaletteItemClick: Component type not provided");
+      return;
+    }
+
+    // Get or auto-select active canvas
+    let canvasId = gridState.activeCanvasId;
+
+    if (!canvasId) {
+      // Auto-select first canvas
+      const canvasIds = Object.keys(gridState.canvases);
+      if (canvasIds.length === 0) {
+        console.warn("handlePaletteItemClick: No canvases available");
+        return;
+      }
+      canvasId = canvasIds[0];
+      setActiveCanvas(canvasId);
+      debug.log(`  🎯 Auto-selected first canvas: ${canvasId}`);
+    }
+
+    // Get component definition
+    const definition = this.componentRegistry.get(componentType);
+    if (!definition) {
+      console.error(
+        `handlePaletteItemClick: Component definition not found for type: ${componentType}`,
+      );
+      return;
+    }
+
+    // Get default size from definition (or use fallback)
+    const defaultSize = definition.defaultSize || { width: 10, height: 6 };
+
+    // Import space-finder utility (dynamic import to avoid circular dependency)
+    const { findFreeSpace } = await import("../../utils/space-finder");
+
+    // Find free space on canvas
+    const position = findFreeSpace(
+      canvasId,
+      defaultSize.width,
+      defaultSize.height,
+    );
+
+    if (!position) {
+      console.error(`handlePaletteItemClick: Could not find space on canvas ${canvasId}`);
+      return;
+    }
+
+    debug.log("  📍 Found free space:", position);
+
+    // Import visual feedback utilities (dynamic import)
+    const visualFeedback = await import("../../utils/visual-feedback");
+
+    // Show visual feedback (canvas highlight + position indicator)
+    visualFeedback.highlightCanvas(canvasId);
+    visualFeedback.showPositionIndicator(
+      canvasId,
+      position.x,
+      position.y,
+      defaultSize.width,
+      defaultSize.height,
+      this.config,
+    );
+
+    debug.log("  ➕ Adding component via API");
+
+    // Add via API for undo/redo support (correct signature)
+    const newItemId = this.api?.addComponent(
+      canvasId,
+      componentType,
+      {
+        x: position.x,
+        y: position.y,
+        width: defaultSize.width,
+        height: defaultSize.height,
+      },
+      {} // Empty config object
+    );
+
+    if (!newItemId) {
+      console.error("Failed to add component to canvas");
+      return;
+    }
+
+    // Animate component in (after short delay to ensure DOM update)
+    setTimeout(() => {
+      visualFeedback.animateComponentIn(newItemId);
+    }, 100);
+
+    // Set as selected (focus on newly added item)
+    gridState.selectedItemId = newItemId;
+    gridState.selectedCanvasId = canvasId;
+
+    // Emit componentAdded event for plugins
+    eventManager.emit("componentAdded", {
+      itemId: newItemId,
+      canvasId: canvasId,
+      componentType: componentType,
+    });
+
+    debug.log("  ✅ Component added successfully");
   }
 
   componentWillLoad() {
@@ -1113,11 +1276,15 @@ export class GridBuilder {
           return null;
         }
 
+        // Look up component definition to get proper name
+        const definition = this.componentRegistry.get(componentType);
+        const componentName = definition?.name || componentType;
+
         // Create new item
         const newItem = {
           id: generateItemId(),
           canvasId,
-          name: componentType,
+          name: componentName,
           type: componentType,
           zIndex: ++canvas.zIndexCounter,
           layouts: {
@@ -1149,7 +1316,7 @@ export class GridBuilder {
       deleteComponent: async (itemId: string) => {
         // Find item and canvas across all canvases
         let targetCanvasId: string | null = null;
-        let targetItem: any = null;
+        let targetItem: GridItem | null = null;
 
         for (const canvasId in gridState.canvases) {
           const canvas = gridState.canvases[canvasId];
@@ -1258,22 +1425,28 @@ export class GridBuilder {
       ) => {
         // Convert API format to state-manager format
         const partialItems = components.map(
-          ({ canvasId, type, position, config }) => ({
-            canvasId,
-            type,
-            name: type,
-            layouts: {
-              desktop: { ...position },
-              mobile: {
-                x: 0,
-                y: 0,
-                width: 50,
-                height: position.height,
-                customized: false,
+          ({ canvasId, type, position, config }) => {
+            // Look up component definition to get proper name
+            const definition = this.componentRegistry.get(type);
+            const componentName = definition?.name || type;
+
+            return {
+              canvasId,
+              type,
+              name: componentName,
+              layouts: {
+                desktop: { ...position },
+                mobile: {
+                  x: 0,
+                  y: 0,
+                  width: 50,
+                  height: position.height,
+                  customized: false,
+                },
               },
-            },
-            config: config || {},
-          }),
+              config: config || {},
+            };
+          },
         );
 
         // Use state-manager batch operation (single state update)
@@ -1548,19 +1721,19 @@ export class GridBuilder {
    */
   private setupScreenReaderAnnouncements = () => {
     // Component added
-    eventManager.on("componentAdded", (data: any) => {
+    eventManager.on("componentAdded", (data: ComponentAddedEvent) => {
       const definition = this.componentRegistry.get(data.item.type);
       const componentName = definition?.name || data.item.type;
       this.announce(`${componentName} component added to canvas`);
     });
 
     // Component deleted
-    eventManager.on("componentDeleted", (data: any) => {
+    eventManager.on("componentDeleted", (data: ComponentDeletedEvent) => {
       this.announce(`Component deleted`);
     });
 
     // Component moved (cross-canvas)
-    eventManager.on("componentMoved", (data: any) => {
+    eventManager.on("componentMoved", (data: ComponentMovedEvent) => {
       this.announce(`Component moved to new canvas`);
     });
 
@@ -1580,7 +1753,7 @@ export class GridBuilder {
     });
 
     // Canvas activated
-    eventManager.on("canvasActivated", (data: any) => {
+    eventManager.on("canvasActivated", (data: CanvasActivatedEvent) => {
       const metadata = this.canvasMetadata?.[data.canvasId];
       const canvasTitle = metadata?.title || data.canvasId;
       this.announce(`${canvasTitle} canvas activated`);

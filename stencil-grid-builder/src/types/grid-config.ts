@@ -500,4 +500,76 @@ export interface GridConfig {
    * @default 20
    */
   canvasMinHeight?: number;
+
+  /**
+   * Enable click-to-add components from palette
+   *
+   * **What it does**: Allows adding components by clicking palette items (alternative to drag-and-drop)
+   * **Why**: Provides faster workflow for power users and better accessibility for users who can't drag
+   *
+   * **Default**: true (enabled for better UX)
+   *
+   * **How it works** (when enabled):
+   * - Click on palette item → component added to active canvas
+   * - Automatically finds free space using smart positioning algorithm
+   * - Falls back to bottom of canvas if no free space found
+   * - Canvas auto-expands to fit new component if needed
+   * - Visual feedback: canvas highlight + component animation + position indicator
+   *
+   * **Smart positioning strategy** (Hybrid algorithm):
+   * 1. **Empty canvas** → Center horizontally at (x = (50 - width) / 2, y = 2)
+   * 2. **Try top-left** → (2, 2) if no collision
+   * 3. **Grid scan** → Top-to-bottom, left-to-right for first free space
+   * 4. **Fallback** → Place at canvas bottom (x = 0, y = bottomY + 2)
+   *
+   * **Edge cases handled**:
+   * - No active canvas → Auto-selects first canvas
+   * - Component too wide → Respects boundary constraints
+   * - Canvas full → Places at bottom and auto-expands canvas height
+   *
+   * **Accessibility benefits**:
+   * - Keyboard-friendly alternative to drag-and-drop
+   * - Works with screen readers (ARIA announcements)
+   * - No mouse precision required
+   * - Faster for power users
+   *
+   * **Use cases**:
+   * - **Power users**: Click-to-add is faster than drag-and-drop for repeated operations
+   * - **Accessibility**: Better for keyboard navigation and screen readers
+   * - **Touch devices**: Easier than drag-and-drop on mobile/tablet
+   * - **Workflow apps**: Streamlined component addition for rapid prototyping
+   *
+   * **When to disable** (set to false):
+   * - Drag-only workflows (force users to drag for deliberate placement)
+   * - Custom palette implementations (implementing own click handlers)
+   * - Simplified UI (fewer interaction modes)
+   * - Prevent accidental additions (require drag for intentional action)
+   *
+   * **Example - Disable click-to-add (drag-only)**:
+   * ```typescript
+   * const dragOnlyConfig: GridConfig = {
+   *   enableClickToAdd: false  // Only allow drag-and-drop
+   * };
+   * ```
+   *
+   * **Example - Enable with custom settings**:
+   * ```typescript
+   * const clickToAddConfig: GridConfig = {
+   *   enableClickToAdd: true,        // Allow click-to-add
+   *   enableAnimations: true,        // Smooth animations for visual feedback
+   *   animationDuration: 200,        // Slightly longer for click feedback
+   *   canvasBottomMargin: 10         // Extra space for new items
+   * };
+   * ```
+   *
+   * **Integration with drag-and-drop**:
+   * - Both interaction modes coexist (users can choose)
+   * - Drag-and-drop: Precise placement control
+   * - Click-to-add: Automatic placement, faster workflow
+   * - Both use same underlying api.addComponent()
+   * - Both emit same events (componentAdded, canvasActivated)
+   *
+   * @default true
+   */
+  enableClickToAdd?: boolean;
 }

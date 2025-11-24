@@ -60,3 +60,50 @@
 .canvas-header:has(+ canvas-section .grid-container.active) .canvas-title {
   opacity: 1;
 }
+
+/* ========================================
+ * Click-to-Add Visual Feedback Animations
+ * ========================================
+ * Animations for click-to-add feature providing visual feedback
+ * when users click palette items to add components.
+ */
+
+/* Canvas Highlight Animation (Pulse on Border) */
+@keyframes canvas-highlight-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 var(--primary-color, #f59e0b);
+    opacity: 1;
+  }
+  50% {
+    box-shadow: 0 0 0 4px var(--primary-color, #f59e0b);
+    opacity: 0.7;
+  }
+}
+
+.canvas-highlight {
+  animation: canvas-highlight-pulse 600ms ease-out;
+}
+
+/* Position Indicator (Ghost Outline) */
+@keyframes position-indicator-fade {
+  0% {
+    opacity: 0.3;
+  }
+  70% {
+    opacity: 0.3;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+.position-indicator {
+  position: absolute;
+  border: 2px dashed var(--primary-color, #007bff);
+  background: var(--primary-color, #007bff);
+  opacity: 0.3;
+  pointer-events: none;
+  z-index: 9999;
+  animation: position-indicator-fade 800ms ease-out forwards;
+}

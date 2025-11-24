@@ -641,4 +641,224 @@ describe("grid-item-wrapper - Active Canvas", () => {
       expect(content.querySelector(".component-placeholder")).toBeFalsy();
     });
   });
+
+  /**
+   * ARIA Accessibility Tests
+   * =========================
+   *
+   * Tests for ARIA-describedby implementation providing keyboard hints to screen readers.
+   *
+   * **Features Tested**:
+   * - ARIA description div is rendered in builder mode
+   * - Description has correct ID format
+   * - Grid item links to description via aria-describedby
+   * - Description text provides helpful keyboard hints
+   * - Description is visually hidden with .sr-only class
+   * - Description is NOT rendered in viewer mode
+   *
+   * **WCAG Compliance**: 1.3.1 Info and Relationships (Level A), 4.1.2 Name, Role, Value (Level A)
+   */
+  describe("ARIA Accessibility", () => {
+    it("should render ARIA description in builder mode", async () => {
+      const page = await newSpecPage({
+        components: [GridItemWrapper],
+        template: () => (
+          <grid-item-wrapper
+            item={mockItem}
+            componentRegistry={mockComponentRegistry}
+            viewerMode={false}
+          />
+        ),
+      });
+
+      await page.waitForChanges();
+
+      // Find ARIA description element
+      const descriptionId = `${mockItem.id}-description`;
+      const descriptionElement = page.root.querySelector(`#${descriptionId}`);
+
+      // Verify description is rendered
+      expect(descriptionElement).toBeTruthy();
+    });
+
+    it("should have correct description ID format", async () => {
+      const page = await newSpecPage({
+        components: [GridItemWrapper],
+        template: () => (
+          <grid-item-wrapper
+            item={mockItem}
+            componentRegistry={mockComponentRegistry}
+            viewerMode={false}
+          />
+        ),
+      });
+
+      await page.waitForChanges();
+
+      // Verify description ID follows pattern: {itemId}-description
+      const expectedId = `${mockItem.id}-description`;
+      const descriptionElement = page.root.querySelector(`#${expectedId}`);
+
+      expect(descriptionElement).toBeTruthy();
+      expect(descriptionElement.id).toBe(expectedId);
+    });
+
+    it("should link grid item to description via aria-describedby", async () => {
+      const page = await newSpecPage({
+        components: [GridItemWrapper],
+        template: () => (
+          <grid-item-wrapper
+            item={mockItem}
+            componentRegistry={mockComponentRegistry}
+            viewerMode={false}
+          />
+        ),
+      });
+
+      await page.waitForChanges();
+
+      // Find grid item
+      const gridItem = page.root.querySelector(".grid-item");
+
+      // Verify aria-describedby points to description
+      const expectedId = `${mockItem.id}-description`;
+      expect(gridItem.getAttribute("aria-describedby")).toBe(expectedId);
+    });
+
+    it("should contain helpful keyboard navigation hints", async () => {
+      const page = await newSpecPage({
+        components: [GridItemWrapper],
+        template: () => (
+          <grid-item-wrapper
+            item={mockItem}
+            componentRegistry={mockComponentRegistry}
+            viewerMode={false}
+          />
+        ),
+      });
+
+      await page.waitForChanges();
+
+      // Find ARIA description
+      const descriptionId = `${mockItem.id}-description`;
+      const descriptionElement = page.root.querySelector(`#${descriptionId}`);
+
+      // Verify description text provides keyboard hints
+      const expectedText =
+        "Use arrow keys to nudge position, drag header to move, resize handles to change size, Delete to remove. Drag components from palette to add new items.";
+      expect(descriptionElement.textContent).toBe(expectedText);
+    });
+
+    it("should have sr-only class for visual hiding", async () => {
+      const page = await newSpecPage({
+        components: [GridItemWrapper],
+        template: () => (
+          <grid-item-wrapper
+            item={mockItem}
+            componentRegistry={mockComponentRegistry}
+            viewerMode={false}
+          />
+        ),
+      });
+
+      await page.waitForChanges();
+
+      // Find ARIA description
+      const descriptionId = `${mockItem.id}-description`;
+      const descriptionElement = page.root.querySelector(`#${descriptionId}`);
+
+      // Verify sr-only class is applied
+      expect(descriptionElement.classList.contains("sr-only")).toBe(true);
+    });
+
+    it("should NOT render ARIA description in viewer mode", async () => {
+      const page = await newSpecPage({
+        components: [GridItemWrapper],
+        template: () => (
+          <grid-item-wrapper
+            item={mockItem}
+            componentRegistry={mockComponentRegistry}
+            viewerMode={true}
+          />
+        ),
+      });
+
+      await page.waitForChanges();
+
+      // Find ARIA description element
+      const descriptionId = `${mockItem.id}-description`;
+      const descriptionElement = page.root.querySelector(`#${descriptionId}`);
+
+      // Verify description is NOT rendered in viewer mode
+      expect(descriptionElement).toBeFalsy();
+    });
+
+    it("should NOT have aria-describedby in viewer mode", async () => {
+      const page = await newSpecPage({
+        components: [GridItemWrapper],
+        template: () => (
+          <grid-item-wrapper
+            item={mockItem}
+            componentRegistry={mockComponentRegistry}
+            viewerMode={true}
+          />
+        ),
+      });
+
+      await page.waitForChanges();
+
+      // Find grid item
+      const gridItem = page.root.querySelector(".grid-item");
+
+      // Verify aria-describedby is not present in viewer mode
+      expect(gridItem.hasAttribute("aria-describedby")).toBe(false);
+    });
+
+    it("should render description for custom wrapper components", async () => {
+      // Create a mock component with custom wrapper
+      const customWrapperRegistry = new Map([
+        [
+          "header",
+          {
+            type: "header",
+            name: "Header",
+            icon: "📄",
+            defaultSize: { width: 20, height: 6 },
+            minSize: { width: 10, height: 3 },
+            render: () => <div>Header Component</div>,
+            renderItemWrapper: ({ contentSlotId, itemId }) => (
+              <div class="custom-wrapper">
+                <div id={contentSlotId}>Content Slot</div>
+              </div>
+            ),
+          },
+        ],
+      ]);
+
+      const page = await newSpecPage({
+        components: [GridItemWrapper],
+        template: () => (
+          <grid-item-wrapper
+            item={mockItem}
+            componentRegistry={customWrapperRegistry}
+            viewerMode={false}
+          />
+        ),
+      });
+
+      await page.waitForChanges();
+
+      // Find ARIA description element
+      const descriptionId = `${mockItem.id}-description`;
+      const descriptionElement = page.root.querySelector(`#${descriptionId}`);
+
+      // Verify description is rendered even with custom wrapper
+      expect(descriptionElement).toBeTruthy();
+      expect(descriptionElement.classList.contains("sr-only")).toBe(true);
+
+      // Verify grid item links to description
+      const gridItem = page.root.querySelector(".grid-item");
+      expect(gridItem.getAttribute("aria-describedby")).toBe(descriptionId);
+    });
+  });
 });
