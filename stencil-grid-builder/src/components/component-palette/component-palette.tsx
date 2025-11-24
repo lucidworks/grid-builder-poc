@@ -254,6 +254,41 @@ export class ComponentPalette {
   @Prop() showHeader?: boolean = true;
 
   /**
+   * Custom label for this palette instance
+   *
+   * **Optional prop**: Provides a descriptive label for this specific palette
+   * **Default**: "Component palette"
+   * **Used for**: ARIA label on toolbar container
+   *
+   * **Use case - Multiple palettes**:
+   * When multiple component palettes exist on the same page (e.g., categorized palettes),
+   * provide unique labels for screen reader users:
+   *
+   * ```typescript
+   * <component-palette
+   *   components={contentComponents}
+   *   paletteLabel="Content components"
+   * />
+   * <component-palette
+   *   components={mediaComponents}
+   *   paletteLabel="Media components"
+   * />
+   * <component-palette
+   *   components={interactiveComponents}
+   *   paletteLabel="Interactive components"
+   * />
+   * ```
+   *
+   * **Accessibility benefit**:
+   * - Screen readers announce: "Content components, toolbar"
+   * - Users can navigate between palettes by their distinct labels
+   * - Each palette has unique ARIA IDs to avoid conflicts
+   *
+   * @default "Component palette"
+   */
+  @Prop() paletteLabel?: string = "Component palette";
+
+  /**
    * Currently dragging component type
    *
    * **Internal state**: Tracks which palette item is being dragged
@@ -265,6 +300,35 @@ export class ComponentPalette {
    * - string: The component type of the item being dragged
    */
   @State() draggingItemType: string | null = null;
+
+  /**
+   * Unique ID for this palette instance
+   *
+   * **Internal state**: Ensures unique ARIA IDs when multiple palettes exist
+   * **Generated**: Once on component load (timestamp + random)
+   * **Used for**: Creating unique `id` attributes for help text and aria-describedby
+   *
+   * **Why needed**:
+   * - Multiple palettes on same page would create duplicate IDs (invalid HTML)
+   * - Each palette needs unique `palette-help-{id}` for aria-describedby
+   * - Prevents ARIA reference conflicts
+   *
+   * **Example HTML output**:
+   * ```html
+   * <!-- Palette 1 -->
+   * <div role="toolbar" aria-label="Content components">
+   *   <div id="palette-help-1234567890" class="sr-only">...</div>
+   *   <div aria-describedby="palette-help-1234567890">...</div>
+   * </div>
+   *
+   * <!-- Palette 2 -->
+   * <div role="toolbar" aria-label="Media components">
+   *   <div id="palette-help-0987654321" class="sr-only">...</div>
+   *   <div aria-describedby="palette-help-0987654321">...</div>
+   * </div>
+   * ```
+   */
+  @State() private paletteId: string = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
   /**
    * Watch for components prop changes
@@ -371,18 +435,28 @@ export class ComponentPalette {
       "palette-chromeless": !this.showHeader,
     };
 
+    // Generate unique ID for this palette instance's help text
+    const helpTextId = `palette-help-${this.paletteId}`;
+
     if (!this.components || this.components.length === 0) {
       return (
         <div class={paletteClasses}>
           {this.showHeader && <h2>Components</h2>}
-          <p class="palette-empty">No components available</p>
+          <p class="palette-empty" role="status" aria-live="polite">No components available</p>
         </div>
       );
     }
 
     return (
-      <div class={paletteClasses} role="region" aria-label="Component palette">
-        {this.showHeader && <h2>Components</h2>}
+      <div class={paletteClasses} role="toolbar" aria-label={this.paletteLabel} aria-orientation="vertical">
+        {/* Screen reader help text with unique ID per instance */}
+        <div id={helpTextId} class="sr-only">
+          {this.config?.enableClickToAdd !== false
+            ? "Click or press Enter/Space to add component to active canvas, or drag to position on any canvas"
+            : "Drag component to canvas to add"}
+        </div>
+
+        {this.showHeader && <h2 id="palette-heading">Components</h2>}
 
         {this.components.map((component) => {
           // Class binding with reactive state
@@ -392,13 +466,23 @@ export class ComponentPalette {
             "dragging-from-palette": this.draggingItemType === component.type,
           };
 
+          // Improved aria-label with interaction methods
+          const ariaLabel = this.config?.enableClickToAdd !== false
+            ? `${component.name} component. Click to add to active canvas or drag to position`
+            : `${component.name} component. Drag to canvas`;
+
           return (
             <div
               class={itemClasses}
               data-component-type={component.type}
               key={component.type}
               role="button"
-              aria-label={`Add ${component.name} component to canvas`}
+              tabindex={0}
+              aria-label={ariaLabel}
+              aria-describedby={helpTextId}
+              aria-pressed={this.draggingItemType === component.type ? "true" : "false"}
+              onClick={(e) => this.handlePaletteItemClick(e)}
+              onKeyDown={(e) => this.handlePaletteItemKeyDown(e)}
             >
               {component.renderPaletteItem
                 ? (() => {
@@ -754,6 +838,125 @@ export class ComponentPalette {
       // Mark as initialized
       (element as any)._dragInitialized = true;
     });
+  };
+
+  /**
+   * Handle palette item click (for click-to-add feature)
+   *
+   * **Triggered**: User clicks on palette item
+   * **Purpose**: Emit event for grid-builder to add component to active canvas
+   *
+   * ## Implementation
+   *
+   * 1. **Check if enabled**: Only proceed if `config.enableClickToAdd !== false`
+   * 2. **Prevent drag conflict**: Don't trigger if currently dragging
+   * 3. **Get component type**: From `data-component-type` attribute
+   * 4. **Dispatch event**: Bubble up to grid-builder
+   *
+   * ## Event Details
+   *
+   * **Event name**: `palette-item-click`
+   * **Event detail**: `{ componentType: string }`
+   * **Bubbles**: true (so grid-builder can listen)
+   * **Composed**: true (crosses shadow DOM boundaries)
+   *
+   * ## Accessibility
+   *
+   * **Keyboard support**: Enter/Space keys also trigger (via handlePaletteItemKeyDown)
+   * **Screen reader**: Uses aria-label to announce action
+   * **Focus**: Palette items are focusable (tabindex=0)
+   *
+   * **Example event listener** (in grid-builder):
+   * ```typescript
+   * @Listen('palette-item-click')
+   * handlePaletteClick(event: CustomEvent<{ componentType: string }>) {
+   *   const { componentType } = event.detail;
+   *   this.addComponentToActiveCanvas(componentType);
+   * }
+   * ```
+   *
+   * @param event - Mouse click event
+   * @private
+   */
+  private handlePaletteItemClick = (event: MouseEvent) => {
+    // Check if click-to-add is enabled (default: true)
+    const enableClickToAdd = this.config?.enableClickToAdd ?? true;
+    if (!enableClickToAdd) {
+      return;
+    }
+
+    // Don't trigger click if currently dragging
+    if (this.draggingItemType) {
+      return;
+    }
+
+    // Get the palette item element (in case event.target is a nested child)
+    const paletteItem = (event.target as HTMLElement).closest('.palette-item') as HTMLElement;
+    if (!paletteItem) {
+      return;
+    }
+
+    // Get component type from data attribute
+    const componentType = paletteItem.getAttribute('data-component-type');
+    if (!componentType) {
+      console.warn('handlePaletteItemClick: Component type not found');
+      return;
+    }
+
+    // Dispatch event for grid-builder to handle
+    const clickEvent = new CustomEvent('palette-item-click', {
+      detail: { componentType },
+      bubbles: true,
+      composed: true,
+    });
+    this.hostElement.dispatchEvent(clickEvent);
+  };
+
+  /**
+   * Handle palette item keyboard interaction (for accessibility)
+   *
+   * **Triggered**: User presses key on focused palette item
+   * **Purpose**: Enable keyboard users to add components via Enter/Space
+   *
+   * ## Implementation
+   *
+   * **Supported keys**:
+   * - Enter: Add component (same as click)
+   * - Space: Add component (same as click)
+   *
+   * **Behavior**:
+   * - Prevents default scrolling on Space
+   * - Calls handlePaletteItemClick for consistency
+   *
+   * ## Accessibility Impact
+   *
+   * **Benefits**:
+   * - Keyboard-only users can add components
+   * - Screen reader users can navigate and activate palette items
+   * - Matches standard button behavior (Enter/Space activation)
+   *
+   * **WCAG Compliance**:
+   * - 2.1.1 Keyboard (Level A): All functionality available via keyboard
+   * - 2.1.3 Keyboard (No Exception) (Level AAA): Enhanced keyboard access
+   *
+   * @param event - Keyboard event
+   * @private
+   */
+  private handlePaletteItemKeyDown = (event: KeyboardEvent) => {
+    // Check if click-to-add is enabled (default: true)
+    const enableClickToAdd = this.config?.enableClickToAdd ?? true;
+    if (!enableClickToAdd) {
+      return;
+    }
+
+    // Handle Enter and Space keys
+    if (event.key === 'Enter' || event.key === ' ') {
+      // Prevent default Space behavior (page scroll)
+      event.preventDefault();
+
+      // Trigger the same handler as click
+      this.handlePaletteItemClick(event as any);
+    }
   };
 
   /**
