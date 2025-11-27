@@ -230,6 +230,11 @@
  */
 
 import { createStore } from "@stencil/store";
+import { createDebugLogger } from "../utils/debug";
+import {
+  validateGridItem,
+  validateItemUpdates,
+} from "../utils/validation";
 
 /**
  * Grid Item Interface
@@ -807,6 +812,11 @@ const initialState: GridState = {
 const { state, onChange, dispose } = createStore<GridState>(initialState);
 
 /**
+ * Debug logger for validation warnings
+ */
+const debug = createDebugLogger("state-manager");
+
+/**
  * Reset state to initial empty configuration
  *
  * **When to call**:
@@ -900,6 +910,16 @@ export function addItemToCanvas(canvasId: string, item: GridItem) {
   const canvas = state.canvases[canvasId];
   if (!canvas) {
     return;
+  }
+
+  // Validate item structure (dev-only, tree-shaken in production)
+  const validation = validateGridItem(item);
+  if (!validation.valid) {
+    debug.warn("⚠️ [addItemToCanvas] with validation issues:", {
+      itemId: item.id,
+      canvasId,
+      errors: validation.errors,
+    });
   }
 
   canvas.items.push(item);
@@ -1003,6 +1023,17 @@ export function updateItem(
     return;
   }
 
+  // Validate updates (dev-only, tree-shaken in production)
+  const validation = validateItemUpdates(updates);
+  if (!validation.valid) {
+    debug.warn("⚠️ [updateItem] with validation issues:", {
+      itemId,
+      canvasId,
+      updates,
+      errors: validation.errors,
+    });
+  }
+
   Object.assign(item, updates);
   state.canvases = { ...state.canvases }; // Trigger update
 }
@@ -1102,6 +1133,17 @@ export function moveItemToCanvas(
   const item = fromCanvas.items.find((i) => i.id === itemId);
   if (!item) {
     return;
+  }
+
+  // Validate item before moving (dev-only, tree-shaken in production)
+  const validation = validateGridItem(item);
+  if (!validation.valid) {
+    debug.warn("⚠️ [moveItemToCanvas] with validation issues:", {
+      itemId,
+      fromCanvasId,
+      toCanvasId,
+      errors: validation.errors,
+    });
   }
 
   // Remove from old canvas
@@ -1650,6 +1692,16 @@ export function addItemsBatch(items: Partial<GridItem>[]): string[] {
       zIndex: canvas.zIndexCounter++,
       config: itemData.config || {},
     };
+
+    // Validate item before adding (dev-only, tree-shaken in production)
+    const validation = validateGridItem(newItem);
+    if (!validation.valid) {
+      debug.warn("⚠️ [addItemsBatch] with validation issues:", {
+        itemId: id,
+        canvasId,
+        errors: validation.errors,
+      });
+    }
 
     canvas.items.push(newItem);
     itemIds.push(id);
