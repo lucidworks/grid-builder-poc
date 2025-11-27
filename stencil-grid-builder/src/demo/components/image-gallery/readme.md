@@ -7,9 +7,10 @@
 
 ## Properties
 
-| Property     | Attribute     | Description | Type     | Default |
-| ------------ | ------------- | ----------- | -------- | ------- |
-| `imageCount` | `image-count` |             | `number` | `6`     |
+| Property          | Attribute          | Description | Type     | Default     |
+| ----------------- | ------------------ | ----------- | -------- | ----------- |
+| `backgroundColor` | `background-color` |             | `string` | `"#f5f5f5"` |
+| `imageCount`      | `image-count`      |             | `number` | `6`         |
 
 
 ## Dependencies

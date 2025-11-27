@@ -219,7 +219,7 @@ export class GridViewer {
 
     // Validate unique component types
     if (this.componentRegistry.size !== this.components.length) {
-      console.warn("GridViewer: Duplicate component types detected");
+      debug.warn("GridViewer: Duplicate component types detected");
     }
 
     // Initialize local viewer state store

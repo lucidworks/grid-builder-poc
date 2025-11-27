@@ -67,7 +67,7 @@ Add a component programmatically
 ```typescript
 const builder = document.querySelector('grid-builder');
 const itemId = await builder.addComponent('canvas1', 'header', {
-  x: 10, y: 10, width: 30, height: 6
+x: 10, y: 10, width: 30, height: 6
 }, { title: 'My Header' });
 ```
 
@@ -165,9 +165,9 @@ Export current state to JSON-serializable format
 const builder = document.querySelector('grid-builder');
 const exportData = await builder.exportState();
 await fetch('/api/layouts', {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify(exportData)
+method: 'POST',
+headers: { 'Content-Type': 'application/json' },
+body: JSON.stringify(exportData)
 });
 ```
 
@@ -334,8 +334,8 @@ Update component configuration
 ```typescript
 const builder = document.querySelector('grid-builder');
 const success = await builder.updateConfig('item-123', {
-  title: 'Updated Title',
-  color: '#ff0000'
+title: 'Updated Title',
+color: '#ff0000'
 });
 ```
 

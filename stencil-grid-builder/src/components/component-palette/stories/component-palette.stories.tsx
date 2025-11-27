@@ -951,21 +951,29 @@ export const MultiPaletteWithUniqueLabels = () => {
     },
   ];
 
+  // Shared config for palettes (enables click-to-add)
+  const paletteConfig = {
+    enableClickToAdd: true,
+  };
+
   // Create palettes with unique labels
   const contentPalette = document.createElement("component-palette");
   contentPalette.components = contentComponents;
   contentPalette.paletteLabel = "Content components"; // Unique label
   contentPalette.showHeader = false;
+  contentPalette.config = paletteConfig;
 
   const mediaPalette = document.createElement("component-palette");
   mediaPalette.components = mediaComponents;
   mediaPalette.paletteLabel = "Media components"; // Unique label
   mediaPalette.showHeader = false;
+  mediaPalette.config = paletteConfig;
 
   const interactivePalette = document.createElement("component-palette");
   interactivePalette.components = interactiveComponents;
   interactivePalette.paletteLabel = "Interactive components"; // Unique label
   interactivePalette.showHeader = false;
+  interactivePalette.config = paletteConfig;
 
   // Create grid-builder with all components
   const allComponents = [
@@ -987,6 +995,12 @@ export const MultiPaletteWithUniqueLabels = () => {
   }, 100);
 
   return html`
+    <style>
+      /* Hide the grid-builder's default palette since we're using external palettes */
+      grid-builder .palette-area {
+        display: none !important;
+      }
+    </style>
     <div
       style="font-family: system-ui, -apple-system, sans-serif; background: #f0f2f5; height: 100vh; display: flex; flex-direction: column;"
     >
@@ -1212,6 +1226,115 @@ export const KeyboardAccessibilityDemo = () => {
             <strong>TalkBack (Android):</strong> Built-in mobile screen reader
           </li>
         </ul>
+      </div>
+    </div>
+  `;
+};
+
+/**
+ * Drag-Only Mode (Click-to-Add Disabled)
+ * =======================================
+ *
+ * Demonstrates the palette when click-to-add is disabled (drag-only mode).
+ * Shows how ARIA descriptions automatically adapt to available interaction methods.
+ */
+export const DragOnlyMode = () => {
+  // Reset state to clear any cached data from previous stories
+  reset();
+
+  const components = sampleComponents;
+
+  // Create grid-builder with click-to-add DISABLED
+  const gridBuilder = document.createElement("grid-builder");
+  gridBuilder.components = components;
+  gridBuilder.config = {
+    enableClickToAdd: false, // Disable click-to-add
+    enableVirtualRendering: false,
+    snapToGrid: true,
+    showGridLines: true,
+  };
+
+  // Initialize with empty canvas
+  setTimeout(() => {
+    if ((window as any).gridBuilderAPI) {
+      (window as any).gridBuilderAPI.addCanvas("demo-canvas");
+    }
+  }, 100);
+
+  return html`
+    <div
+      style="font-family: system-ui, -apple-system, sans-serif; background: #f0f2f5; height: 100vh; display: flex; flex-direction: column;"
+    >
+      <div
+        style="padding: 20px; background: white; box-shadow: 0 2px 4px rgba(0,0,0,0.1);"
+      >
+        <h2 style="margin: 0 0 10px 0; color: #333;">
+          Drag-Only Mode (Click-to-Add Disabled)
+        </h2>
+        <p style="color: #666; margin: 0;">
+          When <code>enableClickToAdd: false</code>, the palette switches to
+          drag-only mode and ARIA descriptions automatically update to reflect
+          this.
+        </p>
+      </div>
+
+      <div style="flex: 1; overflow: hidden;">${gridBuilder}</div>
+
+      <div
+        style="padding: 20px; background: white; border-top: 1px solid #ddd;"
+      >
+        <h4 style="margin: 0 0 10px 0; color: #dc3545;">
+          🚫 Click-to-Add Disabled
+        </h4>
+        <ul
+          style="margin: 0 0 20px 0; padding-left: 20px; line-height: 1.8; color: #666;"
+        >
+          <li>
+            <strong>Drag Required:</strong> Components must be dragged to canvas
+            (clicking has no effect)
+          </li>
+          <li>
+            <strong>ARIA Updated:</strong> Screen reader text changes to "Drag
+            component to canvas to add"
+          </li>
+          <li>
+            <strong>Keyboard Support:</strong> Enter/Space keys do not add
+            components (drag-only)
+          </li>
+        </ul>
+
+        <h4 style="margin: 0 0 10px 0; color: #28a745;">
+          ♿ Adaptive ARIA Descriptions
+        </h4>
+        <div
+          style="background: #f8f9fa; padding: 15px; border-radius: 4px; font-family: monospace; font-size: 13px;"
+        >
+          <div style="margin-bottom: 10px;">
+            <strong>When enableClickToAdd: true (default):</strong>
+            <div style="color: #28a745; margin-top: 5px;">
+              "Click or press Enter/Space to add component to active canvas, or
+              drag to position on any canvas"
+            </div>
+          </div>
+          <div>
+            <strong>When enableClickToAdd: false:</strong>
+            <div style="color: #dc3545; margin-top: 5px;">
+              "Drag component to canvas to add"
+            </div>
+          </div>
+        </div>
+
+        <div
+          style="margin-top: 15px; padding: 15px; background: #e7f3ff; border-radius: 4px; border-left: 4px solid #007bff;"
+        >
+          <strong style="color: #004085;">💡 Accessibility Tip:</strong>
+          <p style="margin: 5px 0 0 0; color: #004085; line-height: 1.6;">
+            The component automatically updates aria-describedby text based on
+            available interaction methods. This ensures screen reader users
+            always receive accurate instructions about how to interact with
+            palette items.
+          </p>
+        </div>
       </div>
     </div>
   `;

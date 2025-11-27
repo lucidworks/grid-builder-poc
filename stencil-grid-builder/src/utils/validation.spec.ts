@@ -10,7 +10,6 @@ import {
   validateLayout,
   validateGridItem,
   validateItemUpdates,
-  ValidationResult,
 } from "./validation";
 
 describe("validation utilities", () => {

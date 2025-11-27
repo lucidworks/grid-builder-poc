@@ -564,7 +564,7 @@ export class GridBuilder {
 
     const { componentType } = event.detail;
     if (!componentType) {
-      console.warn("handlePaletteItemClick: Component type not provided");
+      debug.warn("handlePaletteItemClick: Component type not provided");
       return;
     }
 
@@ -575,7 +575,7 @@ export class GridBuilder {
       // Auto-select first canvas
       const canvasIds = Object.keys(gridState.canvases);
       if (canvasIds.length === 0) {
-        console.warn("handlePaletteItemClick: No canvases available");
+        debug.warn("handlePaletteItemClick: No canvases available");
         return;
       }
       canvasId = canvasIds[0];
@@ -586,7 +586,7 @@ export class GridBuilder {
     // Get component definition
     const definition = this.componentRegistry.get(componentType);
     if (!definition) {
-      console.error(
+      debug.error(
         `handlePaletteItemClick: Component definition not found for type: ${componentType}`,
       );
       return;
@@ -606,7 +606,7 @@ export class GridBuilder {
     );
 
     if (!position) {
-      console.error(
+      debug.error(
         `handlePaletteItemClick: Could not find space on canvas ${canvasId}`,
       );
       return;
@@ -644,7 +644,7 @@ export class GridBuilder {
     );
 
     if (!newItemId) {
-      console.error("Failed to add component to canvas");
+      debug.error("Failed to add component to canvas");
       return;
     }
 
@@ -691,7 +691,7 @@ export class GridBuilder {
 
     // Validate unique component types
     if (this.componentRegistry.size !== this.components.length) {
-      console.warn("GridBuilder: Duplicate component types detected");
+      debug.warn("GridBuilder: Duplicate component types detected");
     }
 
     // Expose interact.js globally (required for drag/drop handlers)
@@ -800,7 +800,7 @@ export class GridBuilder {
       // Get component definition to determine default size
       const definition = this.componentRegistry.get(componentType);
       if (!definition) {
-        console.warn(
+        debug.warn(
           `Component definition not found for type: ${componentType}`,
         );
         return;
@@ -821,7 +821,7 @@ export class GridBuilder {
       const constrained = applyBoundaryConstraints(definition, gridX, gridY);
 
       if (!constrained) {
-        console.warn(
+        debug.warn(
           `Cannot place component "${definition.name}" - minimum size exceeds canvas width`,
         );
         return;
@@ -1526,7 +1526,7 @@ export class GridBuilder {
           .map(({ itemId, config }) => {
             const item = this.api?.getItem(itemId);
             if (!item) {
-              console.warn(`Item ${itemId} not found for config update`);
+              debug.warn(`Item ${itemId} not found for config update`);
               return null;
             }
             return {
