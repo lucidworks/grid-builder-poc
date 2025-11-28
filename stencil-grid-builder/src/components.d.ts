@@ -8,6 +8,8 @@ import { HTMLStencilElement, JSXBase } from "@stencil/core/internal";
 import { GridConfig } from "./types/grid-config";
 import { ComponentDefinition } from "./types/component-definition";
 import { DeletionHook } from "./types/deletion-hook";
+import { VirtualRendererService } from "./services/virtual-renderer";
+import { EventManager } from "./services/event-manager";
 import { GridItem, GridState, ViewerState } from "./services/state-manager";
 import { ConfirmationModalData } from "./demo/types/confirmation-modal-data";
 import { GridBuilderAPI } from "./types/api";
@@ -19,6 +21,8 @@ import { SectionEditorData } from "./demo/types/section-editor-data";
 export { GridConfig } from "./types/grid-config";
 export { ComponentDefinition } from "./types/component-definition";
 export { DeletionHook } from "./types/deletion-hook";
+export { VirtualRendererService } from "./services/virtual-renderer";
+export { EventManager } from "./services/event-manager";
 export { GridItem, GridState, ViewerState } from "./services/state-manager";
 export { ConfirmationModalData } from "./demo/types/confirmation-modal-data";
 export { GridBuilderAPI } from "./types/api";
@@ -312,6 +316,10 @@ export namespace Components {
          */
         "config"?: GridConfig;
         /**
+          * Event manager service instance (Phase 3: Instance-based architecture)  **Optional prop**: Service instance for event emission **Default**: grid-item-wrapper falls back to singleton if not provided **Source**: grid-builder → canvas-section → grid-item-wrapper  **Purpose**: Support multiple grid-builder instances with isolated services  **Migration strategy**: - Phase 3: Add as optional prop (this phase) - Phase 4: Remove singleton fallback and make required
+         */
+        "eventManagerInstance"?: EventManager;
+        /**
           * Whether this canvas is currently active  **Purpose**: Indicate which canvas is currently focused/active **Source**: Computed from gridState.activeCanvasId in grid-builder **Default**: false **Visual effect**: Applies 'active' CSS class to grid-container  **Canvas becomes active when**: - User clicks item on canvas - User clicks canvas background - User starts dragging item on canvas - User starts resizing item on canvas - Programmatically via api.setActiveCanvas()  **Consumer styling hook**: Consumer can style active canvas via CSS: ```css .grid-container.active .canvas-title { opacity: 1; } ```
           * @example ```tsx <canvas-section   canvasId="hero-section"   isActive={gridState.activeCanvasId === 'hero-section'} /> ```
           * @default false
@@ -321,6 +329,10 @@ export namespace Components {
           * Deletion hook (from parent grid-builder)  **Source**: grid-builder component (from onBeforeDelete prop) **Purpose**: Pass through to grid-item-wrapper for deletion interception **Optional**: If not provided, components delete immediately
          */
         "onBeforeDelete"?: DeletionHook;
+        /**
+          * Virtual renderer service instance (Phase 3: Instance-based architecture)  **Optional prop**: Service instance for lazy loading **Default**: grid-item-wrapper falls back to singleton if not provided **Source**: grid-builder → canvas-section → grid-item-wrapper  **Purpose**: Support multiple grid-builder instances with isolated services  **Migration strategy**: - Phase 3: Add as optional prop (this phase) - Phase 4: Remove singleton fallback and make required
+         */
+        "virtualRendererInstance"?: VirtualRendererService;
     }
     /**
      * CanvasSectionViewer Component
@@ -730,6 +742,10 @@ export namespace Components {
          */
         "currentViewport"?: "desktop" | "mobile";
         /**
+          * Event manager service instance (Phase 3: Instance-based architecture)  **Optional prop**: Service instance for event emission **Default**: Falls back to singleton eventManager if not provided **Source**: grid-builder → canvas-section → grid-item-wrapper  **Purpose**: Support multiple grid-builder instances with isolated services  **Migration strategy**: - Phase 3: Add as optional prop (this phase) - Phase 4: Remove singleton fallback and make required
+         */
+        "eventManagerInstance"?: EventManager;
+        /**
           * Grid item data (position, size, type, etc.)  **Source**: Parent canvas-section component **Contains**: id, canvasId, type, name, layouts (desktop/mobile), zIndex, config
          */
         "item": GridItem;
@@ -746,6 +762,10 @@ export namespace Components {
           * @default false
          */
         "viewerMode"?: boolean;
+        /**
+          * Virtual renderer service instance (Phase 3: Instance-based architecture)  **Optional prop**: Service instance for lazy loading **Default**: Falls back to singleton virtualRenderer if not provided **Source**: grid-builder → canvas-section → grid-item-wrapper  **Purpose**: Support multiple grid-builder instances with isolated services  **Migration strategy**: - Phase 3: Add as optional prop (this phase) - Phase 4: Remove singleton fallback and make required
+         */
+        "virtualRendererInstance"?: VirtualRendererService;
     }
     /**
      * GridViewer Component
@@ -1941,6 +1961,10 @@ declare namespace LocalJSX {
          */
         "config"?: GridConfig;
         /**
+          * Event manager service instance (Phase 3: Instance-based architecture)  **Optional prop**: Service instance for event emission **Default**: grid-item-wrapper falls back to singleton if not provided **Source**: grid-builder → canvas-section → grid-item-wrapper  **Purpose**: Support multiple grid-builder instances with isolated services  **Migration strategy**: - Phase 3: Add as optional prop (this phase) - Phase 4: Remove singleton fallback and make required
+         */
+        "eventManagerInstance"?: EventManager;
+        /**
           * Whether this canvas is currently active  **Purpose**: Indicate which canvas is currently focused/active **Source**: Computed from gridState.activeCanvasId in grid-builder **Default**: false **Visual effect**: Applies 'active' CSS class to grid-container  **Canvas becomes active when**: - User clicks item on canvas - User clicks canvas background - User starts dragging item on canvas - User starts resizing item on canvas - Programmatically via api.setActiveCanvas()  **Consumer styling hook**: Consumer can style active canvas via CSS: ```css .grid-container.active .canvas-title { opacity: 1; } ```
           * @example ```tsx <canvas-section   canvasId="hero-section"   isActive={gridState.activeCanvasId === 'hero-section'} /> ```
           * @default false
@@ -1950,6 +1974,10 @@ declare namespace LocalJSX {
           * Deletion hook (from parent grid-builder)  **Source**: grid-builder component (from onBeforeDelete prop) **Purpose**: Pass through to grid-item-wrapper for deletion interception **Optional**: If not provided, components delete immediately
          */
         "onBeforeDelete"?: DeletionHook;
+        /**
+          * Virtual renderer service instance (Phase 3: Instance-based architecture)  **Optional prop**: Service instance for lazy loading **Default**: grid-item-wrapper falls back to singleton if not provided **Source**: grid-builder → canvas-section → grid-item-wrapper  **Purpose**: Support multiple grid-builder instances with isolated services  **Migration strategy**: - Phase 3: Add as optional prop (this phase) - Phase 4: Remove singleton fallback and make required
+         */
+        "virtualRendererInstance"?: VirtualRendererService;
     }
     /**
      * CanvasSectionViewer Component
@@ -2290,6 +2318,10 @@ declare namespace LocalJSX {
          */
         "currentViewport"?: "desktop" | "mobile";
         /**
+          * Event manager service instance (Phase 3: Instance-based architecture)  **Optional prop**: Service instance for event emission **Default**: Falls back to singleton eventManager if not provided **Source**: grid-builder → canvas-section → grid-item-wrapper  **Purpose**: Support multiple grid-builder instances with isolated services  **Migration strategy**: - Phase 3: Add as optional prop (this phase) - Phase 4: Remove singleton fallback and make required
+         */
+        "eventManagerInstance"?: EventManager;
+        /**
           * Grid item data (position, size, type, etc.)  **Source**: Parent canvas-section component **Contains**: id, canvasId, type, name, layouts (desktop/mobile), zIndex, config
          */
         "item": GridItem;
@@ -2306,6 +2338,10 @@ declare namespace LocalJSX {
           * @default false
          */
         "viewerMode"?: boolean;
+        /**
+          * Virtual renderer service instance (Phase 3: Instance-based architecture)  **Optional prop**: Service instance for lazy loading **Default**: Falls back to singleton virtualRenderer if not provided **Source**: grid-builder → canvas-section → grid-item-wrapper  **Purpose**: Support multiple grid-builder instances with isolated services  **Migration strategy**: - Phase 3: Add as optional prop (this phase) - Phase 4: Remove singleton fallback and make required
+         */
+        "virtualRendererInstance"?: VirtualRendererService;
     }
     /**
      * GridViewer Component

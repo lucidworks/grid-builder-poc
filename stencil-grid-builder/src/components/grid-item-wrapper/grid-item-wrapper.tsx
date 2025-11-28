@@ -36,8 +36,11 @@ import {
 } from "../../services/state-manager";
 import { pushCommand } from "../../services/undo-redo";
 import { MoveItemCommand } from "../../services/undo-redo-commands";
-import { virtualRenderer } from "../../services/virtual-renderer";
-import { eventManager } from "../../services/event-manager";
+import {
+  VirtualRendererService,
+  virtualRenderer,
+} from "../../services/virtual-renderer";
+import { EventManager, eventManager } from "../../services/event-manager";
 import { DragHandler } from "../../utils/drag-handler";
 import { ResizeHandler } from "../../utils/resize-handler";
 import { gridToPixelsX, gridToPixelsY } from "../../utils/grid-calculations";
@@ -150,6 +153,36 @@ export class GridItemWrapper {
   @Prop() currentViewport?: "desktop" | "mobile";
 
   /**
+   * Virtual renderer service instance (Phase 3: Instance-based architecture)
+   *
+   * **Optional prop**: Service instance for lazy loading
+   * **Default**: Falls back to singleton virtualRenderer if not provided
+   * **Source**: grid-builder → canvas-section → grid-item-wrapper
+   *
+   * **Purpose**: Support multiple grid-builder instances with isolated services
+   *
+   * **Migration strategy**:
+   * - Phase 3: Add as optional prop (this phase)
+   * - Phase 4: Remove singleton fallback and make required
+   */
+  @Prop() virtualRendererInstance?: VirtualRendererService;
+
+  /**
+   * Event manager service instance (Phase 3: Instance-based architecture)
+   *
+   * **Optional prop**: Service instance for event emission
+   * **Default**: Falls back to singleton eventManager if not provided
+   * **Source**: grid-builder → canvas-section → grid-item-wrapper
+   *
+   * **Purpose**: Support multiple grid-builder instances with isolated services
+   *
+   * **Migration strategy**:
+   * - Phase 3: Add as optional prop (this phase)
+   * - Phase 4: Remove singleton fallback and make required
+   */
+  @Prop() eventManagerInstance?: EventManager;
+
+  /**
    * All items in the canvas (for viewer mode auto-layout)
    *
    * **Purpose**: Calculate mobile auto-layout positions
@@ -258,7 +291,7 @@ export class GridItemWrapper {
     requestAnimationFrame(() => {
       if (this.config?.enableVirtualRendering !== false) {
         // Virtual rendering enabled (default behavior)
-        virtualRenderer.observe(this.itemRef, this.item.id, (isVisible) => {
+        (this.virtualRendererInstance || virtualRenderer).observe(this.itemRef, this.item.id, (isVisible) => {
           this.isVisible = isVisible;
         });
       } else {
@@ -368,7 +401,7 @@ export class GridItemWrapper {
 
     // Cleanup virtual renderer
     if (this.itemRef) {
-      virtualRenderer.unobserve(this.itemRef, this.item.id);
+      (this.virtualRendererInstance || virtualRenderer).unobserve(this.itemRef, this.item.id);
     }
   }
 
@@ -1076,7 +1109,7 @@ export class GridItemWrapper {
 
     // Emit events for plugins
     if (isDrag) {
-      eventManager.emit("componentDragged", {
+      (this.eventManagerInstance || eventManager).emit("componentDragged", {
         itemId: updatedItem.id,
         canvasId: updatedItem.canvasId,
         position: {
@@ -1086,7 +1119,7 @@ export class GridItemWrapper {
       });
     }
     if (isResize) {
-      eventManager.emit("componentResized", {
+      (this.eventManagerInstance || eventManager).emit("componentResized", {
         itemId: updatedItem.id,
         canvasId: updatedItem.canvasId,
         size: {
@@ -1141,7 +1174,7 @@ export class GridItemWrapper {
     setActiveCanvas(this.item.canvasId);
 
     // Emit selection event for plugins
-    eventManager.emit("componentSelected", {
+    (this.eventManagerInstance || eventManager).emit("componentSelected", {
       itemId: this.item.id,
       canvasId: this.item.canvasId,
     });

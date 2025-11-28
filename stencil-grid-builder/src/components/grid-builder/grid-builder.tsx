@@ -2406,6 +2406,8 @@ export class GridBuilder {
                       backgroundColor={metadata.backgroundColor}
                       canvasTitle={metadata.title}
                       onBeforeDelete={this.onBeforeDelete}
+                      virtualRendererInstance={this.virtualRendererInstance}
+                      eventManagerInstance={this.eventManagerInstance}
                     />
                   </div>
                 );

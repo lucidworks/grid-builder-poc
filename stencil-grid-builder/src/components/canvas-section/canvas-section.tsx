@@ -85,6 +85,8 @@ import { calculateCanvasHeight } from "../../utils/canvas-height-calculator";
 import { GridConfig } from "../../types/grid-config";
 import { ComponentDefinition } from "../../types/component-definition";
 import { DeletionHook } from "../../types/deletion-hook";
+import { VirtualRendererService } from "../../services/virtual-renderer";
+import { EventManager } from "../../services/event-manager";
 
 /**
  * CanvasSection Component
@@ -202,6 +204,36 @@ export class CanvasSection {
    * **Optional**: If not provided, components delete immediately
    */
   @Prop() onBeforeDelete?: DeletionHook;
+
+  /**
+   * Virtual renderer service instance (Phase 3: Instance-based architecture)
+   *
+   * **Optional prop**: Service instance for lazy loading
+   * **Default**: grid-item-wrapper falls back to singleton if not provided
+   * **Source**: grid-builder → canvas-section → grid-item-wrapper
+   *
+   * **Purpose**: Support multiple grid-builder instances with isolated services
+   *
+   * **Migration strategy**:
+   * - Phase 3: Add as optional prop (this phase)
+   * - Phase 4: Remove singleton fallback and make required
+   */
+  @Prop() virtualRendererInstance?: VirtualRendererService;
+
+  /**
+   * Event manager service instance (Phase 3: Instance-based architecture)
+   *
+   * **Optional prop**: Service instance for event emission
+   * **Default**: grid-item-wrapper falls back to singleton if not provided
+   * **Source**: grid-builder → canvas-section → grid-item-wrapper
+   *
+   * **Purpose**: Support multiple grid-builder instances with isolated services
+   *
+   * **Migration strategy**:
+   * - Phase 3: Add as optional prop (this phase)
+   * - Phase 4: Remove singleton fallback and make required
+   */
+  @Prop() eventManagerInstance?: EventManager;
 
   /**
    * Canvas state (reactive)
@@ -780,6 +812,8 @@ export class CanvasSection {
               config={this.config}
               componentRegistry={this.componentRegistry}
               onBeforeDelete={this.onBeforeDelete}
+              virtualRendererInstance={this.virtualRendererInstance}
+              eventManagerInstance={this.eventManagerInstance}
             />
           ))}
         </div>
