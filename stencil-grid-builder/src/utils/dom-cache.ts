@@ -84,7 +84,7 @@
  *
  * Singleton pattern ensures all code uses same cache instance
  */
-class DOMCache {
+export class DOMCache {
   /** Canvas element cache - key: canvasId, value: HTMLElement */
   private canvases: Map<string, HTMLElement> = new Map();
 

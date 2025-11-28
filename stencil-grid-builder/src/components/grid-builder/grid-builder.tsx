@@ -73,6 +73,7 @@ import {
 
 // Service imports
 import {
+  StateManager,
   gridState,
   GridState,
   GridItem,
@@ -83,8 +84,11 @@ import {
   setActiveCanvas,
   moveItemToCanvas,
 } from "../../services/state-manager";
-import { virtualRenderer } from "../../services/virtual-renderer";
-import { eventManager } from "../../services/event-manager";
+import {
+  VirtualRendererService,
+  virtualRenderer,
+} from "../../services/virtual-renderer";
+import { EventManager, eventManager } from "../../services/event-manager";
 import {
   BatchAddCommand,
   BatchDeleteCommand,
@@ -93,7 +97,12 @@ import {
   RemoveCanvasCommand,
   MoveItemCommand,
 } from "../../services/undo-redo-commands";
-import { undoRedo, undoRedoState } from "../../services/undo-redo";
+import {
+  UndoRedoManager,
+  undoRedo,
+  undoRedoState,
+} from "../../services/undo-redo";
+import { DOMCache } from "../../utils/dom-cache";
 
 // Utility imports
 import { pixelsToGridX, pixelsToGridY } from "../../utils/grid-calculations";
@@ -442,6 +451,19 @@ export class GridBuilder {
   private api?: GridBuilderAPI;
 
   /**
+   * Service instances (Phase 2: Instance-based architecture)
+   *
+   * **Purpose**: Per-component service instances for isolated state
+   * **Lifecycle**: Created in componentWillLoad, disposed in disconnectedCallback
+   * **Migration**: Replacing singleton imports with instance-based approach
+   */
+  private stateManager?: StateManager;
+  private undoRedoManager?: UndoRedoManager;
+  private eventManagerInstance?: EventManager;
+  private virtualRendererInstance?: VirtualRendererService;
+  private domCacheInstance?: DOMCache;
+
+  /**
    * Host element reference
    *
    * **Purpose**: Access to host element for event listeners
@@ -711,6 +733,22 @@ export class GridBuilder {
 
     // Expose interact.js globally (required for drag/drop handlers)
     (window as any).interact = interact;
+
+    // Phase 2: Create service instances (instance-based architecture)
+    // Each grid-builder component gets its own isolated service instances
+    this.stateManager = new StateManager();
+    this.undoRedoManager = new UndoRedoManager();
+    this.eventManagerInstance = new EventManager();
+    this.virtualRendererInstance = new VirtualRendererService();
+    this.domCacheInstance = new DOMCache();
+
+    debug.log("GridBuilder: Service instances created", {
+      stateManager: !!this.stateManager,
+      undoRedoManager: !!this.undoRedoManager,
+      eventManagerInstance: !!this.eventManagerInstance,
+      virtualRendererInstance: !!this.virtualRendererInstance,
+      domCacheInstance: !!this.domCacheInstance,
+    });
 
     // Restore initial state if provided
     if (this.initialState) {
@@ -1223,6 +1261,25 @@ export class GridBuilder {
       });
       this.initializedPlugins = [];
     }
+
+    // Phase 2: Cleanup service instances
+    if (this.undoRedoManager) {
+      this.undoRedoManager.dispose();
+      debug.log("GridBuilder: Disposed undoRedoManager");
+    }
+    if (this.virtualRendererInstance) {
+      this.virtualRendererInstance.destroy();
+      debug.log("GridBuilder: Destroyed virtualRendererInstance");
+    }
+    if (this.eventManagerInstance) {
+      this.eventManagerInstance.removeAllListeners();
+      debug.log("GridBuilder: Cleared eventManagerInstance listeners");
+    }
+    if (this.domCacheInstance) {
+      this.domCacheInstance.clear();
+      debug.log("GridBuilder: Cleared domCacheInstance");
+    }
+    // StateManager will be garbage collected (no explicit cleanup needed)
 
     // Clear global references
     delete (window as any).virtualRenderer;
