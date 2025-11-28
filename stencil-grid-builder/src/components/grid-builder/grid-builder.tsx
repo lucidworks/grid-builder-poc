@@ -765,27 +765,31 @@ export class GridBuilder {
    * 5. Expose debug helpers
    */
   componentDidLoad() {
-    // Phase 2: Expose service instance globally (for debugging)
-    (window as any).virtualRenderer = this.virtualRendererInstance;
-
     // Create GridBuilderAPI instance
     this.api = this.createAPI();
 
-    // Expose API based on apiRef configuration
-    debug.log("🔧 grid-builder exposing API", {
+    // Expose API and service instances based on apiRef configuration
+    debug.log("🔧 grid-builder exposing API and service instances", {
       hasApiRef: !!this.apiRef,
       apiRefKey: this.apiRef?.key,
       apiCreated: !!this.api,
     });
 
     if (this.apiRef && this.apiRef.key) {
-      debug.log("  📤 Setting API on window", {
+      debug.log("  📤 Setting API and services on window", {
         key: this.apiRef.key,
       });
+      // Expose main API
       window[this.apiRef.key] = this.api;
-      debug.log("  ✅ API set on window", {
+
+      // Phase 2: Expose service instances globally (for debugging)
+      // Use namespaced keys to support multiple grid-builder instances
+      (window as any)[`${this.apiRef.key}_virtualRenderer`] = this.virtualRendererInstance;
+
+      debug.log("  ✅ API and services set on window", {
         key: this.apiRef.key,
-        apiNowExists: !!window[this.apiRef.key],
+        apiExists: !!window[this.apiRef.key],
+        virtualRendererExists: !!(window as any)[`${this.apiRef.key}_virtualRenderer`],
       });
     }
 
@@ -1278,11 +1282,12 @@ export class GridBuilder {
     // StateManager will be garbage collected (no explicit cleanup needed)
 
     // Clear global references
-    delete (window as any).virtualRenderer;
-
-    // Clear API from window if it was set
     if (this.apiRef && this.apiRef.key) {
+      // Clear API
       delete window[this.apiRef.key];
+
+      // Clear namespaced service instances
+      delete (window as any)[`${this.apiRef.key}_virtualRenderer`];
     }
   }
 
