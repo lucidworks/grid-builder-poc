@@ -21,7 +21,7 @@ const simpleComponents = [
     render: ({ itemId, config }) => {
       const div = document.createElement("div");
       div.style.cssText =
-        "padding: 12px; background: #f0f0f0; border-radius: 4px; height: 100%;";
+        "padding: 12px; background: #f0f0f0; border-radius: 4px; width: 100%; height: 100%; box-sizing: border-box;";
       const h3 = document.createElement("h3");
       h3.style.cssText = "margin: 0; font-size: 16px;";
       h3.textContent = config?.title || "Header";
@@ -32,7 +32,7 @@ const simpleComponents = [
     renderDragClone: () => {
       const div = document.createElement("div");
       div.style.cssText =
-        "padding: 12px; background: #f0f0f0; border-radius: 4px; height: 100%; opacity: 0.8;";
+        "padding: 12px; background: #f0f0f0; border-radius: 4px; width: 100%; height: 100%; box-sizing: border-box; opacity: 0.8;";
       const h3 = document.createElement("h3");
       h3.style.cssText = "margin: 0; font-size: 16px;";
       h3.textContent = "📄 Header";
@@ -51,7 +51,7 @@ const simpleComponents = [
     render: ({ itemId, config }) => {
       const div = document.createElement("div");
       div.style.cssText =
-        "padding: 10px; background: #fff; border: 1px solid #ddd; border-radius: 4px; height: 100%;";
+        "padding: 10px; background: #fff; border: 1px solid #ddd; border-radius: 4px; width: 100%; height: 100%; box-sizing: border-box;";
       const p = document.createElement("p");
       p.style.cssText = "margin: 0; font-size: 13px; line-height: 1.4;";
       p.textContent = config?.text || "Sample text content.";
@@ -62,7 +62,7 @@ const simpleComponents = [
     renderDragClone: () => {
       const div = document.createElement("div");
       div.style.cssText =
-        "padding: 10px; background: #fff; border: 1px solid #ddd; border-radius: 4px; height: 100%; opacity: 0.8;";
+        "padding: 10px; background: #fff; border: 1px solid #ddd; border-radius: 4px; width: 100%; height: 100%; box-sizing: border-box; opacity: 0.8;";
       const p = document.createElement("p");
       p.style.cssText = "margin: 0; font-size: 13px; line-height: 1.4;";
       p.textContent = "📝 Text Block";
@@ -81,7 +81,7 @@ const simpleComponents = [
     render: ({ itemId, config }) => {
       const button = document.createElement("button");
       button.style.cssText =
-        "padding: 8px 16px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; width: 100%; height: 100%;";
+        "padding: 8px 16px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; width: 100%; height: 100%; box-sizing: border-box;";
       button.textContent = config?.label || "Click Me";
       return button;
     },
@@ -89,7 +89,7 @@ const simpleComponents = [
     renderDragClone: () => {
       const button = document.createElement("button");
       button.style.cssText =
-        "padding: 8px 16px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; width: 100%; height: 100%; opacity: 0.8;";
+        "padding: 8px 16px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; width: 100%; height: 100%; box-sizing: border-box; opacity: 0.8;";
       button.textContent = "🔘 Button";
       return button;
     },
@@ -99,6 +99,12 @@ const simpleComponents = [
 export const BasicBuilder = (args) => {
   // Reset state to clear any cached data from previous stories
   reset();
+
+  // Create component palette
+  const paletteEl = document.createElement("component-palette");
+  paletteEl.components = simpleComponents;
+
+  // Create grid builder
   const builderEl = document.createElement("grid-builder");
   builderEl.components = simpleComponents;
 
@@ -117,8 +123,13 @@ export const BasicBuilder = (args) => {
   }
 
   return html`
-    <div style="width: 100%; height: ${args.height || "600px"};">
-      ${builderEl}
+    <div style="display: flex; width: 100%; height: ${args.height || "600px"};">
+      <div style="width: 250px; flex-shrink: 0; border-right: 1px solid #ddd; background: #f5f5f5; overflow-y: auto;">
+        ${paletteEl}
+      </div>
+      <div style="flex: 1;">
+        ${builderEl}
+      </div>
     </div>
   `;
 };
@@ -905,23 +916,23 @@ This story demonstrates how the grid builder automatically switches between desk
 **Try this**:
 1. Open browser DevTools → Console tab
 2. Resize the Storybook canvas or your browser window
-3. Watch for messages: \\\`📱 Container-based viewport switch: desktop → mobile (width: 750px)\\\`
+3. Watch for messages: \`📱 Container-based viewport switch: desktop → mobile (width: 750px)\`
 4. Notice how the components in each builder reflow independently
 
 **Implementation snippet**:
-\\\`\\\`\\\`typescript
+\`\`\`typescript
 // The builder automatically handles viewport switching
 const builder = document.querySelector('grid-builder');
 
 // Listen for viewport switch events (optional)
 builder.addEventListener('viewportSwitched', (event) => {
-  console.log(\\\`Switched to \\\${event.detail.viewport}\\\`);
+  console.log(\`Switched to \${event.detail.viewport}\`);
   // Update your UI, analytics, etc.
 });
 
 // You can also programmatically check current viewport
 const currentViewport = builder.getCurrentViewport(); // 'desktop' or 'mobile'
-\\\`\\\`\\\`
+\`\`\`
 
 **Real-world use cases**:
 - **Responsive dashboards**: Builder adapts when placed in resizable panels
@@ -1202,6 +1213,12 @@ builder.uiOverrides = {
 export const WithDeletionHook = () => {
   // Reset state to clear any cached data from previous stories
   reset();
+
+  // Create component palette
+  const paletteEl = document.createElement("component-palette");
+  paletteEl.components = simpleComponents;
+
+  // Create grid builder
   const builderEl = document.createElement("grid-builder");
   builderEl.components = simpleComponents;
 
@@ -1273,8 +1290,13 @@ export const WithDeletionHook = () => {
         Try deleting a component to see the confirmation dialog!
       </p>
 
-      <div style="width: 100%; height: 500px; border: 2px solid #dc3545; border-radius: 8px; overflow: hidden;">
-        ${builderEl}
+      <div style="display: flex; width: 100%; height: 500px; border: 2px solid #dc3545; border-radius: 8px; overflow: hidden;">
+        <div style="width: 250px; flex-shrink: 0; border-right: 1px solid #ddd; background: #f5f5f5; overflow-y: auto;">
+          ${paletteEl}
+        </div>
+        <div style="flex: 1;">
+          ${builderEl}
+        </div>
       </div>
 
       <div style="margin-top: 20px; padding: 20px; background: #fff3cd; border-radius: 8px; border-left: 4px solid #ffc107;">
@@ -1621,7 +1643,7 @@ export const BatchOperationsPerformance = () => {
       ${slowButton} ${fastButton} ${clearButton} ${statsDiv}
 
       <div
-        style="width: 100%; height: 400px; border: 2px solid #28a745; border-radius: 8px; overflow: hidden; margin-top: 20px;"
+        style="width: 100%; height: 600px; border: 2px solid #28a745; border-radius: 8px; overflow: auto; margin-top: 20px;"
       >
         ${builderEl}
       </div>
@@ -1742,6 +1764,12 @@ await api.addComponentsBatch(items);
 export const MultipleSectionsBuilder = () => {
   // Reset state to clear any cached data from previous stories
   reset();
+
+  // Create component palette
+  const paletteEl = document.createElement("component-palette");
+  paletteEl.components = simpleComponents;
+
+  // Create grid builder
   const builderEl = document.createElement("grid-builder");
   builderEl.components = simpleComponents;
 
@@ -1876,9 +1904,14 @@ export const MultipleSectionsBuilder = () => {
       ${addSectionButton}
 
       <div
-        style="width: 100%; height: 700px; border: 2px solid #17a2b8; border-radius: 8px; overflow: auto;"
+        style="display: flex; width: 100%; height: 700px; border: 2px solid #17a2b8; border-radius: 8px; overflow: hidden;"
       >
-        ${builderEl}
+        <div style="width: 250px; flex-shrink: 0; border-right: 1px solid #ddd; background: #f5f5f5; overflow-y: auto;">
+          ${paletteEl}
+        </div>
+        <div style="flex: 1; overflow: auto;">
+          ${builderEl}
+        </div>
       </div>
 
       <div
@@ -2018,6 +2051,12 @@ Components reference their parent canvas via \`item.canvasId\`, enabling:
 export const ActiveCanvasManagement = () => {
   // Reset state to clear any cached data from previous stories
   reset();
+
+  // Create component palette
+  const paletteEl = document.createElement("component-palette");
+  paletteEl.components = simpleComponents;
+
+  // Create grid builder
   const builderEl = document.createElement("grid-builder");
   builderEl.components = simpleComponents;
 
@@ -2192,9 +2231,14 @@ export const ActiveCanvasManagement = () => {
       </div>
 
       <div
-        style="width: 100%; height: 600px; border: 2px solid #007bff; border-radius: 8px; overflow: auto;"
+        style="display: flex; width: 100%; height: 600px; border: 2px solid #007bff; border-radius: 8px; overflow: hidden;"
       >
-        ${builderEl}
+        <div style="width: 250px; flex-shrink: 0; border-right: 1px solid #ddd; background: #f5f5f5; overflow-y: auto;">
+          ${paletteEl}
+        </div>
+        <div style="flex: 1; overflow: auto;">
+          ${builderEl}
+        </div>
       </div>
 
       <div
@@ -2368,6 +2412,12 @@ api.on('canvasActivated', (event) => {
 export const UndoRedoDemo = () => {
   // Reset state to clear any cached data from previous stories
   reset();
+
+  // Create component palette
+  const paletteEl = document.createElement("component-palette");
+  paletteEl.components = simpleComponents;
+
+  // Create grid builder
   const builderEl = document.createElement("grid-builder");
   builderEl.components = simpleComponents;
 
@@ -2529,9 +2579,14 @@ export const UndoRedoDemo = () => {
       <div style="margin-bottom: 20px;">${undoButton} ${redoButton}</div>
 
       <div
-        style="width: 100%; height: 500px; border: 2px solid #6f42c1; border-radius: 8px; overflow: hidden;"
+        style="display: flex; width: 100%; height: 500px; border: 2px solid #6f42c1; border-radius: 8px; overflow: hidden;"
       >
-        ${builderEl}
+        <div style="width: 250px; flex-shrink: 0; border-right: 1px solid #ddd; background: #f5f5f5; overflow-y: auto;">
+          ${paletteEl}
+        </div>
+        <div style="flex: 1; overflow: auto;">
+          ${builderEl}
+        </div>
       </div>
 
       <div
@@ -3200,6 +3255,12 @@ builder.plugins = [
 export const EventsDemo = () => {
   // Reset state to clear any cached data from previous stories
   reset();
+
+  // Create component palette
+  const paletteEl = document.createElement("component-palette");
+  paletteEl.components = simpleComponents;
+
+  // Create grid builder
   const builderEl = document.createElement("grid-builder");
   builderEl.components = simpleComponents;
 
@@ -3270,9 +3331,14 @@ export const EventsDemo = () => {
       </p>
 
       <div
-        style="width: 100%; height: 500px; border: 2px solid #17a2b8; border-radius: 8px; overflow: hidden;"
+        style="display: flex; width: 100%; height: 500px; border: 2px solid #17a2b8; border-radius: 8px; overflow: hidden;"
       >
-        ${builderEl}
+        <div style="width: 250px; flex-shrink: 0; border-right: 1px solid #ddd; background: #f5f5f5; overflow-y: auto;">
+          ${paletteEl}
+        </div>
+        <div style="flex: 1; overflow: auto;">
+          ${builderEl}
+        </div>
       </div>
 
       <div
@@ -3612,6 +3678,12 @@ api.off('componentAdded', handler);
 export const APIIntegrationDemo = () => {
   // Reset state to clear any cached data from previous stories
   reset();
+
+  // Create component palette
+  const paletteEl = document.createElement("component-palette");
+  paletteEl.components = simpleComponents;
+
+  // Create grid builder
   const builderEl = document.createElement("grid-builder");
   builderEl.components = simpleComponents;
 
@@ -3741,9 +3813,14 @@ export const APIIntegrationDemo = () => {
       ${statusDiv} ${controlsDiv}
 
       <div
-        style="width: 100%; height: 500px; border: 2px solid #007bff; border-radius: 8px; overflow: hidden;"
+        style="display: flex; width: 100%; height: 500px; border: 2px solid #007bff; border-radius: 8px; overflow: hidden;"
       >
-        ${builderEl}
+        <div style="width: 250px; flex-shrink: 0; border-right: 1px solid #ddd; background: #f5f5f5; overflow-y: auto;">
+          ${paletteEl}
+        </div>
+        <div style="flex: 1; overflow: auto;">
+          ${builderEl}
+        </div>
       </div>
 
       <div
@@ -4106,6 +4183,12 @@ if (api.canUndo()) {
 export const ClickToAddFeature = () => {
   // Reset state to clear any cached data from previous stories
   reset();
+
+  // Create component palette
+  const paletteEl = document.createElement("component-palette");
+  paletteEl.components = simpleComponents;
+
+  // Create grid builder
   const builderEl = document.createElement("grid-builder");
   builderEl.components = simpleComponents;
 
@@ -4230,9 +4313,14 @@ export const ClickToAddFeature = () => {
       </div>
 
       <div
-        style="width: 100%; height: 600px; border: 2px solid #0ea5e9; border-radius: 8px; overflow: hidden;"
+        style="display: flex; width: 100%; height: 600px; border: 2px solid #0ea5e9; border-radius: 8px; overflow: hidden;"
       >
-        ${builderEl}
+        <div style="width: 250px; flex-shrink: 0; border-right: 1px solid #ddd; background: #f5f5f5; overflow-y: auto;">
+          ${paletteEl}
+        </div>
+        <div style="flex: 1;">
+          ${builderEl}
+        </div>
       </div>
 
       <div
@@ -5461,6 +5549,682 @@ describe('Export/Import Workflow', () => {
 \\\`\\\`\\\`
 
 **Pro tip**: Combine export/import with batch operations for efficient template management. When creating templates, export the layout once, then use batch operations to populate it with real data programmatically. This is 10× faster than manually adding each component via drag-and-drop, and ensures consistent template structure across all instances.
+      `.trim(),
+    },
+  },
+};
+
+/**
+ * Unknown Component Handling
+ * ===========================
+ *
+ * Visual comparison of three strategies for handling unknown component types
+ * (components not in the registry). Shows canvas results only - no palette or
+ * editing interface.
+ *
+ * **Three Handling Modes**:
+ *
+ * 1. **Default Error Display** (left) - Improved visual styling with warning emoji
+ * 2. **Hidden Mode** (center) - Unknown components completely hidden
+ * 3. **Custom Renderer** (right) - Branded error message with analytics
+ *
+ * **When to use each mode**:
+ *
+ * - **Default**: Development/debugging (see what's missing)
+ * - **Hidden**: Production (clean UX, don't show errors to users)
+ * - **Custom**: Production with logging (track missing components, show branded message)
+ *
+ * **What you're seeing**:
+ * - Pre-loaded "Mystery Component" (unknown type) - triggers error handling
+ * - Pre-loaded "Normal Header" (known type) - renders normally
+ * - Clean canvas view showing visual results of each handling strategy
+ */
+export const UnknownComponentHandling = () => {
+  // Reset state to clear any cached data from previous stories
+  reset();
+
+  // =================================================================
+  // MODE 1: Default Error Display (Improved Styling)
+  // =================================================================
+  const defaultBuilder = document.createElement("grid-builder");
+  defaultBuilder.components = simpleComponents; // Known components only
+  defaultBuilder.config = {
+    enableVirtualRendering: false,
+    snapToGrid: true,
+    showGridLines: true,
+    // No hideUnknownComponents or renderUnknownComponent
+    // Will use default improved error styling
+  };
+
+  // =================================================================
+  // MODE 2: Hidden Mode (hideUnknownComponents: true)
+  // =================================================================
+  const hiddenBuilder = document.createElement("grid-builder");
+  hiddenBuilder.components = simpleComponents; // Known components only
+  hiddenBuilder.config = {
+    enableVirtualRendering: false,
+    snapToGrid: true,
+    showGridLines: true,
+    hideUnknownComponents: true, // ← Hide unknown components completely
+  };
+
+  // =================================================================
+  // MODE 3: Custom Renderer (renderUnknownComponent)
+  // =================================================================
+  const customBuilder = document.createElement("grid-builder");
+  customBuilder.components = simpleComponents; // Known components only
+  customBuilder.config = {
+    enableVirtualRendering: false,
+    snapToGrid: true,
+    showGridLines: true,
+    // Custom renderer with branded styling and analytics
+    renderUnknownComponent: ({ type, itemId }) => {
+      // In real app, you'd log to analytics here
+      console.log("📊 Analytics: Unknown component encountered", {
+        type,
+        itemId,
+      });
+
+      // Return custom branded error message
+      const div = document.createElement("div");
+      div.style.cssText = `
+        padding: 20px;
+        background: linear-gradient(135deg, #fff3cd 0%, #ffe69c 100%);
+        border: 2px solid #ffc107;
+        border-radius: 8px;
+        text-align: center;
+        font-family: system-ui, -apple-system, sans-serif;
+      `;
+      div.innerHTML = `
+        <div style="font-size: 32px; margin-bottom: 10px;">🔌</div>
+        <div style="font-size: 14px; font-weight: 600; color: #856404; margin-bottom: 8px;">
+          Component Not Available
+        </div>
+        <div style="font-size: 12px; color: #856404; margin-bottom: 8px;">
+          The "${type}" component is not included in this version.
+        </div>
+        <div style="font-size: 10px; color: #997404; font-family: monospace;">
+          Item ID: ${itemId}
+        </div>
+      `;
+      return div;
+    },
+  };
+
+  // Initialize all three builders with canvases
+  setTimeout(() => {
+    if ((window as any).gridBuilderAPI) {
+      const api = (window as any).gridBuilderAPI;
+
+      // Add canvases and unknown component items to all three builders
+      [defaultBuilder, hiddenBuilder, customBuilder].forEach(
+        (builder, index) => {
+          const canvasId = `unknown-demo-${index}`;
+
+          // Add canvas
+          api.addCanvas(canvasId, builder);
+
+          // Add an unknown component type to demonstrate error handling
+          api.addComponent(
+            canvasId,
+            {
+              type: "mystery-component", // ← This type is NOT in the registry
+              name: "Mystery Component",
+              layouts: {
+                desktop: { x: 2, y: 2, width: 20, height: 8 },
+                mobile: {
+                  x: null,
+                  y: null,
+                  width: null,
+                  height: null,
+                  customized: false,
+                },
+              },
+              config: {},
+            },
+            builder,
+          );
+
+          // Add a known component for comparison
+          api.addComponent(
+            canvasId,
+            {
+              type: "header",
+              name: "Normal Header",
+              layouts: {
+                desktop: { x: 25, y: 2, width: 20, height: 6 },
+                mobile: {
+                  x: null,
+                  y: null,
+                  width: null,
+                  height: null,
+                  customized: false,
+                },
+              },
+              config: {},
+            },
+            builder,
+          );
+        },
+      );
+    }
+  }, 100);
+
+  return html`
+    <style>
+      .unknown-demo-container {
+        font-family: system-ui, -apple-system, sans-serif;
+        background: #f0f2f5;
+        min-height: 100vh;
+        padding: 20px;
+      }
+
+      .unknown-demo-header {
+        background: white;
+        padding: 20px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
+
+      .unknown-demo-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 20px;
+        margin-bottom: 20px;
+      }
+
+      .unknown-demo-mode {
+        background: white;
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
+
+      .unknown-demo-mode-header {
+        padding: 15px;
+        font-weight: 600;
+        font-size: 14px;
+        border-bottom: 2px solid #e0e0e0;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .unknown-demo-mode-header.default {
+        background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+        color: #1565c0;
+        border-bottom-color: #2196f3;
+      }
+
+      .unknown-demo-mode-header.hidden {
+        background: linear-gradient(135deg, #f3e5f5 0%, #e1bee7 100%);
+        color: #6a1b9a;
+        border-bottom-color: #9c27b0;
+      }
+
+      .unknown-demo-mode-header.custom {
+        background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);
+        color: #e65100;
+        border-bottom-color: #ff9800;
+      }
+
+      .unknown-demo-mode-content {
+        height: 400px;
+        overflow: auto;
+      }
+
+      .unknown-demo-footer {
+        background: white;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
+
+      .unknown-demo-code-comparison {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 15px;
+        margin-top: 15px;
+      }
+
+      .unknown-demo-code-block {
+        background: #f8f9fa;
+        padding: 12px;
+        border-radius: 4px;
+        border-left: 3px solid #dee2e6;
+        font-family: "Courier New", monospace;
+        font-size: 11px;
+        line-height: 1.6;
+      }
+
+      .unknown-demo-code-block.default {
+        border-left-color: #2196f3;
+      }
+
+      .unknown-demo-code-block.hidden {
+        border-left-color: #9c27b0;
+      }
+
+      .unknown-demo-code-block.custom {
+        border-left-color: #ff9800;
+      }
+    </style>
+
+    <div class="unknown-demo-container">
+      <!-- Header -->
+      <div class="unknown-demo-header">
+        <h2 style="margin: 0 0 10px 0; color: #333;">
+          Unknown Component Handling Demo
+        </h2>
+        <p style="color: #666; margin: 0;">
+          Visual comparison of three strategies for handling unknown component types.
+          Each canvas below has a pre-loaded "Mystery Component" (unknown type) and
+          a "Normal Header" (known type) to show how each mode handles missing components.
+        </p>
+      </div>
+
+      <!-- Three Modes Grid -->
+      <div class="unknown-demo-grid">
+        <!-- Mode 1: Default Error Display -->
+        <div class="unknown-demo-mode">
+          <div class="unknown-demo-mode-header default">
+            ⚠️ Default Error Display
+          </div>
+          <div class="unknown-demo-mode-content">${defaultBuilder}</div>
+        </div>
+
+        <!-- Mode 2: Hidden Mode -->
+        <div class="unknown-demo-mode">
+          <div class="unknown-demo-mode-header hidden">
+            🙈 Hidden Mode
+          </div>
+          <div class="unknown-demo-mode-content">${hiddenBuilder}</div>
+        </div>
+
+        <!-- Mode 3: Custom Renderer -->
+        <div class="unknown-demo-mode">
+          <div class="unknown-demo-mode-header custom">
+            🎨 Custom Renderer
+          </div>
+          <div class="unknown-demo-mode-content">${customBuilder}</div>
+        </div>
+      </div>
+
+      <!-- Footer with Configuration Examples -->
+      <div class="unknown-demo-footer">
+        <h3 style="margin: 0 0 15px 0; color: #333; font-size: 16px;">
+          Configuration Examples
+        </h3>
+
+        <div class="unknown-demo-code-comparison">
+          <!-- Default Config -->
+          <div>
+            <strong
+              style="display: block; margin-bottom: 8px; color: #1565c0;"
+            >
+              1️⃣ Default (No Config)
+            </strong>
+            <div class="unknown-demo-code-block default">
+              <div style="color: #666; margin-bottom: 5px;">
+                // No special config needed
+              </div>
+              <div>const config = {</div>
+              <div style="margin-left: 15px;">
+                // hideUnknownComponents
+              </div>
+              <div style="margin-left: 15px;">
+                // not set (default: false)
+              </div>
+              <div>};</div>
+              <div style="margin-top: 10px; color: #666;">
+                ✅ Shows improved error
+              </div>
+              <div style="color: #666;">✅ Warning emoji</div>
+              <div style="color: #666;">✅ Pink background</div>
+            </div>
+          </div>
+
+          <!-- Hidden Config -->
+          <div>
+            <strong
+              style="display: block; margin-bottom: 8px; color: #6a1b9a;"
+            >
+              2️⃣ Hidden Mode
+            </strong>
+            <div class="unknown-demo-code-block hidden">
+              <div>const config = {</div>
+              <div style="margin-left: 15px; color: #9c27b0;">
+                hideUnknownComponents:
+              </div>
+              <div style="margin-left: 30px; color: #9c27b0;">true</div>
+              <div>};</div>
+              <div style="margin-top: 10px; color: #666;">
+                ✅ Clean production UX
+              </div>
+              <div style="color: #666;">✅ No error messages</div>
+              <div style="color: #666;">✅ Components hidden</div>
+            </div>
+          </div>
+
+          <!-- Custom Renderer Config -->
+          <div>
+            <strong style="display: block; margin-bottom: 8px; color: #e65100;">
+              3️⃣ Custom Renderer
+            </strong>
+            <div class="unknown-demo-code-block custom">
+              <div>const config = {</div>
+              <div style="margin-left: 15px; color: #ff9800;">
+                renderUnknownComponent:
+              </div>
+              <div style="margin-left: 30px;">({ type, itemId }) => {</div>
+              <div style="margin-left: 45px; color: #666;">
+                // Analytics
+              </div>
+              <div style="margin-left: 45px;">return customJSX;</div>
+              <div style="margin-left: 30px;">}</div>
+              <div>};</div>
+              <div style="margin-top: 10px; color: #666;">✅ Branded errors</div>
+              <div style="color: #666;">✅ Track missing types</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Use Cases -->
+        <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #e0e0e0;">
+          <h4 style="margin: 0 0 10px 0; color: #333; font-size: 14px;">
+            💡 When to Use Each Mode
+          </h4>
+          <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; font-size: 13px;">
+            <div>
+              <strong style="color: #1565c0;">Default Error:</strong>
+              <ul style="margin: 5px 0; padding-left: 20px; color: #666; line-height: 1.6;">
+                <li>Development environments</li>
+                <li>Debugging missing components</li>
+                <li>Testing component registries</li>
+              </ul>
+            </div>
+            <div>
+              <strong style="color: #6a1b9a;">Hidden Mode:</strong>
+              <ul style="margin: 5px 0; padding-left: 20px; color: #666; line-height: 1.6;">
+                <li>Production apps</li>
+                <li>A/B testing features</li>
+                <li>Partial component imports</li>
+              </ul>
+            </div>
+            <div>
+              <strong style="color: #e65100;">Custom Renderer:</strong>
+              <ul style="margin: 5px 0; padding-left: 20px; color: #666; line-height: 1.6;">
+                <li>Production with logging</li>
+                <li>Branded error messages</li>
+                <li>Analytics integration</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+};
+
+UnknownComponentHandling.parameters = {
+  docs: {
+    description: {
+      story: `
+## Unknown Component Handling
+
+This story demonstrates three strategies for handling component types that aren't registered in your component registry.
+
+### Overview
+
+When a grid item references a component type that doesn't exist in the registry, you have three options:
+
+1. **Default Error Display** - Show an improved error message with visual styling
+2. **Hidden Mode** - Completely hide unknown components (clean production UX)
+3. **Custom Renderer** - Provide a custom error component (branded, with analytics)
+
+### Configuration Options
+
+**1. Default (No Configuration)**
+
+The default behavior shows an improved error message with:
+- ⚠️ Warning emoji for visual distinction
+- Pink background (#fff3f3) with red dashed border
+- Clear error text: "Unknown component type: {type}"
+- Helpful for development and debugging
+
+\`\`\`typescript
+// No configuration needed - this is the default
+const builder = document.querySelector('grid-builder');
+builder.config = {
+  // hideUnknownComponents and renderUnknownComponent are undefined
+};
+\`\`\`
+
+**2. Hidden Mode** (\`hideUnknownComponents: true\`)
+
+Completely hides unknown components without rendering anything:
+- Clean production UX (no error messages shown to users)
+- Useful for A/B testing or partial component imports
+- Components are silently skipped
+
+\`\`\`typescript
+builder.config = {
+  hideUnknownComponents: true  // Hide unknown components completely
+};
+\`\`\`
+
+**Use cases:**
+- Production apps where you don't want to show errors
+- A/B testing (hide experimental components from some users)
+- Partial component sets (only load subset of available components)
+- Development (hide deprecated component types)
+
+**3. Custom Renderer** (\`renderUnknownComponent\`)
+
+Provide a custom function that renders your own error component:
+- Full control over error styling and messaging
+- Can integrate with analytics/logging
+- Can return JSX or HTMLElement
+
+\`\`\`typescript
+builder.config = {
+  renderUnknownComponent: ({ type, itemId }) => {
+    // Log to analytics
+    analytics.track('unknown_component_error', { type, itemId });
+
+    // Return custom JSX (or HTMLElement)
+    return (
+      <div style={{ padding: '20px', background: '#fff3cd', border: '2px solid #ffc107' }}>
+        <h4>🔌 Component Not Available</h4>
+        <p>The "{type}" component is not included in this version.</p>
+        <small>Item ID: {itemId}</small>
+      </div>
+    );
+  }
+};
+\`\`\`
+
+**Context object:**
+- \`type\`: The unknown component type string
+- \`itemId\`: The item ID (for debugging/logging)
+
+**Return value:** JSX element or HTMLElement
+
+### Priority Order
+
+If multiple options are configured, they are processed in this priority order:
+
+1. **hideUnknownComponents: true** → Component hidden (no rendering)
+2. **renderUnknownComponent** → Custom renderer called
+3. **Default** → Built-in error display shown
+
+\`\`\`typescript
+// Example: hideUnknownComponents takes precedence
+builder.config = {
+  hideUnknownComponents: true,           // ← This wins (highest priority)
+  renderUnknownComponent: () => { ... }  // ← Never called
+};
+\`\`\`
+
+### Real-World Examples
+
+**Production App with Analytics**
+
+\`\`\`typescript
+const productionConfig = {
+  renderUnknownComponent: ({ type, itemId }) => {
+    // Track missing components
+    fetch('/api/analytics', {
+      method: 'POST',
+      body: JSON.stringify({
+        event: 'unknown_component',
+        componentType: type,
+        itemId: itemId,
+        timestamp: new Date().toISOString()
+      })
+    });
+
+    // Show friendly branded message
+    return (
+      <div className="error-card">
+        <img src="/logo.svg" alt="Logo" />
+        <h3>Content Temporarily Unavailable</h3>
+        <p>We're working on updating this content. Please check back soon!</p>
+      </div>
+    );
+  }
+};
+\`\`\`
+
+**Development Environment with Debug Info**
+
+\`\`\`typescript
+const devConfig = {
+  renderUnknownComponent: ({ type, itemId }) => {
+    const availableTypes = Array.from(componentRegistry.keys());
+
+    return (
+      <div style={{ background: '#f8d7da', padding: '20px', color: '#721c24' }}>
+        <strong>⚠️ Missing Component Type</strong>
+        <ul>
+          <li>Type: <code>{type}</code></li>
+          <li>Item ID: <code>{itemId}</code></li>
+          <li>Available types: {availableTypes.join(', ')}</li>
+        </ul>
+        <button onClick={() => console.log('Item data:', getItem(itemId))}>
+          Log Item Data
+        </button>
+      </div>
+    );
+  }
+};
+\`\`\`
+
+**A/B Testing with Hidden Components**
+
+\`\`\`typescript
+// Hide experimental components from users not in test group
+const config = {
+  hideUnknownComponents: !user.isInExperiment('new-components')
+};
+
+// Users in experiment see all components
+// Users not in experiment see unknown types hidden silently
+\`\`\`
+
+### Browser Compatibility
+
+All three modes work in all modern browsers:
+- ✅ Chrome/Edge/Firefox/Safari (14+)
+- ✅ No special polyfills needed
+- ✅ Works with Shadow DOM and Light DOM
+
+### Performance Considerations
+
+**Default Error Display:**
+- Minimal overhead (~0.01ms per unknown component)
+- Simple DOM rendering
+
+**Hidden Mode:**
+- Zero overhead (components not rendered at all)
+- Best performance (early return)
+
+**Custom Renderer:**
+- Performance depends on your custom code
+- Consider memoizing expensive operations
+- Avoid heavy computations in render function
+
+### Testing Unknown Components
+
+\`\`\`typescript
+describe('Unknown Component Handling', () => {
+  it('should hide unknown components when configured', async () => {
+    const builder = document.querySelector('grid-builder');
+    builder.config = { hideUnknownComponents: true };
+
+    await builder.importState({
+      canvases: {
+        canvas1: {
+          items: [{
+            id: 'item-1',
+            type: 'unknown-type',
+            // ...
+          }]
+        }
+      }
+    });
+
+    // Should render nothing for unknown type
+    const items = builder.shadowRoot.querySelectorAll('.grid-item');
+    expect(items.length).toBe(0);
+  });
+
+  it('should call custom renderer for unknown components', async () => {
+    const customRenderer = jest.fn(() => <div>Custom Error</div>);
+    builder.config = { renderUnknownComponent: customRenderer };
+
+    // Import state with unknown component
+    await builder.importState({ ... });
+
+    expect(customRenderer).toHaveBeenCalledWith({
+      type: 'unknown-type',
+      itemId: 'item-1'
+    });
+  });
+});
+\`\`\`
+
+### Migration Guide
+
+If you're upgrading from an older version without these options:
+
+**Before (always showed default error):**
+\`\`\`typescript
+// Unknown components always showed error message
+const builder = document.querySelector('grid-builder');
+// No way to customize this behavior
+\`\`\`
+
+**After (three options available):**
+\`\`\`typescript
+// Option 1: Keep existing behavior (default)
+builder.config = {}; // No change needed
+
+// Option 2: Hide unknown components
+builder.config = {
+  hideUnknownComponents: true
+};
+
+// Option 3: Custom error renderer
+builder.config = {
+  renderUnknownComponent: ({ type, itemId }) => {
+    return <CustomError type={type} itemId={itemId} />;
+  }
+};
+\`\`\`
+
+**Pro tip**: Use \`hideUnknownComponents\` in production for the cleanest user experience. During development, use the default error display or a custom renderer with detailed debug information to help identify missing component types. For A/B testing scenarios, combine \`hideUnknownComponents\` with feature flags to selectively show/hide components based on user segments.
       `.trim(),
     },
   },

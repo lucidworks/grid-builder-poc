@@ -154,7 +154,9 @@ export const WithCustomComponents = () => {
           color: white;
           padding: 20px;
           border-radius: 8px;
+          width: 100%;
           height: 100%;
+          box-sizing: border-box;
           display: flex;
           align-items: center;
           justify-content: center;
@@ -204,7 +206,9 @@ export const WithCustomComponents = () => {
           color: white;
           padding: 16px;
           border-radius: 8px;
+          width: 100%;
           height: 100%;
+          box-sizing: border-box;
           display: flex;
           align-items: center;
           justify-content: center;
@@ -253,7 +257,9 @@ export const WithCustomComponents = () => {
           background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
           padding: 16px;
           border-radius: 8px;
+          width: 100%;
           height: 100%;
+          box-sizing: border-box;
           border-left: 4px solid #ff6b6b;
         `;
         div.innerHTML = `
@@ -306,7 +312,9 @@ export const WithCustomComponents = () => {
           background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
           padding: 16px;
           border-radius: 12px;
+          width: 100%;
           height: 100%;
+          box-sizing: border-box;
           border: 2px solid #00d2ff;
           text-align: center;
         `;
@@ -365,7 +373,9 @@ export const WithCustomComponents = () => {
           color: white;
           padding: 20px;
           border-radius: 8px;
+          width: 100%;
           height: 100%;
+          box-sizing: border-box;
           display: flex;
           align-items: center;
           justify-content: center;
@@ -416,7 +426,9 @@ export const WithCustomComponents = () => {
           background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
           padding: 16px;
           border-radius: 8px;
+          width: 100%;
           height: 100%;
+          box-sizing: border-box;
           display: flex;
           align-items: center;
           justify-content: space-between;
@@ -472,7 +484,9 @@ export const WithCustomComponents = () => {
           color: white;
           padding: 12px;
           border-radius: 4px;
+          width: 100%;
           height: 100%;
+          box-sizing: border-box;
           display: flex;
           align-items: center;
           justify-content: center;
@@ -526,7 +540,9 @@ export const WithCustomComponents = () => {
           color: white;
           padding: 16px;
           border-radius: 8px;
+          width: 100%;
           height: 100%;
+          box-sizing: border-box;
         `;
         div.innerHTML = `
           <div style="font-size: 16px; font-weight: bold; margin-bottom: 8px;">
@@ -594,17 +610,11 @@ export const WithCustomComponents = () => {
   // Initialize with a demo canvas
   setTimeout(() => {
     if ((window as any).gridBuilderAPI) {
-      (window as any).gridBuilderAPI.addCanvas("demo-canvas");
+      (window as any).gridBuilderAPI.addCanvas("withcustom-canvas");
     }
   }, 100);
 
   return html`
-    <style>
-      /* Hide the grid-builder's default palette */
-      grid-builder .palette-area {
-        display: none !important;
-      }
-    </style>
     <div
       style="font-family: system-ui, -apple-system, sans-serif; background: #f0f2f5; height: 100vh; display: flex; flex-direction: column;"
     >
@@ -728,6 +738,14 @@ export const ClickToAddDemo = () => {
 
   const components = sampleComponents;
 
+  // Create component palette with click-to-add enabled
+  const palette = document.createElement("component-palette");
+  palette.components = components;
+  palette.showHeader = false;
+  palette.config = {
+    enableClickToAdd: true, // Enable click-to-add
+  };
+
   // Create grid-builder with click-to-add enabled
   const gridBuilder = document.createElement("grid-builder");
   gridBuilder.components = components;
@@ -741,7 +759,7 @@ export const ClickToAddDemo = () => {
   // Initialize with empty canvas
   setTimeout(() => {
     if ((window as any).gridBuilderAPI) {
-      (window as any).gridBuilderAPI.addCanvas("demo-canvas");
+      (window as any).gridBuilderAPI.addCanvas("clicktoadd-canvas");
     }
   }, 100);
 
@@ -777,7 +795,20 @@ export const ClickToAddDemo = () => {
         ${statusDiv}
       </div>
 
-      <div style="flex: 1; overflow: hidden;">${gridBuilder}</div>
+      <div style="display: flex; flex: 1; overflow: hidden;">
+        <!-- Left: Component Palette -->
+        <div
+          style="width: 280px; background: white; overflow-y: auto; border-right: 1px solid #ddd; padding: 16px;"
+        >
+          <h3 style="margin: 0 0 16px 0; color: #333; font-size: 16px;">
+            Components
+          </h3>
+          ${palette}
+        </div>
+
+        <!-- Right: Grid Builder -->
+        <div style="flex: 1; overflow: auto;">${gridBuilder}</div>
+      </div>
 
       <div
         style="padding: 20px; background: white; border-top: 1px solid #ddd;"
@@ -990,17 +1021,11 @@ export const MultiPaletteWithUniqueLabels = () => {
 
   setTimeout(() => {
     if ((window as any).gridBuilderAPI) {
-      (window as any).gridBuilderAPI.addCanvas("demo-canvas");
+      (window as any).gridBuilderAPI.addCanvas("multipalette-canvas");
     }
   }, 100);
 
   return html`
-    <style>
-      /* Hide the grid-builder's default palette since we're using external palettes */
-      grid-builder .palette-area {
-        display: none !important;
-      }
-    </style>
     <div
       style="font-family: system-ui, -apple-system, sans-serif; background: #f0f2f5; height: 100vh; display: flex; flex-direction: column;"
     >
@@ -1109,6 +1134,14 @@ export const KeyboardAccessibilityDemo = () => {
 
   const components = sampleComponents;
 
+  // Create component palette with click-to-add enabled
+  const palette = document.createElement("component-palette");
+  palette.components = components;
+  palette.showHeader = false;
+  palette.config = {
+    enableClickToAdd: true,
+  };
+
   // Create grid-builder with keyboard-friendly config
   const gridBuilder = document.createElement("grid-builder");
   gridBuilder.components = components;
@@ -1120,7 +1153,7 @@ export const KeyboardAccessibilityDemo = () => {
 
   setTimeout(() => {
     if ((window as any).gridBuilderAPI) {
-      (window as any).gridBuilderAPI.addCanvas("demo-canvas");
+      (window as any).gridBuilderAPI.addCanvas("keyboard-canvas");
     }
   }, 100);
 
@@ -1172,10 +1205,23 @@ export const KeyboardAccessibilityDemo = () => {
 
       ${instructionsDiv}
 
-      <div
-        style="border: 2px solid #007bff; border-radius: 8px; overflow: hidden;"
-      >
-        ${gridBuilder}
+      <div style="display: flex; gap: 20px;">
+        <!-- Left: Component Palette -->
+        <div
+          style="width: 280px; background: white; border: 2px solid #007bff; border-radius: 8px; padding: 16px;"
+        >
+          <h3 style="margin: 0 0 16px 0; color: #333; font-size: 16px;">
+            Components
+          </h3>
+          ${palette}
+        </div>
+
+        <!-- Right: Grid Builder -->
+        <div
+          style="flex: 1; border: 2px solid #007bff; border-radius: 8px; overflow: hidden;"
+        >
+          ${gridBuilder}
+        </div>
       </div>
 
       <div
@@ -1244,6 +1290,14 @@ export const DragOnlyMode = () => {
 
   const components = sampleComponents;
 
+  // Create component palette with click-to-add DISABLED
+  const palette = document.createElement("component-palette");
+  palette.components = components;
+  palette.showHeader = false;
+  palette.config = {
+    enableClickToAdd: false, // Disable click-to-add (drag-only)
+  };
+
   // Create grid-builder with click-to-add DISABLED
   const gridBuilder = document.createElement("grid-builder");
   gridBuilder.components = components;
@@ -1257,7 +1311,7 @@ export const DragOnlyMode = () => {
   // Initialize with empty canvas
   setTimeout(() => {
     if ((window as any).gridBuilderAPI) {
-      (window as any).gridBuilderAPI.addCanvas("demo-canvas");
+      (window as any).gridBuilderAPI.addCanvas("dragonly-canvas");
     }
   }, 100);
 
@@ -1278,7 +1332,20 @@ export const DragOnlyMode = () => {
         </p>
       </div>
 
-      <div style="flex: 1; overflow: hidden;">${gridBuilder}</div>
+      <div style="display: flex; flex: 1; overflow: hidden;">
+        <!-- Left: Component Palette (Drag-Only) -->
+        <div
+          style="width: 280px; background: white; overflow-y: auto; border-right: 1px solid #ddd; padding: 16px;"
+        >
+          <h3 style="margin: 0 0 16px 0; color: #333; font-size: 16px;">
+            Components (Drag Only)
+          </h3>
+          ${palette}
+        </div>
+
+        <!-- Right: Grid Builder -->
+        <div style="flex: 1; overflow: auto;">${gridBuilder}</div>
+      </div>
 
       <div
         style="padding: 20px; background: white; border-top: 1px solid #ddd;"
@@ -1335,6 +1402,405 @@ export const DragOnlyMode = () => {
             palette items.
           </p>
         </div>
+      </div>
+    </div>
+  `;
+};
+
+/**
+ * Multi-Canvas Click-to-Add
+ * ==========================
+ *
+ * Demonstrates how click-to-add works with multiple canvases.
+ * Components are added to the **active canvas** (highlighted with blue border).
+ */
+export const MultiCanvasClickToAdd = () => {
+  // Reset state to clear any cached data from previous stories
+  reset();
+
+  const components = sampleComponents;
+
+  // Create component palette with click-to-add enabled
+  const palette = document.createElement("component-palette");
+  palette.components = components;
+  palette.showHeader = false;
+  palette.config = {
+    enableClickToAdd: true,
+  };
+
+  // Create grid-builder with click-to-add enabled
+  const gridBuilder = document.createElement("grid-builder");
+  gridBuilder.components = components;
+  gridBuilder.config = {
+    enableClickToAdd: true,
+    enableVirtualRendering: false,
+    snapToGrid: true,
+    showGridLines: true,
+  };
+
+  // Initialize with THREE canvases to demonstrate section-level click-to-add
+  setTimeout(() => {
+    if ((window as any).gridBuilderAPI) {
+      (window as any).gridBuilderAPI.addCanvas("hero-section");
+      (window as any).gridBuilderAPI.addCanvas("content-section");
+      (window as any).gridBuilderAPI.addCanvas("footer-section");
+    }
+  }, 100);
+
+  return html`
+    <div
+      style="font-family: system-ui, -apple-system, sans-serif; background: #f0f2f5; height: 100vh; display: flex; flex-direction: column;"
+    >
+      <div
+        style="padding: 20px; background: white; box-shadow: 0 2px 4px rgba(0,0,0,0.1);"
+      >
+        <h2 style="margin: 0 0 10px 0; color: #333;">
+          Multi-Canvas Click-to-Add
+        </h2>
+        <p style="color: #666; margin: 0 0 10px 0;">
+          This story demonstrates click-to-add with <strong>multiple canvas sections</strong> (Hero, Content, Footer).
+          Click-to-add is <strong>canvas-aware</strong> - components are added to the <strong>active canvas</strong> (highlighted with blue border).
+        </p>
+        <div style="padding: 12px; background: #e7f3ff; border-radius: 4px; border-left: 4px solid #007bff;">
+          <strong style="color: #004085;">💡 How it works:</strong>
+          <span style="color: #004085; font-size: 14px;">
+            Click any canvas section below to activate it, then click a palette item to add it to that section. Scroll down to see all three sections.
+          </span>
+        </div>
+      </div>
+
+      <div style="display: flex; flex: 1; overflow: hidden;">
+        <!-- Left: Component Palette -->
+        <div
+          style="width: 280px; background: white; overflow-y: auto; border-right: 1px solid #ddd; padding: 16px;"
+        >
+          <h3 style="margin: 0 0 16px 0; color: #333; font-size: 16px;">
+            Components
+          </h3>
+          ${palette}
+        </div>
+
+        <!-- Right: Grid Builder with Multiple Canvases -->
+        <div style="flex: 1; overflow-y: auto;">${gridBuilder}</div>
+      </div>
+
+      <div
+        style="padding: 12px 20px; background: white; border-top: 1px solid #ddd;"
+      >
+        <div style="display: flex; gap: 30px; align-items: center; margin-bottom: 8px;">
+          <div style="color: #666; font-size: 13px;">
+            <strong style="color: #007bff;">🎯 Try it:</strong> Click a canvas to activate it (blue border), then click palette items to add components
+          </div>
+          <div style="color: #666; font-size: 13px;">
+            <strong style="color: #28a745;">💡 Tip:</strong> Click = smart position | Drag = exact position
+          </div>
+        </div>
+        <details style="margin-top: 8px;">
+          <summary style="cursor: pointer; color: #007bff; font-size: 12px; user-select: none;">
+            📖 Show detailed instructions
+          </summary>
+          <div style="margin-top: 12px; padding: 12px; background: #f8f9fa; border-radius: 4px; font-size: 13px; line-height: 1.6;">
+            <div style="margin-bottom: 12px;">
+              <strong style="color: #333;">Active Canvas Selection:</strong>
+              <ul style="margin: 4px 0 0 20px; color: #666;">
+                <li>Click a canvas to make it active (blue border appears)</li>
+                <li>Click a component to activate its canvas</li>
+                <li>Click palette item to add to active canvas</li>
+              </ul>
+            </div>
+            <div>
+              <strong style="color: #333;">Try This:</strong>
+              <ol style="margin: 4px 0 0 20px; color: #666;">
+                <li>Click the "Hero Section" canvas</li>
+                <li>Click a palette item (e.g., "Header")</li>
+                <li>Notice it appears in Hero Section</li>
+                <li>Click the "Footer Section" canvas</li>
+                <li>Click another palette item</li>
+                <li>Notice it appears in Footer (not Hero)</li>
+              </ol>
+            </div>
+          </div>
+        </details>
+      </div>
+    </div>
+  `;
+};
+
+/**
+ * Component Sizing Best Practices
+ * ================================
+ *
+ * Demonstrates the correct way to size components so that resize handles
+ * align perfectly with visual edges.
+ */
+export const ComponentSizingBestPractices = () => {
+  // Reset state to clear any cached data from previous stories
+  reset();
+
+  // ✅ CORRECT: Component with padding and proper box-sizing
+  const componentWithPadding = {
+    type: "with-padding",
+    name: "With Padding ✅",
+    icon: "📦",
+    defaultSize: { width: 20, height: 10 },
+    render: () => {
+      const div = document.createElement("div");
+      div.style.cssText = `
+        padding: 16px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 8px;
+        width: 100%;
+        height: 100%;
+        box-sizing: border-box;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 600;
+      `;
+      div.textContent = "Padding + box-sizing ✅";
+      return div;
+    },
+    renderDragClone: () => {
+      const div = document.createElement("div");
+      div.textContent = "📦 With Padding";
+      return div;
+    },
+  };
+
+  // ✅ CORRECT: Component without padding (edge-to-edge fill)
+  const componentNoPadding = {
+    type: "no-padding",
+    name: "No Padding ✅",
+    icon: "📐",
+    defaultSize: { width: 20, height: 10 },
+    render: () => {
+      const div = document.createElement("div");
+      div.style.cssText = `
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        color: white;
+        border-radius: 8px;
+        width: 100%;
+        height: 100%;
+        box-sizing: border-box;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 600;
+      `;
+      div.textContent = "No padding, fills edge-to-edge ✅";
+      return div;
+    },
+    renderDragClone: () => {
+      const div = document.createElement("div");
+      div.textContent = "📐 No Padding";
+      return div;
+    },
+  };
+
+  // ❌ WRONG: Missing width and box-sizing
+  const componentWrong = {
+    type: "wrong-sizing",
+    name: "Missing box-sizing ❌",
+    icon: "⚠️",
+    defaultSize: { width: 20, height: 10 },
+    render: () => {
+      const div = document.createElement("div");
+      div.style.cssText = `
+        padding: 16px;
+        background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
+        color: #8b4513;
+        border-radius: 8px;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 600;
+        border: 3px dashed #ff6b6b;
+      `;
+      div.textContent = "Missing width/box-sizing ❌";
+      return div;
+    },
+    renderDragClone: () => {
+      const div = document.createElement("div");
+      div.textContent = "⚠️ Wrong Sizing";
+      return div;
+    },
+  };
+
+  const components = [componentWithPadding, componentNoPadding, componentWrong];
+
+  // Create palette
+  const palette = document.createElement("component-palette");
+  palette.components = components;
+  palette.showHeader = false;
+
+  // Create grid-builder
+  const gridBuilder = document.createElement("grid-builder");
+  gridBuilder.components = components;
+  gridBuilder.config = {
+    enableVirtualRendering: false,
+    snapToGrid: true,
+    showGridLines: true,
+  };
+
+  // Initialize with demo canvas
+  setTimeout(() => {
+    if ((window as any).gridBuilderAPI) {
+      (window as any).gridBuilderAPI.addCanvas("sizing-demo-canvas");
+    }
+  }, 100);
+
+  return html`
+    <div
+      style="font-family: system-ui, -apple-system, sans-serif; background: #f0f2f5; height: 100vh; display: flex; flex-direction: column;"
+    >
+      <div
+        style="padding: 20px; background: white; box-shadow: 0 2px 4px rgba(0,0,0,0.1);"
+      >
+        <h2 style="margin: 0 0 10px 0; color: #333;">
+          Component Sizing Best Practices
+        </h2>
+        <p style="color: #666; margin: 0;">
+          Learn the correct way to size components so resize handles align
+          perfectly with visual edges.
+        </p>
+      </div>
+
+      <div style="display: flex; flex: 1; overflow: hidden;">
+        <!-- Left: Palette + Instructions -->
+        <div
+          style="width: 320px; background: white; overflow-y: auto; border-right: 1px solid #ddd; display: flex; flex-direction: column; gap: 20px; padding: 20px;"
+        >
+          <!-- Palette -->
+          <div>
+            <div
+              style="background: #4a90e2; color: white; padding: 12px 16px; border-radius: 8px 8px 0 0; font-weight: 600; font-size: 14px; margin-bottom: -10px;"
+            >
+              🎨 Demo Components
+            </div>
+            <div
+              style="background: #f9f9f9; border-radius: 0 0 8px 8px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.05);"
+            >
+              ${palette}
+            </div>
+          </div>
+
+          <!-- Instructions -->
+          <div
+            style="padding: 16px; background: #e7f3ff; border-radius: 8px; border-left: 4px solid #0ea5e9;"
+          >
+            <h4 style="margin: 0 0 8px 0; color: #0369a1; font-size: 13px;">
+              📋 Try This:
+            </h4>
+            <ol
+              style="margin: 0; padding-left: 20px; color: #075985; font-size: 12px; line-height: 1.6;"
+            >
+              <li>Drag all three components to the canvas</li>
+              <li>Click each one to see resize handles</li>
+              <li>
+                Notice the ❌ component's handles don't align with visual edges
+              </li>
+              <li>
+                The ✅ components have handles perfectly aligned to visual edges
+              </li>
+            </ol>
+          </div>
+
+          <!-- Code Examples -->
+          <div
+            style="padding: 16px; background: #f8f9fa; border-radius: 8px; border-left: 4px solid #28a745;"
+          >
+            <h4 style="margin: 0 0 12px 0; color: #155724; font-size: 13px;">
+              ✅ Correct Pattern (With Padding)
+            </h4>
+            <pre
+              style="margin: 0; padding: 12px; background: white; border-radius: 4px; font-size: 11px; line-height: 1.4; overflow-x: auto;"
+            ><code>div.style.cssText = \`
+  padding: 16px;
+  background: #667eea;
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+\`;</code></pre>
+          </div>
+
+          <div
+            style="padding: 16px; background: #f8f9fa; border-radius: 8px; border-left: 4px solid #28a745;"
+          >
+            <h4 style="margin: 0 0 12px 0; color: #155724; font-size: 13px;">
+              ✅ Correct Pattern (No Padding)
+            </h4>
+            <pre
+              style="margin: 0; padding: 12px; background: white; border-radius: 4px; font-size: 11px; line-height: 1.4; overflow-x: auto;"
+            ><code>div.style.cssText = \`
+  background: #10b981;
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+\`;</code></pre>
+          </div>
+
+          <div
+            style="padding: 16px; background: #fff3cd; border-radius: 8px; border-left: 4px solid #ffc107;"
+          >
+            <h4 style="margin: 0 0 12px 0; color: #856404; font-size: 13px;">
+              ❌ Wrong Pattern (Missing width/box-sizing)
+            </h4>
+            <pre
+              style="margin: 0; padding: 12px; background: white; border-radius: 4px; font-size: 11px; line-height: 1.4; overflow-x: auto;"
+            ><code>div.style.cssText = \`
+  padding: 16px;
+  background: #ffecd2;
+  height: 100%;
+  // Missing width and box-sizing!
+\`;</code></pre>
+            <p
+              style="margin: 12px 0 0 0; color: #856404; font-size: 11px; line-height: 1.4;"
+            >
+              Without <code>width: 100%</code> and
+              <code>box-sizing: border-box</code>, the component won't fill its
+              container properly, causing resize handles to appear disconnected
+              from visual edges.
+            </p>
+          </div>
+
+          <!-- Why It Matters -->
+          <div
+            style="padding: 16px; background: #e1f5fe; border-radius: 8px; border-left: 4px solid #0288d1;"
+          >
+            <h4 style="margin: 0 0 8px 0; color: #01579b; font-size: 13px;">
+              💡 Why This Matters
+            </h4>
+            <ul
+              style="margin: 0; padding-left: 16px; color: #01579b; font-size: 11px; line-height: 1.6;"
+            >
+              <li>
+                <strong>box-sizing: border-box</strong> includes padding and
+                border in width/height
+              </li>
+              <li>
+                Without it, <code>height: 100% + padding</code> exceeds
+                container size
+              </li>
+              <li>
+                <strong>width: 100%</strong> ensures horizontal fill of
+                grid-item-wrapper
+              </li>
+              <li>
+                Grid-item-wrapper positions resize handles based on its own
+                size
+              </li>
+              <li>
+                Component must fill wrapper completely for handles to align with
+                visual edges
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- Right: Grid Builder Canvas -->
+        <div style="flex: 1; overflow: auto;">${gridBuilder}</div>
       </div>
     </div>
   `;
