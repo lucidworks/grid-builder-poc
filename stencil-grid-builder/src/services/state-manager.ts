@@ -760,26 +760,22 @@ export interface ViewerState {
 }
 
 /**
- * Initial State (empty canvases for library)
+ * Initial State (truly empty for clean isolation)
  *
- * Library starts with empty canvases by default.
- * Consumers can add their own initial items programmatically.
+ * Library starts with NO canvases by default.
+ * Consumers add canvases programmatically via addCanvas() API.
+ *
+ * **Why completely empty**:
+ * - Prevents state pollution between Storybook stories
+ * - Ensures each grid-builder instance starts fresh
+ * - Avoids "Unknown component type" errors when rapidly switching stories
+ * - Each story builds its own canvas structure from scratch
+ *
+ * **Before**: Had canvas1/canvas2/canvas3 predefined (caused cross-story contamination)
+ * **After**: Empty object {} (stories must explicitly create canvases)
  */
 const initialState: GridState = {
-  canvases: {
-    canvas1: {
-      items: [],
-      zIndexCounter: 1,
-    },
-    canvas2: {
-      items: [],
-      zIndexCounter: 1,
-    },
-    canvas3: {
-      items: [],
-      zIndexCounter: 1,
-    },
-  },
+  canvases: {},
   selectedItemId: null,
   selectedCanvasId: null,
   activeCanvasId: null,
