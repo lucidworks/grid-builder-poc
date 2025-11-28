@@ -556,4 +556,142 @@ export interface GridConfig {
    * @default true
    */
   enableClickToAdd?: boolean;
+
+  /**
+   * Hide unknown component types instead of rendering error placeholder
+   *
+   * **What it does**: When a component type is not found in the registry, hide it completely
+   * **Why**: Cleaner UX when dealing with partial component sets or during development
+   *
+   * **Default**: false (show error placeholder)
+   *
+   * **Behavior**:
+   * - **When false** (default): Unknown components render as error placeholders with red message
+   * - **When true**: Unknown components don't render at all (completely hidden)
+   *
+   * **Use cases**:
+   * - **Production apps**: Hide unknown types for cleaner user experience
+   * - **Partial imports**: When only loading subset of available components
+   * - **Development**: Hide experimental/deprecated component types
+   * - **A/B testing**: Conditionally hide components based on feature flags
+   *
+   * **When to keep false** (show errors):
+   * - **Development/debugging**: Want to see which components are missing
+   * - **Migration**: Tracking which old component types need updating
+   * - **Error visibility**: Make it obvious when component registry is incomplete
+   *
+   * **Example - Hide unknown components**:
+   * ```typescript
+   * const prodConfig: GridConfig = {
+   *   hideUnknownComponents: true  // Clean production experience
+   * };
+   * ```
+   *
+   * **Example - Show errors in development**:
+   * ```typescript
+   * const devConfig: GridConfig = {
+   *   hideUnknownComponents: false,  // Default - show error placeholders
+   *   renderUnknownComponent: ({ type, itemId }) => (
+   *     <div>Dev Mode: Missing component type "{type}"</div>
+   *   )
+   * };
+   * ```
+   * @default false
+   */
+  hideUnknownComponents?: boolean;
+
+  /**
+   * Custom renderer for unknown component types
+   *
+   * **What it does**: Provides custom JSX/HTML when component type is not found in registry
+   * **Why**: Better user experience and debugging for missing component types
+   *
+   * **Default**: undefined (uses built-in error placeholder)
+   *
+   * **Function signature**:
+   * ```typescript
+   * (context: { type: string; itemId: string }) => any
+   * ```
+   *
+   * **Context properties**:
+   * - `type`: The unknown component type string
+   * - `itemId`: The item ID (for debugging/logging)
+   *
+   * **Return value**: JSX element or HTMLElement to render
+   *
+   * **Built-in default** (when not provided):
+   * ```tsx
+   * <div class="component-error">
+   *   ⚠️ Unknown component type: {type}
+   *   <small>Item ID: {itemId}</small>
+   * </div>
+   * ```
+   *
+   * **Use cases**:
+   * - **Branded error messages**: Match your app's design system
+   * - **Development aids**: Show helpful debug info or component type suggestions
+   * - **Graceful degradation**: Render fallback content instead of errors
+   * - **Logging**: Report missing components to analytics
+   *
+   * **Example - Custom error component**:
+   * ```typescript
+   * const config: GridConfig = {
+   *   renderUnknownComponent: ({ type, itemId }) => {
+   *     // Log to analytics
+   *     analytics.track('unknown_component', { type, itemId });
+   *
+   *     // Return custom JSX
+   *     return (
+   *       <div style={{ padding: '20px', background: '#fff3cd', border: '1px solid #ffc107' }}>
+   *         <h4>⚠️ Component Not Available</h4>
+   *         <p>The "{type}" component is not available in this version.</p>
+   *         <small>Item ID: {itemId}</small>
+   *       </div>
+   *     );
+   *   }
+   * };
+   * ```
+   *
+   * **Example - Graceful fallback**:
+   * ```typescript
+   * const config: GridConfig = {
+   *   renderUnknownComponent: ({ type }) => {
+   *     // Render simple placeholder instead of error
+   *     return (
+   *       <div style={{ padding: '20px', background: '#f5f5f5' }}>
+   *         <p>Content placeholder</p>
+   *       </div>
+   *     );
+   *   }
+   * };
+   * ```
+   *
+   * **Example - Development debug info**:
+   * ```typescript
+   * const devConfig: GridConfig = {
+   *   renderUnknownComponent: ({ type, itemId }) => (
+   *     <div style={{ padding: '20px', background: '#f8d7da', color: '#721c24' }}>
+   *       <strong>Missing Component Type</strong>
+   *       <ul>
+   *         <li>Type: <code>{type}</code></li>
+   *         <li>Item ID: <code>{itemId}</code></li>
+   *         <li>Available types: {Object.keys(componentRegistry).join(', ')}</li>
+   *       </ul>
+   *       <button onClick={() => console.log('Item data:', getItem(itemId))}>
+   *         Log Item Data
+   *       </button>
+   *     </div>
+   *   )
+   * };
+   * ```
+   *
+   * **Interaction with hideUnknownComponents**:
+   * - If `hideUnknownComponents: true`, this renderer is ignored (components hidden)
+   * - If `hideUnknownComponents: false`, this renderer is used (or default if undefined)
+   * @default undefined
+   */
+  renderUnknownComponent?: (context: {
+    type: string;
+    itemId: string;
+  }) => any;
 }

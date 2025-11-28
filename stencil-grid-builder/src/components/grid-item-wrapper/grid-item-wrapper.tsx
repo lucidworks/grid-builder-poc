@@ -575,7 +575,10 @@ export class GridItemWrapper {
    *
    * **Fallback for unknown types**:
    * - If no registry provided: "Component registry not available"
-   * - If type not in registry: "Unknown component type: {type}"
+   * - If type not in registry:
+   *   1. Check config.hideUnknownComponents → hide completely (return null)
+   *   2. Check config.renderUnknownComponent → use custom renderer
+   *   3. Otherwise → show default error: "Unknown component type: {type}"
    * - Prevents crashes, helps debugging
    */
   private renderComponent() {
@@ -598,6 +601,40 @@ export class GridItemWrapper {
     const definition = this.componentRegistry.get(this.item.type);
 
     if (!definition) {
+      // Unknown component type - handle according to config options
+
+      // Option 1: Hide unknown components completely
+      if (this.config?.hideUnknownComponents) {
+        debug.log(
+          `GridItemWrapper: Hiding unknown component type "${this.item.type}" (hideUnknownComponents=true)`,
+        );
+        return null; // Don't render anything
+      }
+
+      // Option 2: Use custom unknown component renderer
+      if (this.config?.renderUnknownComponent) {
+        debug.log(
+          `GridItemWrapper: Rendering custom unknown component for type "${this.item.type}"`,
+        );
+        const customRenderer = this.config.renderUnknownComponent({
+          type: this.item.type,
+          itemId: this.item.id,
+        });
+
+        // Handle both HTMLElement and JSX returns
+        if (customRenderer instanceof HTMLElement) {
+          return (
+            <div
+              ref={(el) =>
+                el && !el.hasChildNodes() && el.appendChild(customRenderer)
+              }
+            />
+          );
+        }
+        return customRenderer;
+      }
+
+      // Option 3: Default error display
       console.error(
         `GridItemWrapper: Unknown component type "${this.item.type}" for item ${this.item.id}`,
       );
@@ -620,6 +657,7 @@ export class GridItemWrapper {
     if (rendered instanceof HTMLElement) {
       return (
         <div
+          class="component-wrapper"
           ref={(el) => el && !el.hasChildNodes() && el.appendChild(rendered)}
         />
       );
