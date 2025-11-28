@@ -377,8 +377,8 @@ export class GridBuilder {
    * Custom API exposure configuration
    *
    * **Optional prop**: Control where and how the Grid Builder API is exposed
-   * **Default**: `{ target: window, key: 'gridBuilderAPI' }`
-   * **Purpose**: Allows multiple grid-builder instances and flexible API access patterns
+   * **Default**: `{ key: 'gridBuilderAPI' }`
+   * **Purpose**: Allows multiple grid-builder instances on the same page
    *
    * **Options**:
    * 1. **Custom key on window** (multiple instances):
@@ -388,20 +388,13 @@ export class GridBuilder {
    * // Access: window.gridAPI1, window.gridAPI2
    * ```
    *
-   * 2. **Custom storage object**:
-   * ```typescript
-   * const myStore = {};
-   * <grid-builder api-ref={{ target: myStore, key: 'api' }}></grid-builder>
-   * // Access: myStore.api
-   * ```
-   *
-   * 3. **Disable automatic exposure** (use ref instead):
+   * 2. **Disable automatic exposure** (use ref instead):
    * ```typescript
    * <grid-builder api-ref={null}></grid-builder>
    * // Access via ref: <grid-builder ref={el => this.api = el?.api}></grid-builder>
    * ```
    */
-  @Prop() apiRef?: { key?: string; target?: any } | null = {
+  @Prop() apiRef?: { key?: string } | null = {
     key: "gridBuilderAPI",
   };
 
@@ -515,6 +508,12 @@ export class GridBuilder {
    * **Triggered**: User clicks palette item (emitted by component-palette)
    * **Purpose**: Add component to active canvas using smart positioning
    *
+   * **Event Listener Target**: `document` (not component host element)
+   * - Listens at document level to hear events from palette even when it's a DOM sibling
+   * - Critical for Storybook stories where palette and grid-builder are rendered as siblings
+   * - Events with `bubbles: true` and `composed: true` propagate to document level
+   * - This pattern works in all scenarios: parent-child, siblings, or separate component trees
+   *
    * ## Implementation Steps
    *
    * 1. **Check if enabled**: Only proceed if `config.enableClickToAdd !== false`
@@ -549,11 +548,27 @@ export class GridBuilder {
    * ```
    * @param event - Custom event with { componentType: string }
    */
-  @Listen("palette-item-click")
-  async handlePaletteItemClick(event: CustomEvent<{ componentType: string }>) {
+  @Listen("palette-item-click", { target: "document" })
+  async handlePaletteItemClick(
+    event: CustomEvent<{ componentType: string; targetGridBuilderId?: string }>,
+  ) {
     debug.log("➕ @Listen(palette-item-click) in grid-builder", {
       detail: event.detail,
     });
+
+    // Filter events by target instance ID (for multi-instance support)
+    // If targetGridBuilderId is specified, only respond if it matches our instance ID
+    const { targetGridBuilderId } = event.detail;
+    if (targetGridBuilderId) {
+      const myInstanceId = this.apiRef?.key || "gridBuilderAPI";
+      if (targetGridBuilderId !== myInstanceId) {
+        debug.log(
+          `  ⏭️ Skipping - event targeted at ${targetGridBuilderId}, this instance is ${myInstanceId}`,
+        );
+        return;
+      }
+      debug.log(`  ✅ Event matches this instance (${myInstanceId})`);
+    }
 
     // Check if click-to-add is enabled (default: true)
     const enableClickToAdd = this.config?.enableClickToAdd ?? true;
@@ -726,22 +741,17 @@ export class GridBuilder {
     debug.log("🔧 grid-builder exposing API", {
       hasApiRef: !!this.apiRef,
       apiRefKey: this.apiRef?.key,
-      hasTarget: !!this.apiRef?.target,
-      targetType: typeof this.apiRef?.target,
       apiCreated: !!this.api,
     });
 
     if (this.apiRef && this.apiRef.key) {
-      const target = this.apiRef.target || window;
-      debug.log("  📤 Setting API on target", {
+      debug.log("  📤 Setting API on window", {
         key: this.apiRef.key,
-        isWindow: target === window,
-        targetKeys: Object.keys(target).slice(0, 10), // Show first 10 keys
       });
-      target[this.apiRef.key] = this.api;
-      debug.log("  ✅ API set on target -", {
+      window[this.apiRef.key] = this.api;
+      debug.log("  ✅ API set on window", {
         key: this.apiRef.key,
-        apiNowExists: !!target[this.apiRef.key],
+        apiNowExists: !!window[this.apiRef.key],
       });
     }
 
@@ -1217,10 +1227,9 @@ export class GridBuilder {
     // Clear global references
     delete (window as any).virtualRenderer;
 
-    // Clear API from storage location if it was set
+    // Clear API from window if it was set
     if (this.apiRef && this.apiRef.key) {
-      const target = this.apiRef.target || window;
-      delete target[this.apiRef.key];
+      delete window[this.apiRef.key];
     }
   }
 
@@ -2297,14 +2306,6 @@ export class GridBuilder {
           role="application"
           aria-label="Grid builder"
         >
-          {/* Component Palette */}
-          <div class="palette-area">
-            <component-palette
-              components={this.components}
-              config={this.config}
-            />
-          </div>
-
           {/* Canvas Area */}
           <div class="canvas-area">
             {/* Canvases */}
