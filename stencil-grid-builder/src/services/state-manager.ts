@@ -760,21 +760,19 @@ export interface ViewerState {
 }
 
 /**
- * Initial State (truly empty for clean isolation)
+ * Initial State Configuration
+ * ============================
  *
+ * Default empty state for new StateManager instances.
  * Library starts with NO canvases by default.
- * Consumers add canvases programmatically via addCanvas() API.
  *
  * **Why completely empty**:
- * - Prevents state pollution between Storybook stories
+ * - Prevents state pollution between instances
  * - Ensures each grid-builder instance starts fresh
- * - Avoids "Unknown component type" errors when rapidly switching stories
- * - Each story builds its own canvas structure from scratch
- *
- * **Before**: Had canvas1/canvas2/canvas3 predefined (caused cross-story contamination)
- * **After**: Empty object {} (stories must explicitly create canvases)
+ * - Avoids "Unknown component type" errors
+ * - Each instance builds its own canvas structure
  */
-const initialState: GridState = {
+const defaultInitialState: GridState = {
   canvases: {},
   selectedItemId: null,
   selectedCanvasId: null,
@@ -784,146 +782,251 @@ const initialState: GridState = {
 };
 
 /**
- * Global Grid State Store
- * ========================
- *
- * StencilJS store instance providing reactive state management.
- *
- * **Exports**:
- * - `state`: Reactive state proxy (mutate to trigger updates)
- * - `onChange`: Subscribe to state changes
- * - `dispose`: Cleanup subscriptions (typically not needed)
- *
- * **Usage in components**:
- * ```typescript
- * import { gridState } from './state-manager';
- *
- * // Component automatically re-renders when state changes
- * render() {
- *   const items = gridState.canvases['canvas1'].items;
- *   return items.map(item => <div>{item.name}</div>);
- * }
- * ```
- */
-const { state, onChange, dispose } = createStore<GridState>(initialState);
-
-/**
  * Debug logger for validation warnings
  */
 const debug = createDebugLogger("state-manager");
 
 /**
- * Reset state to initial empty configuration
+ * StateManager Class
+ * ==================
  *
- * **When to call**:
- * - User clicks "Reset" button
- * - Starting fresh
- * - Test cleanup (afterEach hooks)
+ * Instance-based state management for grid builder.
+ * Each grid-builder component can create its own StateManager instance.
  *
- * **What it resets**:
- * - Clears all items from all canvases
- * - Resets z-index counters
- * - Clears selection state
- * - Resets viewport to desktop
- * - Shows grid
- * - Resets item ID counter to 0
+ * ## Architecture
  *
- * **Deep clone pattern**:
- * Uses `JSON.parse(JSON.stringify())` to create independent copy
- * of initial state. Prevents mutations from affecting initialState.
- * @example
+ * **Before (Singleton)**:
+ * - Single global state shared by all grid-builder instances
+ * - Multiple instances pollute each other's state
+ * - Storybook stories contaminate each other
+ *
+ * **After (Instance-based)**:
+ * - Each grid-builder creates its own StateManager
+ * - Isolated state per instance
+ * - Multiple grid-builders on same page work independently
+ *
+ * ## Usage
+ *
+ * **New code (instance-based)**:
  * ```typescript
- * // Reset button handler
- * handleReset() {
- *   if (confirm('Reset to initial state?')) {
- *     reset();
- *     console.log('State reset to empty');
- *   }
+ * // In grid-builder component
+ * componentWillLoad() {
+ *   this.stateManager = new StateManager();
+ *   this.state = this.stateManager.state;
  * }
  * ```
- */
-export function reset() {
-  itemIdCounter = 0; // Reset to 0 (library starts empty)
-
-  // Restore initial state (empty canvases)
-  state.canvases = JSON.parse(JSON.stringify(initialState.canvases));
-  state.selectedItemId = null;
-  state.selectedCanvasId = null;
-  state.activeCanvasId = null;
-  state.currentViewport = "desktop";
-  state.showGrid = true;
-}
-
-export { state as gridState, onChange, dispose };
-
-/**
- * Helper Functions
- * ================
  *
- * CRUD operations for managing grid items and canvases.
- * All mutations use spread pattern to trigger reactivity.
- */
-
-/**
- * Add item to canvas
- *
- * **Use cases**:
- * - Dropping component from palette
- * - Undo delete operation
- * - Duplicating existing item
- * - Programmatic item creation
- *
- * **Reactivity pattern**:
- * 1. Push item to canvas.items array
- * 2. Spread canvases object to trigger update
- * 3. Components automatically re-render
- *
- * **Z-index assignment**:
- * Item should have `zIndex: canvas.zIndexCounter++` before calling.
- * This function doesn't assign z-index automatically.
- *
- * **Safety**: No-op if canvas doesn't exist
- * @param canvasId - Target canvas ID
- * @param item - GridItem to add (should have zIndex assigned)
- * @example
+ * **Legacy code (backward compatible)**:
  * ```typescript
- * // Add new item from palette drop
- * const newItem: GridItem = {
- *   id: generateItemId(),
- *   canvasId: 'canvas1',
- *   type: 'header',
- *   name: 'Header',
- *   layouts: {
- *     desktop: { x: 5, y: 5, width: 20, height: 8 },
- *     mobile: { x: null, y: null, width: null, height: null, customized: false }
- *   },
- *   zIndex: gridState.canvases['canvas1'].zIndexCounter++
- * };
- * addItemToCanvas('canvas1', newItem);
+ * // Still works via singleton export
+ * import { gridState } from './state-manager';
+ * const items = gridState.canvases['canvas1'].items;
  * ```
+ *
+ * ## Instance State
+ *
+ * Each instance has:
+ * - Independent reactive state (StencilJS store)
+ * - Own item ID counter (no collision between instances)
+ * - Own change listeners
+ * - Own lifecycle (dispose() cleanup)
  */
-export function addItemToCanvas(canvasId: string, item: GridItem) {
-  const canvas = state.canvases[canvasId];
-  if (!canvas) {
-    return;
+export class StateManager {
+  /**
+   * Reactive state proxy (mutate to trigger updates)
+   *
+   * **Access pattern**:
+   * ```typescript
+   * const items = stateManager.state.canvases['canvas1'].items;
+   * ```
+   *
+   * **Mutation pattern**:
+   * ```typescript
+   * stateManager.state.selectedItemId = 'item-5';
+   * stateManager.state.canvases = { ...stateManager.state.canvases };
+   * ```
+   */
+  public state: GridState;
+
+  /**
+   * Subscribe to state changes
+   *
+   * **Usage**:
+   * ```typescript
+   * const unsubscribe = stateManager.onChange('canvases', (newVal, oldVal) => {
+   *   console.log('Canvases changed:', newVal);
+   * });
+   * ```
+   *
+   * **Type**: Inferred from StencilJS store (OnChangeHandler<GridState>)
+   */
+  public onChange;
+
+  /**
+   * Cleanup subscriptions (called on component unmount)
+   *
+   * **Usage**:
+   * ```typescript
+   * disconnectedCallback() {
+   *   this.stateManager.dispose();
+   * }
+   * ```
+   */
+  public dispose: () => void;
+
+  /**
+   * Item ID counter for generating unique IDs
+   *
+   * **Starts at 0**: Each instance has independent counter
+   * **Increments**: Each generateItemId() call returns next ID
+   * **Format**: 'item-N' where N is the counter value
+   */
+  private itemIdCounter: number = 0;
+
+  /**
+   * Initial state snapshot for reset()
+   *
+   * **Purpose**: Deep clone of initial state for reset functionality
+   * **Updated**: When constructor receives custom initial state
+   */
+  private initialState: GridState;
+
+  /**
+   * Create new StateManager instance
+   *
+   * @param initialState - Optional custom initial state (for import/restore)
+   * @example
+   * ```typescript
+   * // Empty state (default)
+   * const manager = new StateManager();
+   *
+   * // Restore from saved state
+   * const savedState = JSON.parse(localStorage.getItem('grid-state'));
+   * const manager = new StateManager(savedState);
+   * ```
+   */
+  constructor(initialState?: Partial<GridState>) {
+    // Merge custom initial state with defaults
+    const fullInitialState: GridState = {
+      ...defaultInitialState,
+      ...initialState,
+    };
+
+    // Create StencilJS reactive store
+    const { state, onChange, dispose } = createStore<GridState>(
+      fullInitialState,
+    );
+
+    this.state = state;
+    this.onChange = onChange;
+    this.dispose = dispose;
+
+    // Store initial state for reset() (deep clone to prevent mutations)
+    this.initialState = JSON.parse(JSON.stringify(fullInitialState));
   }
 
-  // Validate item structure (dev-only, tree-shaken in production)
-  const validation = validateGridItem(item);
-  if (!validation.valid) {
-    debug.warn("⚠️ [addItemToCanvas] with validation issues:", {
-      itemId: item.id,
-      canvasId,
-      errors: validation.errors,
-    });
+  /**
+   * Reset state to initial empty configuration
+   *
+   * **When to call**:
+   * - User clicks "Reset" button
+   * - Starting fresh
+   * - Test cleanup (afterEach hooks)
+   *
+   * **What it resets**:
+   * - Clears all items from all canvases
+   * - Resets z-index counters
+   * - Clears selection state
+   * - Resets viewport to desktop
+   * - Shows grid
+   * - Resets item ID counter to 0
+   *
+   * **Deep clone pattern**:
+   * Uses `JSON.parse(JSON.stringify())` to create independent copy
+   * of initial state. Prevents mutations from affecting initialState.
+   * @example
+   * ```typescript
+   * // Reset button handler
+   * handleReset() {
+   *   if (confirm('Reset to initial state?')) {
+   *     this.stateManager.reset();
+   *     console.log('State reset to empty');
+   *   }
+   * }
+   * ```
+   */
+  reset(): void {
+    this.itemIdCounter = 0;
+
+    // Restore initial state (deep clone to prevent mutations)
+    this.state.canvases = JSON.parse(JSON.stringify(this.initialState.canvases));
+    this.state.selectedItemId = this.initialState.selectedItemId;
+    this.state.selectedCanvasId = this.initialState.selectedCanvasId;
+    this.state.activeCanvasId = this.initialState.activeCanvasId;
+    this.state.currentViewport = this.initialState.currentViewport;
+    this.state.showGrid = this.initialState.showGrid;
   }
 
-  canvas.items.push(item);
-  state.canvases = { ...state.canvases }; // Trigger update
-}
+  /**
+   * Add item to canvas
+   *
+   * **Use cases**:
+   * - Dropping component from palette
+   * - Undo delete operation
+   * - Duplicating existing item
+   * - Programmatic item creation
+   *
+   * **Reactivity pattern**:
+   * 1. Push item to canvas.items array
+   * 2. Spread canvases object to trigger update
+   * 3. Components automatically re-render
+   *
+   * **Z-index assignment**:
+   * Item should have `zIndex: canvas.zIndexCounter++` before calling.
+   * This function doesn't assign z-index automatically.
+   *
+   * **Safety**: No-op if canvas doesn't exist
+   * @param canvasId - Target canvas ID
+   * @param item - GridItem to add (should have zIndex assigned)
+   * @example
+   * ```typescript
+   * // Add new item from palette drop
+   * const newItem: GridItem = {
+   *   id: stateManager.generateItemId(),
+   *   canvasId: 'canvas1',
+   *   type: 'header',
+   *   name: 'Header',
+   *   layouts: {
+   *     desktop: { x: 5, y: 5, width: 20, height: 8 },
+   *     mobile: { x: null, y: null, width: null, height: null, customized: false }
+   *   },
+   *   zIndex: stateManager.state.canvases['canvas1'].zIndexCounter++
+   * };
+   * stateManager.addItemToCanvas('canvas1', newItem);
+   * ```
+   */
+  addItemToCanvas(canvasId: string, item: GridItem): void {
+    const canvas = this.state.canvases[canvasId];
+    if (!canvas) {
+      return;
+    }
 
-/**
- * Remove item from canvas
+    // Validate item structure (dev-only, tree-shaken in production)
+    const validation = validateGridItem(item);
+    if (!validation.valid) {
+      debug.warn("⚠️ [addItemToCanvas] with validation issues:", {
+        itemId: item.id,
+        canvasId,
+        errors: validation.errors,
+      });
+    }
+
+    canvas.items.push(item);
+    this.state.canvases = { ...this.state.canvases }; // Trigger update
+  }
+
+  /**
+   * Remove item from canvas
  *
  * **Use cases**:
  * - User deletes item (Delete key or button)
@@ -952,90 +1055,90 @@ export function addItemToCanvas(canvasId: string, item: GridItem) {
  *   deselectItem(); // Clear selection
  * }
  * ```
- */
-export function removeItemFromCanvas(canvasId: string, itemId: string) {
-  const canvas = state.canvases[canvasId];
-  if (!canvas) {
-    return;
+   */
+  removeItemFromCanvas(canvasId: string, itemId: string): void {
+    const canvas = this.state.canvases[canvasId];
+    if (!canvas) {
+      return;
+    }
+
+    canvas.items = canvas.items.filter((item) => item.id !== itemId);
+    this.state.canvases = { ...this.state.canvases }; // Trigger update
   }
 
-  canvas.items = canvas.items.filter((item) => item.id !== itemId);
-  state.canvases = { ...state.canvases }; // Trigger update
-}
+  /**
+   * Update item properties in canvas
+   *
+   * **Use cases**:
+   * - After drag operation (update position)
+   * - After resize operation (update dimensions)
+   * - Changing item name or type
+   * - Bringing item to front (update zIndex)
+   *
+   * **Partial updates**:
+   * Uses `Partial<GridItem>` to allow updating subset of properties.
+   * Object.assign merges updates into existing item.
+   *
+   * **Typical update patterns**:
+   * ```typescript
+   * // Update position after drag
+   * updateItem(canvasId, itemId, {
+   * layouts: { ...item.layouts, desktop: { x: 10, y: 5, width: 20, height: 8 } }
+   * });
+   *
+   * // Bring to front
+   * updateItem(canvasId, itemId, {
+   * zIndex: gridState.canvases[canvasId].zIndexCounter++
+   * });
+   * ```
+   *
+   * **Safety**: No-op if canvas or item doesn't exist
+   * @param canvasId - Canvas containing the item
+   * @param itemId - Item ID to update
+   * @param updates - Partial GridItem with properties to update
+   * @example
+   * ```typescript
+   * // After drag end
+   * const item = getItem('canvas1', 'item-3');
+   * if (item) {
+   *   item.layouts.desktop.x = newX;
+   *   item.layouts.desktop.y = newY;
+   *   updateItem('canvas1', 'item-3', item);
+   * }
+   * ```
+   */
+  updateItem(
+    canvasId: string,
+    itemId: string,
+    updates: Partial<GridItem>,
+  ): void {
+    const canvas = this.state.canvases[canvasId];
+    if (!canvas) {
+      return;
+    }
 
-/**
- * Update item properties in canvas
- *
- * **Use cases**:
- * - After drag operation (update position)
- * - After resize operation (update dimensions)
- * - Changing item name or type
- * - Bringing item to front (update zIndex)
- *
- * **Partial updates**:
- * Uses `Partial<GridItem>` to allow updating subset of properties.
- * Object.assign merges updates into existing item.
- *
- * **Typical update patterns**:
- * ```typescript
- * // Update position after drag
- * updateItem(canvasId, itemId, {
- * layouts: { ...item.layouts, desktop: { x: 10, y: 5, width: 20, height: 8 } }
- * });
- *
- * // Bring to front
- * updateItem(canvasId, itemId, {
- * zIndex: gridState.canvases[canvasId].zIndexCounter++
- * });
- * ```
- *
- * **Safety**: No-op if canvas or item doesn't exist
- * @param canvasId - Canvas containing the item
- * @param itemId - Item ID to update
- * @param updates - Partial GridItem with properties to update
- * @example
- * ```typescript
- * // After drag end
- * const item = getItem('canvas1', 'item-3');
- * if (item) {
- *   item.layouts.desktop.x = newX;
- *   item.layouts.desktop.y = newY;
- *   updateItem('canvas1', 'item-3', item);
- * }
- * ```
- */
-export function updateItem(
-  canvasId: string,
-  itemId: string,
-  updates: Partial<GridItem>,
-) {
-  const canvas = state.canvases[canvasId];
-  if (!canvas) {
-    return;
+    const item = canvas.items.find((i) => i.id === itemId);
+    if (!item) {
+      return;
+    }
+
+    // Validate updates (dev-only, tree-shaken in production)
+    const validation = validateItemUpdates(updates);
+    if (!validation.valid) {
+      debug.warn("⚠️ [updateItem] with validation issues:", {
+        itemId,
+        canvasId,
+        updates,
+        errors: validation.errors,
+      });
+    }
+
+    Object.assign(item, updates);
+    this.state.canvases = { ...this.state.canvases }; // Trigger update
   }
 
-  const item = canvas.items.find((i) => i.id === itemId);
-  if (!item) {
-    return;
-  }
-
-  // Validate updates (dev-only, tree-shaken in production)
-  const validation = validateItemUpdates(updates);
-  if (!validation.valid) {
-    debug.warn("⚠️ [updateItem] with validation issues:", {
-      itemId,
-      canvasId,
-      updates,
-      errors: validation.errors,
-    });
-  }
-
-  Object.assign(item, updates);
-  state.canvases = { ...state.canvases }; // Trigger update
-}
-
-/**
- * Get item by ID
+  /**
+   * Get item by ID
  *
  * **Use cases**:
  * - Reading item data before update
@@ -1062,17 +1165,17 @@ export function updateItem(
  * const snapshot = JSON.parse(JSON.stringify(getItem(canvasId, itemId)));
  * ```
  */
-export function getItem(canvasId: string, itemId: string): GridItem | null {
-  const canvas = state.canvases[canvasId];
-  if (!canvas) {
-    return null;
+  getItem(canvasId: string, itemId: string): GridItem | null {
+    const canvas = this.state.canvases[canvasId];
+    if (!canvas) {
+      return null;
+    }
+
+    return canvas.items.find((i) => i.id === itemId) || null;
   }
 
-  return canvas.items.find((i) => i.id === itemId) || null;
-}
-
-/**
- * Move item to different canvas
+  /**
+   * Move item to different canvas
  *
  * **Use cases**:
  * - Dragging item across canvas boundaries
@@ -1114,705 +1217,661 @@ export function getItem(canvasId: string, itemId: string): GridItem | null {
  * }
  * ```
  */
-export function moveItemToCanvas(
-  fromCanvasId: string,
-  toCanvasId: string,
-  itemId: string,
-) {
-  const fromCanvas = state.canvases[fromCanvasId];
-  const toCanvas = state.canvases[toCanvasId];
+  moveItemToCanvas(
+    fromCanvasId: string,
+    toCanvasId: string,
+    itemId: string,
+  ): void {
+    const fromCanvas = this.state.canvases[fromCanvasId];
+    const toCanvas = this.state.canvases[toCanvasId];
 
-  if (!fromCanvas || !toCanvas) {
-    return;
-  }
-
-  const item = fromCanvas.items.find((i) => i.id === itemId);
-  if (!item) {
-    return;
-  }
-
-  // Validate item before moving (dev-only, tree-shaken in production)
-  const validation = validateGridItem(item);
-  if (!validation.valid) {
-    debug.warn("⚠️ [moveItemToCanvas] with validation issues:", {
-      itemId,
-      fromCanvasId,
-      toCanvasId,
-      errors: validation.errors,
-    });
-  }
-
-  // Remove from old canvas
-  fromCanvas.items = fromCanvas.items.filter((i) => i.id !== itemId);
-
-  // Update item's canvasId
-  item.canvasId = toCanvasId;
-
-  // Add to new canvas
-  toCanvas.items.push(item);
-
-  state.canvases = { ...state.canvases }; // Trigger update
-}
-
-/**
- * ID counter for generating unique item IDs
- *
- * **Starts at 0**: Library starts with empty canvases
- * **Increments**: Each call to generateItemId() returns next ID
- * **Format**: 'item-N' where N is the counter value
- */
-export let itemIdCounter = 0; // Start at 0 (library starts empty)
-
-/**
- * Generate unique item ID
- *
- * **Use cases**:
- * - Creating new item from palette drop
- * - Duplicating existing item
- * - Any programmatic item creation
- *
- * **Uniqueness guarantee**:
- * Monotonically increasing counter ensures no collisions.
- * Even after delete, IDs never reused.
- *
- * **Format**: Returns 'item-N' (e.g., 'item-11', 'item-12')
- *
- * **Thread safety**: Not thread-safe, but not an issue in
- * single-threaded JavaScript environment.
- * @returns Unique item ID string
- * @example
- * ```typescript
- * // Create new item from palette drop
- * const newItem: GridItem = {
- *   id: generateItemId(), // 'item-11'
- *   canvasId: 'canvas1',
- *   type: 'button',
- *   name: 'Button',
- *   layouts: { ... },
- *   zIndex: gridState.canvases['canvas1'].zIndexCounter++
- * };
- * ```
- */
-export function generateItemId(): string {
-  return `item-${++itemIdCounter}`;
-}
-
-/**
- * Set z-index for an item
- *
- * **Use cases**:
- * - Layer panel drag-to-reorder
- * - Bring to front / send to back operations
- * - Manual z-index adjustment
- *
- * **Operation flow**:
- * 1. Find item in canvas
- * 2. Store old z-index for undo/redo
- * 3. Update item's zIndex property
- * 4. Update canvas zIndexCounter if needed
- * 5. Trigger reactivity
- * 6. Return old/new values for undo/redo
- *
- * **Safety**: Returns null if canvas or item doesn't exist
- * @param canvasId - Canvas containing the item
- * @param itemId - Item ID to update
- * @param newZIndex - New z-index value
- * @returns Object with old and new z-index, or null if not found
- * @example
- * ```typescript
- * // Set specific z-index from layer panel
- * const result = setItemZIndex('canvas1', 'item-3', 10);
- * if (result) {
- *   undoRedoManager.push(new ChangeZIndexCommand(
- *     'item-3', 'canvas1', result.oldZIndex, result.newZIndex
- *   ));
- * }
- * ```
- */
-export function setItemZIndex(
-  canvasId: string,
-  itemId: string,
-  newZIndex: number,
-): { oldZIndex: number; newZIndex: number } | null {
-  const canvas = state.canvases[canvasId];
-  if (!canvas) {
-    return null;
-  }
-
-  const item = canvas.items.find((i) => i.id === itemId);
-  if (!item) {
-    return null;
-  }
-
-  const oldZIndex = item.zIndex;
-
-  // Update z-index
-  item.zIndex = newZIndex;
-
-  // Update counter if needed (maintain monotonically increasing counter)
-  if (newZIndex >= canvas.zIndexCounter) {
-    canvas.zIndexCounter = newZIndex + 1;
-  }
-
-  // Trigger reactivity
-  state.canvases = { ...state.canvases };
-
-  return { oldZIndex, newZIndex };
-}
-
-/**
- * Move item forward in z-index (one layer up)
- *
- * **Use cases**:
- * - Layer panel "move up" button
- * - Keyboard shortcut (e.g., Ctrl+Up)
- * - Context menu "Bring forward"
- *
- * **Operation**:
- * Finds next higher z-index and swaps with that item.
- * If already on top, does nothing.
- * @param canvasId - Canvas containing the item
- * @param itemId - Item ID to move forward
- * @returns Object with old and new z-index, or null if not found/already on top
- * @example
- * ```typescript
- * // Move item up one layer
- * const result = moveItemForward('canvas1', 'item-3');
- * if (result) {
- *   console.log(`Moved from z-index ${result.oldZIndex} to ${result.newZIndex}`);
- * }
- * ```
- */
-export function moveItemForward(
-  canvasId: string,
-  itemId: string,
-): { oldZIndex: number; newZIndex: number } | null {
-  const canvas = state.canvases[canvasId];
-  if (!canvas) {
-    return null;
-  }
-
-  const item = canvas.items.find((i) => i.id === itemId);
-  if (!item) {
-    return null;
-  }
-
-  // Find next higher z-index
-  const sortedItems = [...canvas.items].sort((a, b) => a.zIndex - b.zIndex);
-  const currentIndex = sortedItems.findIndex((i) => i.id === itemId);
-
-  // Already on top
-  if (currentIndex === sortedItems.length - 1) {
-    return null;
-  }
-
-  const nextItem = sortedItems[currentIndex + 1];
-  const oldZIndex = item.zIndex;
-  const newZIndex = nextItem.zIndex;
-
-  // Swap z-index values
-  item.zIndex = newZIndex;
-  nextItem.zIndex = oldZIndex;
-
-  // Trigger reactivity
-  state.canvases = { ...state.canvases };
-
-  return { oldZIndex, newZIndex };
-}
-
-/**
- * Move item backward in z-index (one layer down)
- *
- * **Use cases**:
- * - Layer panel "move down" button
- * - Keyboard shortcut (e.g., Ctrl+Down)
- * - Context menu "Send backward"
- *
- * **Operation**:
- * Finds next lower z-index and swaps with that item.
- * If already on bottom, does nothing.
- * @param canvasId - Canvas containing the item
- * @param itemId - Item ID to move backward
- * @returns Object with old and new z-index, or null if not found/already on bottom
- */
-export function moveItemBackward(
-  canvasId: string,
-  itemId: string,
-): { oldZIndex: number; newZIndex: number } | null {
-  const canvas = state.canvases[canvasId];
-  if (!canvas) {
-    return null;
-  }
-
-  const item = canvas.items.find((i) => i.id === itemId);
-  if (!item) {
-    return null;
-  }
-
-  // Find next lower z-index
-  const sortedItems = [...canvas.items].sort((a, b) => a.zIndex - b.zIndex);
-  const currentIndex = sortedItems.findIndex((i) => i.id === itemId);
-
-  // Already on bottom
-  if (currentIndex === 0) {
-    return null;
-  }
-
-  const prevItem = sortedItems[currentIndex - 1];
-  const oldZIndex = item.zIndex;
-  const newZIndex = prevItem.zIndex;
-
-  // Swap z-index values
-  item.zIndex = newZIndex;
-  prevItem.zIndex = oldZIndex;
-
-  // Trigger reactivity
-  state.canvases = { ...state.canvases };
-
-  return { oldZIndex, newZIndex };
-}
-
-/**
- * Bring item to front (highest z-index)
- *
- * **Use cases**:
- * - Layer panel "bring to front" button
- * - Context menu "Bring to front"
- * - Double-click to bring to front
- *
- * **Operation**:
- * Sets z-index to highest value in canvas + 1
- * @param canvasId - Canvas containing the item
- * @param itemId - Item ID to bring to front
- * @returns Object with old and new z-index, or null if not found/already on top
- */
-export function bringItemToFront(
-  canvasId: string,
-  itemId: string,
-): { oldZIndex: number; newZIndex: number } | null {
-  const canvas = state.canvases[canvasId];
-  if (!canvas) {
-    return null;
-  }
-
-  const item = canvas.items.find((i) => i.id === itemId);
-  if (!item) {
-    return null;
-  }
-
-  const oldZIndex = item.zIndex;
-  const maxZIndex = Math.max(...canvas.items.map((i) => i.zIndex));
-
-  // Already on top
-  if (oldZIndex === maxZIndex) {
-    return null;
-  }
-
-  const newZIndex = canvas.zIndexCounter++;
-  item.zIndex = newZIndex;
-
-  // Trigger reactivity
-  state.canvases = { ...state.canvases };
-
-  return { oldZIndex, newZIndex };
-}
-
-/**
- * Send item to back (lowest z-index)
- *
- * **Use cases**:
- * - Layer panel "send to back" button
- * - Context menu "Send to back"
- *
- * **Operation**:
- * Sets z-index to lowest value in canvas - 1
- * @param canvasId - Canvas containing the item
- * @param itemId - Item ID to send to back
- * @returns Object with old and new z-index, or null if not found/already on bottom
- */
-export function sendItemToBack(
-  canvasId: string,
-  itemId: string,
-): { oldZIndex: number; newZIndex: number } | null {
-  const canvas = state.canvases[canvasId];
-  if (!canvas) {
-    return null;
-  }
-
-  const item = canvas.items.find((i) => i.id === itemId);
-  if (!item) {
-    return null;
-  }
-
-  const oldZIndex = item.zIndex;
-  const minZIndex = Math.min(...canvas.items.map((i) => i.zIndex));
-
-  // Already on bottom
-  if (oldZIndex === minZIndex) {
-    return null;
-  }
-
-  const newZIndex = minZIndex - 1;
-  item.zIndex = newZIndex;
-
-  // Trigger reactivity
-  state.canvases = { ...state.canvases };
-
-  return { oldZIndex, newZIndex };
-}
-
-/**
- * Select item and set active canvas
- *
- * **Use cases**:
- * - User clicks item
- * - After creating new item (auto-select)
- * - Keyboard navigation
- *
- * **Visual effects**:
- * - Selected item gets visual highlight (via CSS)
- * - Resize/drag handles appear
- * - Item can be deleted with Delete key
- *
- * **State changes**:
- * - `selectedItemId` = itemId
- * - `selectedCanvasId` = canvasId
- * - Components re-render with selection styles
- *
- * **Single selection**: Selecting new item automatically deselects previous
- * @param itemId - Item to select
- * @param canvasId - Canvas containing the item
- * @example
- * ```typescript
- * // Handle item click
- * handleItemClick(item: GridItem) {
- *   selectItem(item.id, item.canvasId);
- * }
- *
- * // Auto-select after creating item
- * const newItem = createNewItem();
- * addItemToCanvas('canvas1', newItem);
- * selectItem(newItem.id, 'canvas1');
- * ```
- */
-export function selectItem(itemId: string, canvasId: string) {
-  state.selectedItemId = itemId;
-  state.selectedCanvasId = canvasId;
-}
-
-/**
- * Deselect currently selected item
- *
- * **Use cases**:
- * - User clicks canvas background
- * - After deleting selected item
- * - Escape key pressed
- * - Starting drag operation
- *
- * **Visual effects**:
- * - Selection highlight removed
- * - Resize/drag handles hidden
- * - Item no longer delete-able with Delete key
- *
- * **State changes**:
- * - `selectedItemId` = null
- * - `selectedCanvasId` = null
- * - Components re-render without selection styles
- *
- * **Safety**: Safe to call even if nothing selected
- * @example
- * ```typescript
- * // Handle canvas click (deselect)
- * handleCanvasClick(event) {
- *   if (event.target === canvasElement) {
- *     deselectItem();
- *   }
- * }
- *
- * // After deleting item
- * removeItemFromCanvas(canvasId, itemId);
- * deselectItem();
- * ```
- */
-export function deselectItem() {
-  state.selectedItemId = null;
-  state.selectedCanvasId = null;
-}
-
-/**
- * Set active canvas
- *
- * **Use cases**:
- * - User clicks item on canvas → activate that canvas
- * - User clicks canvas background → activate that canvas
- * - User starts dragging item → activate canvas containing item
- * - User starts resizing item → activate canvas containing item
- * - Programmatic canvas focus (e.g., after adding item)
- *
- * **Visual effects**:
- * - Canvas title opacity changes (consumer-controlled CSS)
- * - Canvas border/highlight applied
- * - Canvas-specific settings panel shown
- *
- * **State changes**:
- * - `activeCanvasId` = canvasId
- * - Components re-render with isActive prop
- * - 'canvasActivated' event emitted
- *
- * **Reactivity**: Direct assignment (no spread needed for primitive)
- * @param canvasId - Canvas ID to activate
- * @example
- * ```typescript
- * // Handle item click (activate canvas)
- * handleItemClick(itemId, canvasId) {
- *   setActiveCanvas(canvasId);
- *   selectItem(itemId, canvasId);
- * }
- *
- * // Handle canvas background click
- * handleCanvasClick(canvasId) {
- *   setActiveCanvas(canvasId);
- *   deselectItem();
- * }
- * ```
- */
-export function setActiveCanvas(canvasId: string) {
-  state.activeCanvasId = canvasId;
-}
-
-/**
- * Clear active canvas
- *
- * **Use cases**:
- * - Reset application state
- * - Close all panels
- * - Deactivate all canvases
- *
- * **Visual effects**:
- * - All canvas titles return to inactive state
- * - No canvas highlighted
- * - Canvas settings panel hidden
- *
- * **State changes**:
- * - `activeCanvasId` = null
- * - Components re-render without active state
- *
- * **Safety**: Safe to call even if no canvas active
- * @example
- * ```typescript
- * // Reset button handler
- * handleReset() {
- *   clearActiveCanvas();
- *   deselectItem();
- *   reset();
- * }
- * ```
- */
-export function clearActiveCanvas() {
-  state.activeCanvasId = null;
-}
-
-/**
- * Batch Operations
- * =================
- *
- * Performance-optimized functions for bulk operations.
- * Single state update = single re-render (vs N updates = N re-renders).
- */
-
-/**
- * Add multiple items in a single batch
- *
- * **Performance benefit**: 1000 items added in ~10ms with single re-render
- * vs ~200-500ms with 1000 individual add calls and 1000 re-renders.
- *
- * **Use cases**:
- * - Stress testing (adding 100-1000 items)
- * - Template/preset loading (page templates with many components)
- * - Undo batch delete
- * - Import from saved layout
- *
- * **Reactivity pattern**:
- * 1. Clone canvases object
- * 2. Add all items to cloned canvases
- * 3. Single state assignment triggers single re-render
- * 4. Single undo/redo command for entire batch
- * @param items - Array of partial GridItem specs (missing id, zIndex auto-assigned)
- * @returns Array of created item IDs
- * @example
- * ```typescript
- * // Add 100 items in stress test
- * const items = Array.from({ length: 100 }, (_, i) => ({
- *   canvasId: 'canvas1',
- *   type: i % 2 === 0 ? 'header' : 'text',
- *   name: `Item ${i}`,
- *   layouts: {
- *     desktop: { x: (i % 10) * 5, y: Math.floor(i / 10) * 5, width: 20, height: 5 },
- *     mobile: { x: null, y: null, width: null, height: null, customized: false }
- *   }
- * }));
- *
- * const itemIds = addItemsBatch(items);
- * // ✅ 1 state update, 1 re-render, 1 undo command
- * ```
- */
-export function addItemsBatch(items: Partial<GridItem>[]): string[] {
-  const itemIds: string[] = [];
-  const updatedCanvases = { ...state.canvases };
-
-  for (const itemData of items) {
-    const id = generateItemId();
-    const canvasId = itemData.canvasId!;
-    const canvas = updatedCanvases[canvasId];
-
-    if (!canvas) {
-      console.warn(`Canvas ${canvasId} not found, skipping item`);
-      continue;
+    if (!fromCanvas || !toCanvas) {
+      return;
     }
 
-    const newItem: GridItem = {
-      id,
-      canvasId,
-      type: itemData.type || "unknown",
-      name: itemData.name || "Unnamed",
-      layouts: itemData.layouts || {
-        desktop: { x: 0, y: 0, width: 20, height: 10 },
-        mobile: {
-          x: null,
-          y: null,
-          width: null,
-          height: null,
-          customized: false,
-        },
-      },
-      zIndex: canvas.zIndexCounter++,
-      config: itemData.config || {},
-    };
+    const item = fromCanvas.items.find((i) => i.id === itemId);
+    if (!item) {
+      return;
+    }
 
-    // Validate item before adding (dev-only, tree-shaken in production)
-    const validation = validateGridItem(newItem);
+    // Validate item before moving (dev-only, tree-shaken in production)
+    const validation = validateGridItem(item);
     if (!validation.valid) {
-      debug.warn("⚠️ [addItemsBatch] with validation issues:", {
-        itemId: id,
-        canvasId,
+      debug.warn("⚠️ [moveItemToCanvas] with validation issues:", {
+        itemId,
+        fromCanvasId,
+        toCanvasId,
         errors: validation.errors,
       });
     }
 
-    canvas.items.push(newItem);
-    itemIds.push(id);
+    // Remove from old canvas
+    fromCanvas.items = fromCanvas.items.filter((i) => i.id !== itemId);
+
+    // Update item's canvasId
+    item.canvasId = toCanvasId;
+
+    // Add to new canvas
+    toCanvas.items.push(item);
+
+    this.state.canvases = { ...this.state.canvases }; // Trigger update
   }
 
-  // Single state update triggers single re-render
-  state.canvases = updatedCanvases;
+  /**
+   * Generate unique item ID
+   *
+   * **Use cases**:
+   * - Creating new item from palette drop
+   * - Duplicating existing item
+   * - Any programmatic item creation
+   *
+   * **Uniqueness guarantee**:
+   * Monotonically increasing counter ensures no collisions.
+   * Even after delete, IDs never reused.
+   *
+   * **Format**: Returns 'item-N' (e.g., 'item-11', 'item-12')
+   *
+   * **Thread safety**: Not thread-safe, but not an issue in
+   * single-threaded JavaScript environment.
+   * @returns Unique item ID string
+   * @example
+   * ```typescript
+   * // Create new item from palette drop
+   * const newItem: GridItem = {
+   *   id: stateManager.generateItemId(), // 'item-11'
+   *   canvasId: 'canvas1',
+   *   type: 'button',
+   *   name: 'Button',
+   *   layouts: { ... },
+   *   zIndex: stateManager.state.canvases['canvas1'].zIndexCounter++
+   * };
+   * ```
+   */
+  generateItemId(): string {
+    return `item-${++this.itemIdCounter}`;
+  }
 
-  return itemIds;
+  /**
+   * Set z-index for an item
+   *
+   * **Use cases**:
+   * - Layer panel drag-to-reorder
+   * - Bring to front / send to back operations
+   * - Manual z-index adjustment
+   *
+   * **Operation flow**:
+   * 1. Find item in canvas
+   * 2. Store old z-index for undo/redo
+   * 3. Update item's zIndex property
+   * 4. Update canvas zIndexCounter if needed
+   * 5. Trigger reactivity
+   * 6. Return old/new values for undo/redo
+   *
+   * **Safety**: Returns null if canvas or item doesn't exist
+   * @param canvasId - Canvas containing the item
+   * @param itemId - Item ID to update
+   * @param newZIndex - New z-index value
+   * @returns Object with old and new z-index, or null if not found
+   */
+  setItemZIndex(
+    canvasId: string,
+    itemId: string,
+    newZIndex: number,
+  ): { oldZIndex: number; newZIndex: number } | null {
+    const canvas = this.state.canvases[canvasId];
+    if (!canvas) {
+      return null;
+    }
+
+    const item = canvas.items.find((i) => i.id === itemId);
+    if (!item) {
+      return null;
+    }
+
+    const oldZIndex = item.zIndex;
+
+    // Update z-index
+    item.zIndex = newZIndex;
+
+    // Update counter if needed (maintain monotonically increasing counter)
+    if (newZIndex >= canvas.zIndexCounter) {
+      canvas.zIndexCounter = newZIndex + 1;
+    }
+
+    // Trigger reactivity
+    this.state.canvases = { ...this.state.canvases };
+
+    return { oldZIndex, newZIndex };
+  }
+
+  /**
+   * Move item forward in z-index (one layer up)
+   *
+   * **Use cases**:
+   * - Layer panel "move up" button
+   * - Keyboard shortcut (e.g., Ctrl+Up)
+   * - Context menu "Bring forward"
+   *
+   * **Operation**:
+   * Finds next higher z-index and swaps with that item.
+   * If already on top, does nothing.
+   * @param canvasId - Canvas containing the item
+   * @param itemId - Item ID to move forward
+   * @returns Object with old and new z-index, or null if not found/already on top
+   */
+  moveItemForward(
+    canvasId: string,
+    itemId: string,
+  ): { oldZIndex: number; newZIndex: number } | null {
+    const canvas = this.state.canvases[canvasId];
+    if (!canvas) {
+      return null;
+    }
+
+    const item = canvas.items.find((i) => i.id === itemId);
+    if (!item) {
+      return null;
+    }
+
+    // Find next higher z-index
+    const sortedItems = [...canvas.items].sort((a, b) => a.zIndex - b.zIndex);
+    const currentIndex = sortedItems.findIndex((i) => i.id === itemId);
+
+    // Already on top
+    if (currentIndex === sortedItems.length - 1) {
+      return null;
+    }
+
+    const nextItem = sortedItems[currentIndex + 1];
+    const oldZIndex = item.zIndex;
+    const newZIndex = nextItem.zIndex;
+
+    // Swap z-index values
+    item.zIndex = newZIndex;
+    nextItem.zIndex = oldZIndex;
+
+    // Trigger reactivity
+    this.state.canvases = { ...this.state.canvases };
+
+    return { oldZIndex, newZIndex };
+  }
+
+  /**
+   * Move item backward in z-index (one layer down)
+   *
+   * **Use cases**:
+   * - Layer panel "move down" button
+   * - Keyboard shortcut (e.g., Ctrl+Down)
+   * - Context menu "Send backward"
+   *
+   * **Operation**:
+   * Finds next lower z-index and swaps with that item.
+   * If already on bottom, does nothing.
+   * @param canvasId - Canvas containing the item
+   * @param itemId - Item ID to move backward
+   * @returns Object with old and new z-index, or null if not found/already on bottom
+   */
+  moveItemBackward(
+    canvasId: string,
+    itemId: string,
+  ): { oldZIndex: number; newZIndex: number } | null {
+    const canvas = this.state.canvases[canvasId];
+    if (!canvas) {
+      return null;
+    }
+
+    const item = canvas.items.find((i) => i.id === itemId);
+    if (!item) {
+      return null;
+    }
+
+    // Find next lower z-index
+    const sortedItems = [...canvas.items].sort((a, b) => a.zIndex - b.zIndex);
+    const currentIndex = sortedItems.findIndex((i) => i.id === itemId);
+
+    // Already on bottom
+    if (currentIndex === 0) {
+      return null;
+    }
+
+    const prevItem = sortedItems[currentIndex - 1];
+    const oldZIndex = item.zIndex;
+    const newZIndex = prevItem.zIndex;
+
+    // Swap z-index values
+    item.zIndex = newZIndex;
+    prevItem.zIndex = oldZIndex;
+
+    // Trigger reactivity
+    this.state.canvases = { ...this.state.canvases };
+
+    return { oldZIndex, newZIndex };
+  }
+
+  /**
+   * Bring item to front (highest z-index)
+   *
+   * **Use cases**:
+   * - Layer panel "bring to front" button
+   * - Context menu "Bring to front"
+   * - Double-click to bring to front
+   *
+   * **Operation**:
+   * Sets z-index to highest value in canvas + 1
+   * @param canvasId - Canvas containing the item
+   * @param itemId - Item ID to bring to front
+   * @returns Object with old and new z-index, or null if not found/already on top
+   */
+  bringItemToFront(
+    canvasId: string,
+    itemId: string,
+  ): { oldZIndex: number; newZIndex: number } | null {
+    const canvas = this.state.canvases[canvasId];
+    if (!canvas) {
+      return null;
+    }
+
+    const item = canvas.items.find((i) => i.id === itemId);
+    if (!item) {
+      return null;
+    }
+
+    const oldZIndex = item.zIndex;
+    const maxZIndex = Math.max(...canvas.items.map((i) => i.zIndex));
+
+    // Already on top
+    if (oldZIndex === maxZIndex) {
+      return null;
+    }
+
+    const newZIndex = canvas.zIndexCounter++;
+    item.zIndex = newZIndex;
+
+    // Trigger reactivity
+    this.state.canvases = { ...this.state.canvases };
+
+    return { oldZIndex, newZIndex };
+  }
+
+  /**
+   * Send item to back (lowest z-index)
+   *
+   * **Use cases**:
+   * - Layer panel "send to back" button
+   * - Context menu "Send to back"
+   *
+   * **Operation**:
+   * Sets z-index to lowest value in canvas - 1
+   * @param canvasId - Canvas containing the item
+   * @param itemId - Item ID to send to back
+   * @returns Object with old and new z-index, or null if not found/already on bottom
+   */
+  sendItemToBack(
+    canvasId: string,
+    itemId: string,
+  ): { oldZIndex: number; newZIndex: number } | null {
+    const canvas = this.state.canvases[canvasId];
+    if (!canvas) {
+      return null;
+    }
+
+    const item = canvas.items.find((i) => i.id === itemId);
+    if (!item) {
+      return null;
+    }
+
+    const oldZIndex = item.zIndex;
+    const minZIndex = Math.min(...canvas.items.map((i) => i.zIndex));
+
+    // Already on bottom
+    if (oldZIndex === minZIndex) {
+      return null;
+    }
+
+    const newZIndex = minZIndex - 1;
+    item.zIndex = newZIndex;
+
+    // Trigger reactivity
+    this.state.canvases = { ...this.state.canvases };
+
+    return { oldZIndex, newZIndex };
+  }
+
+  /**
+   * Select item and set active canvas
+   *
+   * **Use cases**:
+   * - User clicks item
+   * - After creating new item (auto-select)
+   * - Keyboard navigation
+   *
+   * **Visual effects**:
+   * - Selected item gets visual highlight (via CSS)
+   * - Resize/drag handles appear
+   * - Item can be deleted with Delete key
+   *
+   * **State changes**:
+   * - `selectedItemId` = itemId
+   * - `selectedCanvasId` = canvasId
+   * - Components re-render with selection styles
+   *
+   * **Single selection**: Selecting new item automatically deselects previous
+   * @param itemId - Item to select
+   * @param canvasId - Canvas containing the item
+   */
+  selectItem(itemId: string, canvasId: string): void {
+    this.state.selectedItemId = itemId;
+    this.state.selectedCanvasId = canvasId;
+  }
+
+  /**
+   * Deselect currently selected item
+   *
+   * **Use cases**:
+   * - User clicks canvas background
+   * - After deleting selected item
+   * - Escape key pressed
+   * - Starting drag operation
+   *
+   * **Visual effects**:
+   * - Selection highlight removed
+   * - Resize/drag handles hidden
+   * - Item no longer delete-able with Delete key
+   *
+   * **State changes**:
+   * - `selectedItemId` = null
+   * - `selectedCanvasId` = null
+   * - Components re-render without selection styles
+   *
+   * **Safety**: Safe to call even if nothing selected
+   */
+  deselectItem(): void {
+    this.state.selectedItemId = null;
+    this.state.selectedCanvasId = null;
+  }
+
+  /**
+   * Set active canvas
+   *
+   * **Use cases**:
+   * - User clicks item on canvas → activate that canvas
+   * - User clicks canvas background → activate that canvas
+   * - User starts dragging item → activate canvas containing item
+   * - User starts resizing item → activate canvas containing item
+   * - Programmatic canvas focus (e.g., after adding item)
+   *
+   * **Visual effects**:
+   * - Canvas title opacity changes (consumer-controlled CSS)
+   * - Canvas border/highlight applied
+   * - Canvas-specific settings panel shown
+   *
+   * **State changes**:
+   * - `activeCanvasId` = canvasId
+   * - Components re-render with isActive prop
+   * - 'canvasActivated' event emitted
+   *
+   * **Reactivity**: Direct assignment (no spread needed for primitive)
+   * @param canvasId - Canvas ID to activate
+   */
+  setActiveCanvas(canvasId: string): void {
+    this.state.activeCanvasId = canvasId;
+  }
+
+  /**
+   * Clear active canvas
+   *
+   * **Use cases**:
+   * - Reset application state
+   * - Close all panels
+   * - Deactivate all canvases
+   *
+   * **Visual effects**:
+   * - All canvas titles return to inactive state
+   * - No canvas highlighted
+   * - Canvas settings panel hidden
+   *
+   * **State changes**:
+   * - `activeCanvasId` = null
+   * - Components re-render without active state
+   *
+   * **Safety**: Safe to call even if no canvas active
+   */
+  clearActiveCanvas(): void {
+    this.state.activeCanvasId = null;
+  }
+
+  /**
+   * Add multiple items in a single batch
+   *
+   * **Performance benefit**: 1000 items added in ~10ms with single re-render
+   * vs ~200-500ms with 1000 individual add calls and 1000 re-renders.
+   *
+   * **Use cases**:
+   * - Stress testing (adding 100-1000 items)
+   * - Template/preset loading (page templates with many components)
+   * - Undo batch delete
+   * - Import from saved layout
+   *
+   * **Reactivity pattern**:
+   * 1. Clone canvases object
+   * 2. Add all items to cloned canvases
+   * 3. Single state assignment triggers single re-render
+   * 4. Single undo/redo command for entire batch
+   * @param items - Array of partial GridItem specs (missing id, zIndex auto-assigned)
+   * @returns Array of created item IDs
+   */
+  addItemsBatch(items: Partial<GridItem>[]): string[] {
+    const itemIds: string[] = [];
+    const updatedCanvases = { ...this.state.canvases };
+
+    for (const itemData of items) {
+      const id = this.generateItemId();
+      const canvasId = itemData.canvasId!;
+      const canvas = updatedCanvases[canvasId];
+
+      if (!canvas) {
+        console.warn(`Canvas ${canvasId} not found, skipping item`);
+        continue;
+      }
+
+      const newItem: GridItem = {
+        id,
+        canvasId,
+        type: itemData.type || "unknown",
+        name: itemData.name || "Unnamed",
+        layouts: itemData.layouts || {
+          desktop: { x: 0, y: 0, width: 20, height: 10 },
+          mobile: {
+            x: null,
+            y: null,
+            width: null,
+            height: null,
+            customized: false,
+          },
+        },
+        zIndex: canvas.zIndexCounter++,
+        config: itemData.config || {},
+      };
+
+      // Validate item before adding (dev-only, tree-shaken in production)
+      const validation = validateGridItem(newItem);
+      if (!validation.valid) {
+        debug.warn("⚠️ [addItemsBatch] with validation issues:", {
+          itemId: id,
+          canvasId,
+          errors: validation.errors,
+        });
+      }
+
+      canvas.items.push(newItem);
+      itemIds.push(id);
+    }
+
+    // Single state update triggers single re-render
+    this.state.canvases = updatedCanvases;
+
+    return itemIds;
+  }
+
+  /**
+   * Delete multiple items in a single batch
+   *
+   * **Performance benefit**: 1000 items deleted in ~5ms with single re-render
+   * vs ~100-200ms with 1000 individual delete calls and 1000 re-renders.
+   *
+   * **Use cases**:
+   * - Clear canvas (delete all)
+   * - Delete selection group
+   * - Undo batch add
+   * - Cleanup operations
+   *
+   * **Reactivity pattern**:
+   * 1. Clone canvases object
+   * 2. Filter out all items from cloned canvases
+   * 3. Single state assignment triggers single re-render
+   * 4. Single undo/redo command for entire batch
+   * @param itemIds - Array of item IDs to delete
+   */
+  deleteItemsBatch(itemIds: string[]): void {
+    const itemIdSet = new Set(itemIds);
+    const updatedCanvases = { ...this.state.canvases };
+
+    // Filter out items from all canvases
+    for (const canvasId in updatedCanvases) {
+      updatedCanvases[canvasId] = {
+        ...updatedCanvases[canvasId],
+        items: updatedCanvases[canvasId].items.filter(
+          (item) => !itemIdSet.has(item.id),
+        ),
+      };
+    }
+
+    // Single state update triggers single re-render
+    this.state.canvases = updatedCanvases;
+  }
+
+  /**
+   * Update multiple item configs in a single batch
+   *
+   * **Performance benefit**: 1000 items updated in ~8ms with single re-render
+   * vs ~150-300ms with 1000 individual update calls and 1000 re-renders.
+   *
+   * **Use cases**:
+   * - Theme changes (update colors for all items)
+   * - Bulk property changes
+   * - Undo batch config change
+   * - Template application
+   *
+   * **Reactivity pattern**:
+   * 1. Clone canvases object
+   * 2. Apply all updates to cloned canvases
+   * 3. Single state assignment triggers single re-render
+   * 4. Single undo/redo command for entire batch
+   * @param updates - Array of { itemId, canvasId, updates } objects
+   */
+  updateItemsBatch(
+    updates: {
+      itemId: string;
+      canvasId: string;
+      updates: Partial<GridItem>;
+    }[],
+  ): void {
+    const updatedCanvases = { ...this.state.canvases };
+
+    for (const { itemId, canvasId, updates: itemUpdates } of updates) {
+      const canvas = updatedCanvases[canvasId];
+      if (!canvas) {
+        console.warn(`Canvas ${canvasId} not found, skipping item ${itemId}`);
+        continue;
+      }
+
+      const item = canvas.items.find((i) => i.id === itemId);
+      if (!item) {
+        console.warn(`Item ${itemId} not found in canvas ${canvasId}`);
+        continue;
+      }
+
+      Object.assign(item, itemUpdates);
+    }
+
+    // Single state update triggers single re-render
+    this.state.canvases = updatedCanvases;
+  }
 }
 
 /**
- * Delete multiple items in a single batch
+ * Backward Compatibility Layer
+ * ==============================
  *
- * **Performance benefit**: 1000 items deleted in ~5ms with single re-render
- * vs ~100-200ms with 1000 individual delete calls and 1000 re-renders.
+ * Singleton instance and helper function exports for backward compatibility.
+ * Existing code can continue using these while we migrate to instance-based architecture.
  *
- * **Use cases**:
- * - Clear canvas (delete all)
- * - Delete selection group
- * - Undo batch add
- * - Cleanup operations
+ * **Migration path**:
+ * 1. Phase 1: Create instance-based classes (CURRENT PHASE)
+ * 2. Phase 2: Update grid-builder to create instances
+ * 3. Phase 3: Update child components to accept instances as props
+ * 4. Phase 4: Remove these exports and update all imports
  *
- * **Reactivity pattern**:
- * 1. Clone canvases object
- * 2. Filter out all items from cloned canvases
- * 3. Single state assignment triggers single re-render
- * 4. Single undo/redo command for entire batch
- * @param itemIds - Array of item IDs to delete
- * @example
- * ```typescript
- * // Clear entire canvas
- * const canvas = gridState.canvases['canvas1'];
- * const allItemIds = canvas.items.map(item => item.id);
- * deleteItemsBatch(allItemIds);
- * // ✅ 1 state update, 1 re-render, 1 undo command
- * ```
+ * **Why needed**:
+ * - 29 files import from state-manager.ts (25 unique files)
+ * - Allows incremental migration without breaking the codebase
+ * - Can test instance-based approach without immediate breaking changes
  */
-export function deleteItemsBatch(itemIds: string[]): void {
-  const itemIdSet = new Set(itemIds);
-  const updatedCanvases = { ...state.canvases };
 
-  // Filter out items from all canvases
-  for (const canvasId in updatedCanvases) {
-    updatedCanvases[canvasId] = {
-      ...updatedCanvases[canvasId],
-      items: updatedCanvases[canvasId].items.filter(
-        (item) => !itemIdSet.has(item.id),
-      ),
-    };
-  }
+// Create singleton instance (for backward compatibility only)
+const defaultManager = new StateManager();
 
-  // Single state update triggers single re-render
-  state.canvases = updatedCanvases;
-}
+// Export singleton state (backward compatible)
+export const gridState = defaultManager.state;
+export const state = defaultManager.state; // Alternative export name
+export const onChange = defaultManager.onChange;
 
-/**
- * Update multiple item configs in a single batch
- *
- * **Performance benefit**: 1000 items updated in ~8ms with single re-render
- * vs ~150-300ms with 1000 individual update calls and 1000 re-renders.
- *
- * **Use cases**:
- * - Theme changes (update colors for all items)
- * - Bulk property changes
- * - Undo batch config change
- * - Template application
- *
- * **Reactivity pattern**:
- * 1. Clone canvases object
- * 2. Apply all updates to cloned canvases
- * 3. Single state assignment triggers single re-render
- * 4. Single undo/redo command for entire batch
- * @param updates - Array of { itemId, canvasId, updates } objects
- * @example
- * ```typescript
- * // Change all headers to blue
- * const headerUpdates = Object.values(gridState.canvases)
- *   .flatMap(canvas => canvas.items)
- *   .filter(item => item.type === 'header')
- *   .map(item => ({
- *     itemId: item.id,
- *     canvasId: item.canvasId,
- *     updates: { config: { ...item.config, color: 'blue' } }
- *   }));
- *
- * updateItemsBatch(headerUpdates);
- * // ✅ 1 state update, 1 re-render, 1 undo command
- * ```
- */
-export function updateItemsBatch(
+// Export singleton instance methods as standalone functions (backward compatible)
+export const reset = () => defaultManager.reset();
+export const addItemToCanvas = (canvasId: string, item: GridItem) =>
+  defaultManager.addItemToCanvas(canvasId, item);
+export const removeItemFromCanvas = (canvasId: string, itemId: string) =>
+  defaultManager.removeItemFromCanvas(canvasId, itemId);
+export const updateItem = (
+  canvasId: string,
+  itemId: string,
+  updates: Partial<GridItem>,
+) => defaultManager.updateItem(canvasId, itemId, updates);
+export const getItem = (canvasId: string, itemId: string) =>
+  defaultManager.getItem(canvasId, itemId);
+export const moveItemToCanvas = (
+  fromCanvasId: string,
+  toCanvasId: string,
+  itemId: string,
+) => defaultManager.moveItemToCanvas(fromCanvasId, toCanvasId, itemId);
+export const generateItemId = () => defaultManager.generateItemId();
+export const setItemZIndex = (
+  canvasId: string,
+  itemId: string,
+  newZIndex: number,
+) => defaultManager.setItemZIndex(canvasId, itemId, newZIndex);
+export const moveItemForward = (canvasId: string, itemId: string) =>
+  defaultManager.moveItemForward(canvasId, itemId);
+export const moveItemBackward = (canvasId: string, itemId: string) =>
+  defaultManager.moveItemBackward(canvasId, itemId);
+export const bringItemToFront = (canvasId: string, itemId: string) =>
+  defaultManager.bringItemToFront(canvasId, itemId);
+export const sendItemToBack = (canvasId: string, itemId: string) =>
+  defaultManager.sendItemToBack(canvasId, itemId);
+export const selectItem = (itemId: string, canvasId: string) =>
+  defaultManager.selectItem(itemId, canvasId);
+export const deselectItem = () => defaultManager.deselectItem();
+export const setActiveCanvas = (canvasId: string) =>
+  defaultManager.setActiveCanvas(canvasId);
+export const clearActiveCanvas = () => defaultManager.clearActiveCanvas();
+export const addItemsBatch = (items: Partial<GridItem>[]) =>
+  defaultManager.addItemsBatch(items);
+export const deleteItemsBatch = (itemIds: string[]) =>
+  defaultManager.deleteItemsBatch(itemIds);
+export const updateItemsBatch = (
   updates: {
     itemId: string;
     canvasId: string;
     updates: Partial<GridItem>;
   }[],
-): void {
-  const updatedCanvases = { ...state.canvases };
-
-  for (const { itemId, canvasId, updates: itemUpdates } of updates) {
-    const canvas = updatedCanvases[canvasId];
-    if (!canvas) {
-      console.warn(`Canvas ${canvasId} not found, skipping item ${itemId}`);
-      continue;
-    }
-
-    const item = canvas.items.find((i) => i.id === itemId);
-    if (!item) {
-      console.warn(`Item ${itemId} not found in canvas ${canvasId}`);
-      continue;
-    }
-
-    Object.assign(item, itemUpdates);
-  }
-
-  // Single state update triggers single re-render
-  state.canvases = updatedCanvases;
-}
+) => defaultManager.updateItemsBatch(updates);
