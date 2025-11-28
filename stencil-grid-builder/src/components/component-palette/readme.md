@@ -65,13 +65,11 @@ Library component providing draggable component palette UI.
 ### Used by
 
  - [blog-app](../../demo/components/blog-app)
- - [grid-builder](../grid-builder)
 
 ### Graph
 ```mermaid
 graph TD;
   blog-app --> component-palette
-  grid-builder --> component-palette
   style component-palette fill:#f9f,stroke:#333,stroke-width:4px
 ```
 

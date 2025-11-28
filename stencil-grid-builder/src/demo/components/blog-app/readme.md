@@ -71,7 +71,6 @@ graph TD;
   layer-panel --> layer-panel-item
   grid-viewer --> canvas-section-viewer
   canvas-section-viewer --> grid-item-wrapper
-  grid-builder --> component-palette
   grid-builder --> canvas-section
   canvas-section --> grid-item-wrapper
   custom-config-panel --> custom-palette-item

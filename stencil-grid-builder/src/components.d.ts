@@ -431,6 +431,11 @@ export namespace Components {
           * @default true
          */
         "showHeader"?: boolean;
+        /**
+          * Target grid-builder instance ID  **Optional prop**: Specifies which grid-builder instance should receive click-to-add events **Default**: undefined (events received by all grid-builder instances) **Used for**: Multi-instance scenarios with multiple grid-builders on the same page  **Use case - Multiple grid-builders**: When multiple grid-builder instances exist on the same page, use this prop to route palette events to a specific instance:  ```typescript // Grid builders with different API keys <grid-builder api-ref={{ key: 'gridAPI1' }} components={...} /> <grid-builder api-ref={{ key: 'gridAPI2' }} components={...} />  // Palettes targeting specific builders <component-palette   components={components}   targetGridBuilderId="gridAPI1" /> <component-palette   components={components}   targetGridBuilderId="gridAPI2" /> ```  **How it works**: - Palette includes `targetGridBuilderId` in `palette-item-click` event detail - Grid-builder filters events by matching against its own instance ID - If omitted, all grid-builders receive the event (backward compatible)
+          * @default undefined
+         */
+        "targetGridBuilderId"?: string;
     }
     /**
      * ConfigPanel Component
@@ -599,10 +604,10 @@ export namespace Components {
          */
         "addComponent": (canvasId: string, componentType: string, position: { x: number; y: number; width: number; height: number; }, config?: Record<string, any>) => Promise<string | null>;
         /**
-          * Custom API exposure configuration  **Optional prop**: Control where and how the Grid Builder API is exposed **Default**: `{ target: window, key: 'gridBuilderAPI' }` **Purpose**: Allows multiple grid-builder instances and flexible API access patterns  **Options**: 1. **Custom key on window** (multiple instances): ```typescript <grid-builder api-ref={{ key: 'gridAPI1' }}></grid-builder> <grid-builder api-ref={{ key: 'gridAPI2' }}></grid-builder> // Access: window.gridAPI1, window.gridAPI2 ```  2. **Custom storage object**: ```typescript const myStore = {}; <grid-builder api-ref={{ target: myStore, key: 'api' }}></grid-builder> // Access: myStore.api ```  3. **Disable automatic exposure** (use ref instead): ```typescript <grid-builder api-ref={null}></grid-builder> // Access via ref: <grid-builder ref={el => this.api = el?.api}></grid-builder> ```
+          * Custom API exposure configuration  **Optional prop**: Control where and how the Grid Builder API is exposed **Default**: `{ key: 'gridBuilderAPI' }` **Purpose**: Allows multiple grid-builder instances on the same page  **Options**: 1. **Custom key on window** (multiple instances): ```typescript <grid-builder api-ref={{ key: 'gridAPI1' }}></grid-builder> <grid-builder api-ref={{ key: 'gridAPI2' }}></grid-builder> // Access: window.gridAPI1, window.gridAPI2 ```  2. **Disable automatic exposure** (use ref instead): ```typescript <grid-builder api-ref={null}></grid-builder> // Access via ref: <grid-builder ref={el => this.api = el?.api}></grid-builder> ```
           * @default {     key: "gridBuilderAPI",   }
          */
-        "apiRef"?: { key?: string; target?: any } | null;
+        "apiRef"?: { key?: string } | null;
         /**
           * Check if redo is available  **Purpose**: Determine if there are actions to redo  **Example**: ```typescript const builder = document.querySelector('grid-builder'); const canRedo = await builder.canRedo(); redoButton.disabled = !canRedo; ```
           * @returns Promise<boolean> - True if redo is available
@@ -2055,6 +2060,11 @@ declare namespace LocalJSX {
           * @default true
          */
         "showHeader"?: boolean;
+        /**
+          * Target grid-builder instance ID  **Optional prop**: Specifies which grid-builder instance should receive click-to-add events **Default**: undefined (events received by all grid-builder instances) **Used for**: Multi-instance scenarios with multiple grid-builders on the same page  **Use case - Multiple grid-builders**: When multiple grid-builder instances exist on the same page, use this prop to route palette events to a specific instance:  ```typescript // Grid builders with different API keys <grid-builder api-ref={{ key: 'gridAPI1' }} components={...} /> <grid-builder api-ref={{ key: 'gridAPI2' }} components={...} />  // Palettes targeting specific builders <component-palette   components={components}   targetGridBuilderId="gridAPI1" /> <component-palette   components={components}   targetGridBuilderId="gridAPI2" /> ```  **How it works**: - Palette includes `targetGridBuilderId` in `palette-item-click` event detail - Grid-builder filters events by matching against its own instance ID - If omitted, all grid-builders receive the event (backward compatible)
+          * @default undefined
+         */
+        "targetGridBuilderId"?: string;
     }
     /**
      * ConfigPanel Component
@@ -2217,10 +2227,10 @@ declare namespace LocalJSX {
      */
     interface GridBuilder {
         /**
-          * Custom API exposure configuration  **Optional prop**: Control where and how the Grid Builder API is exposed **Default**: `{ target: window, key: 'gridBuilderAPI' }` **Purpose**: Allows multiple grid-builder instances and flexible API access patterns  **Options**: 1. **Custom key on window** (multiple instances): ```typescript <grid-builder api-ref={{ key: 'gridAPI1' }}></grid-builder> <grid-builder api-ref={{ key: 'gridAPI2' }}></grid-builder> // Access: window.gridAPI1, window.gridAPI2 ```  2. **Custom storage object**: ```typescript const myStore = {}; <grid-builder api-ref={{ target: myStore, key: 'api' }}></grid-builder> // Access: myStore.api ```  3. **Disable automatic exposure** (use ref instead): ```typescript <grid-builder api-ref={null}></grid-builder> // Access via ref: <grid-builder ref={el => this.api = el?.api}></grid-builder> ```
+          * Custom API exposure configuration  **Optional prop**: Control where and how the Grid Builder API is exposed **Default**: `{ key: 'gridBuilderAPI' }` **Purpose**: Allows multiple grid-builder instances on the same page  **Options**: 1. **Custom key on window** (multiple instances): ```typescript <grid-builder api-ref={{ key: 'gridAPI1' }}></grid-builder> <grid-builder api-ref={{ key: 'gridAPI2' }}></grid-builder> // Access: window.gridAPI1, window.gridAPI2 ```  2. **Disable automatic exposure** (use ref instead): ```typescript <grid-builder api-ref={null}></grid-builder> // Access via ref: <grid-builder ref={el => this.api = el?.api}></grid-builder> ```
           * @default {     key: "gridBuilderAPI",   }
          */
-        "apiRef"?: { key?: string; target?: any } | null;
+        "apiRef"?: { key?: string } | null;
         /**
           * Canvas metadata storage (host app responsibility)  **Optional prop**: Store canvas-level presentation metadata **Purpose**: Host app owns canvas metadata (titles, colors, settings)  **Separation of concerns**: - Library owns placement state (items, layouts, zIndex) - Host app owns presentation state (colors, titles, custom metadata)  **Structure**: Record<canvasId, any>  **Example**: ```typescript const canvasMetadata = {   'hero-section': {     title: 'Hero Section',     backgroundColor: '#f0f4f8',     customSettings: { ... }   },   'articles-grid': {     title: 'Articles Grid',     backgroundColor: '#ffffff'   } }; <grid-builder canvasMetadata={canvasMetadata} ... /> ```  **Use with canvas-click events**: - Library fires canvas-click event when canvas background clicked - Host app shows canvas settings panel - Host app updates canvasMetadata state - Library passes metadata to canvas-section via props
          */

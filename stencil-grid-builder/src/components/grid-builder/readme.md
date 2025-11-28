@@ -361,13 +361,11 @@ Promise<boolean> - True if updated successfully
 
 ### Depends on
 
-- [component-palette](../component-palette)
 - [canvas-section](../canvas-section)
 
 ### Graph
 ```mermaid
 graph TD;
-  grid-builder --> component-palette
   grid-builder --> canvas-section
   canvas-section --> grid-item-wrapper
   blog-app --> grid-builder
