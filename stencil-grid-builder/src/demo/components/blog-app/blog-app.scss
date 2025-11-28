@@ -303,17 +303,12 @@ blog-app {
       min-width: 0; /* Allow flex shrinking - critical for preventing overflow */
       overflow-x: auto; /* Allow scrolling if content is too wide */
 
-      /* Hide grid-builder's default palette */
+      /* Grid Builder - canvas area styling */
       grid-builder {
         display: block;
         width: 100%;
         min-height: 600px;
         box-sizing: border-box;
-
-        /* Hide the built-in palette since we're using custom categorized ones */
-        .palette-area {
-          display: none;
-        }
 
         /* Ensure main area uses available width */
         .main-area {
