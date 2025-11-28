@@ -908,92 +908,52 @@ export class VirtualRendererService {
 }
 
 /**
- * Singleton VirtualRenderer instance
- * ====================================
+ * Backward Compatibility Layer
+ * ==============================
  *
- * Global singleton instance shared across all grid components.
+ * Singleton instance export for backward compatibility.
+ * Existing code can continue using this while we migrate to instance-based architecture.
  *
- * ## Singleton Pattern
+ * **Migration path**:
+ * 1. Phase 1: VirtualRendererService class already exists (CURRENT PHASE - ✓ Complete)
+ * 2. Phase 2: Update grid-builder to create instances
+ * 3. Phase 3: Update child components to accept instances as props
+ * 4. Phase 4: Remove singleton export and update all imports
  *
- * **Why singleton**:
+ * **Why singleton currently**:
  * - Single IntersectionObserver for all items (efficient)
  * - Shared callback registry (O(1) lookups)
- * - Consistent configuration across app
- * - Easier to use (no prop drilling)
- * - Standard service pattern
+ * - Can be replaced with per-instance observers in Phase 2
  *
- * **Instantiation**:
+ * **Usage note**: VirtualRendererService is already a class, so no conversion needed.
+ * Just need to update grid-builder to create instances instead of importing singleton.
+ *
+ * **Current usage pattern**:
  * ```typescript
- * export const virtualRenderer = new VirtualRendererService();
- * ```
- * - Created at module load time
- * - Immediately available to all components
- * - Initializes IntersectionObserver
- * - Ready for observe() calls
- *
- * ## Usage Pattern
- *
- * **In grid-builder-app.tsx** (optional, for visibility):
- * ```typescript
- * componentDidLoad() {
- * // Expose globally for debugging (optional)
- * (window as any).virtualRenderer = virtualRenderer;
- * }
- * ```
- *
- * **In grid-item-wrapper.tsx**:
- * ```typescript
+ * // In grid-item-wrapper.tsx:
  * import { virtualRenderer } from '../../services/virtual-renderer';
  *
  * componentDidLoad() {
- * virtualRenderer.observe(this.itemRef, this.item.id, (isVisible) => {
- * this.isVisible = isVisible;
- * });
+ *   virtualRenderer.observe(this.itemRef, this.item.id, (isVisible) => {
+ *     this.isVisible = isVisible;
+ *   });
  * }
  *
  * disconnectedCallback() {
- * virtualRenderer.unobserve(this.itemRef, this.item.id);
+ *   virtualRenderer.unobserve(this.itemRef, this.item.id);
  * }
  * ```
  *
- * ## Global State
- *
- * **Observer shared across**:
- * - All grid-item-wrapper components
- * - All canvas sections
- * - Entire application
- *
- * **Benefits**:
- * - Single observer instance (low overhead)
- * - Batch intersection processing
- * - Consistent behavior
- * - Simple API
- *
- * ## Alternative Patterns
- *
- * **Could use React Context** (not needed):
+ * **Future usage pattern** (Phase 2+):
  * ```typescript
- * const VirtualRendererContext = createContext(virtualRenderer);
- * // More boilerplate, no real benefit
- * ```
+ * // In grid-item-wrapper.tsx:
+ * @Prop() virtualRenderer: VirtualRendererService;  // Passed from grid-builder
  *
- * **Could use dependency injection** (overkill):
- * ```typescript
- * @Inject() virtualRenderer: VirtualRendererService
- * // Complex setup, no benefit for this use case
- * ```
- *
- * **Singleton is simplest**:
- * - Direct import
- * - No context setup
- * - No DI container
- * - Works across frameworks
- * @example
- * ```typescript
- * // Import and use directly:
- * import { virtualRenderer } from './virtual-renderer';
- *
- * virtualRenderer.observe(element, id, callback);
+ * componentDidLoad() {
+ *   this.virtualRenderer.observe(this.itemRef, this.item.id, (isVisible) => {
+ *     this.isVisible = isVisible;
+ *   });
+ * }
  * ```
  */
 export const virtualRenderer = new VirtualRendererService();

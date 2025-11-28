@@ -207,18 +207,40 @@ class DOMCache {
 }
 
 /**
- * Singleton DOM cache instance
+ * Backward Compatibility Layer
+ * ==============================
  *
- * Export as const to ensure single instance across entire application.
- * All modules import same cache, preventing duplicate element caching
- * and ensuring consistent cache state.
- * @example
+ * Singleton instance export for backward compatibility.
+ * Existing code can continue using this while we migrate to instance-based architecture.
+ *
+ * **Migration path**:
+ * 1. Phase 1: DOMCache class already exists (CURRENT PHASE - ✓ Complete)
+ * 2. Phase 2: Update grid-builder to create instances
+ * 3. Phase 3: Update child components to accept instances as props
+ * 4. Phase 4: Remove singleton export and update all imports
+ *
+ * **Why singleton currently**:
+ * - Single cache instance across all components (efficient)
+ * - Shared element references (consistent cache state)
+ * - Can be replaced with per-instance caches in Phase 2
+ *
+ * **Usage note**: DOMCache is already a class, so no conversion needed.
+ * Just need to update grid-builder to create instances instead of importing singleton.
+ *
+ * **Current usage pattern**:
  * ```typescript
- * import { domCache } from './dom-cache';
+ * import { domCache } from '../../utils/dom-cache';
  *
- * // All modules use same cache instance
- * const el1 = domCache.getCanvas('canvas1');
- * const el2 = domCache.getCanvas('canvas1'); // Same reference
+ * const canvas = domCache.getCanvas('canvas1');
+ * ```
+ *
+ * **Future usage pattern** (Phase 2+):
+ * ```typescript
+ * // In grid-builder.tsx:
+ * @Prop() domCache: DOMCache;  // Passed to child components
+ *
+ * // In child components:
+ * const canvas = this.domCache.getCanvas('canvas1');
  * ```
  */
 export const domCache = new DOMCache();

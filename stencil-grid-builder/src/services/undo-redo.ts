@@ -343,104 +343,6 @@ export interface UndoRedoState {
 }
 
 /**
- * Reactive state store for undo/redo button states
- *
- * **StencilJS integration**: Components automatically subscribe when accessing properties
- * **Updates**: Modified by updateButtonStates() after each operation
- */
-const { state: undoRedoState } = createStore<UndoRedoState>({
-  canUndo: false,
-  canRedo: false,
-});
-
-export { undoRedoState };
-
-/**
- * Undo/Redo Service API
- * =====================
- *
- * Provides a clear, namespaced API for undo/redo operations.
- * Use this instead of individual function imports for better clarity.
- * @example
- * ```typescript
- * import { undoRedo } from './services/undo-redo';
- *
- * // Add command to history
- * undoRedo.push(new AddItemCommand(canvasId, item));
- *
- * // Undo/redo
- * undoRedo.undo();
- * undoRedo.redo();
- *
- * // Check availability
- * if (undoRedo.canUndo()) {
- *   undoRedo.undo();
- * }
- * ```
- */
-export const undoRedo = {
-  /** Add command to undo/redo history */
-  push: pushCommand,
-
-  /** Undo last command */
-  undo,
-
-  /** Redo previously undone command */
-  redo,
-
-  /** Check if undo is available */
-  canUndo,
-
-  /** Check if redo is available */
-  canRedo,
-
-  /** Clear entire history */
-  clearHistory,
-};
-
-/**
- * Internal Command History State
- * ===============================
- *
- * Private state managing command stack and position.
- * Not exported - accessed only through public functions.
- */
-
-/**
- * Command history stack
- *
- * **Structure**: Array of Command objects in chronological order
- * **Growth**: Appends new commands to end
- * **Bounded**: Limited to MAX_HISTORY commands (50)
- * **Branching**: Discards commands after current position on new push
- * @example
- * ```
- * [AddItemCommand, DeleteItemCommand, MoveItemCommand]
- *  ↑                ↑                  ↑
- *  0                1                  2 (historyPosition)
- * ```
- */
-const commandHistory: Command[] = [];
-
-/**
- * Current position in command history
- *
- * **Range**: -1 (empty history) to commandHistory.length - 1
- * **Meaning**:
- * - -1: No commands or all undone
- * - 0: First command is current state
- * - N: Command at index N is current state
- *
- * **Operations**:
- * - Push command: position++
- * - Undo: position--
- * - Redo: position++
- *
- * **Invariant**: position < commandHistory.length
- */
-let historyPosition: number = -1;
-
-/**
  * Maximum number of commands in history
  *
  * **Why 50**: Balance between:
@@ -453,34 +355,136 @@ let historyPosition: number = -1;
 const MAX_HISTORY = 50;
 
 /**
- * Update reactive state for undo/redo button enablement
+ * UndoRedoManager Class
+ * =====================
  *
- * **Called after**:
- * - pushCommand() - New command added
- * - undo() - Position moved backward
- * - redo() - Position moved forward
- * - clearHistory() - History reset
+ * Instance-based undo/redo management for grid builder.
+ * Each grid-builder component can create its own UndoRedoManager instance.
  *
- * **Updates**:
- * - `canUndo`: true if historyPosition >= 0 (commands available to undo)
- * - `canRedo`: true if historyPosition < commandHistory.length - 1 (commands available to redo)
+ * ## Architecture
  *
- * **Triggers**:
- * - Component re-renders (via StencilJS Store reactivity)
- * - Button enable/disable state changes
+ * **Before (Singleton)**:
+ * - Single global history shared by all grid-builder instances
+ * - Multiple instances pollute each other's history
+ * - Storybook stories contaminate each other
  *
- * **Why not inline**:
- * - DRY principle (called from 4 places)
- * - Single responsibility (updating button states)
- * - Easier to extend (e.g., add logging, analytics)
+ * **After (Instance-based)**:
+ * - Each grid-builder creates its own UndoRedoManager
+ * - Isolated history per instance
+ * - Multiple grid-builders on same page work independently
+ *
+ * ## Usage
+ *
+ * **New code (instance-based)**:
+ * ```typescript
+ * // In grid-builder component
+ * componentWillLoad() {
+ *   this.undoRedoManager = new UndoRedoManager();
+ *   this.undoRedoState = this.undoRedoManager.state;
+ * }
+ * ```
+ *
+ * **Legacy code (backward compatible)**:
+ * ```typescript
+ * // Still works via singleton export
+ * import { undoRedo } from './services/undo-redo';
+ * undoRedo.push(new AddItemCommand(...));
+ * ```
+ *
+ * ## Instance State
+ *
+ * Each instance has:
+ * - Independent reactive state (StencilJS store)
+ * - Own command history stack
+ * - Own history position pointer
+ * - Own lifecycle (dispose() cleanup)
  */
-function updateButtonStates(): void {
-  undoRedoState.canUndo = historyPosition >= 0;
-  undoRedoState.canRedo = historyPosition < commandHistory.length - 1;
-}
+export class UndoRedoManager {
+  /**
+   * Reactive state for button enable/disable
+   *
+   * **Access pattern**:
+   * ```typescript
+   * const canUndoNow = undoRedoManager.state.canUndo;
+   * ```
+   *
+   * **Updates**: Automatically triggered after each operation
+   */
+  public state: UndoRedoState;
 
-/**
- * Push a new command to the history stack
+  /**
+   * Cleanup subscriptions (called on component unmount)
+   *
+   * **Usage**:
+   * ```typescript
+   * disconnectedCallback() {
+   *   this.undoRedoManager.dispose();
+   * }
+   * ```
+   */
+  public dispose: () => void;
+
+  /**
+   * Command history stack
+   *
+   * **Structure**: Array of Command objects in chronological order
+   * **Growth**: Appends new commands to end
+   * **Bounded**: Limited to MAX_HISTORY commands (50)
+   * **Branching**: Discards commands after current position on new push
+   */
+  private commandHistory: Command[] = [];
+
+  /**
+   * Current position in command history
+   *
+   * **Range**: -1 (empty history) to commandHistory.length - 1
+   * **Meaning**:
+   * - -1: No commands or all undone
+   * - 0: First command is current state
+   * - N: Command at index N is current state
+   */
+  private historyPosition: number = -1;
+
+  /**
+   * Create new UndoRedoManager instance
+   *
+   * @example
+   * ```typescript
+   * // Empty history (default)
+   * const manager = new UndoRedoManager();
+   * ```
+   */
+  constructor() {
+    // Create StencilJS reactive store
+    const { state, dispose } = createStore<UndoRedoState>({
+      canUndo: false,
+      canRedo: false,
+    });
+
+    this.state = state;
+    this.dispose = dispose;
+  }
+
+  /**
+   * Update reactive state for undo/redo button enablement
+   *
+   * **Called after**:
+   * - push() - New command added
+   * - undo() - Position moved backward
+   * - redo() - Position moved forward
+   * - clearHistory() - History reset
+   *
+   * **Updates**:
+   * - `canUndo`: true if historyPosition >= 0 (commands available to undo)
+   * - `canRedo`: true if historyPosition < commandHistory.length - 1 (commands available to redo)
+   */
+  private updateButtonStates(): void {
+    this.state.canUndo = this.historyPosition >= 0;
+    this.state.canRedo = this.historyPosition < this.commandHistory.length - 1;
+  }
+
+  /**
+   * Push a new command to the history stack
  *
  * **Use cases**:
  * - After drag operation completes
@@ -541,260 +545,304 @@ function updateButtonStates(): void {
  *   pushCommand(command);
  * }
  * ```
- */
-export function pushCommand(command: Command): void {
-  debug.log(
-    "➕ PUSH: Adding command to history:",
-    (command as any).description || command,
-  );
+   * @param command - Fully constructed command with before/after snapshots
+   */
+  push(command: Command): void {
+    debug.log(
+      "➕ PUSH: Adding command to history:",
+      (command as any).description || command,
+    );
 
-  // Remove any commands after current position
-  commandHistory.splice(historyPosition + 1);
+    // Remove any commands after current position
+    this.commandHistory.splice(this.historyPosition + 1);
 
-  // Add new command
-  commandHistory.push(command);
+    // Add new command
+    this.commandHistory.push(command);
 
-  // Limit history size
-  if (commandHistory.length > MAX_HISTORY) {
-    commandHistory.shift();
-  } else {
-    historyPosition++;
+    // Limit history size
+    if (this.commandHistory.length > MAX_HISTORY) {
+      this.commandHistory.shift();
+    } else {
+      this.historyPosition++;
+    }
+
+    debug.log(
+      "  History position now:",
+      this.historyPosition,
+      ", Total commands:",
+      this.commandHistory.length,
+    );
+
+    // Update button states
+    this.updateButtonStates();
   }
 
-  debug.log(
-    "  History position now:",
-    historyPosition,
-    ", Total commands:",
-    commandHistory.length,
-  );
+  /**
+   * Undo the last command in history
+   *
+   * **Triggered by**:
+   * - Ctrl+Z / Cmd+Z keyboard shortcut
+   * - Undo button click
+   * - Programmatic undo (rare)
+   *
+   * **Operation sequence**:
+   * 1. Check if undo available (historyPosition >= 0)
+   * 2. Get command at current position
+   * 3. Execute command.undo() (reverses operation)
+   * 4. Decrement position pointer
+   * 5. Update button states (triggers UI)
+   *
+   * **Side effects**:
+   * - Mutates global state (via command.undo())
+   * - Triggers component re-renders
+   * - Updates undo/redo button states
+   * - May deselect items (depending on command)
+   *
+   * **Position before/after**:
+   * ```
+   * Before: [cmd1, cmd2, cmd3]
+   * ↑ position = 2
+   *
+   * After:  [cmd1, cmd2, cmd3]
+   * ↑ position = 1
+   * ```
+   *
+   * **Safety**: No-op if historyPosition < 0 (nothing to undo)
+   *
+   * **Multiple undo**: Can be called repeatedly to undo multiple commands
+   * @example
+   * ```typescript
+   * // Keyboard shortcut handler
+   * window.addEventListener('keydown', (e) => {
+   *   if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
+   *     undo();
+   *     e.preventDefault();
+   *   }
+   * });
+   * ```
+   */
+  undo(): void {
+    if (this.historyPosition < 0) {
+      return;
+    }
 
-  // Update button states
-  updateButtonStates();
-}
+    const command = this.commandHistory[this.historyPosition];
+    debug.log(
+      "🔙 UNDO: Executing command at position",
+      this.historyPosition,
+      ":",
+      command,
+    );
+    debug.log("  Command description:", (command as any).description);
+    command.undo();
+    this.historyPosition--;
+    debug.log("  New position after undo:", this.historyPosition);
 
-/**
- * Undo the last command in history
- *
- * **Triggered by**:
- * - Ctrl+Z / Cmd+Z keyboard shortcut
- * - Undo button click
- * - Programmatic undo (rare)
- *
- * **Operation sequence**:
- * 1. Check if undo available (historyPosition >= 0)
- * 2. Get command at current position
- * 3. Execute command.undo() (reverses operation)
- * 4. Decrement position pointer
- * 5. Update button states (triggers UI)
- *
- * **Side effects**:
- * - Mutates global state (via command.undo())
- * - Triggers component re-renders
- * - Updates undo/redo button states
- * - May deselect items (depending on command)
- *
- * **Position before/after**:
- * ```
- * Before: [cmd1, cmd2, cmd3]
- * ↑ position = 2
- *
- * After:  [cmd1, cmd2, cmd3]
- * ↑ position = 1
- * ```
- *
- * **Safety**: No-op if historyPosition < 0 (nothing to undo)
- *
- * **Multiple undo**: Can be called repeatedly to undo multiple commands
- * @example
- * ```typescript
- * // Keyboard shortcut handler
- * window.addEventListener('keydown', (e) => {
- *   if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
- *     undo();
- *     e.preventDefault();
- *   }
- * });
- * ```
- */
-export function undo(): void {
-  if (historyPosition < 0) {
-    return;
+    this.updateButtonStates();
   }
 
-  const command = commandHistory[historyPosition];
-  debug.log(
-    "🔙 UNDO: Executing command at position",
-    historyPosition,
-    ":",
-    command,
-  );
-  debug.log("  Command description:", (command as any).description);
-  command.undo();
-  historyPosition--;
-  debug.log("  New position after undo:", historyPosition);
+  /**
+   * Redo the next command in history
+   *
+   * **Triggered by**:
+   * - Ctrl+Y / Cmd+Y keyboard shortcut
+   * - Ctrl+Shift+Z / Cmd+Shift+Z (alternative)
+   * - Redo button click
+   * - Programmatic redo (rare)
+   *
+   * **Operation sequence**:
+   * 1. Check if redo available (historyPosition < commandHistory.length - 1)
+   * 2. Increment position pointer
+   * 3. Get command at new position
+   * 4. Execute command.redo() (reapplies operation)
+   * 5. Update button states (triggers UI)
+   *
+   * **Side effects**:
+   * - Mutates global state (via command.redo())
+   * - Triggers component re-renders
+   * - Updates undo/redo button states
+   * - May select items (depending on command)
+   *
+   * **Position before/after**:
+   * ```
+   * Before: [cmd1, cmd2, cmd3]
+   * ↑ position = 1
+   *
+   * After:  [cmd1, cmd2, cmd3]
+   * ↑ position = 2
+   * ```
+   *
+   * **Safety**: No-op if no commands to redo (position at end)
+   *
+   * **Multiple redo**: Can be called repeatedly to redo multiple commands
+   *
+   * **Redo after new action**: Redo becomes unavailable after new command
+   * pushed (future history discarded)
+   * @example
+   * ```typescript
+   * // Keyboard shortcut handler
+   * window.addEventListener('keydown', (e) => {
+   *   if ((e.ctrlKey || e.metaKey) && e.key === 'y') {
+   *     redo();
+   *     e.preventDefault();
+   *   }
+   * });
+   * ```
+   */
+  redo(): void {
+    if (this.historyPosition >= this.commandHistory.length - 1) {
+      return;
+    }
 
-  updateButtonStates();
-}
+    this.historyPosition++;
+    const command = this.commandHistory[this.historyPosition];
+    command.redo();
 
-/**
- * Redo the next command in history
- *
- * **Triggered by**:
- * - Ctrl+Y / Cmd+Y keyboard shortcut
- * - Ctrl+Shift+Z / Cmd+Shift+Z (alternative)
- * - Redo button click
- * - Programmatic redo (rare)
- *
- * **Operation sequence**:
- * 1. Check if redo available (historyPosition < commandHistory.length - 1)
- * 2. Increment position pointer
- * 3. Get command at new position
- * 4. Execute command.redo() (reapplies operation)
- * 5. Update button states (triggers UI)
- *
- * **Side effects**:
- * - Mutates global state (via command.redo())
- * - Triggers component re-renders
- * - Updates undo/redo button states
- * - May select items (depending on command)
- *
- * **Position before/after**:
- * ```
- * Before: [cmd1, cmd2, cmd3]
- * ↑ position = 1
- *
- * After:  [cmd1, cmd2, cmd3]
- * ↑ position = 2
- * ```
- *
- * **Safety**: No-op if no commands to redo (position at end)
- *
- * **Multiple redo**: Can be called repeatedly to redo multiple commands
- *
- * **Redo after new action**: Redo becomes unavailable after new command
- * pushed (future history discarded)
- * @example
- * ```typescript
- * // Keyboard shortcut handler
- * window.addEventListener('keydown', (e) => {
- *   if ((e.ctrlKey || e.metaKey) && e.key === 'y') {
- *     redo();
- *     e.preventDefault();
- *   }
- * });
- * ```
- */
-export function redo(): void {
-  if (historyPosition >= commandHistory.length - 1) {
-    return;
+    this.updateButtonStates();
   }
 
-  historyPosition++;
-  const command = commandHistory[historyPosition];
-  command.redo();
+  /**
+   * Check if undo operation is available
+   *
+   * **Use cases**:
+   * - Enabling/disabling undo button
+   * - Showing undo keyboard hint
+   * - Programmatic checks before undo
+   *
+   * **Returns true when**: historyPosition >= 0 (commands in history)
+   * **Returns false when**: historyPosition = -1 (no history or all undone)
+   *
+   * **Note**: Prefer using `undoRedoState.canUndo` in UI components
+   * for automatic reactivity. This function is for imperative checks.
+   * @returns true if undo() can be called, false otherwise
+   * @example
+   * ```typescript
+   * // Imperative check
+   * if (canUndo()) {
+   *   debug.log('Undo available');
+   *   undo();
+   * }
+   *
+   * // Prefer reactive state in UI
+   * <button disabled={!undoRedoState.canUndo}>Undo</button>
+   * ```
+   */
+  canUndo(): boolean {
+    return this.historyPosition >= 0;
+  }
 
-  updateButtonStates();
+  /**
+   * Check if redo operation is available
+   *
+   * **Use cases**:
+   * - Enabling/disabling redo button
+   * - Showing redo keyboard hint
+   * - Programmatic checks before redo
+   *
+   * **Returns true when**: historyPosition < commandHistory.length - 1
+   * **Returns false when**: At end of history or history empty
+   *
+   * **Becomes false after**: New command pushed (future discarded)
+   *
+   * **Note**: Prefer using `undoRedoState.canRedo` in UI components
+   * for automatic reactivity. This function is for imperative checks.
+   * @returns true if redo() can be called, false otherwise
+   * @example
+   * ```typescript
+   * // Imperative check
+   * if (canRedo()) {
+   *   debug.log('Redo available');
+   *   redo();
+   * }
+   *
+   * // Prefer reactive state in UI
+   * <button disabled={!undoRedoState.canRedo}>Redo</button>
+   * ```
+   */
+  canRedo(): boolean {
+    return this.historyPosition < this.commandHistory.length - 1;
+  }
+
+  /**
+   * Clear all command history
+   *
+   * **Use cases**:
+   * - Application reset
+   * - Loading new project
+   * - Test cleanup
+   * - Memory management (rare)
+   *
+   * **Effects**:
+   * - Empties command history array
+   * - Resets position to -1
+   * - Disables both undo and redo buttons
+   * - Does NOT affect current state (only history)
+   *
+   * **Memory**: Allows garbage collection of command objects and snapshots
+   *
+   * **Cannot be undone**: This operation itself is not undoable
+   *
+   * **Safety**: Safe to call even if history already empty
+   * @example
+   * ```typescript
+   * // Reset application
+   * function resetApp() {
+   *   clearHistory();
+   *   reset(); // Reset state
+   *   debug.log('Application reset');
+   * }
+   *
+   * // Test cleanup
+   * afterEach(() => {
+   *   clearHistory();
+   * });
+   * ```
+   */
+  clearHistory(): void {
+    this.commandHistory.length = 0;
+    this.historyPosition = -1;
+    this.updateButtonStates();
+  }
 }
 
 /**
- * Check if undo operation is available
+ * Backward Compatibility Layer
+ * ==============================
  *
- * **Use cases**:
- * - Enabling/disabling undo button
- * - Showing undo keyboard hint
- * - Programmatic checks before undo
+ * Singleton instance and helper function exports for backward compatibility.
+ * Existing code can continue using these while we migrate to instance-based architecture.
  *
- * **Returns true when**: historyPosition >= 0 (commands in history)
- * **Returns false when**: historyPosition = -1 (no history or all undone)
+ * **Migration path**:
+ * 1. Phase 1: Create instance-based classes (CURRENT PHASE)
+ * 2. Phase 2: Update grid-builder to create instances
+ * 3. Phase 3: Update child components to accept instances as props
+ * 4. Phase 4: Remove these exports and update all imports
  *
- * **Note**: Prefer using `undoRedoState.canUndo` in UI components
- * for automatic reactivity. This function is for imperative checks.
- * @returns true if undo() can be called, false otherwise
- * @example
- * ```typescript
- * // Imperative check
- * if (canUndo()) {
- *   debug.log('Undo available');
- *   undo();
- * }
- *
- * // Prefer reactive state in UI
- * <button disabled={!undoRedoState.canUndo}>Undo</button>
- * ```
+ * **Why needed**:
+ * - Allows incremental migration without breaking the codebase
+ * - Can test instance-based approach without immediate breaking changes
  */
-export function canUndo(): boolean {
-  return historyPosition >= 0;
-}
 
-/**
- * Check if redo operation is available
- *
- * **Use cases**:
- * - Enabling/disabling redo button
- * - Showing redo keyboard hint
- * - Programmatic checks before redo
- *
- * **Returns true when**: historyPosition < commandHistory.length - 1
- * **Returns false when**: At end of history or history empty
- *
- * **Becomes false after**: New command pushed (future discarded)
- *
- * **Note**: Prefer using `undoRedoState.canRedo` in UI components
- * for automatic reactivity. This function is for imperative checks.
- * @returns true if redo() can be called, false otherwise
- * @example
- * ```typescript
- * // Imperative check
- * if (canRedo()) {
- *   debug.log('Redo available');
- *   redo();
- * }
- *
- * // Prefer reactive state in UI
- * <button disabled={!undoRedoState.canRedo}>Redo</button>
- * ```
- */
-export function canRedo(): boolean {
-  return historyPosition < commandHistory.length - 1;
-}
+// Create singleton instance (for backward compatibility only)
+const defaultManager = new UndoRedoManager();
 
-/**
- * Clear all command history
- *
- * **Use cases**:
- * - Application reset
- * - Loading new project
- * - Test cleanup
- * - Memory management (rare)
- *
- * **Effects**:
- * - Empties command history array
- * - Resets position to -1
- * - Disables both undo and redo buttons
- * - Does NOT affect current state (only history)
- *
- * **Memory**: Allows garbage collection of command objects and snapshots
- *
- * **Cannot be undone**: This operation itself is not undoable
- *
- * **Safety**: Safe to call even if history already empty
- * @example
- * ```typescript
- * // Reset application
- * function resetApp() {
- *   clearHistory();
- *   reset(); // Reset state
- *   debug.log('Application reset');
- * }
- *
- * // Test cleanup
- * afterEach(() => {
- *   clearHistory();
- * });
- * ```
- */
-export function clearHistory(): void {
-  commandHistory.length = 0;
-  historyPosition = -1;
-  updateButtonStates();
-}
+// Export singleton state (backward compatible)
+export const undoRedoState = defaultManager.state;
+
+// Export singleton instance methods as standalone functions (backward compatible)
+export const pushCommand = (command: Command) => defaultManager.push(command);
+export const undo = () => defaultManager.undo();
+export const redo = () => defaultManager.redo();
+export const canUndo = () => defaultManager.canUndo();
+export const canRedo = () => defaultManager.canRedo();
+export const clearHistory = () => defaultManager.clearHistory();
+
+// Export object wrapper for backward compatibility (deprecated, use standalone functions)
+export const undoRedo = {
+  push: pushCommand,
+  undo,
+  redo,
+  canUndo,
+  canRedo,
+  clearHistory,
+};
