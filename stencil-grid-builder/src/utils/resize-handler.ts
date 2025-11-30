@@ -197,8 +197,8 @@
 import type { InteractResizeEvent, Interactable } from "interactjs";
 import {
   GridItem,
+  GridState,
   setActiveCanvas,
-  gridState,
 } from "../services/state-manager";
 import { ComponentDefinition } from "../types/component-definition";
 import { GridConfig } from "../types/grid-config";
@@ -306,6 +306,9 @@ export class ResizeHandler {
   /** Grid item data (position, size, layouts) */
   private item: GridItem;
 
+  /** Grid state instance (for accessing canvases, viewport) */
+  private state: GridState;
+
   /** Component definition (for min/max size constraints) */
   private componentDefinition?: ComponentDefinition;
 
@@ -388,12 +391,14 @@ export class ResizeHandler {
   constructor(
     element: HTMLElement,
     item: GridItem,
+    state: GridState,
     onUpdate: (item: GridItem) => void,
     componentDefinition?: ComponentDefinition,
     config?: GridConfig,
   ) {
     this.element = element;
     this.item = item;
+    this.state = state;
     this.onUpdate = onUpdate;
     this.componentDefinition = componentDefinition;
     this.config = config;
@@ -1213,12 +1218,12 @@ export class ResizeHandler {
 
     // IMPORTANT: Get latest item from state to preserve any config changes
     // that occurred during resize (e.g., backgroundColor changes)
-    const canvas = gridState.canvases[this.item.canvasId];
+    const canvas = this.state.canvases[this.item.canvasId];
     const latestItem = canvas?.items.find((i) => i.id === this.item.id);
     const itemToUpdate = latestItem || this.item; // Fallback to stored item if not found
 
     // Update item size and position in current viewport's layout (convert to grid units)
-    const currentViewport = gridState.currentViewport || "desktop";
+    const currentViewport = this.state.currentViewport || "desktop";
     const layout =
       itemToUpdate.layouts[currentViewport as "desktop" | "mobile"];
 

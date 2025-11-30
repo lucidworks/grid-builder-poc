@@ -183,6 +183,23 @@ export class GridItemWrapper {
   @Prop() eventManagerInstance?: EventManager;
 
   /**
+   * State manager instance (Phase 3: Instance-based architecture)
+   *
+   * **Optional prop**: Grid state instance for utilities
+   * **Default**: Falls back to singleton gridState if not provided
+   * **Source**: grid-builder → canvas-section → grid-item-wrapper
+   *
+   * **Purpose**: Support multiple grid-builder instances with isolated state
+   *
+   * **Migration strategy**:
+   * - Phase 3: Add as optional prop (this phase)
+   * - Phase 4: Remove singleton fallback and make required
+   *
+   * **Used by**: DragHandler, ResizeHandler for accessing canvases and viewport
+   */
+  @Prop() stateInstance?: any;
+
+  /**
    * All items in the canvas (for viewer mode auto-layout)
    *
    * **Purpose**: Calculate mobile auto-layout positions
@@ -318,6 +335,7 @@ export class GridItemWrapper {
       this.dragHandler = new DragHandler(
         this.itemRef,
         this.item,
+        this.stateInstance || gridState,
         this.handleItemUpdate,
         this.config,
         headerElement,
@@ -328,6 +346,7 @@ export class GridItemWrapper {
       this.resizeHandler = new ResizeHandler(
         this.itemRef,
         this.item,
+        this.stateInstance || gridState,
         this.handleItemUpdate,
         componentDefinition,
         this.config,
@@ -494,6 +513,7 @@ export class GridItemWrapper {
       this.dragHandler = new DragHandler(
         this.itemRef,
         this.item,
+        this.stateInstance || gridState,
         this.handleItemUpdate,
         newConfig,
         headerElement,
@@ -504,6 +524,7 @@ export class GridItemWrapper {
       this.resizeHandler = new ResizeHandler(
         this.itemRef,
         this.item,
+        this.stateInstance || gridState,
         this.handleItemUpdate,
         componentDefinition,
         newConfig,

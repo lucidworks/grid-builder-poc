@@ -134,9 +134,9 @@
 import type { InteractDragEvent, Interactable } from "interactjs";
 import {
   GridItem,
+  GridState,
   selectItem,
   setActiveCanvas,
-  gridState,
 } from "../services/state-manager";
 import { GridConfig } from "../types/grid-config";
 import { domCache } from "./dom-cache";
@@ -250,6 +250,9 @@ export class DragHandler {
   /** Grid item data (position, size, layouts) */
   private item: GridItem;
 
+  /** Grid state instance (for accessing canvases, viewport) */
+  private state: GridState;
+
   /** Callback to update parent state after drag ends */
   private onUpdate: (item: GridItem) => void;
 
@@ -290,6 +293,7 @@ export class DragHandler {
    * **Performance**: Initialization is cheap (~1ms), deferred to constructor is fine
    * @param element - DOM element to make draggable (grid-item-wrapper)
    * @param item - Grid item data for position/layout management
+   * @param state - Grid state instance (for accessing canvases, viewport)
    * @param onUpdate - Callback invoked with updated item after drag ends
    * @param config - Grid configuration options (for auto-scroll, etc.)
    * @param dragHandleElement - Optional element to use as drag handle
@@ -304,6 +308,7 @@ export class DragHandler {
    *   this.dragHandler = new DragHandler(
    *     this.element,
    *     this.item,
+   *     this.state,
    *     (item) => this.handleItemUpdate(item),
    *     this.config,
    *     header,
@@ -315,6 +320,7 @@ export class DragHandler {
   constructor(
     element: HTMLElement,
     item: GridItem,
+    state: GridState,
     onUpdate: (item: GridItem) => void,
     config?: GridConfig,
     dragHandleElement?: HTMLElement,
@@ -322,6 +328,7 @@ export class DragHandler {
   ) {
     this.element = element;
     this.item = item;
+    this.state = state;
     this.onUpdate = onUpdate;
     this.config = config;
     this.dragHandleElement = dragHandleElement;
@@ -886,12 +893,12 @@ export class DragHandler {
 
     // IMPORTANT: Get latest item from state to preserve any config changes
     // that occurred during drag (e.g., backgroundColor changes)
-    const canvas = gridState.canvases[this.item.canvasId];
+    const canvas = this.state.canvases[this.item.canvasId];
     const latestItem = canvas?.items.find((i) => i.id === this.item.id);
     const itemToUpdate = latestItem || this.item; // Fallback to stored item if not found
 
     // Update item position in current viewport's layout (use constrained grid units)
-    const currentViewport = gridState.currentViewport || "desktop";
+    const currentViewport = this.state.currentViewport || "desktop";
     const layout =
       itemToUpdate.layouts[currentViewport as "desktop" | "mobile"];
 

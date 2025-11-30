@@ -330,6 +330,10 @@ export namespace Components {
          */
         "onBeforeDelete"?: DeletionHook;
         /**
+          * State manager instance (Phase 3: Instance-based architecture)  **Optional prop**: Grid state instance for utilities **Default**: grid-item-wrapper falls back to singleton if not provided **Source**: grid-builder → canvas-section → grid-item-wrapper  **Purpose**: Support multiple grid-builder instances with isolated state  **Migration strategy**: - Phase 3: Add as optional prop (this phase) - Phase 4: Remove singleton fallback and make required  **Used by**: DragHandler, ResizeHandler for accessing canvases and viewport
+         */
+        "stateInstance"?: any;
+        /**
           * Virtual renderer service instance (Phase 3: Instance-based architecture)  **Optional prop**: Service instance for lazy loading **Default**: grid-item-wrapper falls back to singleton if not provided **Source**: grid-builder → canvas-section → grid-item-wrapper  **Purpose**: Support multiple grid-builder instances with isolated services  **Migration strategy**: - Phase 3: Add as optional prop (this phase) - Phase 4: Remove singleton fallback and make required
          */
         "virtualRendererInstance"?: VirtualRendererService;
@@ -757,6 +761,10 @@ export namespace Components {
           * Render version (force re-render trigger)  **Source**: Parent canvas-section (incremented on resize) **Purpose**: Force grid calculation refresh when container resizes
          */
         "renderVersion"?: number;
+        /**
+          * State manager instance (Phase 3: Instance-based architecture)  **Optional prop**: Grid state instance for utilities **Default**: Falls back to singleton gridState if not provided **Source**: grid-builder → canvas-section → grid-item-wrapper  **Purpose**: Support multiple grid-builder instances with isolated state  **Migration strategy**: - Phase 3: Add as optional prop (this phase) - Phase 4: Remove singleton fallback and make required  **Used by**: DragHandler, ResizeHandler for accessing canvases and viewport
+         */
+        "stateInstance"?: any;
         /**
           * Viewer mode flag  **Purpose**: Disable editing features for rendering-only mode **Default**: false (editing enabled)  **When true**: - ❌ No drag-and-drop handlers - ❌ No resize handles - ❌ No item header (drag handle) - ❌ No delete button - ❌ No selection state - ✅ Only renders component content  **Use case**: grid-viewer component for display-only mode
           * @default false
@@ -1975,6 +1983,10 @@ declare namespace LocalJSX {
          */
         "onBeforeDelete"?: DeletionHook;
         /**
+          * State manager instance (Phase 3: Instance-based architecture)  **Optional prop**: Grid state instance for utilities **Default**: grid-item-wrapper falls back to singleton if not provided **Source**: grid-builder → canvas-section → grid-item-wrapper  **Purpose**: Support multiple grid-builder instances with isolated state  **Migration strategy**: - Phase 3: Add as optional prop (this phase) - Phase 4: Remove singleton fallback and make required  **Used by**: DragHandler, ResizeHandler for accessing canvases and viewport
+         */
+        "stateInstance"?: any;
+        /**
           * Virtual renderer service instance (Phase 3: Instance-based architecture)  **Optional prop**: Service instance for lazy loading **Default**: grid-item-wrapper falls back to singleton if not provided **Source**: grid-builder → canvas-section → grid-item-wrapper  **Purpose**: Support multiple grid-builder instances with isolated services  **Migration strategy**: - Phase 3: Add as optional prop (this phase) - Phase 4: Remove singleton fallback and make required
          */
         "virtualRendererInstance"?: VirtualRendererService;
@@ -2333,6 +2345,10 @@ declare namespace LocalJSX {
           * Render version (force re-render trigger)  **Source**: Parent canvas-section (incremented on resize) **Purpose**: Force grid calculation refresh when container resizes
          */
         "renderVersion"?: number;
+        /**
+          * State manager instance (Phase 3: Instance-based architecture)  **Optional prop**: Grid state instance for utilities **Default**: Falls back to singleton gridState if not provided **Source**: grid-builder → canvas-section → grid-item-wrapper  **Purpose**: Support multiple grid-builder instances with isolated state  **Migration strategy**: - Phase 3: Add as optional prop (this phase) - Phase 4: Remove singleton fallback and make required  **Used by**: DragHandler, ResizeHandler for accessing canvases and viewport
+         */
+        "stateInstance"?: any;
         /**
           * Viewer mode flag  **Purpose**: Disable editing features for rendering-only mode **Default**: false (editing enabled)  **When true**: - ❌ No drag-and-drop handlers - ❌ No resize handles - ❌ No item header (drag handle) - ❌ No delete button - ❌ No selection state - ✅ Only renders component content  **Use case**: grid-viewer component for display-only mode
           * @default false

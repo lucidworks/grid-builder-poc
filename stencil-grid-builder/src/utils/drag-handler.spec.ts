@@ -67,7 +67,7 @@ describe("DragHandler - Active Canvas", () => {
 
   describe("Constructor and Initialization", () => {
     it("should create handler with item canvasId", () => {
-      handler = new DragHandler(mockElement, mockItem, onUpdateCallback, {});
+      handler = new DragHandler(mockElement, mockItem, gridState, onUpdateCallback, {});
 
       // Handler stores the item's canvasId
       expect((handler as any).item.canvasId).toBe("canvas1");
@@ -90,9 +90,9 @@ describe("DragHandler - Active Canvas", () => {
       element3.id = "item-3";
       element3.style.transform = "translate(0px, 0px)";
 
-      const handler1 = new DragHandler(element1, item1, jest.fn(), {});
-      const handler2 = new DragHandler(element2, item2, jest.fn(), {});
-      const handler3 = new DragHandler(element3, item3, jest.fn(), {});
+      const handler1 = new DragHandler(element1, item1, gridState, jest.fn(), {});
+      const handler2 = new DragHandler(element2, item2, gridState, jest.fn(), {});
+      const handler3 = new DragHandler(element3, item3, gridState, jest.fn(), {});
 
       expect((handler1 as any).item.canvasId).toBe("canvas1");
       expect((handler2 as any).item.canvasId).toBe("canvas2");
@@ -106,7 +106,7 @@ describe("DragHandler - Active Canvas", () => {
     it("should register draggable with interact.js", () => {
       const interact = require("interactjs");
 
-      handler = new DragHandler(mockElement, mockItem, onUpdateCallback, {});
+      handler = new DragHandler(mockElement, mockItem, gridState, onUpdateCallback, {});
 
       expect(interact).toHaveBeenCalledWith(mockElement);
       expect(interact.mockInteractable.draggable).toHaveBeenCalled();
@@ -132,7 +132,7 @@ describe("DragHandler - Active Canvas", () => {
       gridState.selectedItemId = "item-2";
       gridState.selectedCanvasId = "canvas2";
 
-      handler = new DragHandler(mockElement, mockItem, onUpdateCallback, {});
+      handler = new DragHandler(mockElement, mockItem, gridState, onUpdateCallback, {});
 
       // Set active canvas
       setActiveCanvas("canvas1");
@@ -148,14 +148,14 @@ describe("DragHandler - Active Canvas", () => {
     it("should cleanup interact.js on destroy", () => {
       const interact = require("interactjs");
 
-      handler = new DragHandler(mockElement, mockItem, onUpdateCallback, {});
+      handler = new DragHandler(mockElement, mockItem, gridState, onUpdateCallback, {});
       handler.destroy();
 
       expect(interact.mockInteractable.unset).toHaveBeenCalled();
     });
 
     it("should handle multiple destroy calls", () => {
-      handler = new DragHandler(mockElement, mockItem, onUpdateCallback, {});
+      handler = new DragHandler(mockElement, mockItem, gridState, onUpdateCallback, {});
 
       handler.destroy();
       handler.destroy(); // Should not throw
@@ -172,6 +172,7 @@ describe("DragHandler - Active Canvas", () => {
       handler = new DragHandler(
         mockElement,
         mockItem,
+        gridState,
         onUpdateCallback,
         {},
         handleElement,
@@ -181,7 +182,7 @@ describe("DragHandler - Active Canvas", () => {
     });
 
     it("should work without drag handle element", () => {
-      handler = new DragHandler(mockElement, mockItem, onUpdateCallback, {});
+      handler = new DragHandler(mockElement, mockItem, gridState, onUpdateCallback, {});
 
       expect(handler).toBeDefined();
     });

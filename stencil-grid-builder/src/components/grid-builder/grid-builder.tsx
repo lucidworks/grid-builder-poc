@@ -74,7 +74,6 @@ import {
 // Service imports
 import {
   StateManager,
-  gridState,
   GridState,
   GridItem,
   generateItemId,
@@ -535,7 +534,7 @@ export class GridBuilder {
    * ## Implementation Steps
    *
    * 1. **Check if enabled**: Only proceed if `config.enableClickToAdd !== false`
-   * 2. **Get active canvas**: Use gridState.activeCanvasId or auto-select first
+   * 2. **Get active canvas**: Use this.stateManager!.state.activeCanvasId or auto-select first
    * 3. **Find component definition**: Look up in component registry
    * 4. **Find free space**: Use findFreeSpace() for collision-free placement
    * 5. **Create grid item**: Generate ID, build item object with found position
@@ -602,11 +601,11 @@ export class GridBuilder {
     }
 
     // Get or auto-select active canvas
-    let canvasId = gridState.activeCanvasId;
+    let canvasId = this.stateManager!.state.activeCanvasId;
 
     if (!canvasId) {
       // Auto-select first canvas
-      const canvasIds = Object.keys(gridState.canvases);
+      const canvasIds = Object.keys(this.stateManager!.state.canvases);
       if (canvasIds.length === 0) {
         debug.warn("handlePaletteItemClick: No canvases available");
         return;
@@ -692,12 +691,12 @@ export class GridBuilder {
     });
 
     // Set as selected (focus on newly added item)
-    gridState.selectedItemId = newItemId;
-    gridState.selectedCanvasId = canvasId;
+    this.stateManager!.state.selectedItemId = newItemId;
+    this.stateManager!.state.selectedCanvasId = canvasId;
 
     // Emit componentAdded event for plugins
     // Must include full item object to match ComponentAddedEvent interface
-    const canvas = gridState.canvases[canvasId];
+    const canvas = this.stateManager!.state.canvases[canvasId];
     const newItem = canvas?.items.find((item) => item.id === newItemId);
 
     if (newItem) {
@@ -748,7 +747,7 @@ export class GridBuilder {
 
     // Restore initial state if provided
     if (this.initialState) {
-      Object.assign(gridState, this.initialState);
+      Object.assign(this.stateManager!.state, this.initialState);
     }
   }
 
@@ -909,7 +908,7 @@ export class GridBuilder {
       });
 
       // 1. Get item from source canvas
-      const sourceCanvas = gridState.canvases[sourceCanvasId];
+      const sourceCanvas = this.stateManager!.state.canvases[sourceCanvasId];
       if (!sourceCanvas) {
         console.error("Source canvas not found:", sourceCanvasId);
         return;
@@ -958,17 +957,17 @@ export class GridBuilder {
       moveItemToCanvas(sourceCanvasId, targetCanvasId, itemId);
 
       // 8. Assign new z-index in target canvas (prevents z-index conflicts)
-      const targetCanvas = gridState.canvases[targetCanvasId];
+      const targetCanvas = this.stateManager!.state.canvases[targetCanvasId];
       const targetZIndex = targetCanvas.zIndexCounter++;
       item.zIndex = targetZIndex;
-      gridState.canvases = { ...gridState.canvases }; // Trigger reactivity
+      this.stateManager!.state.canvases = { ...this.stateManager!.state.canvases }; // Trigger reactivity
 
       // 9. Set target canvas as active
       setActiveCanvas(targetCanvasId);
 
       // 10. Update selection state if item was selected
-      if (gridState.selectedItemId === itemId) {
-        gridState.selectedCanvasId = targetCanvasId;
+      if (this.stateManager!.state.selectedItemId === itemId) {
+        this.stateManager!.state.selectedCanvasId = targetCanvasId;
       }
 
       // 11. Create undo/redo command with z-index tracking
@@ -1049,19 +1048,19 @@ export class GridBuilder {
 
       // Handle Delete key (delete selected component)
       if (event.key === "Delete" || event.key === "Backspace") {
-        if (gridState.selectedItemId && gridState.selectedCanvasId) {
+        if (this.stateManager!.state.selectedItemId && this.stateManager!.state.selectedCanvasId) {
           debug.log("⌨️ Keyboard: Delete triggered", {
-            itemId: gridState.selectedItemId,
+            itemId: this.stateManager!.state.selectedItemId,
           });
           event.preventDefault();
 
           // Capture the item ID and canvas ID before deletion
-          const deletedItemId = gridState.selectedItemId;
-          const deletedCanvasId = gridState.selectedCanvasId;
+          const deletedItemId = this.stateManager!.state.selectedItemId;
+          const deletedCanvasId = this.stateManager!.state.selectedCanvasId;
 
           // Delete the selected item (async - respects onBeforeDelete hook)
           this.api
-            ?.deleteComponent(gridState.selectedItemId)
+            ?.deleteComponent(this.stateManager!.state.selectedItemId)
             .then((deleted) => {
               if (deleted) {
                 // Announce deletion only if actually deleted (not cancelled by modal)
@@ -1078,13 +1077,13 @@ export class GridBuilder {
 
       // Handle Escape key (deselect component)
       if (event.key === "Escape") {
-        if (gridState.selectedItemId || gridState.selectedCanvasId) {
+        if (this.stateManager!.state.selectedItemId || this.stateManager!.state.selectedCanvasId) {
           debug.log("⌨️ Keyboard: Escape triggered (deselecting)");
           event.preventDefault();
 
           // Clear selection
-          gridState.selectedItemId = null;
-          gridState.selectedCanvasId = null;
+          this.stateManager!.state.selectedItemId = null;
+          this.stateManager!.state.selectedCanvasId = null;
 
           // Announce deselection
           this.announce("Selection cleared");
@@ -1094,7 +1093,7 @@ export class GridBuilder {
       }
 
       // Handle arrow key nudging (only if component is selected)
-      if (!gridState.selectedItemId || !gridState.selectedCanvasId) {
+      if (!this.stateManager!.state.selectedItemId || !this.stateManager!.state.selectedCanvasId) {
         return;
       }
 
@@ -1111,18 +1110,18 @@ export class GridBuilder {
       event.preventDefault();
 
       // Get selected item
-      const canvas = gridState.canvases[gridState.selectedCanvasId];
+      const canvas = this.stateManager!.state.canvases[this.stateManager!.state.selectedCanvasId];
       if (!canvas) {
         return;
       }
 
-      const item = canvas.items.find((i) => i.id === gridState.selectedItemId);
+      const item = canvas.items.find((i) => i.id === this.stateManager!.state.selectedItemId);
       if (!item) {
         return;
       }
 
       // Get current viewport layout
-      const viewport = gridState.currentViewport;
+      const viewport = this.stateManager!.state.currentViewport;
       const layout = item.layouts[viewport];
 
       // Calculate nudge amount (1 grid unit in each direction)
@@ -1177,8 +1176,8 @@ export class GridBuilder {
       // Create undo command for nudge (same canvas = z-index unchanged)
       const nudgeCommand = new MoveItemCommand(
         item.id,
-        gridState.selectedCanvasId,
-        gridState.selectedCanvasId,
+        this.stateManager!.state.selectedCanvasId,
+        this.stateManager!.state.selectedCanvasId,
         { x: oldX, y: oldY },
         { x: constrainedX, y: constrainedY },
         canvas.items.findIndex((i) => i.id === item.id),
@@ -1188,12 +1187,12 @@ export class GridBuilder {
       this.undoRedoManager?.push(nudgeCommand);
 
       // Trigger state update
-      gridState.canvases = { ...gridState.canvases };
+      this.stateManager!.state.canvases = { ...this.stateManager!.state.canvases };
 
       // Emit event
       this.eventManagerInstance?.emit("componentDragged", {
         itemId: item.id,
-        canvasId: gridState.selectedCanvasId,
+        canvasId: this.stateManager!.state.selectedCanvasId,
         position: { x: constrainedX, y: constrainedY },
       });
     };
@@ -1329,16 +1328,16 @@ export class GridBuilder {
       // State Access (Read)
       // ======================
 
-      getState: () => gridState,
+      getState: () => this.stateManager!.state,
 
       getItems: (canvasId: string) => {
-        return gridState.canvases[canvasId]?.items || [];
+        return this.stateManager!.state.canvases[canvasId]?.items || [];
       },
 
       getItem: (itemId: string) => {
         // Search across all canvases
-        for (const canvasId in gridState.canvases) {
-          const canvas = gridState.canvases[canvasId];
+        for (const canvasId in this.stateManager!.state.canvases) {
+          const canvas = this.stateManager!.state.canvases[canvasId];
           const item = canvas.items.find((i) => i.id === itemId);
           if (item) {
             return item;
@@ -1357,7 +1356,7 @@ export class GridBuilder {
         position: { x: number; y: number; width: number; height: number },
         config?: Record<string, any>,
       ) => {
-        const canvas = gridState.canvases[canvasId];
+        const canvas = this.stateManager!.state.canvases[canvasId];
         if (!canvas) {
           console.error(`Canvas not found: ${canvasId}`);
           return null;
@@ -1389,7 +1388,7 @@ export class GridBuilder {
 
         // Add to canvas
         canvas.items.push(newItem);
-        gridState.canvases = { ...gridState.canvases };
+        this.stateManager!.state.canvases = { ...this.stateManager!.state.canvases };
 
         // Add to undo/redo history
         this.undoRedoManager?.push(new BatchAddCommand([newItem.id]));
@@ -1405,8 +1404,8 @@ export class GridBuilder {
         let targetCanvasId: string | null = null;
         let targetItem: GridItem | null = null;
 
-        for (const canvasId in gridState.canvases) {
-          const canvas = gridState.canvases[canvasId];
+        for (const canvasId in this.stateManager!.state.canvases) {
+          const canvas = this.stateManager!.state.canvases[canvasId];
           const item = canvas.items.find((i) => i.id === itemId);
           if (item) {
             targetCanvasId = canvasId;
@@ -1439,7 +1438,7 @@ export class GridBuilder {
         }
 
         // Proceed with deletion
-        const canvas = gridState.canvases[targetCanvasId];
+        const canvas = this.stateManager!.state.canvases[targetCanvasId];
         const itemIndex = canvas.items.findIndex((i) => i.id === itemId);
         if (itemIndex !== -1) {
           // Add to undo/redo history BEFORE deletion (need state for undo)
@@ -1447,12 +1446,12 @@ export class GridBuilder {
 
           // Delete item
           canvas.items.splice(itemIndex, 1);
-          gridState.canvases = { ...gridState.canvases };
+          this.stateManager!.state.canvases = { ...this.stateManager!.state.canvases };
 
           // Deselect if deleted item was selected
-          if (gridState.selectedItemId === itemId) {
-            gridState.selectedItemId = null;
-            gridState.selectedCanvasId = null;
+          if (this.stateManager!.state.selectedItemId === itemId) {
+            this.stateManager!.state.selectedItemId = null;
+            this.stateManager!.state.selectedCanvasId = null;
           }
 
           // Emit event
@@ -1468,8 +1467,8 @@ export class GridBuilder {
 
       updateConfig: (itemId: string, config: Record<string, any>) => {
         // Find and update item across all canvases
-        for (const canvasId in gridState.canvases) {
-          const canvas = gridState.canvases[canvasId];
+        for (const canvasId in this.stateManager!.state.canvases) {
+          const canvas = this.stateManager!.state.canvases[canvasId];
           const itemIndex = canvas.items.findIndex((i) => i.id === itemId);
           if (itemIndex !== -1) {
             const item = canvas.items[itemIndex];
@@ -1490,7 +1489,7 @@ export class GridBuilder {
               ...canvas.items[itemIndex],
               config: newConfig,
             };
-            gridState.canvases = { ...gridState.canvases };
+            this.stateManager!.state.canvases = { ...this.stateManager!.state.canvases };
 
             // Emit event
             this.eventManagerInstance?.emit("configChanged", { itemId, canvasId, config });
@@ -1574,11 +1573,11 @@ export class GridBuilder {
 
         // Clear selection if any deleted item was selected
         if (
-          gridState.selectedItemId &&
-          itemIds.includes(gridState.selectedItemId)
+          this.stateManager!.state.selectedItemId &&
+          itemIds.includes(this.stateManager!.state.selectedItemId)
         ) {
-          gridState.selectedItemId = null;
-          gridState.selectedCanvasId = null;
+          this.stateManager!.state.selectedItemId = null;
+          this.stateManager!.state.selectedCanvasId = null;
         }
 
         // Emit batch event
@@ -1683,7 +1682,7 @@ export class GridBuilder {
       },
 
       getActiveCanvas: () => {
-        return gridState.activeCanvasId;
+        return this.stateManager!.state.activeCanvasId;
       },
     };
   }
@@ -1756,7 +1755,7 @@ export class GridBuilder {
    * **Observer callback**:
    * 1. Get container width from ResizeObserver entry
    * 2. Determine target viewport (mobile if < 768px, desktop otherwise)
-   * 3. Update gridState.currentViewport if changed
+   * 3. Update this.stateManager!.state.currentViewport if changed
    *
    * **Why container-based**:
    * - More flexible than window.resize (e.g., sidebar layouts, embedded widgets)
@@ -1781,11 +1780,11 @@ export class GridBuilder {
         const targetViewport = width < 768 ? "mobile" : "desktop";
 
         // Only update if viewport changed
-        if (gridState.currentViewport !== targetViewport) {
+        if (this.stateManager!.state.currentViewport !== targetViewport) {
           debug.log(
-            `📱 Container-based viewport switch: ${gridState.currentViewport} → ${targetViewport} (width: ${Math.round(width)}px)`,
+            `📱 Container-based viewport switch: ${this.stateManager!.state.currentViewport} → ${targetViewport} (width: ${Math.round(width)}px)`,
           );
-          gridState.currentViewport = targetViewport;
+          this.stateManager!.state.currentViewport = targetViewport;
         }
       }
     });
@@ -1895,7 +1894,7 @@ export class GridBuilder {
     _deletedItemId: string,
   ) => {
     // Get the canvas that contained the deleted item
-    const canvas = gridState.canvases[canvasId];
+    const canvas = this.stateManager!.state.canvases[canvasId];
     if (!canvas) {
       debug.log("⌨️ Focus: Canvas not found, focusing palette");
       // Focus the component palette as fallback
@@ -1964,8 +1963,8 @@ export class GridBuilder {
       nextItemElement.focus();
 
       // Also select it in the state
-      gridState.selectedItemId = nextItem.id;
-      gridState.selectedCanvasId = nextItem.canvasId;
+      this.stateManager!.state.selectedItemId = nextItem.id;
+      this.stateManager!.state.selectedCanvasId = nextItem.canvasId;
     }
   };
 
@@ -1986,13 +1985,13 @@ export class GridBuilder {
   private restoreFocusToSelection = () => {
     // Wait for DOM to update after state change
     setTimeout(() => {
-      if (gridState.selectedItemId) {
+      if (this.stateManager!.state.selectedItemId) {
         debug.log("⌨️ Focus: Restoring focus to selected item", {
-          itemId: gridState.selectedItemId,
+          itemId: this.stateManager!.state.selectedItemId,
         });
 
         const selectedElement = this.hostElement.querySelector(
-          `#${gridState.selectedItemId}`,
+          `#${this.stateManager!.state.selectedItemId}`,
         ) as HTMLElement;
 
         if (selectedElement) {
@@ -2037,7 +2036,7 @@ export class GridBuilder {
     const exportData: GridExport = {
       version: "1.0.0",
       canvases: {},
-      viewport: gridState.currentViewport,
+      viewport: this.stateManager!.state.currentViewport,
       metadata: {
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
@@ -2045,8 +2044,8 @@ export class GridBuilder {
     };
 
     // Export each canvas with its items
-    for (const canvasId in gridState.canvases) {
-      const canvas = gridState.canvases[canvasId];
+    for (const canvasId in this.stateManager!.state.canvases) {
+      const canvas = this.stateManager!.state.canvases[canvasId];
 
       exportData.canvases[canvasId] = {
         items: canvas.items.map((item) => ({
@@ -2083,7 +2082,7 @@ export class GridBuilder {
   @Method()
   async importState(state: Partial<GridState> | GridExport) {
     // Import grid state
-    Object.assign(gridState, state);
+    Object.assign(this.stateManager!.state, state);
   }
 
   /**
@@ -2101,7 +2100,7 @@ export class GridBuilder {
    */
   @Method()
   async getState(): Promise<GridState> {
-    return gridState;
+    return this.stateManager!.state;
   }
 
   /**
@@ -2345,7 +2344,7 @@ export class GridBuilder {
    * - Listen to 'item-click' events to show your config UI
    */
   render() {
-    const canvasIds = Object.keys(gridState.canvases);
+    const canvasIds = Object.keys(this.stateManager!.state.canvases);
 
     return (
       <Host ref={(el) => (this.el = el)}>
@@ -2369,7 +2368,7 @@ export class GridBuilder {
             {/* Canvases */}
             <div class="canvases-container">
               {canvasIds.map((canvasId) => {
-                const isActive = gridState.activeCanvasId === canvasId;
+                const isActive = this.stateManager!.state.activeCanvasId === canvasId;
                 const metadata = this.canvasMetadata?.[canvasId] || {};
 
                 // Render custom canvas header if provided
@@ -2408,6 +2407,7 @@ export class GridBuilder {
                       onBeforeDelete={this.onBeforeDelete}
                       virtualRendererInstance={this.virtualRendererInstance}
                       eventManagerInstance={this.eventManagerInstance}
+                      stateInstance={this.stateManager!.state}
                     />
                   </div>
                 );

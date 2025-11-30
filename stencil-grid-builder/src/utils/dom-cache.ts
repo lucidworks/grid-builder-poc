@@ -207,40 +207,27 @@ export class DOMCache {
 }
 
 /**
- * Backward Compatibility Layer
- * ==============================
+ * Global DOMCache Instance
+ * =========================
  *
- * Singleton instance export for backward compatibility.
- * Existing code can continue using this while we migrate to instance-based architecture.
+ * Global singleton instance for backward compatibility and utility usage.
  *
- * **Migration path**:
- * 1. Phase 1: DOMCache class already exists (CURRENT PHASE - ✓ Complete)
- * 2. Phase 2: Update grid-builder to create instances
- * 3. Phase 3: Update child components to accept instances as props
- * 4. Phase 4: Remove singleton export and update all imports
+ * **Why keep this**:
+ * - DOMCache is stateful but globally shareable (element IDs are globally unique)
+ * - Utilities (drag-handler, resize-handler, grid-calculations) can use global instance
+ * - Test files can mock or create instances as needed
+ * - Grid-builder instances can still create their own if needed for isolation
  *
- * **Why singleton currently**:
- * - Single cache instance across all components (efficient)
- * - Shared element references (consistent cache state)
- * - Can be replaced with per-instance caches in Phase 2
+ * **Hybrid approach**:
+ * - Grid-builder creates instance and passes to components (Phase 2)
+ * - Components accept instance props with fallback (Phase 3)
+ * - Utilities use global singleton (simpler, no need to thread through)
+ * - Multiple grid-builder instances still work correctly (isolated state in other services)
  *
- * **Usage note**: DOMCache is already a class, so no conversion needed.
- * Just need to update grid-builder to create instances instead of importing singleton.
- *
- * **Current usage pattern**:
+ * **Usage**:
  * ```typescript
- * import { domCache } from '../../utils/dom-cache';
- *
+ * import { domCache } from './dom-cache';
  * const canvas = domCache.getCanvas('canvas1');
- * ```
- *
- * **Future usage pattern** (Phase 2+):
- * ```typescript
- * // In grid-builder.tsx:
- * @Prop() domCache: DOMCache;  // Passed to child components
- *
- * // In child components:
- * const canvas = this.domCache.getCanvas('canvas1');
  * ```
  */
 export const domCache = new DOMCache();
