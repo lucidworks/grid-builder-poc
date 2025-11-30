@@ -1,10 +1,13 @@
 import { html } from "lit-html";
 import { action } from "@storybook/addon-actions";
-import { reset } from "../../../services/state-manager";
 
 export default {
   title: "Components/Grid Builder",
 };
+
+// Generate unique API key for each story instance
+let storyInstanceCounter = 0;
+const getUniqueApiKey = () => `gridBuilderAPI_story_${++storyInstanceCounter}`;
 
 // Simple component definitions using document.createElement()
 // This returns actual DOM elements that can be appended directly
@@ -97,16 +100,18 @@ const simpleComponents = [
 ];
 
 export const BasicBuilder = (args) => {
-  // Reset state to clear any cached data from previous stories
-  reset();
+  // Generate unique API key for this story instance
+  const apiKey = getUniqueApiKey();
 
   // Create component palette
   const paletteEl = document.createElement("component-palette");
   paletteEl.components = simpleComponents;
+  paletteEl.targetGridBuilderId = apiKey; // Target this story's grid-builder instance
 
   // Create grid builder
   const builderEl = document.createElement("grid-builder");
   builderEl.components = simpleComponents;
+  builderEl.apiRef = { key: apiKey }; // Isolated instance for this story
 
   // Apply config from controls
   if (
@@ -117,7 +122,7 @@ export const BasicBuilder = (args) => {
     builderEl.config = {
       gridSizePercent: args.gridSizePercent || 2,
       snapToGrid: args.snapToGrid ?? true,
-      showGridLines: args.showGridLines ?? false,
+      showGridLines: args.showGridLines ?? true,
       enableVirtualRendering: false, // Disable for Storybook iframe compatibility
     };
   }
@@ -138,7 +143,7 @@ BasicBuilder.args = {
   height: "600px",
   gridSizePercent: 2,
   snapToGrid: true,
-  showGridLines: false,
+  showGridLines: true,
 };
 
 BasicBuilder.argTypes = {
@@ -213,10 +218,17 @@ This story demonstrates the minimal setup needed to create a working grid builde
 };
 
 export const WithCustomTheme = (args) => {
-  // Reset state to clear any cached data from previous stories
-  reset();
+  // Use stable API key for this story (doesn't change when args change)
+  const apiKey = "gridBuilderAPI_customTheme";
+
+  // Create component palette
+  const paletteEl = document.createElement("component-palette");
+  paletteEl.components = simpleComponents;
+  paletteEl.targetGridBuilderId = apiKey; // Target this story's grid-builder instance
+
   const builderEl = document.createElement("grid-builder");
   builderEl.components = simpleComponents;
+  builderEl.apiRef = { key: apiKey }; // Isolated instance for this story
 
   // Apply custom theme colors
   builderEl.theme = {
@@ -293,6 +305,7 @@ export const WithCustomTheme = (args) => {
   };
 
   builderEl.config = {
+    showGridLines: true,
     enableVirtualRendering: false, // Disable for Storybook iframe compatibility
   };
 
@@ -310,9 +323,16 @@ export const WithCustomTheme = (args) => {
       </p>
 
       <div
-        style="width: 100%; height: 600px; border: 2px solid ${args.primaryColor}; border-radius: 8px; overflow: hidden;"
+        style="display: flex; width: 100%; height: 600px; border: 2px solid ${args.primaryColor}; border-radius: 8px; overflow: hidden;"
       >
-        ${builderEl}
+        <div
+          style="width: 250px; flex-shrink: 0; border-right: 1px solid #ddd; background: ${args.paletteBackground}; overflow-y: auto;"
+        >
+          ${paletteEl}
+        </div>
+        <div style="flex: 1;">
+          ${builderEl}
+        </div>
       </div>
 
       <div
@@ -451,10 +471,12 @@ builder.theme = {
 };
 
 export const WithCustomGridConfig = (args) => {
-  // Reset state to clear any cached data from previous stories
-  reset();
+  // Generate unique API key for this story instance
+  const apiKey = getUniqueApiKey();
+
   const builderEl = document.createElement("grid-builder");
   builderEl.components = simpleComponents;
+  builderEl.apiRef = { key: apiKey }; // Isolated instance for this story
   builderEl.config = {
     gridSizePercent: args.gridSizePercent,
     minGridSize: args.minGridSize,
@@ -572,10 +594,12 @@ builder.config = {
 };
 
 export const WithInitialState = () => {
-  // Reset state to clear any cached data from previous stories
-  reset();
+  // Generate unique API key for this story instance
+  const apiKey = getUniqueApiKey();
+
   const builderEl = document.createElement("grid-builder");
   builderEl.components = simpleComponents;
+  builderEl.apiRef = { key: apiKey }; // Isolated instance for this story
   builderEl.initialState = {
     canvases: {
       "canvas-1": {
@@ -722,12 +746,14 @@ builder.initialState = savedState;
 };
 
 export const ResponsiveViewportDemo = () => {
-  // Reset state to clear any cached data from previous stories
-  reset();
   // Create builders at different container widths to show viewport switching
   const createBuilder = (width) => {
+    // Generate unique API key for each builder instance
+    const apiKey = getUniqueApiKey();
+
     const builderEl = document.createElement("grid-builder");
     builderEl.components = simpleComponents;
+  builderEl.apiRef = { key: apiKey }; // Isolated instance for this story
     builderEl.initialState = {
       canvases: {
         "canvas-1": {
@@ -947,10 +973,11 @@ const currentViewport = builder.getCurrentViewport(); // 'desktop' or 'mobile'
 };
 
 export const WithCanvasMetadataAndCustomHeaders = () => {
-  // Reset state to clear any cached data from previous stories
-  reset();
+  // Generate unique API key for this story instance
+  const apiKey = getUniqueApiKey();
   const builderEl = document.createElement("grid-builder");
   builderEl.components = simpleComponents;
+  builderEl.apiRef = { key: apiKey }; // Isolated instance for this story
 
   // Multiple canvas sections with metadata
   builderEl.initialState = {
@@ -1072,7 +1099,7 @@ export const WithCanvasMetadataAndCustomHeaders = () => {
 
   // Set initial active canvas
   setTimeout(() => {
-    const api = (window as any).gridBuilderAPI;
+    const api = (window as any)[apiKey];
     if (api) {
       api.setActiveCanvas("hero-section");
     }
@@ -1211,8 +1238,8 @@ builder.uiOverrides = {
 };
 
 export const WithDeletionHook = () => {
-  // Reset state to clear any cached data from previous stories
-  reset();
+  // Generate unique API key for this story instance
+  const apiKey = getUniqueApiKey();
 
   // Create component palette
   const paletteEl = document.createElement("component-palette");
@@ -1221,6 +1248,7 @@ export const WithDeletionHook = () => {
   // Create grid builder
   const builderEl = document.createElement("grid-builder");
   builderEl.components = simpleComponents;
+  builderEl.apiRef = { key: apiKey }; // Isolated instance for this story
 
   builderEl.initialState = {
     canvases: {
@@ -1457,10 +1485,11 @@ builder.onBeforeDelete = (context) => {
 };
 
 export const BatchOperationsPerformance = () => {
-  // Reset state to clear any cached data from previous stories
-  reset();
+  // Generate unique API key for this story instance
+  const apiKey = getUniqueApiKey();
   const builderEl = document.createElement("grid-builder");
   builderEl.components = simpleComponents;
+  builderEl.apiRef = { key: apiKey }; // Isolated instance for this story
 
   builderEl.initialState = {
     canvases: {
@@ -1518,7 +1547,7 @@ export const BatchOperationsPerformance = () => {
     margin: 10px 10px 10px 0;
   `;
   slowButton.onclick = async () => {
-    const api = (window as any).gridBuilderAPI;
+    const api = (window as any)[apiKey];
     if (!api) return;
 
     slowButton.disabled = true;
@@ -1567,7 +1596,7 @@ export const BatchOperationsPerformance = () => {
     margin: 10px 10px 10px 0;
   `;
   fastButton.onclick = async () => {
-    const api = (window as any).gridBuilderAPI;
+    const api = (window as any)[apiKey];
     if (!api) return;
 
     slowButton.disabled = true;
@@ -1617,7 +1646,7 @@ export const BatchOperationsPerformance = () => {
     margin: 10px 0;
   `;
   clearButton.onclick = async () => {
-    const api = (window as any).gridBuilderAPI;
+    const api = (window as any)[apiKey];
     if (!api) return;
 
     const state = api.getState();
@@ -1762,8 +1791,8 @@ await api.addComponentsBatch(items);
 };
 
 export const MultipleSectionsBuilder = () => {
-  // Reset state to clear any cached data from previous stories
-  reset();
+  // Generate unique API key for this story instance
+  const apiKey = getUniqueApiKey();
 
   // Create component palette
   const paletteEl = document.createElement("component-palette");
@@ -1772,6 +1801,7 @@ export const MultipleSectionsBuilder = () => {
   // Create grid builder
   const builderEl = document.createElement("grid-builder");
   builderEl.components = simpleComponents;
+  builderEl.apiRef = { key: apiKey }; // Isolated instance for this story
 
   // Multi-section layout
   builderEl.initialState = {
@@ -1876,7 +1906,7 @@ export const MultipleSectionsBuilder = () => {
 
   let sectionCounter = 1;
   addSectionButton.onclick = async () => {
-    const api = (window as any).gridBuilderAPI;
+    const api = (window as any)[apiKey];
     if (!api) return;
 
     const newCanvasId = `custom-section-${sectionCounter++}`;
@@ -2010,7 +2040,7 @@ builder.canvasMetadata = {
 };
 
 // Add new section dynamically
-const api = window.gridBuilderAPI;
+const api = (window as any)[apiKey];
 await api.addCanvas('new-section-id');
 
 // Update metadata for new section
@@ -2049,8 +2079,8 @@ Components reference their parent canvas via \`item.canvasId\`, enabling:
 };
 
 export const ActiveCanvasManagement = () => {
-  // Reset state to clear any cached data from previous stories
-  reset();
+  // Generate unique API key for this story instance
+  const apiKey = getUniqueApiKey();
 
   // Create component palette
   const paletteEl = document.createElement("component-palette");
@@ -2059,6 +2089,7 @@ export const ActiveCanvasManagement = () => {
   // Create grid builder
   const builderEl = document.createElement("grid-builder");
   builderEl.components = simpleComponents;
+  builderEl.apiRef = { key: apiKey }; // Isolated instance for this story
 
   builderEl.initialState = {
     canvases: {
@@ -2153,7 +2184,7 @@ export const ActiveCanvasManagement = () => {
 
   // Listen for canvas activation events
   setTimeout(() => {
-    const api = (window as any).gridBuilderAPI;
+    const api = (window as any)[apiKey];
     if (api) {
       api.on("canvasActivated", (event) => {
         statusDiv.innerHTML = `Active Canvas: <span style="color: #007bff;">${event.canvasId}</span>`;
@@ -2175,7 +2206,7 @@ export const ActiveCanvasManagement = () => {
     margin: 5px;
   `;
   button1.onclick = async () => {
-    const api = (window as any).gridBuilderAPI;
+    const api = (window as any)[apiKey];
     if (api) await api.setActiveCanvas("canvas-1");
   };
 
@@ -2183,7 +2214,7 @@ export const ActiveCanvasManagement = () => {
   button2.textContent = "🎯 Activate Canvas 2";
   button2.style.cssText = button1.style.cssText;
   button2.onclick = async () => {
-    const api = (window as any).gridBuilderAPI;
+    const api = (window as any)[apiKey];
     if (api) await api.setActiveCanvas("canvas-2");
   };
 
@@ -2191,7 +2222,7 @@ export const ActiveCanvasManagement = () => {
   button3.textContent = "🎯 Activate Canvas 3";
   button3.style.cssText = button1.style.cssText;
   button3.onclick = async () => {
-    const api = (window as any).gridBuilderAPI;
+    const api = (window as any)[apiKey];
     if (api) await api.setActiveCanvas("canvas-3");
   };
 
@@ -2208,7 +2239,7 @@ export const ActiveCanvasManagement = () => {
     margin: 5px;
   `;
   clearButton.onclick = async () => {
-    const api = (window as any).gridBuilderAPI;
+    const api = (window as any)[apiKey];
     if (api) await api.setActiveCanvas(null);
   };
 
@@ -2323,7 +2354,7 @@ Host app updates sidebar/breadcrumbs
 
 **Implementation snippet**:
 \\\`\\\`\\\`typescript
-const api = window.gridBuilderAPI;
+const api = (window as any)[apiKey];
 
 // Programmatically activate a canvas
 await api.setActiveCanvas('hero-section');
@@ -2410,8 +2441,8 @@ api.on('canvasActivated', (event) => {
 };
 
 export const UndoRedoDemo = () => {
-  // Reset state to clear any cached data from previous stories
-  reset();
+  // Generate unique API key for this story instance
+  const apiKey = getUniqueApiKey();
 
   // Create component palette
   const paletteEl = document.createElement("component-palette");
@@ -2420,6 +2451,7 @@ export const UndoRedoDemo = () => {
   // Create grid builder
   const builderEl = document.createElement("grid-builder");
   builderEl.components = simpleComponents;
+  builderEl.apiRef = { key: apiKey }; // Isolated instance for this story
 
   builderEl.initialState = {
     canvases: {
@@ -2485,7 +2517,7 @@ export const UndoRedoDemo = () => {
 
   const updateHistoryDisplay = () => {
     setTimeout(() => {
-      const api = (window as any).gridBuilderAPI;
+      const api = (window as any)[apiKey];
       if (!api) return;
 
       const canUndo = api.canUndo();
@@ -2501,7 +2533,7 @@ export const UndoRedoDemo = () => {
 
   // Listen for events to update history display
   setTimeout(() => {
-    const api = (window as any).gridBuilderAPI;
+    const api = (window as any)[apiKey];
     if (api) {
       const events = [
         "componentAdded",
@@ -2533,7 +2565,7 @@ export const UndoRedoDemo = () => {
     margin: 10px 10px 10px 0;
   `;
   undoButton.onclick = async () => {
-    const api = (window as any).gridBuilderAPI;
+    const api = (window as any)[apiKey];
     if (api) {
       await api.undo();
       updateHistoryDisplay();
@@ -2554,7 +2586,7 @@ export const UndoRedoDemo = () => {
     margin: 10px 0;
   `;
   redoButton.onclick = async () => {
-    const api = (window as any).gridBuilderAPI;
+    const api = (window as any)[apiKey];
     if (api) {
       await api.redo();
       updateHistoryDisplay();
@@ -2724,7 +2756,7 @@ undoRedoManager.push(new MoveItemCommand(...));
 
 **Using the API**:
 \\\`\\\`\\\`typescript
-const api = window.gridBuilderAPI;
+const api = (window as any)[apiKey];
 
 // Check if undo/redo is available
 const canUndo = api.canUndo();  // true if history has commands
@@ -2818,10 +2850,11 @@ The system supports platform-specific conventions:
 };
 
 export const PluginSystemDemo = () => {
-  // Reset state to clear any cached data from previous stories
-  reset();
+  // Generate unique API key for this story instance
+  const apiKey = getUniqueApiKey();
   const builderEl = document.createElement("grid-builder");
   builderEl.components = simpleComponents;
+  builderEl.apiRef = { key: apiKey }; // Isolated instance for this story
 
   builderEl.initialState = {
     canvases: {
@@ -3253,8 +3286,8 @@ builder.plugins = [
 };
 
 export const EventsDemo = () => {
-  // Reset state to clear any cached data from previous stories
-  reset();
+  // Generate unique API key for this story instance
+  const apiKey = getUniqueApiKey();
 
   // Create component palette
   const paletteEl = document.createElement("component-palette");
@@ -3263,6 +3296,7 @@ export const EventsDemo = () => {
   // Create grid builder
   const builderEl = document.createElement("grid-builder");
   builderEl.components = simpleComponents;
+  builderEl.apiRef = { key: apiKey }; // Isolated instance for this story
 
   builderEl.initialState = {
     canvases: {
@@ -3516,7 +3550,7 @@ This story demonstrates all available events emitted by the grid builder using S
 **Implementation - Basic event listener**:
 \\\`\\\`\\\`typescript
 const builder = document.querySelector('grid-builder');
-const api = window.gridBuilderAPI;
+const api = (window as any)[apiKey];
 
 // Listen to component additions
 api.on('componentAdded', (event) => {
@@ -3676,8 +3710,8 @@ api.off('componentAdded', handler);
 };
 
 export const APIIntegrationDemo = () => {
-  // Reset state to clear any cached data from previous stories
-  reset();
+  // Generate unique API key for this story instance
+  const apiKey = getUniqueApiKey();
 
   // Create component palette
   const paletteEl = document.createElement("component-palette");
@@ -3686,6 +3720,7 @@ export const APIIntegrationDemo = () => {
   // Create grid builder
   const builderEl = document.createElement("grid-builder");
   builderEl.components = simpleComponents;
+  builderEl.apiRef = { key: apiKey }; // Isolated instance for this story
 
   builderEl.initialState = {
     canvases: {
@@ -3728,7 +3763,7 @@ export const APIIntegrationDemo = () => {
     margin: 5px;
   `;
   addHeaderBtn.onclick = async () => {
-    const api = (window as any).gridBuilderAPI;
+    const api = (window as any)[apiKey];
     if (api) {
       const itemId = await api.addComponent(
         "canvas-1",
@@ -3752,7 +3787,7 @@ export const APIIntegrationDemo = () => {
     "#007bff",
   );
   getStateBtn.onclick = async () => {
-    const api = (window as any).gridBuilderAPI;
+    const api = (window as any)[apiKey];
     if (api) {
       const state = api.getState();
       const itemCount = state.canvases["canvas-1"]?.items.length || 0;
@@ -3767,7 +3802,7 @@ export const APIIntegrationDemo = () => {
     "#ffc107",
   );
   undoBtn.onclick = async () => {
-    const api = (window as any).gridBuilderAPI;
+    const api = (window as any)[apiKey];
     if (api) {
       await api.undo();
       statusDiv.innerHTML = "⏪ Undo executed";
@@ -3781,7 +3816,7 @@ export const APIIntegrationDemo = () => {
     "#dc3545",
   );
   clearBtn.onclick = async () => {
-    const api = (window as any).gridBuilderAPI;
+    const api = (window as any)[apiKey];
     if (api) {
       const state = api.getState();
       const itemIds =
@@ -3807,7 +3842,7 @@ export const APIIntegrationDemo = () => {
         Demonstrates programmatic control via the GridBuilderAPI.
         <br />
         The grid-builder exposes its API at
-        <code>window.gridBuilderAPI</code> for external control.
+        <code>(window as any)[apiKey]</code> for external control.
       </p>
 
       ${statusDiv} ${controlsDiv}
@@ -3830,7 +3865,7 @@ export const APIIntegrationDemo = () => {
         <ul style="margin-bottom: 0; padding-left: 20px; line-height: 1.8;">
           <li>
             <strong>Default:</strong>
-            <code>window.gridBuilderAPI</code> (automatic)
+            <code>(window as any)[apiKey]</code> (automatic)
           </li>
           <li>
             <strong>Custom:</strong> Set via <code>apiRef</code> prop:
@@ -3901,7 +3936,7 @@ APIIntegrationDemo.parameters = {
       story: `
 **Use Case**: Programmatic control of the grid builder via the GridBuilderAPI for external integrations and automation
 
-This story demonstrates how to control the grid builder programmatically using the GridBuilderAPI. The API is automatically exposed at \`window.gridBuilderAPI\` (configurable via \`apiRef\` prop) and provides methods for managing components, canvas state, undo/redo history, and event subscriptions. This is essential for integrating the builder with external tools, admin panels, automation scripts, or custom UI controls.
+This story demonstrates how to control the grid builder programmatically using the GridBuilderAPI. The API is automatically exposed at \`(window as any)[apiKey]\` (configurable via \`apiRef\` prop) and provides methods for managing components, canvas state, undo/redo history, and event subscriptions. This is essential for integrating the builder with external tools, admin panels, automation scripts, or custom UI controls.
 
 **When to use**: Use the API for programmatic control when you need to:
 - Build custom UI controls outside the builder (external toolbars, admin panels)
@@ -3912,7 +3947,7 @@ This story demonstrates how to control the grid builder programmatically using t
 - Create keyboard shortcuts or command palettes
 
 **Key features demonstrated**:
-- **Default API access**: Automatic \`window.gridBuilderAPI\` registration for immediate use
+- **Default API access**: Automatic \`(window as any)[apiKey]\` registration for immediate use
 - **Custom API reference**: Configure custom target object via \`apiRef\` prop
 - **Plugin API access**: Plugins receive API in \`init(api)\` method
 - **Component management**: Add, delete, update components programmatically
@@ -3930,17 +3965,17 @@ This story demonstrates how to control the grid builder programmatically using t
 **API Access Methods**:
 The grid builder provides three ways to access the API:
 
-1. **Default (window.gridBuilderAPI)**: Automatic registration for simple use cases
+1. **Default ((window as any)[apiKey])**: Automatic registration for simple use cases
 2. **Custom (apiRef prop)**: Control where API is stored for namespace management
 3. **Plugin (init method)**: Plugins receive API automatically in lifecycle hook
 
 **Implementation - Default API access**:
 \\\`\\\`\\\`typescript
-// The grid-builder automatically registers API at window.gridBuilderAPI
+// The grid-builder automatically registers API at (window as any)[apiKey]
 const builder = document.querySelector('grid-builder');
 
 // Access API from window
-const api = window.gridBuilderAPI;
+const api = (window as any)[apiKey];
 
 // Add component programmatically
 await api.addComponent(
@@ -4181,8 +4216,8 @@ if (api.canUndo()) {
 };
 
 export const ClickToAddFeature = () => {
-  // Reset state to clear any cached data from previous stories
-  reset();
+  // Generate unique API key for this story instance
+  const apiKey = getUniqueApiKey();
 
   // Create component palette
   const paletteEl = document.createElement("component-palette");
@@ -4191,6 +4226,7 @@ export const ClickToAddFeature = () => {
   // Create grid builder
   const builderEl = document.createElement("grid-builder");
   builderEl.components = simpleComponents;
+  builderEl.apiRef = { key: apiKey }; // Isolated instance for this story
 
   // Pre-populate with some items to demonstrate collision detection
   builderEl.initialState = {
@@ -4560,7 +4596,7 @@ builder.config = {
 \\\`\\\`\\\`typescript
 // You can override default positioning by listening to componentAdded event
 const builder = document.querySelector('grid-builder');
-const api = window.gridBuilderAPI;
+const api = (window as any)[apiKey];
 
 // Intercept added components and reposition them
 api.on('componentAdded', (event) => {
@@ -4670,10 +4706,11 @@ builder.config = {
 };
 
 export const ExportImportWorkflow = () => {
-  // Reset state to clear any cached data from previous stories
-  reset();
+  // Generate unique API key for this story instance
+  const apiKey = getUniqueApiKey();
   const builderEl = document.createElement("grid-builder");
   builderEl.components = simpleComponents;
+  builderEl.apiRef = { key: apiKey }; // Isolated instance for this story
 
   builderEl.initialState = {
     canvases: {
@@ -4765,7 +4802,7 @@ export const ExportImportWorkflow = () => {
     margin: 5px;
   `;
   exportBtn.onclick = async () => {
-    const api = (window as any).gridBuilderAPI;
+    const api = (window as any)[apiKey];
     if (api) {
       const exported = await builderEl.exportState();
       exportDiv.textContent = JSON.stringify(exported, null, 2);
@@ -4799,7 +4836,7 @@ export const ExportImportWorkflow = () => {
     "#dc3545",
   );
   clearBtn.onclick = async () => {
-    const api = (window as any).gridBuilderAPI;
+    const api = (window as any)[apiKey];
     if (api) {
       const state = api.getState();
       const itemIds =
@@ -5580,14 +5617,17 @@ describe('Export/Import Workflow', () => {
  * - Clean canvas view showing visual results of each handling strategy
  */
 export const UnknownComponentHandling = () => {
-  // Reset state to clear any cached data from previous stories
-  reset();
+  // Generate unique API keys for each builder instance (3 builders in this story)
+  const defaultApiKey = getUniqueApiKey();
+  const hiddenApiKey = getUniqueApiKey();
+  const customApiKey = getUniqueApiKey();
 
   // =================================================================
   // MODE 1: Default Error Display (Improved Styling)
   // =================================================================
   const defaultBuilder = document.createElement("grid-builder");
   defaultBuilder.components = simpleComponents; // Known components only
+  defaultBuilder.apiRef = { key: defaultApiKey }; // Isolated instance for default mode
   defaultBuilder.config = {
     enableVirtualRendering: false,
     snapToGrid: true,
@@ -5601,6 +5641,7 @@ export const UnknownComponentHandling = () => {
   // =================================================================
   const hiddenBuilder = document.createElement("grid-builder");
   hiddenBuilder.components = simpleComponents; // Known components only
+  hiddenBuilder.apiRef = { key: hiddenApiKey }; // Isolated instance for hidden mode
   hiddenBuilder.config = {
     enableVirtualRendering: false,
     snapToGrid: true,
@@ -5613,6 +5654,7 @@ export const UnknownComponentHandling = () => {
   // =================================================================
   const customBuilder = document.createElement("grid-builder");
   customBuilder.components = simpleComponents; // Known components only
+  customBuilder.apiRef = { key: customApiKey }; // Isolated instance for custom mode
   customBuilder.config = {
     enableVirtualRendering: false,
     snapToGrid: true,
@@ -5653,61 +5695,47 @@ export const UnknownComponentHandling = () => {
 
   // Initialize all three builders with canvases
   setTimeout(() => {
-    if ((window as any).gridBuilderAPI) {
-      const api = (window as any).gridBuilderAPI;
+    // Each builder has its own isolated API
+    const apiKeys = [defaultApiKey, hiddenApiKey, customApiKey];
+    const builders = [defaultBuilder, hiddenBuilder, customBuilder];
 
-      // Add canvases and unknown component items to all three builders
-      [defaultBuilder, hiddenBuilder, customBuilder].forEach(
-        (builder, index) => {
-          const canvasId = `unknown-demo-${index}`;
+    builders.forEach((_, index) => {
+      const apiKey = apiKeys[index];
+      const api = (window as any)[apiKey];
 
-          // Add canvas
-          api.addCanvas(canvasId, builder);
+      if (api) {
+        const canvasId = `unknown-demo-${index}`;
 
-          // Add an unknown component type to demonstrate error handling
-          api.addComponent(
-            canvasId,
-            {
-              type: "mystery-component", // ← This type is NOT in the registry
-              name: "Mystery Component",
-              layouts: {
-                desktop: { x: 2, y: 2, width: 20, height: 8 },
-                mobile: {
-                  x: null,
-                  y: null,
-                  width: null,
-                  height: null,
-                  customized: false,
-                },
-              },
-              config: {},
-            },
-            builder,
-          );
+        // Add canvas
+        api.addCanvas(canvasId);
 
-          // Add a known component for comparison
-          api.addComponent(
-            canvasId,
-            {
-              type: "header",
-              name: "Normal Header",
-              layouts: {
-                desktop: { x: 25, y: 2, width: 20, height: 6 },
-                mobile: {
-                  x: null,
-                  y: null,
-                  width: null,
-                  height: null,
-                  customized: false,
-                },
-              },
-              config: {},
-            },
-            builder,
-          );
-        },
-      );
-    }
+        // Add an unknown component type to demonstrate error handling
+        api.addComponent(
+          canvasId,
+          "mystery-component", // ← This type is NOT in the registry
+          {
+            x: 2,
+            y: 2,
+            width: 20,
+            height: 8,
+          },
+          {},
+        );
+
+        // Add a known component for comparison
+        api.addComponent(
+          canvasId,
+          "header",
+          {
+            x: 25,
+            y: 2,
+            width: 20,
+            height: 6,
+          },
+          { title: "Normal Header" },
+        );
+      }
+    });
   }, 100);
 
   return html`
