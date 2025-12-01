@@ -9,26 +9,93 @@ const mockDisconnect = jest.fn();
   disconnect: mockDisconnect,
 }));
 
+import { h } from "@stencil/core";
 import { newSpecPage } from "@stencil/core/testing";
 import { CanvasSection } from "../canvas-section";
 import {
-  gridState,
   reset,
-  setActiveCanvas,
 } from "../../../services/state-manager";
 
+// Create mock instances for Phase 4
+const createMockStateInstance = () => ({
+  canvases: {
+    canvas1: { items: [], zIndexCounter: 1 },
+    canvas2: { items: [], zIndexCounter: 1 },
+    canvas3: { items: [], zIndexCounter: 1 },
+  },
+  activeCanvasId: null,
+  showGrid: true,
+  currentViewport: 'desktop',
+  selectedItemId: null,
+  selectedCanvasId: null,
+});
+
+const createMockVirtualRendererInstance = () => ({
+  observe: jest.fn(),
+  unobserve: jest.fn(),
+});
+
+const createMockUndoRedoManagerInstance = () => ({
+  push: jest.fn(),
+  undo: jest.fn(),
+  redo: jest.fn(),
+  canUndo: jest.fn(() => false),
+  canRedo: jest.fn(() => false),
+});
+
+const createMockEventManagerInstance = () => ({
+  emit: jest.fn(),
+  on: jest.fn(),
+  off: jest.fn(),
+});
+
+const createMockOnStateChange = () => {
+  const callbacks: Record<string, Function[]> = {};
+  return jest.fn((key: string, callback: Function) => {
+    if (!callbacks[key]) callbacks[key] = [];
+    callbacks[key].push(callback);
+  });
+};
+
 describe("canvas-section - Active Canvas", () => {
+  let mockStateInstance: any;
+  let mockVirtualRendererInstance: any;
+  let mockUndoRedoManagerInstance: any;
+  let mockEventManagerInstance: any;
+  let mockOnStateChange: any;
+
   beforeEach(() => {
     reset();
     jest.clearAllMocks();
+    mockStateInstance = createMockStateInstance();
+    mockVirtualRendererInstance = createMockVirtualRendererInstance();
+    mockUndoRedoManagerInstance = createMockUndoRedoManagerInstance();
+    mockEventManagerInstance = createMockEventManagerInstance();
+    mockOnStateChange = createMockOnStateChange();
   });
+
+  // Helper function to create spec page with instance props
+  const createCanvasSectionPage = async (canvasId: string = 'canvas1') => {
+    const page = await newSpecPage({
+      components: [CanvasSection],
+      template: () => (
+        <canvas-section
+          canvasId={canvasId}
+          virtualRendererInstance={mockVirtualRendererInstance}
+          undoRedoManagerInstance={mockUndoRedoManagerInstance}
+          eventManagerInstance={mockEventManagerInstance}
+          stateInstance={mockStateInstance}
+          onStateChange={mockOnStateChange}
+        />
+      ),
+    });
+
+    return page;
+  };
 
   describe("isActive Prop", () => {
     it("should render with active class when isActive is true", async () => {
-      const page = await newSpecPage({
-        components: [CanvasSection],
-        html: `<canvas-section canvas-id="canvas1"></canvas-section>`,
-      });
+      const page = await createCanvasSectionPage('canvas1');
 
       page.root.isActive = true;
       await page.waitForChanges();
@@ -38,10 +105,7 @@ describe("canvas-section - Active Canvas", () => {
     });
 
     it("should render without active class when isActive is false", async () => {
-      const page = await newSpecPage({
-        components: [CanvasSection],
-        html: `<canvas-section canvas-id="canvas1"></canvas-section>`,
-      });
+      const page = await createCanvasSectionPage('canvas1');
 
       page.root.isActive = false;
       await page.waitForChanges();
@@ -51,20 +115,14 @@ describe("canvas-section - Active Canvas", () => {
     });
 
     it("should default to inactive when isActive prop not provided", async () => {
-      const page = await newSpecPage({
-        components: [CanvasSection],
-        html: `<canvas-section canvas-id="canvas1"></canvas-section>`,
-      });
+      const page = await createCanvasSectionPage('canvas1');
 
       const gridContainer = page.root.querySelector(".grid-container");
       expect(gridContainer.classList.contains("active")).toBe(false);
     });
 
     it("should update active class when isActive prop changes", async () => {
-      const page = await newSpecPage({
-        components: [CanvasSection],
-        html: `<canvas-section canvas-id="canvas1"></canvas-section>`,
-      });
+      const page = await createCanvasSectionPage('canvas1');
 
       page.root.isActive = false;
       await page.waitForChanges();
@@ -80,10 +138,7 @@ describe("canvas-section - Active Canvas", () => {
     });
 
     it("should toggle active class multiple times", async () => {
-      const page = await newSpecPage({
-        components: [CanvasSection],
-        html: `<canvas-section canvas-id="canvas1"></canvas-section>`,
-      });
+      const page = await createCanvasSectionPage('canvas1');
 
       // Start inactive
       page.root.isActive = false;
@@ -113,10 +168,7 @@ describe("canvas-section - Active Canvas", () => {
 
   describe("Canvas Activation Events", () => {
     it("should emit canvas-activated event when canvas background is clicked", async () => {
-      const page = await newSpecPage({
-        components: [CanvasSection],
-        html: `<canvas-section canvas-id="canvas1"></canvas-section>`,
-      });
+      const page = await createCanvasSectionPage('canvas1');
 
       await page.waitForChanges();
 
@@ -138,10 +190,7 @@ describe("canvas-section - Active Canvas", () => {
     });
 
     it("should emit canvas-click event for backward compatibility", async () => {
-      const page = await newSpecPage({
-        components: [CanvasSection],
-        html: `<canvas-section canvas-id="canvas1"></canvas-section>`,
-      });
+      const page = await createCanvasSectionPage('canvas1');
 
       await page.waitForChanges();
 
@@ -162,14 +211,11 @@ describe("canvas-section - Active Canvas", () => {
     });
 
     it("should call setActiveCanvas when canvas background is clicked", async () => {
-      const page = await newSpecPage({
-        components: [CanvasSection],
-        html: `<canvas-section canvas-id="canvas2"></canvas-section>`,
-      });
+      const page = await createCanvasSectionPage('canvas2');
 
       await page.waitForChanges();
 
-      expect(gridState.activeCanvasId).toBeNull();
+      expect(mockStateInstance.activeCanvasId).toBeNull();
 
       const gridContainer = page.root.querySelector(".grid-container");
       const clickEvent = new MouseEvent("click", { bubbles: true });
@@ -180,14 +226,11 @@ describe("canvas-section - Active Canvas", () => {
       gridContainer.dispatchEvent(clickEvent);
       await page.waitForChanges();
 
-      expect(gridState.activeCanvasId).toBe("canvas2");
+      expect(mockStateInstance.activeCanvasId).toBe("canvas2");
     });
 
     it("should not emit events when clicking on child elements", async () => {
-      const page = await newSpecPage({
-        components: [CanvasSection],
-        html: `<canvas-section canvas-id="canvas1"></canvas-section>`,
-      });
+      const page = await createCanvasSectionPage('canvas1');
 
       await page.waitForChanges();
 
@@ -211,10 +254,7 @@ describe("canvas-section - Active Canvas", () => {
     });
 
     it("should emit events with correct canvasId for different canvases", async () => {
-      const page = await newSpecPage({
-        components: [CanvasSection],
-        html: `<canvas-section canvas-id="canvas1"></canvas-section>`,
-      });
+      const page = await createCanvasSectionPage('canvas1');
 
       await page.waitForChanges();
 
@@ -245,20 +285,14 @@ describe("canvas-section - Active Canvas", () => {
 
   describe("CSS Classes and Styling", () => {
     it("should always have grid-container class", async () => {
-      const page = await newSpecPage({
-        components: [CanvasSection],
-        html: `<canvas-section canvas-id="canvas1"></canvas-section>`,
-      });
+      const page = await createCanvasSectionPage('canvas1');
 
       const gridContainer = page.root.querySelector(".grid-container");
       expect(gridContainer.classList.contains("grid-container")).toBe(true);
     });
 
     it("should combine active class with other classes", async () => {
-      const page = await newSpecPage({
-        components: [CanvasSection],
-        html: `<canvas-section canvas-id="canvas1"></canvas-section>`,
-      });
+      const page = await createCanvasSectionPage('canvas1');
 
       page.root.isActive = true;
       await page.waitForChanges();
@@ -269,14 +303,10 @@ describe("canvas-section - Active Canvas", () => {
     });
 
     it("should maintain other classes when active state changes", async () => {
-      const page = await newSpecPage({
-        components: [CanvasSection],
-        html: `<canvas-section canvas-id="canvas1"></canvas-section>`,
-      });
-
       // Start with hide-grid class
-      gridState.showGrid = false;
-      await page.waitForChanges();
+      mockStateInstance.showGrid = false;
+
+      const page = await createCanvasSectionPage('canvas1');
 
       let gridContainer = page.root.querySelector(".grid-container");
       expect(gridContainer.classList.contains("hide-grid")).toBe(true);
@@ -302,15 +332,12 @@ describe("canvas-section - Active Canvas", () => {
 
   describe("Integration with State", () => {
     it("should update global state when clicked", async () => {
-      const page = await newSpecPage({
-        components: [CanvasSection],
-        html: `<canvas-section canvas-id="canvas2"></canvas-section>`,
-      });
+      const page = await createCanvasSectionPage('canvas2');
 
       await page.waitForChanges();
 
       // Initially no canvas is active
-      expect(gridState.activeCanvasId).toBeNull();
+      expect(mockStateInstance.activeCanvasId).toBeNull();
 
       // Click the canvas
       const gridContainer = page.root.querySelector(".grid-container");
@@ -323,19 +350,16 @@ describe("canvas-section - Active Canvas", () => {
       await page.waitForChanges();
 
       // Canvas2 should now be active in global state
-      expect(gridState.activeCanvasId).toBe("canvas2");
+      expect(mockStateInstance.activeCanvasId).toBe("canvas2");
     });
 
     it("should reflect external state changes via isActive prop", async () => {
-      const page = await newSpecPage({
-        components: [CanvasSection],
-        html: `<canvas-section canvas-id="canvas1"></canvas-section>`,
-      });
+      const page = await createCanvasSectionPage('canvas1');
 
       await page.waitForChanges();
 
       // External code sets canvas as active
-      setActiveCanvas("canvas1");
+      mockStateInstance.activeCanvasId = "canvas1";
 
       // Component should be told it's active via prop
       page.root.isActive = true;

@@ -13,12 +13,44 @@ import { h } from "@stencil/core";
 import { newSpecPage } from "@stencil/core/testing";
 import { GridItemWrapper } from "../grid-item-wrapper";
 import {
-  gridState,
   reset,
-  setActiveCanvas,
 } from "../../../services/state-manager";
 import { domCache } from "../../../utils/dom-cache";
 import { mockDragClone } from "../../../utils/test-helpers";
+
+// Create mock instances for Phase 4
+const createMockStateInstance = () => ({
+  canvases: {
+    canvas1: { items: [], zIndexCounter: 1 },
+    canvas2: { items: [], zIndexCounter: 1 },
+  },
+  activeCanvasId: null,
+  selectedItemId: null,
+  selectedCanvasId: null,
+  currentViewport: 'desktop',
+  showGrid: true,
+});
+
+const createMockVirtualRendererInstance = () => ({
+  observe: jest.fn(),
+  unobserve: jest.fn(),
+  initialize: jest.fn(),
+  destroy: jest.fn(),
+});
+
+const createMockUndoRedoManagerInstance = () => ({
+  push: jest.fn(),
+  undo: jest.fn(),
+  redo: jest.fn(),
+  canUndo: jest.fn(() => false),
+  canRedo: jest.fn(() => false),
+});
+
+const createMockEventManagerInstance = () => ({
+  emit: jest.fn(),
+  on: jest.fn(),
+  off: jest.fn(),
+});
 
 describe("grid-item-wrapper - Active Canvas", () => {
   const mockItem = {
@@ -48,9 +80,18 @@ describe("grid-item-wrapper - Active Canvas", () => {
     ],
   ]);
 
+  let mockStateInstance: any;
+  let mockVirtualRendererInstance: any;
+  let mockUndoRedoManagerInstance: any;
+  let mockEventManagerInstance: any;
+
   beforeEach(() => {
     reset();
     jest.clearAllMocks();
+    mockStateInstance = createMockStateInstance();
+    mockVirtualRendererInstance = createMockVirtualRendererInstance();
+    mockUndoRedoManagerInstance = createMockUndoRedoManagerInstance();
+    mockEventManagerInstance = createMockEventManagerInstance();
   });
 
   afterEach(() => {
@@ -80,6 +121,11 @@ describe("grid-item-wrapper - Active Canvas", () => {
           <grid-item-wrapper
             item={mockItem}
             componentRegistry={mockComponentRegistry}
+          
+            virtualRendererInstance={mockVirtualRendererInstance}
+            eventManagerInstance={mockEventManagerInstance}
+            undoRedoManagerInstance={mockUndoRedoManagerInstance}
+            stateInstance={mockStateInstance}
           />
         ),
       });
@@ -87,7 +133,7 @@ describe("grid-item-wrapper - Active Canvas", () => {
       await page.waitForChanges();
 
       // Initially no canvas is active
-      expect(gridState.activeCanvasId).toBeNull();
+      expect(mockStateInstance.activeCanvasId).toBeNull();
 
       // Click the item
       const itemElement = page.root.querySelector(
@@ -99,7 +145,7 @@ describe("grid-item-wrapper - Active Canvas", () => {
       }
 
       // Canvas should be activated
-      expect(gridState.activeCanvasId).toBe("canvas1");
+      expect(mockStateInstance.activeCanvasId).toBe("canvas1");
     });
 
     it("should activate correct canvas when clicking items on different canvases", async () => {
@@ -132,6 +178,11 @@ describe("grid-item-wrapper - Active Canvas", () => {
           <grid-item-wrapper
             item={item1}
             componentRegistry={mockComponentRegistry}
+          
+            virtualRendererInstance={mockVirtualRendererInstance}
+            eventManagerInstance={mockEventManagerInstance}
+            undoRedoManagerInstance={mockUndoRedoManagerInstance}
+            stateInstance={mockStateInstance}
           />
         ),
       });
@@ -143,7 +194,7 @@ describe("grid-item-wrapper - Active Canvas", () => {
       expect(itemElement).toBeTruthy();
       itemElement.click();
       await page.waitForChanges();
-      expect(gridState.activeCanvasId).toBe("canvas1");
+      expect(mockStateInstance.activeCanvasId).toBe("canvas1");
 
       // Change item to canvas2
       const item2 = JSON.parse(
@@ -157,7 +208,7 @@ describe("grid-item-wrapper - Active Canvas", () => {
       expect(itemElement2).toBeTruthy();
       itemElement2.click();
       await page.waitForChanges();
-      expect(gridState.activeCanvasId).toBe("canvas2");
+      expect(mockStateInstance.activeCanvasId).toBe("canvas2");
     });
 
     it("should set both active canvas and selection state on click", async () => {
@@ -177,6 +228,11 @@ describe("grid-item-wrapper - Active Canvas", () => {
           <grid-item-wrapper
             item={mockItem}
             componentRegistry={mockComponentRegistry}
+          
+            virtualRendererInstance={mockVirtualRendererInstance}
+            eventManagerInstance={mockEventManagerInstance}
+            undoRedoManagerInstance={mockUndoRedoManagerInstance}
+            stateInstance={mockStateInstance}
           />
         ),
       });
@@ -184,9 +240,9 @@ describe("grid-item-wrapper - Active Canvas", () => {
       await page.waitForChanges();
 
       // Initially nothing is selected or active
-      expect(gridState.activeCanvasId).toBeNull();
-      expect(gridState.selectedItemId).toBeNull();
-      expect(gridState.selectedCanvasId).toBeNull();
+      expect(mockStateInstance.activeCanvasId).toBeNull();
+      expect(mockStateInstance.selectedItemId).toBeNull();
+      expect(mockStateInstance.selectedCanvasId).toBeNull();
 
       const itemElement = page.root.querySelector(".grid-item") as HTMLElement;
       if (itemElement) {
@@ -195,9 +251,9 @@ describe("grid-item-wrapper - Active Canvas", () => {
       }
 
       // Both active canvas and selection should be set
-      expect(gridState.activeCanvasId).toBe("canvas1");
-      expect(gridState.selectedItemId).toBe("item-1");
-      expect(gridState.selectedCanvasId).toBe("canvas1");
+      expect(mockStateInstance.activeCanvasId).toBe("canvas1");
+      expect(mockStateInstance.selectedItemId).toBe("item-1");
+      expect(mockStateInstance.selectedCanvasId).toBe("canvas1");
     });
 
     it("should not activate canvas in viewer mode", async () => {
@@ -208,13 +264,18 @@ describe("grid-item-wrapper - Active Canvas", () => {
             item={mockItem}
             componentRegistry={mockComponentRegistry}
             viewerMode
+          
+            virtualRendererInstance={mockVirtualRendererInstance}
+            eventManagerInstance={mockEventManagerInstance}
+            undoRedoManagerInstance={mockUndoRedoManagerInstance}
+            stateInstance={mockStateInstance}
           />
         ),
       });
 
       await page.waitForChanges();
 
-      expect(gridState.activeCanvasId).toBeNull();
+      expect(mockStateInstance.activeCanvasId).toBeNull();
 
       const itemElement = page.root.querySelector(".grid-item") as HTMLElement;
       if (itemElement) {
@@ -223,7 +284,7 @@ describe("grid-item-wrapper - Active Canvas", () => {
       }
 
       // Canvas should NOT be activated in viewer mode
-      expect(gridState.activeCanvasId).toBeNull();
+      expect(mockStateInstance.activeCanvasId).toBeNull();
     });
 
     it("should activate canvas even when item is already selected", async () => {
@@ -233,6 +294,11 @@ describe("grid-item-wrapper - Active Canvas", () => {
           <grid-item-wrapper
             item={mockItem}
             componentRegistry={mockComponentRegistry}
+          
+            virtualRendererInstance={mockVirtualRendererInstance}
+            eventManagerInstance={mockEventManagerInstance}
+            undoRedoManagerInstance={mockUndoRedoManagerInstance}
+            stateInstance={mockStateInstance}
           />
         ),
       });
@@ -240,12 +306,12 @@ describe("grid-item-wrapper - Active Canvas", () => {
       await page.waitForChanges();
 
       // Select the item first
-      gridState.selectedItemId = "item-1";
-      gridState.selectedCanvasId = "canvas1";
+      mockStateInstance.selectedItemId = "item-1";
+      mockStateInstance.selectedCanvasId = "canvas1";
 
       // Activate a different canvas
-      setActiveCanvas("canvas2");
-      expect(gridState.activeCanvasId).toBe("canvas2");
+      mockStateInstance.activeCanvasId = "canvas2";
+      expect(mockStateInstance.activeCanvasId).toBe("canvas2");
 
       // Click the item again
       const itemElement = page.root.querySelector(".grid-item") as HTMLElement;
@@ -255,7 +321,7 @@ describe("grid-item-wrapper - Active Canvas", () => {
       }
 
       // Should switch active canvas back to canvas1
-      expect(gridState.activeCanvasId).toBe("canvas1");
+      expect(mockStateInstance.activeCanvasId).toBe("canvas1");
     });
 
     it("should not activate canvas when clicking drag handle", async () => {
@@ -265,13 +331,18 @@ describe("grid-item-wrapper - Active Canvas", () => {
           <grid-item-wrapper
             item={mockItem}
             componentRegistry={mockComponentRegistry}
+          
+            virtualRendererInstance={mockVirtualRendererInstance}
+            eventManagerInstance={mockEventManagerInstance}
+            undoRedoManagerInstance={mockUndoRedoManagerInstance}
+            stateInstance={mockStateInstance}
           />
         ),
       });
 
       await page.waitForChanges();
 
-      expect(gridState.activeCanvasId).toBeNull();
+      expect(mockStateInstance.activeCanvasId).toBeNull();
 
       // Try to click drag handle (click should be ignored)
       const dragHandle = page.root.querySelector(".drag-handle") as HTMLElement;
@@ -281,7 +352,7 @@ describe("grid-item-wrapper - Active Canvas", () => {
       }
 
       // Canvas should NOT be activated when clicking control elements
-      expect(gridState.activeCanvasId).toBeNull();
+      expect(mockStateInstance.activeCanvasId).toBeNull();
     });
 
     it("should not activate canvas when item was just dragged", async () => {
@@ -291,6 +362,11 @@ describe("grid-item-wrapper - Active Canvas", () => {
           <grid-item-wrapper
             item={mockItem}
             componentRegistry={mockComponentRegistry}
+          
+            virtualRendererInstance={mockVirtualRendererInstance}
+            eventManagerInstance={mockEventManagerInstance}
+            undoRedoManagerInstance={mockUndoRedoManagerInstance}
+            stateInstance={mockStateInstance}
           />
         ),
       });
@@ -307,7 +383,7 @@ describe("grid-item-wrapper - Active Canvas", () => {
       }
 
       // Canvas should NOT be activated if item was just dragged
-      expect(gridState.activeCanvasId).toBeNull();
+      expect(mockStateInstance.activeCanvasId).toBeNull();
     });
   });
 
@@ -319,15 +395,20 @@ describe("grid-item-wrapper - Active Canvas", () => {
           <grid-item-wrapper
             item={mockItem}
             componentRegistry={mockComponentRegistry}
+          
+            virtualRendererInstance={mockVirtualRendererInstance}
+            eventManagerInstance={mockEventManagerInstance}
+            undoRedoManagerInstance={mockUndoRedoManagerInstance}
+            stateInstance={mockStateInstance}
           />
         ),
       });
 
       await page.waitForChanges();
 
-      expect(gridState.activeCanvasId).toBeNull();
-      expect(gridState.selectedItemId).toBeNull();
-      expect(gridState.selectedCanvasId).toBeNull();
+      expect(mockStateInstance.activeCanvasId).toBeNull();
+      expect(mockStateInstance.selectedItemId).toBeNull();
+      expect(mockStateInstance.selectedCanvasId).toBeNull();
 
       const itemElement = page.root.querySelector(".grid-item") as HTMLElement;
       if (itemElement) {
@@ -336,9 +417,9 @@ describe("grid-item-wrapper - Active Canvas", () => {
       }
 
       // All three should be set
-      expect(gridState.activeCanvasId).toBe("canvas1");
-      expect(gridState.selectedItemId).toBe("item-1");
-      expect(gridState.selectedCanvasId).toBe("canvas1");
+      expect(mockStateInstance.activeCanvasId).toBe("canvas1");
+      expect(mockStateInstance.selectedItemId).toBe("item-1");
+      expect(mockStateInstance.selectedCanvasId).toBe("canvas1");
     });
 
     it("should handle rapid canvas switching via item clicks", async () => {
@@ -380,6 +461,11 @@ describe("grid-item-wrapper - Active Canvas", () => {
           <grid-item-wrapper
             item={item1}
             componentRegistry={mockComponentRegistry}
+          
+            virtualRendererInstance={mockVirtualRendererInstance}
+            eventManagerInstance={mockEventManagerInstance}
+            undoRedoManagerInstance={mockUndoRedoManagerInstance}
+            stateInstance={mockStateInstance}
           />
         ),
       });
@@ -389,7 +475,7 @@ describe("grid-item-wrapper - Active Canvas", () => {
       // Click item1
       (page.root.querySelector(".grid-item") as HTMLElement)?.click();
       await page.waitForChanges();
-      expect(gridState.activeCanvasId).toBe("canvas1");
+      expect(mockStateInstance.activeCanvasId).toBe("canvas1");
 
       // Change to item2 (canvas2)
       page.root.item = JSON.parse(
@@ -398,7 +484,7 @@ describe("grid-item-wrapper - Active Canvas", () => {
       await page.waitForChanges();
       (page.root.querySelector(".grid-item") as HTMLElement)?.click();
       await page.waitForChanges();
-      expect(gridState.activeCanvasId).toBe("canvas2");
+      expect(mockStateInstance.activeCanvasId).toBe("canvas2");
 
       // Change to item3 (canvas3)
       page.root.item = JSON.parse(
@@ -407,7 +493,7 @@ describe("grid-item-wrapper - Active Canvas", () => {
       await page.waitForChanges();
       (page.root.querySelector(".grid-item") as HTMLElement)?.click();
       await page.waitForChanges();
-      expect(gridState.activeCanvasId).toBe("canvas3");
+      expect(mockStateInstance.activeCanvasId).toBe("canvas3");
 
       // Change back to item1
       page.root.item = JSON.parse(
@@ -416,7 +502,7 @@ describe("grid-item-wrapper - Active Canvas", () => {
       await page.waitForChanges();
       (page.root.querySelector(".grid-item") as HTMLElement)?.click();
       await page.waitForChanges();
-      expect(gridState.activeCanvasId).toBe("canvas1");
+      expect(mockStateInstance.activeCanvasId).toBe("canvas1");
     });
   });
 
@@ -428,6 +514,11 @@ describe("grid-item-wrapper - Active Canvas", () => {
           <grid-item-wrapper
             item={mockItem}
             componentRegistry={mockComponentRegistry}
+          
+            virtualRendererInstance={mockVirtualRendererInstance}
+            eventManagerInstance={mockEventManagerInstance}
+            undoRedoManagerInstance={mockUndoRedoManagerInstance}
+            stateInstance={mockStateInstance}
           />
         ),
       });
@@ -450,7 +541,7 @@ describe("grid-item-wrapper - Active Canvas", () => {
       });
 
       // Canvas should also be activated
-      expect(gridState.activeCanvasId).toBe("canvas1");
+      expect(mockStateInstance.activeCanvasId).toBe("canvas1");
     });
   });
 
@@ -461,6 +552,8 @@ describe("grid-item-wrapper - Active Canvas", () => {
     const mockVirtualRendererInstance = {
       observe: mockObserveVR,
       unobserve: mockUnobserveVR,
+      initialize: jest.fn(),
+      destroy: jest.fn(),
     };
 
     beforeEach(() => {
@@ -475,8 +568,11 @@ describe("grid-item-wrapper - Active Canvas", () => {
           <grid-item-wrapper
             item={mockItem}
             componentRegistry={mockComponentRegistry}
-            virtualRendererInstance={mockVirtualRendererInstance as any}
             config={{ enableVirtualRendering: false }}
+            virtualRendererInstance={mockVirtualRendererInstance as any}
+            eventManagerInstance={mockEventManagerInstance}
+            undoRedoManagerInstance={mockUndoRedoManagerInstance}
+            stateInstance={mockStateInstance}
           />
         ),
       });
@@ -502,8 +598,12 @@ describe("grid-item-wrapper - Active Canvas", () => {
           <grid-item-wrapper
             item={mockItem}
             componentRegistry={mockComponentRegistry}
-            virtualRendererInstance={mockVirtualRendererInstance as any}
             config={{ enableVirtualRendering: true }}
+          
+            virtualRendererInstance={mockVirtualRendererInstance as any}
+            eventManagerInstance={mockEventManagerInstance}
+            undoRedoManagerInstance={mockUndoRedoManagerInstance}
+            stateInstance={mockStateInstance}
           />
         ),
       });
@@ -529,8 +629,12 @@ describe("grid-item-wrapper - Active Canvas", () => {
           <grid-item-wrapper
             item={mockItem}
             componentRegistry={mockComponentRegistry}
-            virtualRendererInstance={mockVirtualRendererInstance as any}
             config={{}} // No enableVirtualRendering specified
+          
+            virtualRendererInstance={mockVirtualRendererInstance as any}
+            eventManagerInstance={mockEventManagerInstance}
+            undoRedoManagerInstance={mockUndoRedoManagerInstance}
+            stateInstance={mockStateInstance}
           />
         ),
       });
@@ -556,7 +660,11 @@ describe("grid-item-wrapper - Active Canvas", () => {
           <grid-item-wrapper
             item={mockItem}
             componentRegistry={mockComponentRegistry}
+          
             virtualRendererInstance={mockVirtualRendererInstance as any}
+            eventManagerInstance={mockEventManagerInstance}
+            undoRedoManagerInstance={mockUndoRedoManagerInstance}
+            stateInstance={mockStateInstance}
           />
         ),
       });
@@ -587,8 +695,12 @@ describe("grid-item-wrapper - Active Canvas", () => {
           <grid-item-wrapper
             item={mockItem}
             componentRegistry={mockComponentRegistry}
-            virtualRendererInstance={mockVirtualRendererInstance as any}
             config={{ enableVirtualRendering: true }}
+          
+            virtualRendererInstance={mockVirtualRendererInstance as any}
+            eventManagerInstance={mockEventManagerInstance}
+            undoRedoManagerInstance={mockUndoRedoManagerInstance}
+            stateInstance={mockStateInstance}
           />
         ),
       });
@@ -626,8 +738,12 @@ describe("grid-item-wrapper - Active Canvas", () => {
           <grid-item-wrapper
             item={mockItem}
             componentRegistry={mockComponentRegistry}
-            virtualRendererInstance={mockVirtualRendererInstance as any}
             config={{ enableVirtualRendering: true }}
+          
+            virtualRendererInstance={mockVirtualRendererInstance as any}
+            eventManagerInstance={mockEventManagerInstance}
+            undoRedoManagerInstance={mockUndoRedoManagerInstance}
+            stateInstance={mockStateInstance}
           />
         ),
       });
@@ -679,6 +795,11 @@ describe("grid-item-wrapper - Active Canvas", () => {
             item={mockItem}
             componentRegistry={mockComponentRegistry}
             viewerMode={false}
+          
+            virtualRendererInstance={mockVirtualRendererInstance}
+            eventManagerInstance={mockEventManagerInstance}
+            undoRedoManagerInstance={mockUndoRedoManagerInstance}
+            stateInstance={mockStateInstance}
           />
         ),
       });
@@ -701,6 +822,11 @@ describe("grid-item-wrapper - Active Canvas", () => {
             item={mockItem}
             componentRegistry={mockComponentRegistry}
             viewerMode={false}
+          
+            virtualRendererInstance={mockVirtualRendererInstance}
+            eventManagerInstance={mockEventManagerInstance}
+            undoRedoManagerInstance={mockUndoRedoManagerInstance}
+            stateInstance={mockStateInstance}
           />
         ),
       });
@@ -723,6 +849,11 @@ describe("grid-item-wrapper - Active Canvas", () => {
             item={mockItem}
             componentRegistry={mockComponentRegistry}
             viewerMode={false}
+          
+            virtualRendererInstance={mockVirtualRendererInstance}
+            eventManagerInstance={mockEventManagerInstance}
+            undoRedoManagerInstance={mockUndoRedoManagerInstance}
+            stateInstance={mockStateInstance}
           />
         ),
       });
@@ -745,6 +876,11 @@ describe("grid-item-wrapper - Active Canvas", () => {
             item={mockItem}
             componentRegistry={mockComponentRegistry}
             viewerMode={false}
+          
+            virtualRendererInstance={mockVirtualRendererInstance}
+            eventManagerInstance={mockEventManagerInstance}
+            undoRedoManagerInstance={mockUndoRedoManagerInstance}
+            stateInstance={mockStateInstance}
           />
         ),
       });
@@ -769,6 +905,11 @@ describe("grid-item-wrapper - Active Canvas", () => {
             item={mockItem}
             componentRegistry={mockComponentRegistry}
             viewerMode={false}
+          
+            virtualRendererInstance={mockVirtualRendererInstance}
+            eventManagerInstance={mockEventManagerInstance}
+            undoRedoManagerInstance={mockUndoRedoManagerInstance}
+            stateInstance={mockStateInstance}
           />
         ),
       });
@@ -791,6 +932,11 @@ describe("grid-item-wrapper - Active Canvas", () => {
             item={mockItem}
             componentRegistry={mockComponentRegistry}
             viewerMode
+          
+            virtualRendererInstance={mockVirtualRendererInstance}
+            eventManagerInstance={mockEventManagerInstance}
+            undoRedoManagerInstance={mockUndoRedoManagerInstance}
+            stateInstance={mockStateInstance}
           />
         ),
       });
@@ -813,6 +959,11 @@ describe("grid-item-wrapper - Active Canvas", () => {
             item={mockItem}
             componentRegistry={mockComponentRegistry}
             viewerMode
+          
+            virtualRendererInstance={mockVirtualRendererInstance}
+            eventManagerInstance={mockEventManagerInstance}
+            undoRedoManagerInstance={mockUndoRedoManagerInstance}
+            stateInstance={mockStateInstance}
           />
         ),
       });
@@ -856,6 +1007,11 @@ describe("grid-item-wrapper - Active Canvas", () => {
             item={mockItem}
             componentRegistry={customWrapperRegistry}
             viewerMode={false}
+          
+            virtualRendererInstance={mockVirtualRendererInstance}
+            eventManagerInstance={mockEventManagerInstance}
+            undoRedoManagerInstance={mockUndoRedoManagerInstance}
+            stateInstance={mockStateInstance}
           />
         ),
       });

@@ -634,6 +634,8 @@ describe("grid-builder", () => {
     it("should expose addCanvas method", async () => {
       const component = new GridBuilder();
       component.components = mockComponentDefinitions;
+
+      component.componentWillLoad();
       component.componentDidLoad();
 
       expect(typeof component.addCanvas).toBe("function");
@@ -645,6 +647,8 @@ describe("grid-builder", () => {
     it("should expose removeCanvas method", async () => {
       const component = new GridBuilder();
       component.components = mockComponentDefinitions;
+
+      component.componentWillLoad();
       component.componentDidLoad();
 
       expect(typeof component.removeCanvas).toBe("function");
