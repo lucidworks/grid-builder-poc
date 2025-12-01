@@ -59,7 +59,7 @@
  * @module grid-calculations
  */
 
-import { domCache } from "./dom-cache";
+import { DOMCache } from "./dom-cache";
 import { GridConfig } from "../types/grid-config";
 
 /** Fixed vertical grid size in pixels - provides consistent vertical spacing */
@@ -261,6 +261,7 @@ export function getGridSizeHorizontal(
   canvasId: string,
   config?: GridConfig,
   forceRecalc: boolean = false,
+  domCacheInstance?: DOMCache,
 ): number {
   // Instance-aware cache key: ${instanceId}-${canvasId}-h
   // Fallback to ${canvasId}-h for backward compatibility if no instanceId
@@ -272,8 +273,9 @@ export function getGridSizeHorizontal(
     return gridSizeCache.get(cacheKey)!;
   }
 
-  // Use DOM cache instead of getElementById
-  const container = domCache.getCanvas(canvasId);
+  // Use DOM cache instance if provided, otherwise create temporary instance
+  const cache = domCacheInstance || new DOMCache();
+  const container = cache.getCanvas(canvasId);
   if (!container) {
     console.warn(`Canvas container not found: ${canvasId}`);
     return 0;

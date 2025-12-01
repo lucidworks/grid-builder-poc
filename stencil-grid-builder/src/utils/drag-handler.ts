@@ -139,7 +139,7 @@ import {
   setActiveCanvas,
 } from "../services/state-manager";
 import { GridConfig } from "../types/grid-config";
-import { domCache } from "./dom-cache";
+import { DOMCache } from "./dom-cache";
 import {
   getGridSizeHorizontal,
   getGridSizeVertical,
@@ -259,6 +259,9 @@ export class DragHandler {
   /** Grid configuration options */
   private config?: GridConfig;
 
+  /** DOM cache instance for fast canvas lookups */
+  private domCacheInstance: DOMCache;
+
   /** interact.js draggable instance for cleanup */
   private interactInstance: Interactable | null = null;
 
@@ -295,6 +298,7 @@ export class DragHandler {
    * @param item - Grid item data for position/layout management
    * @param state - Grid state instance (for accessing canvases, viewport)
    * @param onUpdate - Callback invoked with updated item after drag ends
+   * @param domCacheInstance - DOM cache instance for fast canvas lookups
    * @param config - Grid configuration options (for auto-scroll, etc.)
    * @param dragHandleElement - Optional element to use as drag handle
    * @param onDragMove - Optional callback when drag movement occurs
@@ -310,6 +314,7 @@ export class DragHandler {
    *     this.item,
    *     this.state,
    *     (item) => this.handleItemUpdate(item),
+   *     this.domCacheInstance,
    *     this.config,
    *     header,
    *     () => this.wasDragged = true
@@ -322,6 +327,7 @@ export class DragHandler {
     item: GridItem,
     state: GridState,
     onUpdate: (item: GridItem) => void,
+    domCacheInstance: DOMCache,
     config?: GridConfig,
     dragHandleElement?: HTMLElement,
     onDragMove?: () => void,
@@ -330,6 +336,7 @@ export class DragHandler {
     this.item = item;
     this.state = state;
     this.onUpdate = onUpdate;
+    this.domCacheInstance = domCacheInstance;
     this.config = config;
     this.dragHandleElement = dragHandleElement;
     this.onDragMove = onDragMove;
@@ -844,14 +851,14 @@ export class DragHandler {
     }
 
     // Calculate new position relative to current canvas (same-canvas drag only)
-    const targetContainer = domCache.getCanvas(targetCanvasId);
+    const targetContainer = this.domCacheInstance.getCanvas(targetCanvasId);
     if (!targetContainer) {
       // Invalid drop - no canvas found, snap back to original position
       this.snapBackToOriginalPosition(event);
       return;
     }
 
-    const gridSizeX = getGridSizeHorizontal(targetCanvasId, this.config);
+    const gridSizeX = getGridSizeHorizontal(targetCanvasId, this.config, false, this.domCacheInstance);
     const gridSizeY = getGridSizeVertical(this.config);
 
     // Final position is base position + drag delta
@@ -886,7 +893,7 @@ export class DragHandler {
     );
 
     // Convert back to pixels
-    const gridSizeXForConversion = getGridSizeHorizontal(targetCanvasId, this.config);
+    const gridSizeXForConversion = getGridSizeHorizontal(targetCanvasId, this.config, false, this.domCacheInstance);
     const gridSizeYForConversion = getGridSizeVertical(this.config);
     newX = constrained.x * gridSizeXForConversion;
     newY = constrained.y * gridSizeYForConversion;

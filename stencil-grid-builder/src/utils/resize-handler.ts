@@ -202,7 +202,7 @@ import {
 } from "../services/state-manager";
 import { ComponentDefinition } from "../types/component-definition";
 import { GridConfig } from "../types/grid-config";
-import { domCache } from "./dom-cache";
+import { DOMCache } from "./dom-cache";
 import {
   getGridSizeHorizontal,
   getGridSizeVertical,
@@ -315,6 +315,9 @@ export class ResizeHandler {
   /** Grid configuration (for consistent grid size calculations) */
   private config?: GridConfig;
 
+  /** DOM cache instance for fast canvas lookups */
+  private domCacheInstance: DOMCache;
+
   /** Callback to update parent state after resize ends */
   private onUpdate: (item: GridItem) => void;
 
@@ -393,6 +396,7 @@ export class ResizeHandler {
     item: GridItem,
     state: GridState,
     onUpdate: (item: GridItem) => void,
+    domCacheInstance: DOMCache,
     componentDefinition?: ComponentDefinition,
     config?: GridConfig,
   ) {
@@ -400,6 +404,7 @@ export class ResizeHandler {
     this.item = item;
     this.state = state;
     this.onUpdate = onUpdate;
+    this.domCacheInstance = domCacheInstance;
     this.componentDefinition = componentDefinition;
     this.config = config;
 
@@ -775,7 +780,7 @@ export class ResizeHandler {
     let newY = this.startRect.y + deltaY;
 
     // Get canvas dimensions for boundary constraints
-    const container = domCache.getCanvas(this.item.canvasId);
+    const container = this.domCacheInstance.getCanvas(this.item.canvasId);
     const containerWidth = container ? container.clientWidth : Infinity;
     const containerHeight = container ? container.clientHeight : Infinity;
 
@@ -961,13 +966,13 @@ export class ResizeHandler {
     }
 
     // Get the container to calculate relative position
-    const container = domCache.getCanvas(this.item.canvasId);
+    const container = this.domCacheInstance.getCanvas(this.item.canvasId);
     if (!container) {
       return;
     }
 
     const containerRect = container.getBoundingClientRect();
-    const gridSizeX = getGridSizeHorizontal(this.item.canvasId, this.config);
+    const gridSizeX = getGridSizeHorizontal(this.item.canvasId, this.config, false, this.domCacheInstance);
     const gridSizeY = getGridSizeVertical(this.config);
 
     // Get final deltas from data attributes BEFORE cleaning them up (like drag-handler)
