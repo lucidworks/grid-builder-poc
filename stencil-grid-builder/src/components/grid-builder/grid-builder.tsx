@@ -87,8 +87,6 @@ import {
   BatchAddCommand,
   BatchDeleteCommand,
   BatchUpdateConfigCommand,
-  AddCanvasCommand,
-  RemoveCanvasCommand,
   MoveItemCommand,
 } from "../../services/undo-redo-commands";
 import {
@@ -1723,17 +1721,36 @@ export class GridBuilder {
       // ======================
 
       addCanvas: (canvasId: string) => {
-        // Create and execute command
-        const command = new AddCanvasCommand(canvasId);
-        this.undoRedoManager?.push(command);
-        command.redo();
+        // Add canvas to instance state (minimal - just item placement management)
+        this.stateManager!.state.canvases[canvasId] = {
+          zIndexCounter: 1,
+          items: [],
+        };
+
+        // Trigger state change for reactivity
+        this.stateManager!.state.canvases = { ...this.stateManager!.state.canvases };
+
+        // Emit event so host app can sync its metadata
+        this.eventManagerInstance?.emit("canvasAdded", { canvasId });
+
+        // TODO: Add undo/redo support for canvas add/remove operations
+        // Currently disabled because AddCanvasCommand references singleton state
+        // Will need to refactor commands to accept state instance as parameter
       },
 
       removeCanvas: (canvasId: string) => {
-        // Create and execute command
-        const command = new RemoveCanvasCommand(canvasId);
-        this.undoRedoManager?.push(command);
-        command.redo();
+        // Remove canvas from instance state
+        delete this.stateManager!.state.canvases[canvasId];
+
+        // Trigger state change for reactivity
+        this.stateManager!.state.canvases = { ...this.stateManager!.state.canvases };
+
+        // Emit event so host app can sync its metadata
+        this.eventManagerInstance?.emit("canvasRemoved", { canvasId });
+
+        // TODO: Add undo/redo support for canvas add/remove operations
+        // Currently disabled because RemoveCanvasCommand references singleton state
+        // Will need to refactor commands to accept state instance as parameter
       },
 
       setActiveCanvas: (canvasId: string) => {
