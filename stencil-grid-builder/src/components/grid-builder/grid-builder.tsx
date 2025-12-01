@@ -1735,6 +1735,21 @@ export class GridBuilder {
 
         // Execute the command
         command.redo();
+
+        // Set newly added canvas as active
+        this.stateManager!.state.activeCanvasId = canvasId;
+        this.eventManagerInstance?.emit("canvasActivated", { canvasId });
+
+        // Scroll to the new canvas after DOM has updated
+        requestAnimationFrame(() => {
+          const canvasElement = this.domCacheInstance?.getCanvas(canvasId);
+          if (canvasElement) {
+            canvasElement.scrollIntoView({
+              behavior: "smooth",
+              block: "center",
+            });
+          }
+        });
       },
 
       removeCanvas: (canvasId: string) => {
@@ -1759,6 +1774,14 @@ export class GridBuilder {
 
       getActiveCanvas: () => {
         return this.stateManager!.state.activeCanvasId;
+      },
+
+      // ======================
+      // Custom Command Support
+      // ======================
+
+      pushCommand: (command: any) => {
+        this.undoRedoManager?.push(command);
       },
     };
   }
@@ -2504,6 +2527,7 @@ export class GridBuilder {
                       undoRedoManagerInstance={this.undoRedoManager}
                       stateInstance={this.stateManager!.state}
                       onStateChange={(key: string, callback: Function) => this.stateManager!.onChange(key, callback)}
+                      domCacheInstance={this.domCacheInstance}
                       theme={this.theme}
                     />
                   </div>

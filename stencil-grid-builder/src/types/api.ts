@@ -774,4 +774,65 @@ export interface GridBuilderAPI {
    * ```
    */
   getActiveCanvas(): string | null;
+
+  // ======================
+  // Custom Command Support
+  // ======================
+
+  /**
+   * Push custom command to undo/redo stack
+   *
+   * **Use cases**:
+   * - Host app metadata changes (section titles, colors)
+   * - Custom editor operations
+   * - Plugin-specific undo/redo
+   *
+   * **Requirements**:
+   * - Command must implement Command interface (undo, redo methods)
+   * - Command should be idempotent (safe to call undo/redo multiple times)
+   * - Command should not throw errors
+   *
+   * **Integration**:
+   * - Command added to library's undo/redo stack
+   * - Works with library's undo/redo buttons
+   * - Unified undo/redo history for user
+   *
+   * **Example Command**:
+   * ```typescript
+   * class MyCommand implements Command {
+   *   constructor(
+   *     private beforeState: any,
+   *     private afterState: any,
+   *     private updateCallback: (state: any) => void
+   *   ) {}
+   *
+   *   undo() {
+   *     this.updateCallback(this.beforeState);
+   *   }
+   *
+   *   redo() {
+   *     this.updateCallback(this.afterState);
+   *   }
+   * }
+   * ```
+   * @param command - Command instance to push
+   * @example
+   * ```typescript
+   * // Push custom command for section color change
+   * const beforeColor = canvasMetadata[canvasId].backgroundColor;
+   * const afterColor = '#ffffff';
+   *
+   * api.pushCommand(new SectionMetadataCommand(
+   *   canvasId,
+   *   { backgroundColor: beforeColor },
+   *   { backgroundColor: afterColor },
+   *   (metadata) => {
+   *     canvasMetadata[canvasId] = { ...canvasMetadata[canvasId], ...metadata };
+   *   }
+   * ));
+   *
+   * // Now user can undo/redo color changes with Ctrl+Z/Ctrl+Y
+   * ```
+   */
+  pushCommand(command: any): void;
 }

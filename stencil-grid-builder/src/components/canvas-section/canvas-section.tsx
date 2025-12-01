@@ -85,6 +85,7 @@ import { DeletionHook } from "../../types/deletion-hook";
 import { VirtualRendererService } from "../../services/virtual-renderer";
 import { EventManager } from "../../services/event-manager";
 import { UndoRedoManager } from "../../services/undo-redo";
+import { DOMCache } from "../../utils/dom-cache";
 
 /**
  * CanvasSection Component
@@ -258,6 +259,17 @@ export class CanvasSection {
    * ```
    */
   @Prop() onStateChange?: (key: string, callback: Function) => void;
+
+  /**
+   * DOM cache service instance (Phase 4)
+   *
+   * **Required for editing mode** (grid-builder provides this)
+   *
+   * **Source**: grid-builder → canvas-section → grid-item-wrapper
+   * **Purpose**: Support multiple grid-builder instances with isolated DOM caches
+   * **Used by**: DragHandler, ResizeHandler for fast canvas element lookups
+   */
+  @Prop() domCacheInstance?: DOMCache;
 
   /**
    * Theme configuration (from parent grid-builder)
@@ -874,6 +886,7 @@ export class CanvasSection {
               eventManagerInstance={this.eventManagerInstance}
               undoRedoManagerInstance={this.undoRedoManagerInstance}
               stateInstance={this.stateInstance}
+              domCacheInstance={this.domCacheInstance}
               theme={this.theme}
             />
           ))}

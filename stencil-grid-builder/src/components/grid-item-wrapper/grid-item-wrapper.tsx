@@ -39,6 +39,7 @@ import {
 import { EventManager } from "../../services/event-manager";
 import { DragHandler } from "../../utils/drag-handler";
 import { ResizeHandler } from "../../utils/resize-handler";
+import { DOMCache } from "../../utils/dom-cache";
 import { gridToPixelsX, gridToPixelsY } from "../../utils/grid-calculations";
 import { GridConfig } from "../../types/grid-config";
 import { ComponentDefinition } from "../../types/component-definition";
@@ -211,6 +212,18 @@ export class GridItemWrapper {
   @Prop() undoRedoManagerInstance?: UndoRedoManager;
 
   /**
+   * DOM cache service instance (Phase 4)
+   *
+   * **Required for editing mode** (grid-builder provides this)
+   * **Optional for viewer mode** (grid-viewer doesn't need it)
+   *
+   * **Source**: grid-builder → canvas-section → grid-item-wrapper
+   * **Purpose**: Support multiple grid-builder instances with isolated DOM caches
+   * **Used by**: DragHandler, ResizeHandler for fast canvas element lookups
+   */
+  @Prop() domCacheInstance?: DOMCache;
+
+  /**
    * All items in the canvas (for viewer mode auto-layout)
    *
    * **Purpose**: Calculate mobile auto-layout positions
@@ -349,6 +362,7 @@ export class GridItemWrapper {
         this.item,
         this.stateInstance,
         this.handleItemUpdate,
+        this.domCacheInstance,
         this.config,
         headerElement,
         () => {
@@ -360,6 +374,7 @@ export class GridItemWrapper {
         this.item,
         this.stateInstance,
         this.handleItemUpdate,
+        this.domCacheInstance,
         componentDefinition,
         this.config,
       );
@@ -527,6 +542,7 @@ export class GridItemWrapper {
         this.item,
         this.stateInstance,
         this.handleItemUpdate,
+        this.domCacheInstance,
         newConfig,
         headerElement,
         () => {
@@ -538,6 +554,7 @@ export class GridItemWrapper {
         this.item,
         this.stateInstance,
         this.handleItemUpdate,
+        this.domCacheInstance,
         componentDefinition,
         newConfig,
       );
