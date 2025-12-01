@@ -87,6 +87,8 @@ import {
   BatchAddCommand,
   BatchDeleteCommand,
   BatchUpdateConfigCommand,
+  AddCanvasCommand,
+  RemoveCanvasCommand,
   MoveItemCommand,
 } from "../../services/undo-redo-commands";
 import {
@@ -1721,36 +1723,33 @@ export class GridBuilder {
       // ======================
 
       addCanvas: (canvasId: string) => {
-        // Add canvas to instance state (minimal - just item placement management)
-        this.stateManager!.state.canvases[canvasId] = {
-          zIndexCounter: 1,
-          items: [],
-        };
+        // Create command with instance state and event manager
+        const command = new AddCanvasCommand(
+          canvasId,
+          this.stateManager!.state,
+          this.eventManagerInstance
+        );
 
-        // Trigger state change for reactivity
-        this.stateManager!.state.canvases = { ...this.stateManager!.state.canvases };
+        // Add to undo/redo stack
+        this.undoRedoManager?.push(command);
 
-        // Emit event so host app can sync its metadata
-        this.eventManagerInstance?.emit("canvasAdded", { canvasId });
-
-        // TODO: Add undo/redo support for canvas add/remove operations
-        // Currently disabled because AddCanvasCommand references singleton state
-        // Will need to refactor commands to accept state instance as parameter
+        // Execute the command
+        command.redo();
       },
 
       removeCanvas: (canvasId: string) => {
-        // Remove canvas from instance state
-        delete this.stateManager!.state.canvases[canvasId];
+        // Create command with instance state and event manager
+        const command = new RemoveCanvasCommand(
+          canvasId,
+          this.stateManager!.state,
+          this.eventManagerInstance
+        );
 
-        // Trigger state change for reactivity
-        this.stateManager!.state.canvases = { ...this.stateManager!.state.canvases };
+        // Add to undo/redo stack
+        this.undoRedoManager?.push(command);
 
-        // Emit event so host app can sync its metadata
-        this.eventManagerInstance?.emit("canvasRemoved", { canvasId });
-
-        // TODO: Add undo/redo support for canvas add/remove operations
-        // Currently disabled because RemoveCanvasCommand references singleton state
-        // Will need to refactor commands to accept state instance as parameter
+        // Execute the command
+        command.redo();
       },
 
       setActiveCanvas: (canvasId: string) => {

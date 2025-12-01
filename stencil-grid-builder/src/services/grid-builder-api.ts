@@ -66,6 +66,7 @@ import {
   setItemZIndex as setItemZIndexInternal,
   updateItemsBatch,
 } from "./state-manager";
+import { eventManager } from "./event-manager";
 import {
   AddCanvasCommand,
   AddItemCommand,
@@ -276,7 +277,7 @@ export class GridBuilderAPI {
    * ```
    */
   addCanvas(canvasId: string): void {
-    const cmd = new AddCanvasCommand(canvasId);
+    const cmd = new AddCanvasCommand(canvasId, gridState, eventManager);
     pushCommand(cmd);
     cmd.redo(); // Execute the command
 
@@ -308,7 +309,7 @@ export class GridBuilderAPI {
    * ```
    */
   removeCanvas(canvasId: string): void {
-    const cmd = new RemoveCanvasCommand(canvasId);
+    const cmd = new RemoveCanvasCommand(canvasId, gridState, eventManager);
     pushCommand(cmd);
     cmd.redo(); // Execute the command
 

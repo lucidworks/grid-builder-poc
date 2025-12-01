@@ -1351,37 +1351,41 @@ export class BatchUpdateConfigCommand implements Command {
 export class AddCanvasCommand implements Command {
   description = "Add Canvas";
   private canvasId: string;
+  private stateInstance: any; // GridState instance
+  private eventManagerInstance: any; // EventManager instance
 
-  constructor(canvasId: string) {
+  constructor(canvasId: string, stateInstance: any, eventManagerInstance: any) {
     this.canvasId = canvasId;
+    this.stateInstance = stateInstance;
+    this.eventManagerInstance = eventManagerInstance;
   }
 
   undo(): void {
     debug.log("🔙 AddCanvasCommand.undo() - removing canvas:", this.canvasId);
 
-    // Remove canvas from library state
-    delete gridState.canvases[this.canvasId];
+    // Remove canvas from instance state
+    delete this.stateInstance.canvases[this.canvasId];
 
     // Trigger state change for reactivity
-    gridState.canvases = { ...gridState.canvases };
+    this.stateInstance.canvases = { ...this.stateInstance.canvases };
 
     // Emit event so host app can sync its metadata
     debug.log("  📢 Emitting canvasRemoved event for:", this.canvasId);
-    eventManager.emit("canvasRemoved", { canvasId: this.canvasId });
+    this.eventManagerInstance.emit("canvasRemoved", { canvasId: this.canvasId });
   }
 
   redo(): void {
-    // Add canvas to library state (minimal - just item placement management)
-    gridState.canvases[this.canvasId] = {
+    // Add canvas to instance state (minimal - just item placement management)
+    this.stateInstance.canvases[this.canvasId] = {
       zIndexCounter: 1,
       items: [],
     };
 
     // Trigger state change for reactivity
-    gridState.canvases = { ...gridState.canvases };
+    this.stateInstance.canvases = { ...this.stateInstance.canvases };
 
     // Emit event so host app can sync its metadata
-    eventManager.emit("canvasAdded", { canvasId: this.canvasId });
+    this.eventManagerInstance.emit("canvasAdded", { canvasId: this.canvasId });
   }
 }
 
@@ -1432,16 +1436,20 @@ export class AddCanvasCommand implements Command {
 export class RemoveCanvasCommand implements Command {
   description = "Remove Canvas";
   private canvasId: string;
+  private stateInstance: any; // GridState instance
+  private eventManagerInstance: any; // EventManager instance
   private canvasSnapshot: {
     zIndexCounter: number;
     items: GridItem[];
   } | null = null;
 
-  constructor(canvasId: string) {
+  constructor(canvasId: string, stateInstance: any, eventManagerInstance: any) {
     this.canvasId = canvasId;
+    this.stateInstance = stateInstance;
+    this.eventManagerInstance = eventManagerInstance;
 
     // Snapshot canvas state (deep clone to prevent mutations)
-    const canvas = gridState.canvases[canvasId];
+    const canvas = this.stateInstance.canvases[canvasId];
     if (canvas) {
       this.canvasSnapshot = JSON.parse(JSON.stringify(canvas));
     }
@@ -1450,27 +1458,27 @@ export class RemoveCanvasCommand implements Command {
   undo(): void {
     // Restore canvas from snapshot (just layout state, no metadata)
     if (this.canvasSnapshot) {
-      gridState.canvases[this.canvasId] = JSON.parse(
+      this.stateInstance.canvases[this.canvasId] = JSON.parse(
         JSON.stringify(this.canvasSnapshot),
       );
 
       // Trigger state change for reactivity
-      gridState.canvases = { ...gridState.canvases };
+      this.stateInstance.canvases = { ...this.stateInstance.canvases };
 
       // Emit event so host app can sync its metadata
-      eventManager.emit("canvasAdded", { canvasId: this.canvasId });
+      this.eventManagerInstance.emit("canvasAdded", { canvasId: this.canvasId });
     }
   }
 
   redo(): void {
-    // Remove canvas from library state
-    delete gridState.canvases[this.canvasId];
+    // Remove canvas from instance state
+    delete this.stateInstance.canvases[this.canvasId];
 
     // Trigger state change for reactivity
-    gridState.canvases = { ...gridState.canvases };
+    this.stateInstance.canvases = { ...this.stateInstance.canvases };
 
     // Emit event so host app can sync its metadata
-    eventManager.emit("canvasRemoved", { canvasId: this.canvasId });
+    this.eventManagerInstance.emit("canvasRemoved", { canvasId: this.canvasId });
   }
 }
 
