@@ -131,6 +131,15 @@ export class CanvasSectionViewer {
   @Prop() virtualRendererInstance?: VirtualRendererService;
 
   /**
+   * State instance (viewer state with editing fields set to null)
+   *
+   * **Optional**: Provided by grid-viewer to eliminate defensive guards in grid-item-wrapper
+   * **Purpose**: Provide minimal state object matching StateManager structure
+   * **Value**: ViewerState with selectedItemId/selectedCanvasId/activeCanvasId always null
+   */
+  @Prop() stateInstance?: any;
+
+  /**
    * Render version counter (forces re-renders)
    *
    * **Purpose**: Trigger re-renders when grid calculations change
@@ -343,6 +352,7 @@ export class CanvasSectionViewer {
               currentViewport={this.currentViewport}
               canvasItems={this.items}
               virtualRendererInstance={this.virtualRendererInstance}
+              stateInstance={this.stateInstance}
             />
           ))}
         </div>
