@@ -762,10 +762,6 @@ export class GridBuilder {
     // This prevents cache collisions when multiple instances share canvasIds
     this.instanceId = this.apiRef?.key || 'gridBuilderAPI';
 
-    console.log('[BUILD-2025-12-01-01:40] GridBuilder instanceId set', {
-      instanceId: this.instanceId,
-      hasCustomConfig: !!this.config,
-    });
     debug.log("GridBuilder: Instance ID set", {
       instanceId: this.instanceId,
       hasCustomConfig: !!this.config,
@@ -775,9 +771,6 @@ export class GridBuilder {
     // Critical for Storybook tab switching: prevents cache from previous tab (Docs/Canvas)
     // ResizeObserver only fires on changes, not initial load, so we must clear here
     clearGridSizeCache(this.instanceId);
-    console.log('[BUILD-2025-12-01-01:40] Cleared instance cache on load', {
-      instanceId: this.instanceId,
-    });
     debug.log("GridBuilder: Cleared instance cache on load", {
       instanceId: this.instanceId,
     });

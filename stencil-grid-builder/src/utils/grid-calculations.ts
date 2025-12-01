@@ -214,13 +214,6 @@ export function setGridSizeCache(
 
   // Set in cache
   gridSizeCache.set(cacheKey, size);
-
-  console.log('[BUILD-2025-12-01-02:15] Pre-populated cache from ResizeObserver', {
-    cacheKey,
-    containerWidth,
-    rawSize,
-    finalSize: size
-  });
 }
 
 /**
@@ -276,9 +269,7 @@ export function getGridSizeHorizontal(
     : `${canvasId}-h`;
 
   if (!forceRecalc && gridSizeCache.has(cacheKey)) {
-    const cachedValue = gridSizeCache.get(cacheKey)!;
-    console.log('[BUILD-2025-12-01-01:40] Cache HIT', { cacheKey, cachedValue });
-    return cachedValue;
+    return gridSizeCache.get(cacheKey)!;
   }
 
   // Use DOM cache instead of getElementById
@@ -302,21 +293,11 @@ export function getGridSizeHorizontal(
   const maxSize = config?.maxGridSize ?? DEFAULT_MAX_GRID_SIZE;
   const size = Math.max(minSize, Math.min(maxSize, rawSize));
 
-  console.log('[BUILD-2025-12-01-01:40] Cache MISS - calculated', {
-    cacheKey,
-    containerWidth: container.clientWidth,
-    rawSize,
-    finalSize: size
-  });
-
   // Don't cache if container not laid out yet (prevents caching 0-width or tiny containers)
   // Critical for initial load: canvas element exists in DOM but CSS layout hasn't happened yet
   // ResizeObserver will fire when layout completes, then we'll cache the correct value
   if (container.clientWidth > 100) {
     gridSizeCache.set(cacheKey, size);
-    console.log('  → Cached (containerWidth > 100px)');
-  } else {
-    console.log('  → NOT cached (containerWidth too small, waiting for layout)');
   }
 
   return size;

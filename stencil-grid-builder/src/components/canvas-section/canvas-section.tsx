@@ -619,25 +619,15 @@ export class CanvasSection {
           // Get width from ResizeObserver entry (more reliable than clientWidth during re-render)
           const width = entry.contentRect.width;
 
-          console.log('[BUILD-2025-12-01-02:15] ResizeObserver fired (RAF)', {
-            canvasId: this.canvasId,
-            instanceId: this.config?.instanceId,
-            observedWidth: width,
-            clientWidth: this.gridContainerRef?.clientWidth
-          });
-
           // Only proceed if container is laid out (width > 100px)
           if (width > 100) {
             // Pre-populate cache with correct value BEFORE triggering re-render
             // This ensures grid calculations never read clientWidth=0 during re-render
             setGridSizeCache(this.canvasId, width, this.config);
-            console.log('  → Pre-populated cache with correct value');
 
             // Force re-render to update item positions
             // Grid calculations will now use the cached correct value
             this.renderVersion++;
-          } else {
-            console.log('  → Skipped (width too small, waiting for layout)');
           }
         }
       });
