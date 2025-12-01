@@ -2501,6 +2501,7 @@ export class GridBuilder {
                       onBeforeDelete={this.onBeforeDelete}
                       virtualRendererInstance={this.virtualRendererInstance}
                       eventManagerInstance={this.eventManagerInstance}
+                      undoRedoManagerInstance={this.undoRedoManager}
                       stateInstance={this.stateManager!.state}
                       onStateChange={(key: string, callback: Function) => this.stateManager!.onChange(key, callback)}
                       theme={this.theme}
