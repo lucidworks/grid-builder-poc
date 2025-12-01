@@ -8,10 +8,10 @@
 .layer-panel {
   display: flex;
   flex-direction: column;
-  height: 100%;
+  width: 100%;
   background: #fafafa;
-  border-left: 1px solid #e0e0e0;
   overflow: hidden;
+  box-sizing: border-box;
 
   &__header {
     display: flex;
@@ -51,6 +51,7 @@
     font-size: 14px;
     outline: none;
     transition: border-color 0.2s ease;
+    box-sizing: border-box;
 
     &:focus {
       border-color: #4a90e2;
@@ -63,11 +64,12 @@
   }
 
   &__list {
-    flex: 1;
-    overflow-y: auto;
     overflow-x: hidden;
     padding: 8px;
     background: #fafafa;
+    width: 100%;
+    box-sizing: border-box;
+    min-height: 400px; /* Show at least 3-4 rows of items */
 
     /* Scrollbar styling */
     &::-webkit-scrollbar {
@@ -91,6 +93,8 @@
   &__list-inner {
     position: relative;
     min-height: 100%;
+    width: 100%;
+    box-sizing: border-box;
   }
 
   &__visible-items {
