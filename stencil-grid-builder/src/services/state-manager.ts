@@ -757,6 +757,33 @@ export interface ViewerState {
    * **Manual override**: Can be set via props or API
    */
   currentViewport: "desktop" | "mobile";
+
+  /**
+   * Selected item ID (editing-only, always null in viewer mode)
+   *
+   * **Purpose**: Allows grid-item-wrapper to access this field without defensive guards
+   * **Value**: Always null in viewer mode (no selection support)
+   * **Builder mode**: This field is actively used for selection tracking
+   */
+  selectedItemId: string | null;
+
+  /**
+   * Selected canvas ID (editing-only, always null in viewer mode)
+   *
+   * **Purpose**: Allows grid-item-wrapper to access this field without defensive guards
+   * **Value**: Always null in viewer mode (no selection support)
+   * **Builder mode**: This field is actively used for selection tracking
+   */
+  selectedCanvasId: string | null;
+
+  /**
+   * Active canvas ID (editing-only, always null in viewer mode)
+   *
+   * **Purpose**: Allows grid-item-wrapper to access this field without defensive guards
+   * **Value**: Always null in viewer mode (no active canvas concept)
+   * **Builder mode**: This field tracks which canvas is currently focused for editing
+   */
+  activeCanvasId: string | null;
 }
 
 /**
