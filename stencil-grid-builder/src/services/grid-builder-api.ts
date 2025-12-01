@@ -66,7 +66,7 @@ import {
   setItemZIndex as setItemZIndexInternal,
   updateItemsBatch,
 } from "./state-manager";
-import { eventManager } from "./event-manager";
+import { EventManager } from "./event-manager";
 import {
   AddCanvasCommand,
   AddItemCommand,
@@ -190,6 +190,15 @@ class EventEmitter {
  */
 export class GridBuilderAPI {
   private eventEmitter: EventEmitter = new EventEmitter();
+  private eventManager: EventManager;
+
+  /**
+   * Create a new GridBuilderAPI instance
+   * @param eventManager - EventManager instance for emitting internal service events
+   */
+  constructor(eventManager: EventManager) {
+    this.eventManager = eventManager;
+  }
 
   // ============================================================================
   // State Access Methods
@@ -277,7 +286,7 @@ export class GridBuilderAPI {
    * ```
    */
   addCanvas(canvasId: string): void {
-    const cmd = new AddCanvasCommand(canvasId, gridState, eventManager);
+    const cmd = new AddCanvasCommand(canvasId, gridState, this.eventManager);
     pushCommand(cmd);
     cmd.redo(); // Execute the command
 
@@ -309,7 +318,7 @@ export class GridBuilderAPI {
    * ```
    */
   removeCanvas(canvasId: string): void {
-    const cmd = new RemoveCanvasCommand(canvasId, gridState, eventManager);
+    const cmd = new RemoveCanvasCommand(canvasId, gridState, this.eventManager);
     pushCommand(cmd);
     cmd.redo(); // Execute the command
 
@@ -926,14 +935,17 @@ export class GridBuilderAPI {
     }
 
     // Create undo/redo command
-    const command = new ChangeZIndexCommand([
-      {
-        itemId,
-        canvasId,
-        oldZIndex: result.oldZIndex,
-        newZIndex: result.newZIndex,
-      },
-    ]);
+    const command = new ChangeZIndexCommand(
+      [
+        {
+          itemId,
+          canvasId,
+          oldZIndex: result.oldZIndex,
+          newZIndex: result.newZIndex,
+        },
+      ],
+      this.eventManager,
+    );
     pushCommand(command);
 
     // Emit single item event
@@ -968,14 +980,17 @@ export class GridBuilderAPI {
     }
 
     // Create undo/redo command
-    const command = new ChangeZIndexCommand([
-      {
-        itemId,
-        canvasId,
-        oldZIndex: result.oldZIndex,
-        newZIndex: result.newZIndex,
-      },
-    ]);
+    const command = new ChangeZIndexCommand(
+      [
+        {
+          itemId,
+          canvasId,
+          oldZIndex: result.oldZIndex,
+          newZIndex: result.newZIndex,
+        },
+      ],
+      this.eventManager,
+    );
     pushCommand(command);
 
     // Emit single item event
@@ -1010,14 +1025,17 @@ export class GridBuilderAPI {
     }
 
     // Create undo/redo command
-    const command = new ChangeZIndexCommand([
-      {
-        itemId,
-        canvasId,
-        oldZIndex: result.oldZIndex,
-        newZIndex: result.newZIndex,
-      },
-    ]);
+    const command = new ChangeZIndexCommand(
+      [
+        {
+          itemId,
+          canvasId,
+          oldZIndex: result.oldZIndex,
+          newZIndex: result.newZIndex,
+        },
+      ],
+      this.eventManager,
+    );
     pushCommand(command);
 
     // Emit single item event
@@ -1080,20 +1098,23 @@ export class GridBuilderAPI {
     }
 
     // Create undo/redo command for BOTH items (batch operation)
-    const command = new ChangeZIndexCommand([
-      {
-        itemId: item.id,
-        canvasId,
-        oldZIndex: oldZIndex1,
-        newZIndex: result.newZIndex,
-      },
-      {
-        itemId: nextItem.id,
-        canvasId,
-        oldZIndex: oldZIndex2,
-        newZIndex: oldZIndex1, // Swapped to item's old z-index
-      },
-    ]);
+    const command = new ChangeZIndexCommand(
+      [
+        {
+          itemId: item.id,
+          canvasId,
+          oldZIndex: oldZIndex1,
+          newZIndex: result.newZIndex,
+        },
+        {
+          itemId: nextItem.id,
+          canvasId,
+          oldZIndex: oldZIndex2,
+          newZIndex: oldZIndex1, // Swapped to item's old z-index
+        },
+      ],
+      this.eventManager,
+    );
     pushCommand(command);
 
     // Emit batch event (2 items affected atomically)
@@ -1166,20 +1187,23 @@ export class GridBuilderAPI {
     }
 
     // Create undo/redo command for BOTH items (batch operation)
-    const command = new ChangeZIndexCommand([
-      {
-        itemId: item.id,
-        canvasId,
-        oldZIndex: oldZIndex1,
-        newZIndex: result.newZIndex,
-      },
-      {
-        itemId: prevItem.id,
-        canvasId,
-        oldZIndex: oldZIndex2,
-        newZIndex: oldZIndex1, // Swapped to item's old z-index
-      },
-    ]);
+    const command = new ChangeZIndexCommand(
+      [
+        {
+          itemId: item.id,
+          canvasId,
+          oldZIndex: oldZIndex1,
+          newZIndex: result.newZIndex,
+        },
+        {
+          itemId: prevItem.id,
+          canvasId,
+          oldZIndex: oldZIndex2,
+          newZIndex: oldZIndex1, // Swapped to item's old z-index
+        },
+      ],
+      this.eventManager,
+    );
     pushCommand(command);
 
     // Emit batch event (2 items affected atomically)
@@ -1304,7 +1328,10 @@ export class GridBuilderAPI {
     gridState.canvases = { ...gridState.canvases };
 
     // Create undo/redo command for all changes
-    const command = new ChangeZIndexCommand(changesWithOldValues);
+    const command = new ChangeZIndexCommand(
+      changesWithOldValues,
+      this.eventManager,
+    );
     pushCommand(command);
 
     // Emit batch event (all items affected atomically)

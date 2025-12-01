@@ -325,18 +325,10 @@ export class EventManager {
  *
  * Singleton instance export for backward compatibility.
  * Existing code can continue using this while we migrate to instance-based architecture.
- *
- * **Migration path**:
- * 1. Phase 1: EventManager class already exists (CURRENT PHASE - ✓ Complete)
- * 2. Phase 2: Update grid-builder to create instances
- * 3. Phase 3: Update child components to accept instances as props
- * 4. Phase 4: Remove singleton export and update all imports
- *
- * **Why singleton currently**:
- * - Ensures all components/plugins use same event bus
- * - Can be replaced with per-instance buses in Phase 2
- *
- * **Usage note**: EventManager is already a class, so no conversion needed.
- * Just need to update grid-builder to create instances instead of importing singleton.
  */
-export const eventManager = new EventManager();
+
+// Create singleton instance (for backward compatibility only)
+const defaultManager = new EventManager();
+
+// Export singleton instance
+export const eventManager = defaultManager;

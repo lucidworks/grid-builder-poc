@@ -164,7 +164,7 @@ import {
   updateItemsBatch,
 } from "./state-manager";
 import { Command } from "./undo-redo";
-import { eventManager } from "./event-manager";
+import { EventManager } from "./event-manager";
 import { createDebugLogger } from "../utils/debug";
 
 const debug = createDebugLogger("undo-redo-commands");
@@ -1549,6 +1549,7 @@ export class ChangeZIndexCommand implements Command {
     oldZIndex: number;
     newZIndex: number;
   }[];
+  private eventManager: EventManager;
 
   constructor(
     changes: {
@@ -1557,8 +1558,10 @@ export class ChangeZIndexCommand implements Command {
       oldZIndex: number;
       newZIndex: number;
     }[],
+    eventManager: EventManager,
   ) {
     this.changes = changes;
+    this.eventManager = eventManager;
 
     // Descriptive message for command history
     if (changes.length === 1) {
@@ -1588,7 +1591,7 @@ export class ChangeZIndexCommand implements Command {
     // Emit single event (batch or individual based on change count)
     if (this.changes.length === 1) {
       const change = this.changes[0];
-      eventManager.emit("zIndexChanged", {
+      this.eventManager.emit("zIndexChanged", {
         itemId: change.itemId,
         canvasId: change.canvasId,
         oldZIndex: change.newZIndex, // Swapped for undo
@@ -1596,7 +1599,7 @@ export class ChangeZIndexCommand implements Command {
       });
     } else {
       // Emit batch event for atomic update
-      eventManager.emit("zIndexBatchChanged", {
+      this.eventManager.emit("zIndexBatchChanged", {
         changes: this.changes.map((change) => ({
           itemId: change.itemId,
           canvasId: change.canvasId,
@@ -1626,7 +1629,7 @@ export class ChangeZIndexCommand implements Command {
     // Emit single event (batch or individual based on change count)
     if (this.changes.length === 1) {
       const change = this.changes[0];
-      eventManager.emit("zIndexChanged", {
+      this.eventManager.emit("zIndexChanged", {
         itemId: change.itemId,
         canvasId: change.canvasId,
         oldZIndex: change.oldZIndex,
@@ -1634,7 +1637,7 @@ export class ChangeZIndexCommand implements Command {
       });
     } else {
       // Emit batch event for atomic update
-      eventManager.emit("zIndexBatchChanged", {
+      this.eventManager.emit("zIndexBatchChanged", {
         changes: this.changes.map((change) => ({
           itemId: change.itemId,
           canvasId: change.canvasId,

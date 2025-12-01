@@ -913,47 +913,4 @@ export class VirtualRendererService {
  *
  * Singleton instance export for backward compatibility.
  * Existing code can continue using this while we migrate to instance-based architecture.
- *
- * **Migration path**:
- * 1. Phase 1: VirtualRendererService class already exists (CURRENT PHASE - ✓ Complete)
- * 2. Phase 2: Update grid-builder to create instances
- * 3. Phase 3: Update child components to accept instances as props
- * 4. Phase 4: Remove singleton export and update all imports
- *
- * **Why singleton currently**:
- * - Single IntersectionObserver for all items (efficient)
- * - Shared callback registry (O(1) lookups)
- * - Can be replaced with per-instance observers in Phase 2
- *
- * **Usage note**: VirtualRendererService is already a class, so no conversion needed.
- * Just need to update grid-builder to create instances instead of importing singleton.
- *
- * **Current usage pattern**:
- * ```typescript
- * // In grid-item-wrapper.tsx:
- * import { virtualRenderer } from '../../services/virtual-renderer';
- *
- * componentDidLoad() {
- *   virtualRenderer.observe(this.itemRef, this.item.id, (isVisible) => {
- *     this.isVisible = isVisible;
- *   });
- * }
- *
- * disconnectedCallback() {
- *   virtualRenderer.unobserve(this.itemRef, this.item.id);
- * }
- * ```
- *
- * **Future usage pattern** (Phase 2+):
- * ```typescript
- * // In grid-item-wrapper.tsx:
- * @Prop() virtualRenderer: VirtualRendererService;  // Passed from grid-builder
- *
- * componentDidLoad() {
- *   this.virtualRenderer.observe(this.itemRef, this.item.id, (isVisible) => {
- *     this.isVisible = isVisible;
- *   });
- * }
- * ```
  */
-export const virtualRenderer = new VirtualRendererService();

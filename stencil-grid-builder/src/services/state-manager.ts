@@ -1831,18 +1831,6 @@ export class StateManager {
  * ==============================
  *
  * Singleton instance and helper function exports for backward compatibility.
- * Existing code can continue using these while we migrate to instance-based architecture.
- *
- * **Migration path**:
- * 1. Phase 1: Create instance-based classes (CURRENT PHASE)
- * 2. Phase 2: Update grid-builder to create instances
- * 3. Phase 3: Update child components to accept instances as props
- * 4. Phase 4: Remove these exports and update all imports
- *
- * **Why needed**:
- * - 29 files import from state-manager.ts (25 unique files)
- * - Allows incremental migration without breaking the codebase
- * - Can test instance-based approach without immediate breaking changes
  */
 
 // Create singleton instance (for backward compatibility only)
