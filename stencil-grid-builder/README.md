@@ -521,9 +521,9 @@ class MyPlugin implements GridBuilderPlugin {
 - Passing custom `target` objects (like `this`) through Stencil/JSX props is not supported due to JSX serialization limitations
 - For namespace isolation, use unique key names like `window.myApp.gridAPI1` by setting `api-ref='{ "key": "myApp.gridAPI1" }'`
 
-**Complete Instance Isolation** (Phase 4 Architecture):
+**Complete Instance Isolation**:
 
-After Phase 4 migration (completed 2024), the library achieves **complete instance isolation** with no singleton fallbacks:
+The library achieves **complete instance isolation** with no singleton fallbacks:
 
 ```typescript
 // Child components use instance props (optional syntax for viewer mode compatibility)

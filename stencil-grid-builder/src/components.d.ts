@@ -13,8 +13,9 @@ import { UndoRedoManager } from "./services/undo-redo";
 import { EventManager } from "./services/event-manager";
 import { DOMCache } from "./utils/dom-cache";
 import { GridItem, GridState, ViewerState } from "./services/state-manager";
+import { GridBuilderAPI } from "./services/grid-builder-api";
 import { ConfirmationModalData } from "./demo/types/confirmation-modal-data";
-import { GridBuilderAPI } from "./types/api";
+import { GridBuilderAPI as GridBuilderAPI1 } from "./types/api";
 import { GridBuilderTheme } from "./types/theme";
 import { GridBuilderPlugin } from "./types/plugin";
 import { UIComponentOverrides } from "./types/ui-overrides";
@@ -28,8 +29,9 @@ export { UndoRedoManager } from "./services/undo-redo";
 export { EventManager } from "./services/event-manager";
 export { DOMCache } from "./utils/dom-cache";
 export { GridItem, GridState, ViewerState } from "./services/state-manager";
+export { GridBuilderAPI } from "./services/grid-builder-api";
 export { ConfirmationModalData } from "./demo/types/confirmation-modal-data";
-export { GridBuilderAPI } from "./types/api";
+export { GridBuilderAPI as GridBuilderAPI1 } from "./types/api";
 export { GridBuilderTheme } from "./types/theme";
 export { GridBuilderPlugin } from "./types/plugin";
 export { UIComponentOverrides } from "./types/ui-overrides";
@@ -162,11 +164,11 @@ export namespace Components {
          */
         "config"?: GridConfig;
         /**
-          * DOM cache service instance (Phase 4)  **Required for editing mode** (grid-builder provides this)  **Source**: grid-builder → canvas-section → grid-item-wrapper **Purpose**: Support multiple grid-builder instances with isolated DOM caches **Used by**: DragHandler, ResizeHandler for fast canvas element lookups
+          * DOM cache service instance (passed from grid-builder)  **Required for editing mode** (grid-builder provides this)  **Source**: grid-builder → canvas-section → grid-item-wrapper **Purpose**: Support multiple grid-builder instances with isolated DOM caches **Used by**: DragHandler, ResizeHandler for fast canvas element lookups
          */
         "domCacheInstance"?: DOMCache;
         /**
-          * Event manager service instance (Phase 4)  **Required for editing mode** (grid-builder provides this)  **Source**: grid-builder → canvas-section → grid-item-wrapper **Purpose**: Support multiple grid-builder instances with isolated services
+          * Event manager service instance (passed from grid-builder)  **Required for editing mode** (grid-builder provides this)  **Source**: grid-builder → canvas-section → grid-item-wrapper **Purpose**: Support multiple grid-builder instances with isolated services
          */
         "eventManagerInstance"?: EventManager;
         /**
@@ -180,11 +182,11 @@ export namespace Components {
          */
         "onBeforeDelete"?: DeletionHook;
         /**
-          * State change subscription function (Phase 4)  **Required for editing mode** (grid-builder provides this)  **Source**: grid-builder (this.stateManager.onChange) **Purpose**: Subscribe to instance-specific state changes for reactivity  **Usage**: ```typescript onStateChange={(key, callback) => this.stateManager.onChange(key, callback)} ```
+          * State change subscription function (passed from grid-builder)  **Required for editing mode** (grid-builder provides this)  **Source**: grid-builder (this.stateManager.onChange) **Purpose**: Subscribe to instance-specific state changes for reactivity  **Usage**: ```typescript onStateChange={(key, callback) => this.stateManager.onChange(key, callback)} ```
          */
         "onStateChange"?: (key: string, callback: Function) => void;
         /**
-          * State manager instance (Phase 4)  **Required for editing mode** (grid-builder provides this)  **Source**: grid-builder → canvas-section → grid-item-wrapper **Purpose**: Support multiple grid-builder instances with isolated state **Used by**: DragHandler, ResizeHandler for accessing canvases and viewport
+          * State manager instance (passed from grid-builder)  **Required for editing mode** (grid-builder provides this)  **Source**: grid-builder → canvas-section → grid-item-wrapper **Purpose**: Support multiple grid-builder instances with isolated state **Used by**: DragHandler, ResizeHandler for accessing canvases and viewport
          */
         "stateInstance"?: any;
         /**
@@ -192,11 +194,11 @@ export namespace Components {
          */
         "theme"?: any;
         /**
-          * Undo/Redo manager service instance (Phase 4)  **Required for editing mode** (grid-builder provides this)  **Source**: grid-builder → canvas-section → grid-item-wrapper **Purpose**: Support multiple grid-builder instances with isolated undo/redo stacks
+          * Undo/Redo manager service instance (passed from grid-builder)  **Required for editing mode** (grid-builder provides this)  **Source**: grid-builder → canvas-section → grid-item-wrapper **Purpose**: Support multiple grid-builder instances with isolated undo/redo stacks
          */
         "undoRedoManagerInstance"?: UndoRedoManager;
         /**
-          * Virtual renderer service instance (Phase 4)  **Required for editing mode** (grid-builder provides this)  **Source**: grid-builder → canvas-section → grid-item-wrapper **Purpose**: Support multiple grid-builder instances with isolated services
+          * Virtual renderer service instance (passed from grid-builder)  **Required for editing mode** (grid-builder provides this)  **Source**: grid-builder → canvas-section → grid-item-wrapper **Purpose**: Support multiple grid-builder instances with isolated services
          */
         "virtualRendererInstance"?: VirtualRendererService;
     }
@@ -238,7 +240,7 @@ export namespace Components {
          */
         "stateInstance"?: any;
         /**
-          * Virtual renderer service instance (Phase 4)  **Optional**: Provided by grid-viewer if virtual rendering enabled **Purpose**: Lazy loading of grid items for better performance
+          * Virtual renderer service instance (passed from grid-builder)  **Optional**: Provided by grid-viewer if virtual rendering enabled **Purpose**: Lazy loading of grid items for better performance
          */
         "virtualRendererInstance"?: VirtualRendererService;
     }
@@ -332,6 +334,10 @@ export namespace Components {
      */
     interface ConfigPanel {
         /**
+          * Grid Builder API instance  **Source**: Parent component (e.g., blog-app) **Purpose**: Access grid state and subscribe to events **Required**: Component won't work without valid API reference
+         */
+        "api"?: GridBuilderAPI;
+        /**
           * Component registry (from parent grid-builder)  **Source**: grid-builder component **Purpose**: Look up component definitions for config forms
          */
         "componentRegistry"?: Map<string, ComponentDefinition>;
@@ -404,7 +410,7 @@ export namespace Components {
         /**
           * Grid Builder API (accessed from window.gridBuilderAPI or passed as prop)  **Source**: window.gridBuilderAPI (set by grid-builder component) **Purpose**: Access grid state and methods **Required**: Component won't work without valid API reference
          */
-        "api"?: GridBuilderAPI;
+        "api"?: GridBuilderAPI1;
     }
     /**
      * Custom Drag Clone Component
@@ -616,11 +622,11 @@ export namespace Components {
          */
         "currentViewport"?: "desktop" | "mobile";
         /**
-          * DOM cache service instance (Phase 4)  **Required for editing mode** (grid-builder provides this) **Optional for viewer mode** (grid-viewer doesn't need it)  **Source**: grid-builder → canvas-section → grid-item-wrapper **Purpose**: Support multiple grid-builder instances with isolated DOM caches **Used by**: DragHandler, ResizeHandler for fast canvas element lookups
+          * DOM cache service instance (passed from grid-builder)  **Required for editing mode** (grid-builder provides this) **Optional for viewer mode** (grid-viewer doesn't need it)  **Source**: grid-builder → canvas-section → grid-item-wrapper **Purpose**: Support multiple grid-builder instances with isolated DOM caches **Used by**: DragHandler, ResizeHandler for fast canvas element lookups
          */
         "domCacheInstance"?: DOMCache;
         /**
-          * Event manager service instance (Phase 4)  **Required for editing mode** (grid-builder provides this) **Optional for viewer mode** (grid-viewer doesn't need it)  **Source**: grid-builder → canvas-section → grid-item-wrapper **Purpose**: Support multiple grid-builder instances with isolated services
+          * Event manager service instance (passed from grid-builder)  **Required for editing mode** (grid-builder provides this) **Optional for viewer mode** (grid-viewer doesn't need it)  **Source**: grid-builder → canvas-section → grid-item-wrapper **Purpose**: Support multiple grid-builder instances with isolated services
          */
         "eventManagerInstance"?: EventManager;
         /**
@@ -636,7 +642,7 @@ export namespace Components {
          */
         "renderVersion"?: number;
         /**
-          * State manager instance (Phase 4)  **Required for editing mode** (grid-builder provides this) **Optional for viewer mode** (grid-viewer doesn't need it)  **Source**: grid-builder → canvas-section → grid-item-wrapper **Purpose**: Support multiple grid-builder instances with isolated state **Used by**: DragHandler, ResizeHandler for accessing canvases and viewport
+          * State manager instance (passed from grid-builder)  **Required for editing mode** (grid-builder provides this) **Optional for viewer mode** (grid-viewer doesn't need it)  **Source**: grid-builder → canvas-section → grid-item-wrapper **Purpose**: Support multiple grid-builder instances with isolated state **Used by**: DragHandler, ResizeHandler for accessing canvases and viewport
          */
         "stateInstance"?: any;
         /**
@@ -644,7 +650,7 @@ export namespace Components {
          */
         "theme"?: any;
         /**
-          * Undo/Redo manager service instance (Phase 4)  **Required for editing mode** (grid-builder provides this) **Optional for viewer mode** (grid-viewer doesn't need it)  **Source**: grid-builder → canvas-section → grid-item-wrapper **Purpose**: Support multiple grid-builder instances with isolated undo/redo stacks **Used by**: handleItemUpdate() for pushing move/resize commands to undo stack
+          * Undo/Redo manager service instance (passed from grid-builder)  **Required for editing mode** (grid-builder provides this) **Optional for viewer mode** (grid-viewer doesn't need it)  **Source**: grid-builder → canvas-section → grid-item-wrapper **Purpose**: Support multiple grid-builder instances with isolated undo/redo stacks **Used by**: handleItemUpdate() for pushing move/resize commands to undo stack
          */
         "undoRedoManagerInstance"?: UndoRedoManager;
         /**
@@ -653,7 +659,7 @@ export namespace Components {
          */
         "viewerMode"?: boolean;
         /**
-          * Virtual renderer service instance (Phase 4)  **Required for editing mode** (grid-builder provides this) **Optional for viewer mode** (grid-viewer doesn't need it)  **Source**: grid-builder → canvas-section → grid-item-wrapper **Purpose**: Support multiple grid-builder instances with isolated services
+          * Virtual renderer service instance (passed from grid-builder)  **Required for editing mode** (grid-builder provides this) **Optional for viewer mode** (grid-viewer doesn't need it)  **Source**: grid-builder → canvas-section → grid-item-wrapper **Purpose**: Support multiple grid-builder instances with isolated services
          */
         "virtualRendererInstance"?: VirtualRendererService;
     }
@@ -706,7 +712,7 @@ export namespace Components {
     }
     interface LayerPanel {
         /**
-          * Grid Builder API instance (Phase 4: Instance-based architecture)  **Required**: Must be provided or component won't display items **Source**: Host app (blog-app) passes this via prop **Purpose**: Access instance-based state instead of singleton  **Why needed**: With Phase 4 instance-based architecture, grid-builder uses its own state instance. The layer panel must access that same instance, not the singleton, to display items correctly.  **Migration from singleton**: - Before: `import { gridState } from '../../services/state-manager'` - After: `this.api.getState().canvases`
+          * Grid Builder API instance (instance-based architecture)  **Required**: Must be provided or component won't display items **Source**: Host app (blog-app) passes this via prop **Purpose**: Access instance-based state for multi-instance support  **Why needed**: Grid-builder uses its own state instance. The layer panel must access that same instance to display items correctly.
          */
         "api"?: any;
         /**
@@ -1540,11 +1546,11 @@ declare namespace LocalJSX {
          */
         "config"?: GridConfig;
         /**
-          * DOM cache service instance (Phase 4)  **Required for editing mode** (grid-builder provides this)  **Source**: grid-builder → canvas-section → grid-item-wrapper **Purpose**: Support multiple grid-builder instances with isolated DOM caches **Used by**: DragHandler, ResizeHandler for fast canvas element lookups
+          * DOM cache service instance (passed from grid-builder)  **Required for editing mode** (grid-builder provides this)  **Source**: grid-builder → canvas-section → grid-item-wrapper **Purpose**: Support multiple grid-builder instances with isolated DOM caches **Used by**: DragHandler, ResizeHandler for fast canvas element lookups
          */
         "domCacheInstance"?: DOMCache;
         /**
-          * Event manager service instance (Phase 4)  **Required for editing mode** (grid-builder provides this)  **Source**: grid-builder → canvas-section → grid-item-wrapper **Purpose**: Support multiple grid-builder instances with isolated services
+          * Event manager service instance (passed from grid-builder)  **Required for editing mode** (grid-builder provides this)  **Source**: grid-builder → canvas-section → grid-item-wrapper **Purpose**: Support multiple grid-builder instances with isolated services
          */
         "eventManagerInstance"?: EventManager;
         /**
@@ -1558,11 +1564,11 @@ declare namespace LocalJSX {
          */
         "onBeforeDelete"?: DeletionHook;
         /**
-          * State change subscription function (Phase 4)  **Required for editing mode** (grid-builder provides this)  **Source**: grid-builder (this.stateManager.onChange) **Purpose**: Subscribe to instance-specific state changes for reactivity  **Usage**: ```typescript onStateChange={(key, callback) => this.stateManager.onChange(key, callback)} ```
+          * State change subscription function (passed from grid-builder)  **Required for editing mode** (grid-builder provides this)  **Source**: grid-builder (this.stateManager.onChange) **Purpose**: Subscribe to instance-specific state changes for reactivity  **Usage**: ```typescript onStateChange={(key, callback) => this.stateManager.onChange(key, callback)} ```
          */
         "onStateChange"?: (key: string, callback: Function) => void;
         /**
-          * State manager instance (Phase 4)  **Required for editing mode** (grid-builder provides this)  **Source**: grid-builder → canvas-section → grid-item-wrapper **Purpose**: Support multiple grid-builder instances with isolated state **Used by**: DragHandler, ResizeHandler for accessing canvases and viewport
+          * State manager instance (passed from grid-builder)  **Required for editing mode** (grid-builder provides this)  **Source**: grid-builder → canvas-section → grid-item-wrapper **Purpose**: Support multiple grid-builder instances with isolated state **Used by**: DragHandler, ResizeHandler for accessing canvases and viewport
          */
         "stateInstance"?: any;
         /**
@@ -1570,11 +1576,11 @@ declare namespace LocalJSX {
          */
         "theme"?: any;
         /**
-          * Undo/Redo manager service instance (Phase 4)  **Required for editing mode** (grid-builder provides this)  **Source**: grid-builder → canvas-section → grid-item-wrapper **Purpose**: Support multiple grid-builder instances with isolated undo/redo stacks
+          * Undo/Redo manager service instance (passed from grid-builder)  **Required for editing mode** (grid-builder provides this)  **Source**: grid-builder → canvas-section → grid-item-wrapper **Purpose**: Support multiple grid-builder instances with isolated undo/redo stacks
          */
         "undoRedoManagerInstance"?: UndoRedoManager;
         /**
-          * Virtual renderer service instance (Phase 4)  **Required for editing mode** (grid-builder provides this)  **Source**: grid-builder → canvas-section → grid-item-wrapper **Purpose**: Support multiple grid-builder instances with isolated services
+          * Virtual renderer service instance (passed from grid-builder)  **Required for editing mode** (grid-builder provides this)  **Source**: grid-builder → canvas-section → grid-item-wrapper **Purpose**: Support multiple grid-builder instances with isolated services
          */
         "virtualRendererInstance"?: VirtualRendererService;
     }
@@ -1616,7 +1622,7 @@ declare namespace LocalJSX {
          */
         "stateInstance"?: any;
         /**
-          * Virtual renderer service instance (Phase 4)  **Optional**: Provided by grid-viewer if virtual rendering enabled **Purpose**: Lazy loading of grid items for better performance
+          * Virtual renderer service instance (passed from grid-builder)  **Optional**: Provided by grid-viewer if virtual rendering enabled **Purpose**: Lazy loading of grid items for better performance
          */
         "virtualRendererInstance"?: VirtualRendererService;
     }
@@ -1710,6 +1716,10 @@ declare namespace LocalJSX {
      */
     interface ConfigPanel {
         /**
+          * Grid Builder API instance  **Source**: Parent component (e.g., blog-app) **Purpose**: Access grid state and subscribe to events **Required**: Component won't work without valid API reference
+         */
+        "api"?: GridBuilderAPI;
+        /**
           * Component registry (from parent grid-builder)  **Source**: grid-builder component **Purpose**: Look up component definitions for config forms
          */
         "componentRegistry"?: Map<string, ComponentDefinition>;
@@ -1790,7 +1800,7 @@ declare namespace LocalJSX {
         /**
           * Grid Builder API (accessed from window.gridBuilderAPI or passed as prop)  **Source**: window.gridBuilderAPI (set by grid-builder component) **Purpose**: Access grid state and methods **Required**: Component won't work without valid API reference
          */
-        "api"?: GridBuilderAPI;
+        "api"?: GridBuilderAPI1;
     }
     /**
      * Custom Drag Clone Component
@@ -1925,11 +1935,11 @@ declare namespace LocalJSX {
          */
         "currentViewport"?: "desktop" | "mobile";
         /**
-          * DOM cache service instance (Phase 4)  **Required for editing mode** (grid-builder provides this) **Optional for viewer mode** (grid-viewer doesn't need it)  **Source**: grid-builder → canvas-section → grid-item-wrapper **Purpose**: Support multiple grid-builder instances with isolated DOM caches **Used by**: DragHandler, ResizeHandler for fast canvas element lookups
+          * DOM cache service instance (passed from grid-builder)  **Required for editing mode** (grid-builder provides this) **Optional for viewer mode** (grid-viewer doesn't need it)  **Source**: grid-builder → canvas-section → grid-item-wrapper **Purpose**: Support multiple grid-builder instances with isolated DOM caches **Used by**: DragHandler, ResizeHandler for fast canvas element lookups
          */
         "domCacheInstance"?: DOMCache;
         /**
-          * Event manager service instance (Phase 4)  **Required for editing mode** (grid-builder provides this) **Optional for viewer mode** (grid-viewer doesn't need it)  **Source**: grid-builder → canvas-section → grid-item-wrapper **Purpose**: Support multiple grid-builder instances with isolated services
+          * Event manager service instance (passed from grid-builder)  **Required for editing mode** (grid-builder provides this) **Optional for viewer mode** (grid-viewer doesn't need it)  **Source**: grid-builder → canvas-section → grid-item-wrapper **Purpose**: Support multiple grid-builder instances with isolated services
          */
         "eventManagerInstance"?: EventManager;
         /**
@@ -1945,7 +1955,7 @@ declare namespace LocalJSX {
          */
         "renderVersion"?: number;
         /**
-          * State manager instance (Phase 4)  **Required for editing mode** (grid-builder provides this) **Optional for viewer mode** (grid-viewer doesn't need it)  **Source**: grid-builder → canvas-section → grid-item-wrapper **Purpose**: Support multiple grid-builder instances with isolated state **Used by**: DragHandler, ResizeHandler for accessing canvases and viewport
+          * State manager instance (passed from grid-builder)  **Required for editing mode** (grid-builder provides this) **Optional for viewer mode** (grid-viewer doesn't need it)  **Source**: grid-builder → canvas-section → grid-item-wrapper **Purpose**: Support multiple grid-builder instances with isolated state **Used by**: DragHandler, ResizeHandler for accessing canvases and viewport
          */
         "stateInstance"?: any;
         /**
@@ -1953,7 +1963,7 @@ declare namespace LocalJSX {
          */
         "theme"?: any;
         /**
-          * Undo/Redo manager service instance (Phase 4)  **Required for editing mode** (grid-builder provides this) **Optional for viewer mode** (grid-viewer doesn't need it)  **Source**: grid-builder → canvas-section → grid-item-wrapper **Purpose**: Support multiple grid-builder instances with isolated undo/redo stacks **Used by**: handleItemUpdate() for pushing move/resize commands to undo stack
+          * Undo/Redo manager service instance (passed from grid-builder)  **Required for editing mode** (grid-builder provides this) **Optional for viewer mode** (grid-viewer doesn't need it)  **Source**: grid-builder → canvas-section → grid-item-wrapper **Purpose**: Support multiple grid-builder instances with isolated undo/redo stacks **Used by**: handleItemUpdate() for pushing move/resize commands to undo stack
          */
         "undoRedoManagerInstance"?: UndoRedoManager;
         /**
@@ -1962,7 +1972,7 @@ declare namespace LocalJSX {
          */
         "viewerMode"?: boolean;
         /**
-          * Virtual renderer service instance (Phase 4)  **Required for editing mode** (grid-builder provides this) **Optional for viewer mode** (grid-viewer doesn't need it)  **Source**: grid-builder → canvas-section → grid-item-wrapper **Purpose**: Support multiple grid-builder instances with isolated services
+          * Virtual renderer service instance (passed from grid-builder)  **Required for editing mode** (grid-builder provides this) **Optional for viewer mode** (grid-viewer doesn't need it)  **Source**: grid-builder → canvas-section → grid-item-wrapper **Purpose**: Support multiple grid-builder instances with isolated services
          */
         "virtualRendererInstance"?: VirtualRendererService;
     }
@@ -2015,7 +2025,7 @@ declare namespace LocalJSX {
     }
     interface LayerPanel {
         /**
-          * Grid Builder API instance (Phase 4: Instance-based architecture)  **Required**: Must be provided or component won't display items **Source**: Host app (blog-app) passes this via prop **Purpose**: Access instance-based state instead of singleton  **Why needed**: With Phase 4 instance-based architecture, grid-builder uses its own state instance. The layer panel must access that same instance, not the singleton, to display items correctly.  **Migration from singleton**: - Before: `import { gridState } from '../../services/state-manager'` - After: `this.api.getState().canvases`
+          * Grid Builder API instance (instance-based architecture)  **Required**: Must be provided or component won't display items **Source**: Host app (blog-app) passes this via prop **Purpose**: Access instance-based state for multi-instance support  **Why needed**: Grid-builder uses its own state instance. The layer panel must access that same instance to display items correctly.
          */
         "api"?: any;
         /**
