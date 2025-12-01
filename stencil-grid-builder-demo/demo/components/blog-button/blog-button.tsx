@@ -15,7 +15,7 @@ export class BlogButton {
 
   private handleClick = (_e: MouseEvent) => {
     if (this.href) {
-      window.location.href = this.href;
+      window.open(this.href, '_blank');
     }
     this.buttonClick.emit();
   };
