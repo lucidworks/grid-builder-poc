@@ -9,6 +9,7 @@ import { GridConfig } from "./types/grid-config";
 import { ComponentDefinition } from "./types/component-definition";
 import { DeletionHook } from "./types/deletion-hook";
 import { VirtualRendererService } from "./services/virtual-renderer";
+import { UndoRedoManager } from "./services/undo-redo";
 import { EventManager } from "./services/event-manager";
 import { GridItem, GridState, ViewerState } from "./services/state-manager";
 import { ConfirmationModalData } from "./demo/types/confirmation-modal-data";
@@ -22,6 +23,7 @@ export { GridConfig } from "./types/grid-config";
 export { ComponentDefinition } from "./types/component-definition";
 export { DeletionHook } from "./types/deletion-hook";
 export { VirtualRendererService } from "./services/virtual-renderer";
+export { UndoRedoManager } from "./services/undo-redo";
 export { EventManager } from "./services/event-manager";
 export { GridItem, GridState, ViewerState } from "./services/state-manager";
 export { ConfirmationModalData } from "./demo/types/confirmation-modal-data";
@@ -316,7 +318,7 @@ export namespace Components {
          */
         "config"?: GridConfig;
         /**
-          * Event manager service instance (Phase 3: Instance-based architecture)  **Optional prop**: Service instance for event emission **Default**: grid-item-wrapper falls back to singleton if not provided **Source**: grid-builder → canvas-section → grid-item-wrapper  **Purpose**: Support multiple grid-builder instances with isolated services  **Migration strategy**: - Phase 3: Add as optional prop (this phase) - Phase 4: Remove singleton fallback and make required
+          * Event manager service instance (Phase 4)  **Required for editing mode** (grid-builder provides this)  **Source**: grid-builder → canvas-section → grid-item-wrapper **Purpose**: Support multiple grid-builder instances with isolated services
          */
         "eventManagerInstance"?: EventManager;
         /**
@@ -330,11 +332,11 @@ export namespace Components {
          */
         "onBeforeDelete"?: DeletionHook;
         /**
-          * State change subscription function (Phase 3: Instance-based architecture)  **Optional prop**: Function to subscribe to instance state changes **Default**: Falls back to singleton onChange if not provided **Source**: grid-builder (this.stateManager.onChange)  **Purpose**: Subscribe to instance-specific state changes for reactivity  **Usage**: ```typescript onStateChange={(key, callback) => this.stateManager.onChange(key, callback)} ```
+          * State change subscription function (Phase 4)  **Required for editing mode** (grid-builder provides this)  **Source**: grid-builder (this.stateManager.onChange) **Purpose**: Subscribe to instance-specific state changes for reactivity  **Usage**: ```typescript onStateChange={(key, callback) => this.stateManager.onChange(key, callback)} ```
          */
         "onStateChange"?: (key: string, callback: Function) => void;
         /**
-          * State manager instance (Phase 3: Instance-based architecture)  **Optional prop**: Grid state instance for utilities **Default**: grid-item-wrapper falls back to singleton if not provided **Source**: grid-builder → canvas-section → grid-item-wrapper  **Purpose**: Support multiple grid-builder instances with isolated state  **Migration strategy**: - Phase 3: Add as optional prop (this phase) - Phase 4: Remove singleton fallback and make required  **Used by**: DragHandler, ResizeHandler for accessing canvases and viewport
+          * State manager instance (Phase 4)  **Required for editing mode** (grid-builder provides this)  **Source**: grid-builder → canvas-section → grid-item-wrapper **Purpose**: Support multiple grid-builder instances with isolated state **Used by**: DragHandler, ResizeHandler for accessing canvases and viewport
          */
         "stateInstance"?: any;
         /**
@@ -342,7 +344,11 @@ export namespace Components {
          */
         "theme"?: any;
         /**
-          * Virtual renderer service instance (Phase 3: Instance-based architecture)  **Optional prop**: Service instance for lazy loading **Default**: grid-item-wrapper falls back to singleton if not provided **Source**: grid-builder → canvas-section → grid-item-wrapper  **Purpose**: Support multiple grid-builder instances with isolated services  **Migration strategy**: - Phase 3: Add as optional prop (this phase) - Phase 4: Remove singleton fallback and make required
+          * Undo/Redo manager service instance (Phase 4)  **Required for editing mode** (grid-builder provides this)  **Source**: grid-builder → canvas-section → grid-item-wrapper **Purpose**: Support multiple grid-builder instances with isolated undo/redo stacks
+         */
+        "undoRedoManagerInstance"?: UndoRedoManager;
+        /**
+          * Virtual renderer service instance (Phase 4)  **Required for editing mode** (grid-builder provides this)  **Source**: grid-builder → canvas-section → grid-item-wrapper **Purpose**: Support multiple grid-builder instances with isolated services
          */
         "virtualRendererInstance"?: VirtualRendererService;
     }
@@ -379,6 +385,10 @@ export namespace Components {
           * Items to render in this canvas  **Required**: Array of GridItem objects **Source**: Passed from grid-viewer component  **Unlike canvas-section**: Items passed via props, not from global state
          */
         "items": GridItem[];
+        /**
+          * Virtual renderer service instance (Phase 4)  **Optional**: Provided by grid-viewer if virtual rendering enabled **Purpose**: Lazy loading of grid items for better performance
+         */
+        "virtualRendererInstance"?: VirtualRendererService;
     }
     /**
      * ComponentPalette Component
@@ -754,7 +764,7 @@ export namespace Components {
          */
         "currentViewport"?: "desktop" | "mobile";
         /**
-          * Event manager service instance (Phase 3: Instance-based architecture)  **Optional prop**: Service instance for event emission **Default**: Falls back to singleton eventManager if not provided **Source**: grid-builder → canvas-section → grid-item-wrapper  **Purpose**: Support multiple grid-builder instances with isolated services  **Migration strategy**: - Phase 3: Add as optional prop (this phase) - Phase 4: Remove singleton fallback and make required
+          * Event manager service instance (Phase 4)  **Required for editing mode** (grid-builder provides this) **Optional for viewer mode** (grid-viewer doesn't need it)  **Source**: grid-builder → canvas-section → grid-item-wrapper **Purpose**: Support multiple grid-builder instances with isolated services
          */
         "eventManagerInstance"?: EventManager;
         /**
@@ -770,7 +780,7 @@ export namespace Components {
          */
         "renderVersion"?: number;
         /**
-          * State manager instance (Phase 3: Instance-based architecture)  **Optional prop**: Grid state instance for utilities **Default**: Falls back to singleton gridState if not provided **Source**: grid-builder → canvas-section → grid-item-wrapper  **Purpose**: Support multiple grid-builder instances with isolated state  **Migration strategy**: - Phase 3: Add as optional prop (this phase) - Phase 4: Remove singleton fallback and make required  **Used by**: DragHandler, ResizeHandler for accessing canvases and viewport
+          * State manager instance (Phase 4)  **Required for editing mode** (grid-builder provides this) **Optional for viewer mode** (grid-viewer doesn't need it)  **Source**: grid-builder → canvas-section → grid-item-wrapper **Purpose**: Support multiple grid-builder instances with isolated state **Used by**: DragHandler, ResizeHandler for accessing canvases and viewport
          */
         "stateInstance"?: any;
         /**
@@ -778,12 +788,16 @@ export namespace Components {
          */
         "theme"?: any;
         /**
+          * Undo/Redo manager service instance (Phase 4)  **Required for editing mode** (grid-builder provides this) **Optional for viewer mode** (grid-viewer doesn't need it)  **Source**: grid-builder → canvas-section → grid-item-wrapper **Purpose**: Support multiple grid-builder instances with isolated undo/redo stacks **Used by**: handleItemUpdate() for pushing move/resize commands to undo stack
+         */
+        "undoRedoManagerInstance"?: UndoRedoManager;
+        /**
           * Viewer mode flag  **Purpose**: Disable editing features for rendering-only mode **Default**: false (editing enabled)  **When true**: - ❌ No drag-and-drop handlers - ❌ No resize handles - ❌ No item header (drag handle) - ❌ No delete button - ❌ No selection state - ✅ Only renders component content  **Use case**: grid-viewer component for display-only mode
           * @default false
          */
         "viewerMode"?: boolean;
         /**
-          * Virtual renderer service instance (Phase 3: Instance-based architecture)  **Optional prop**: Service instance for lazy loading **Default**: Falls back to singleton virtualRenderer if not provided **Source**: grid-builder → canvas-section → grid-item-wrapper  **Purpose**: Support multiple grid-builder instances with isolated services  **Migration strategy**: - Phase 3: Add as optional prop (this phase) - Phase 4: Remove singleton fallback and make required
+          * Virtual renderer service instance (Phase 4)  **Required for editing mode** (grid-builder provides this) **Optional for viewer mode** (grid-viewer doesn't need it)  **Source**: grid-builder → canvas-section → grid-item-wrapper **Purpose**: Support multiple grid-builder instances with isolated services
          */
         "virtualRendererInstance"?: VirtualRendererService;
     }
@@ -1981,7 +1995,7 @@ declare namespace LocalJSX {
          */
         "config"?: GridConfig;
         /**
-          * Event manager service instance (Phase 3: Instance-based architecture)  **Optional prop**: Service instance for event emission **Default**: grid-item-wrapper falls back to singleton if not provided **Source**: grid-builder → canvas-section → grid-item-wrapper  **Purpose**: Support multiple grid-builder instances with isolated services  **Migration strategy**: - Phase 3: Add as optional prop (this phase) - Phase 4: Remove singleton fallback and make required
+          * Event manager service instance (Phase 4)  **Required for editing mode** (grid-builder provides this)  **Source**: grid-builder → canvas-section → grid-item-wrapper **Purpose**: Support multiple grid-builder instances with isolated services
          */
         "eventManagerInstance"?: EventManager;
         /**
@@ -1995,11 +2009,11 @@ declare namespace LocalJSX {
          */
         "onBeforeDelete"?: DeletionHook;
         /**
-          * State change subscription function (Phase 3: Instance-based architecture)  **Optional prop**: Function to subscribe to instance state changes **Default**: Falls back to singleton onChange if not provided **Source**: grid-builder (this.stateManager.onChange)  **Purpose**: Subscribe to instance-specific state changes for reactivity  **Usage**: ```typescript onStateChange={(key, callback) => this.stateManager.onChange(key, callback)} ```
+          * State change subscription function (Phase 4)  **Required for editing mode** (grid-builder provides this)  **Source**: grid-builder (this.stateManager.onChange) **Purpose**: Subscribe to instance-specific state changes for reactivity  **Usage**: ```typescript onStateChange={(key, callback) => this.stateManager.onChange(key, callback)} ```
          */
         "onStateChange"?: (key: string, callback: Function) => void;
         /**
-          * State manager instance (Phase 3: Instance-based architecture)  **Optional prop**: Grid state instance for utilities **Default**: grid-item-wrapper falls back to singleton if not provided **Source**: grid-builder → canvas-section → grid-item-wrapper  **Purpose**: Support multiple grid-builder instances with isolated state  **Migration strategy**: - Phase 3: Add as optional prop (this phase) - Phase 4: Remove singleton fallback and make required  **Used by**: DragHandler, ResizeHandler for accessing canvases and viewport
+          * State manager instance (Phase 4)  **Required for editing mode** (grid-builder provides this)  **Source**: grid-builder → canvas-section → grid-item-wrapper **Purpose**: Support multiple grid-builder instances with isolated state **Used by**: DragHandler, ResizeHandler for accessing canvases and viewport
          */
         "stateInstance"?: any;
         /**
@@ -2007,7 +2021,11 @@ declare namespace LocalJSX {
          */
         "theme"?: any;
         /**
-          * Virtual renderer service instance (Phase 3: Instance-based architecture)  **Optional prop**: Service instance for lazy loading **Default**: grid-item-wrapper falls back to singleton if not provided **Source**: grid-builder → canvas-section → grid-item-wrapper  **Purpose**: Support multiple grid-builder instances with isolated services  **Migration strategy**: - Phase 3: Add as optional prop (this phase) - Phase 4: Remove singleton fallback and make required
+          * Undo/Redo manager service instance (Phase 4)  **Required for editing mode** (grid-builder provides this)  **Source**: grid-builder → canvas-section → grid-item-wrapper **Purpose**: Support multiple grid-builder instances with isolated undo/redo stacks
+         */
+        "undoRedoManagerInstance"?: UndoRedoManager;
+        /**
+          * Virtual renderer service instance (Phase 4)  **Required for editing mode** (grid-builder provides this)  **Source**: grid-builder → canvas-section → grid-item-wrapper **Purpose**: Support multiple grid-builder instances with isolated services
          */
         "virtualRendererInstance"?: VirtualRendererService;
     }
@@ -2044,6 +2062,10 @@ declare namespace LocalJSX {
           * Items to render in this canvas  **Required**: Array of GridItem objects **Source**: Passed from grid-viewer component  **Unlike canvas-section**: Items passed via props, not from global state
          */
         "items": GridItem[];
+        /**
+          * Virtual renderer service instance (Phase 4)  **Optional**: Provided by grid-viewer if virtual rendering enabled **Purpose**: Lazy loading of grid items for better performance
+         */
+        "virtualRendererInstance"?: VirtualRendererService;
     }
     /**
      * ComponentPalette Component
@@ -2350,7 +2372,7 @@ declare namespace LocalJSX {
          */
         "currentViewport"?: "desktop" | "mobile";
         /**
-          * Event manager service instance (Phase 3: Instance-based architecture)  **Optional prop**: Service instance for event emission **Default**: Falls back to singleton eventManager if not provided **Source**: grid-builder → canvas-section → grid-item-wrapper  **Purpose**: Support multiple grid-builder instances with isolated services  **Migration strategy**: - Phase 3: Add as optional prop (this phase) - Phase 4: Remove singleton fallback and make required
+          * Event manager service instance (Phase 4)  **Required for editing mode** (grid-builder provides this) **Optional for viewer mode** (grid-viewer doesn't need it)  **Source**: grid-builder → canvas-section → grid-item-wrapper **Purpose**: Support multiple grid-builder instances with isolated services
          */
         "eventManagerInstance"?: EventManager;
         /**
@@ -2366,7 +2388,7 @@ declare namespace LocalJSX {
          */
         "renderVersion"?: number;
         /**
-          * State manager instance (Phase 3: Instance-based architecture)  **Optional prop**: Grid state instance for utilities **Default**: Falls back to singleton gridState if not provided **Source**: grid-builder → canvas-section → grid-item-wrapper  **Purpose**: Support multiple grid-builder instances with isolated state  **Migration strategy**: - Phase 3: Add as optional prop (this phase) - Phase 4: Remove singleton fallback and make required  **Used by**: DragHandler, ResizeHandler for accessing canvases and viewport
+          * State manager instance (Phase 4)  **Required for editing mode** (grid-builder provides this) **Optional for viewer mode** (grid-viewer doesn't need it)  **Source**: grid-builder → canvas-section → grid-item-wrapper **Purpose**: Support multiple grid-builder instances with isolated state **Used by**: DragHandler, ResizeHandler for accessing canvases and viewport
          */
         "stateInstance"?: any;
         /**
@@ -2374,12 +2396,16 @@ declare namespace LocalJSX {
          */
         "theme"?: any;
         /**
+          * Undo/Redo manager service instance (Phase 4)  **Required for editing mode** (grid-builder provides this) **Optional for viewer mode** (grid-viewer doesn't need it)  **Source**: grid-builder → canvas-section → grid-item-wrapper **Purpose**: Support multiple grid-builder instances with isolated undo/redo stacks **Used by**: handleItemUpdate() for pushing move/resize commands to undo stack
+         */
+        "undoRedoManagerInstance"?: UndoRedoManager;
+        /**
           * Viewer mode flag  **Purpose**: Disable editing features for rendering-only mode **Default**: false (editing enabled)  **When true**: - ❌ No drag-and-drop handlers - ❌ No resize handles - ❌ No item header (drag handle) - ❌ No delete button - ❌ No selection state - ✅ Only renders component content  **Use case**: grid-viewer component for display-only mode
           * @default false
          */
         "viewerMode"?: boolean;
         /**
-          * Virtual renderer service instance (Phase 3: Instance-based architecture)  **Optional prop**: Service instance for lazy loading **Default**: Falls back to singleton virtualRenderer if not provided **Source**: grid-builder → canvas-section → grid-item-wrapper  **Purpose**: Support multiple grid-builder instances with isolated services  **Migration strategy**: - Phase 3: Add as optional prop (this phase) - Phase 4: Remove singleton fallback and make required
+          * Virtual renderer service instance (Phase 4)  **Required for editing mode** (grid-builder provides this) **Optional for viewer mode** (grid-viewer doesn't need it)  **Source**: grid-builder → canvas-section → grid-item-wrapper **Purpose**: Support multiple grid-builder instances with isolated services
          */
         "virtualRendererInstance"?: VirtualRendererService;
     }

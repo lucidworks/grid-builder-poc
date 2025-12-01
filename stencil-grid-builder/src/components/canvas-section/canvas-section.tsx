@@ -71,9 +71,6 @@ import interact from "interactjs";
 import {
   Canvas,
   GridItem,
-  gridState,
-  onChange,
-  setActiveCanvas,
 } from "../../services/state-manager";
 import {
   setGridSizeCache,
@@ -87,6 +84,7 @@ import { ComponentDefinition } from "../../types/component-definition";
 import { DeletionHook } from "../../types/deletion-hook";
 import { VirtualRendererService } from "../../services/virtual-renderer";
 import { EventManager } from "../../services/event-manager";
+import { UndoRedoManager } from "../../services/undo-redo";
 
 /**
  * CanvasSection Component
@@ -206,59 +204,52 @@ export class CanvasSection {
   @Prop() onBeforeDelete?: DeletionHook;
 
   /**
-   * Virtual renderer service instance (Phase 3: Instance-based architecture)
+   * Virtual renderer service instance (Phase 4)
    *
-   * **Optional prop**: Service instance for lazy loading
-   * **Default**: grid-item-wrapper falls back to singleton if not provided
+   * **Required for editing mode** (grid-builder provides this)
+   *
    * **Source**: grid-builder → canvas-section → grid-item-wrapper
-   *
    * **Purpose**: Support multiple grid-builder instances with isolated services
-   *
-   * **Migration strategy**:
-   * - Phase 3: Add as optional prop (this phase)
-   * - Phase 4: Remove singleton fallback and make required
    */
   @Prop() virtualRendererInstance?: VirtualRendererService;
 
   /**
-   * Event manager service instance (Phase 3: Instance-based architecture)
+   * Undo/Redo manager service instance (Phase 4)
    *
-   * **Optional prop**: Service instance for event emission
-   * **Default**: grid-item-wrapper falls back to singleton if not provided
+   * **Required for editing mode** (grid-builder provides this)
+   *
    * **Source**: grid-builder → canvas-section → grid-item-wrapper
+   * **Purpose**: Support multiple grid-builder instances with isolated undo/redo stacks
+   */
+  @Prop() undoRedoManagerInstance?: UndoRedoManager;
+
+  /**
+   * Event manager service instance (Phase 4)
    *
+   * **Required for editing mode** (grid-builder provides this)
+   *
+   * **Source**: grid-builder → canvas-section → grid-item-wrapper
    * **Purpose**: Support multiple grid-builder instances with isolated services
-   *
-   * **Migration strategy**:
-   * - Phase 3: Add as optional prop (this phase)
-   * - Phase 4: Remove singleton fallback and make required
    */
   @Prop() eventManagerInstance?: EventManager;
 
   /**
-   * State manager instance (Phase 3: Instance-based architecture)
+   * State manager instance (Phase 4)
    *
-   * **Optional prop**: Grid state instance for utilities
-   * **Default**: grid-item-wrapper falls back to singleton if not provided
+   * **Required for editing mode** (grid-builder provides this)
+   *
    * **Source**: grid-builder → canvas-section → grid-item-wrapper
-   *
    * **Purpose**: Support multiple grid-builder instances with isolated state
-   *
-   * **Migration strategy**:
-   * - Phase 3: Add as optional prop (this phase)
-   * - Phase 4: Remove singleton fallback and make required
-   *
    * **Used by**: DragHandler, ResizeHandler for accessing canvases and viewport
    */
   @Prop() stateInstance?: any;
 
   /**
-   * State change subscription function (Phase 3: Instance-based architecture)
+   * State change subscription function (Phase 4)
    *
-   * **Optional prop**: Function to subscribe to instance state changes
-   * **Default**: Falls back to singleton onChange if not provided
+   * **Required for editing mode** (grid-builder provides this)
+   *
    * **Source**: grid-builder (this.stateManager.onChange)
-   *
    * **Purpose**: Subscribe to instance-specific state changes for reactivity
    *
    * **Usage**:
@@ -371,20 +362,19 @@ export class CanvasSection {
    */
   componentWillLoad() {
     // Initial load
-    this.canvas = (this.stateInstance || gridState).canvases[this.canvasId];
+    this.canvas = this.stateInstance.canvases[this.canvasId];
 
-    // Calculate initial height (use instance state if available)
+    // Calculate initial height
     this.calculatedHeight = calculateCanvasHeight(this.canvasId, this.config, this.stateInstance);
 
-    // Subscribe to state changes (use instance onChange if available, fall back to global)
-    const subscribeToChanges = this.onStateChange || onChange;
-    subscribeToChanges("canvases", () => {
+    // Subscribe to state changes
+    this.onStateChange("canvases", () => {
       try {
-        if (this.canvasId && (this.stateInstance || gridState).canvases[this.canvasId]) {
-          this.canvas = (this.stateInstance || gridState).canvases[this.canvasId];
+        if (this.canvasId && this.stateInstance.canvases[this.canvasId]) {
+          this.canvas = this.stateInstance.canvases[this.canvasId];
           this.renderVersion++; // Force re-render
 
-          // Recalculate canvas height based on content (use instance state if available)
+          // Recalculate canvas height based on content
           this.calculatedHeight = calculateCanvasHeight(
             this.canvasId,
             this.config,
@@ -397,13 +387,13 @@ export class CanvasSection {
     });
 
     // Subscribe to viewport changes (desktop ↔ mobile)
-    subscribeToChanges("currentViewport", () => {
-      // Recalculate height for new viewport layout (use instance state if available)
+    this.onStateChange("currentViewport", () => {
+      // Recalculate height for new viewport layout
       this.calculatedHeight = calculateCanvasHeight(this.canvasId, this.config, this.stateInstance);
     });
 
     // Subscribe to grid visibility changes
-    subscribeToChanges("showGrid", () => {
+    this.onStateChange("showGrid", () => {
       // Force re-render to update grid visibility class
       this.renderVersion++;
     });
@@ -416,7 +406,7 @@ export class CanvasSection {
    * **Purpose**: Ensure canvas reference is fresh from state
    */
   componentWillUpdate() {
-    this.canvas = (this.stateInstance || gridState).canvases[this.canvasId];
+    this.canvas = this.stateInstance.canvases[this.canvasId];
   }
 
   /**
@@ -468,9 +458,9 @@ export class CanvasSection {
     if (newCanvasId === oldCanvasId) return;
 
     // Reload canvas data from state
-    this.canvas = (this.stateInstance || gridState).canvases[newCanvasId];
+    this.canvas = this.stateInstance.canvases[newCanvasId];
 
-    // Recalculate canvas height for new canvas (use instance state if available)
+    // Recalculate canvas height for new canvas
     this.calculatedHeight = calculateCanvasHeight(newCanvasId, this.config, this.stateInstance);
 
     // Reinitialize dropzone with new canvas ID
@@ -559,7 +549,7 @@ export class CanvasSection {
       // (not on a grid item or other child element)
       if (event.target === this.gridContainerRef) {
         // Set this canvas as active
-        setActiveCanvas(this.canvasId);
+        this.stateInstance.activeCanvasId = this.canvasId;
 
         // Emit canvas-activated event
         const canvasActivatedEvent = new CustomEvent("canvas-activated", {
@@ -837,7 +827,7 @@ export class CanvasSection {
    * - Passes renderVersion to force recalculation
    */
   render() {
-    const showGrid = (this.stateInstance || gridState).showGrid;
+    const showGrid = this.stateInstance.showGrid;
     const verticalGridSize = getGridSizeVertical(this.config);
 
     // Calculate min-height from config (default 20 grid units)
@@ -882,6 +872,7 @@ export class CanvasSection {
               onBeforeDelete={this.onBeforeDelete}
               virtualRendererInstance={this.virtualRendererInstance}
               eventManagerInstance={this.eventManagerInstance}
+              undoRedoManagerInstance={this.undoRedoManagerInstance}
               stateInstance={this.stateInstance}
               theme={this.theme}
             />

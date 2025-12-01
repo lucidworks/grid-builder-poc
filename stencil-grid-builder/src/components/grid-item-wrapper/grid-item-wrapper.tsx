@@ -30,17 +30,13 @@ import { Component, h, Listen, Prop, State, Watch } from "@stencil/core";
 // Internal imports
 import {
   GridItem,
-  gridState,
-  updateItem,
-  setActiveCanvas,
 } from "../../services/state-manager";
-import { pushCommand } from "../../services/undo-redo";
+import { UndoRedoManager } from "../../services/undo-redo";
 import { MoveItemCommand } from "../../services/undo-redo-commands";
 import {
   VirtualRendererService,
-  virtualRenderer,
 } from "../../services/virtual-renderer";
-import { EventManager, eventManager } from "../../services/event-manager";
+import { EventManager } from "../../services/event-manager";
 import { DragHandler } from "../../utils/drag-handler";
 import { ResizeHandler } from "../../utils/resize-handler";
 import { gridToPixelsX, gridToPixelsY } from "../../utils/grid-calculations";
@@ -169,51 +165,50 @@ export class GridItemWrapper {
   @Prop() currentViewport?: "desktop" | "mobile";
 
   /**
-   * Virtual renderer service instance (Phase 3: Instance-based architecture)
+   * Virtual renderer service instance (Phase 4)
    *
-   * **Optional prop**: Service instance for lazy loading
-   * **Default**: Falls back to singleton virtualRenderer if not provided
+   * **Required for editing mode** (grid-builder provides this)
+   * **Optional for viewer mode** (grid-viewer doesn't need it)
+   *
    * **Source**: grid-builder → canvas-section → grid-item-wrapper
-   *
    * **Purpose**: Support multiple grid-builder instances with isolated services
-   *
-   * **Migration strategy**:
-   * - Phase 3: Add as optional prop (this phase)
-   * - Phase 4: Remove singleton fallback and make required
    */
   @Prop() virtualRendererInstance?: VirtualRendererService;
 
   /**
-   * Event manager service instance (Phase 3: Instance-based architecture)
+   * Event manager service instance (Phase 4)
    *
-   * **Optional prop**: Service instance for event emission
-   * **Default**: Falls back to singleton eventManager if not provided
+   * **Required for editing mode** (grid-builder provides this)
+   * **Optional for viewer mode** (grid-viewer doesn't need it)
+   *
    * **Source**: grid-builder → canvas-section → grid-item-wrapper
-   *
    * **Purpose**: Support multiple grid-builder instances with isolated services
-   *
-   * **Migration strategy**:
-   * - Phase 3: Add as optional prop (this phase)
-   * - Phase 4: Remove singleton fallback and make required
    */
   @Prop() eventManagerInstance?: EventManager;
 
   /**
-   * State manager instance (Phase 3: Instance-based architecture)
+   * State manager instance (Phase 4)
    *
-   * **Optional prop**: Grid state instance for utilities
-   * **Default**: Falls back to singleton gridState if not provided
+   * **Required for editing mode** (grid-builder provides this)
+   * **Optional for viewer mode** (grid-viewer doesn't need it)
+   *
    * **Source**: grid-builder → canvas-section → grid-item-wrapper
-   *
    * **Purpose**: Support multiple grid-builder instances with isolated state
-   *
-   * **Migration strategy**:
-   * - Phase 3: Add as optional prop (this phase)
-   * - Phase 4: Remove singleton fallback and make required
-   *
    * **Used by**: DragHandler, ResizeHandler for accessing canvases and viewport
    */
   @Prop() stateInstance?: any;
+
+  /**
+   * Undo/Redo manager service instance (Phase 4)
+   *
+   * **Required for editing mode** (grid-builder provides this)
+   * **Optional for viewer mode** (grid-viewer doesn't need it)
+   *
+   * **Source**: grid-builder → canvas-section → grid-item-wrapper
+   * **Purpose**: Support multiple grid-builder instances with isolated undo/redo stacks
+   * **Used by**: handleItemUpdate() for pushing move/resize commands to undo stack
+   */
+  @Prop() undoRedoManagerInstance?: UndoRedoManager;
 
   /**
    * All items in the canvas (for viewer mode auto-layout)
@@ -302,8 +297,8 @@ export class GridItemWrapper {
    * Update component state (selection and snapshot)
    */
   private updateComponentState() {
-    // Update selection state (use instance state if available, fall back to global)
-    const selectedItemId = this.stateInstance?.selectedItemId || gridState.selectedItemId;
+    // Update selection state
+    const selectedItemId = this.stateInstance.selectedItemId;
     this.isSelected = selectedItemId === this.item.id;
 
     // Capture item snapshot for undo/redo
@@ -323,13 +318,13 @@ export class GridItemWrapper {
     // which would cause a state change and trigger Stencil warning about extra re-renders.
     // Using requestAnimationFrame defers setup until after lifecycle completes.
     requestAnimationFrame(() => {
-      if (this.config?.enableVirtualRendering !== false) {
+      if (this.config?.enableVirtualRendering !== false && this.virtualRendererInstance) {
         // Virtual rendering enabled (default behavior)
-        (this.virtualRendererInstance || virtualRenderer).observe(this.itemRef, this.item.id, (isVisible) => {
+        this.virtualRendererInstance.observe(this.itemRef, this.item.id, (isVisible) => {
           this.isVisible = isVisible;
         });
       } else {
-        // Virtual rendering disabled - render immediately
+        // Virtual rendering disabled or no instance (viewer mode) - render immediately
         this.isVisible = true;
       }
     });
@@ -352,7 +347,7 @@ export class GridItemWrapper {
       this.dragHandler = new DragHandler(
         this.itemRef,
         this.item,
-        this.stateInstance || gridState,
+        this.stateInstance,
         this.handleItemUpdate,
         this.config,
         headerElement,
@@ -363,7 +358,7 @@ export class GridItemWrapper {
       this.resizeHandler = new ResizeHandler(
         this.itemRef,
         this.item,
-        this.stateInstance || gridState,
+        this.stateInstance,
         this.handleItemUpdate,
         componentDefinition,
         this.config,
@@ -436,8 +431,8 @@ export class GridItemWrapper {
     }
 
     // Cleanup virtual renderer
-    if (this.itemRef) {
-      (this.virtualRendererInstance || virtualRenderer).unobserve(this.itemRef, this.item.id);
+    if (this.itemRef && this.virtualRendererInstance) {
+      this.virtualRendererInstance.unobserve(this.itemRef, this.item.id);
     }
   }
 
@@ -530,7 +525,7 @@ export class GridItemWrapper {
       this.dragHandler = new DragHandler(
         this.itemRef,
         this.item,
-        this.stateInstance || gridState,
+        this.stateInstance,
         this.handleItemUpdate,
         newConfig,
         headerElement,
@@ -541,7 +536,7 @@ export class GridItemWrapper {
       this.resizeHandler = new ResizeHandler(
         this.itemRef,
         this.item,
-        this.stateInstance || gridState,
+        this.stateInstance,
         this.handleItemUpdate,
         componentDefinition,
         newConfig,
@@ -610,12 +605,17 @@ export class GridItemWrapper {
   @Listen("item-bring-to-front")
   handleItemBringToFrontEvent(event: CustomEvent) {
     event.stopPropagation();
-    const canvases = this.stateInstance?.canvases || gridState.canvases;
-    const canvas = canvases[this.item.canvasId];
+    const canvas = this.stateInstance.canvases[this.item.canvasId];
     if (!canvas) return;
 
     const maxZ = Math.max(...canvas.items.map((i) => i.zIndex));
-    updateItem(this.item.canvasId, this.item.id, { zIndex: maxZ + 1 });
+    const newItems = canvas.items.map(item =>
+      item.id === this.item.id ? { ...item, zIndex: maxZ + 1 } : item
+    );
+    this.stateInstance.canvases = {
+      ...this.stateInstance.canvases,
+      [this.item.canvasId]: { ...canvas, items: newItems }
+    };
   }
 
   /**
@@ -624,12 +624,17 @@ export class GridItemWrapper {
   @Listen("item-send-to-back")
   handleItemSendToBackEvent(event: CustomEvent) {
     event.stopPropagation();
-    const canvases = this.stateInstance?.canvases || gridState.canvases;
-    const canvas = canvases[this.item.canvasId];
+    const canvas = this.stateInstance.canvases[this.item.canvasId];
     if (!canvas) return;
 
     const minZ = Math.min(...canvas.items.map((i) => i.zIndex));
-    updateItem(this.item.canvasId, this.item.id, { zIndex: minZ - 1 });
+    const newItems = canvas.items.map(item =>
+      item.id === this.item.id ? { ...item, zIndex: minZ - 1 } : item
+    );
+    this.stateInstance.canvases = {
+      ...this.stateInstance.canvases,
+      [this.item.canvasId]: { ...canvas, items: newItems }
+    };
   }
 
   /**
@@ -776,10 +781,10 @@ export class GridItemWrapper {
     const itemIdForDelete = this.item.id;
     const canvasIdForDelete = this.item.canvasId;
 
-    // Use prop-based viewport in viewer mode, instance or global state in builder mode
+    // Use prop-based viewport in viewer mode, instance state in builder mode
     const currentViewport = this.viewerMode
       ? this.currentViewport || "desktop"
-      : (this.stateInstance?.currentViewport || gridState.currentViewport);
+      : this.stateInstance.currentViewport;
 
     const layout = this.item.layouts[currentViewport];
 
@@ -788,11 +793,10 @@ export class GridItemWrapper {
     if (currentViewport === "mobile" && !this.item.layouts.mobile.customized) {
       // Auto-layout for mobile: stack components vertically at full width
 
-      // Use prop-based items in viewer mode, instance or global state in builder mode
-      const canvases = this.stateInstance?.canvases || gridState.canvases;
+      // Use prop-based items in viewer mode, instance state in builder mode
       const canvasItems = this.viewerMode
         ? this.canvasItems || []
-        : canvases[this.item.canvasId]?.items || [];
+        : this.stateInstance.canvases[this.item.canvasId]?.items || [];
 
       const itemIndex =
         canvasItems.findIndex((i) => i.id === this.item.id) ?? 0;
@@ -815,8 +819,7 @@ export class GridItemWrapper {
     }
 
     // Compute selection directly from state (only in editing mode)
-    // Use instance state if available, fall back to global state
-    const selectedItemId = this.stateInstance?.selectedItemId || gridState.selectedItemId;
+    const selectedItemId = this.stateInstance.selectedItemId;
     const isSelected =
       !this.viewerMode && selectedItemId === this.item.id;
 
@@ -1075,6 +1078,7 @@ export class GridItemWrapper {
    * Handle item update (called by drag/resize handlers)
    */
   private handleItemUpdate = (updatedItem: GridItem) => {
+
     // Check if position or canvas changed (for undo/redo)
     let isDrag = false;
     let isResize = false;
@@ -1095,8 +1099,8 @@ export class GridItemWrapper {
       isResize = sizeChanged;
 
       if (isDrag || isResize) {
-        // Find source canvas and index (use instance state if available)
-        const canvases = this.stateInstance?.canvases || gridState.canvases;
+        // Find source canvas and index
+        const canvases = this.stateInstance.canvases;
         const sourceCanvas = canvases[snapshot.canvasId];
         const sourceIndex =
           sourceCanvas?.items.findIndex((i) => i.id === this.item.id) || 0;
@@ -1114,45 +1118,46 @@ export class GridItemWrapper {
           }
         }
 
-        // Push undo command before updating state
+        // Push undo command before updating state (Phase 4: only if manager exists)
         // Include size tracking for resize operations (also handles resize with position change)
-        pushCommand(
-          new MoveItemCommand(
-            updatedItem.id,
-            snapshot.canvasId,
-            updatedItem.canvasId,
-            {
-              x: snapshot.layouts.desktop.x,
-              y: snapshot.layouts.desktop.y,
-            },
-            {
-              x: updatedItem.layouts.desktop.x,
-              y: updatedItem.layouts.desktop.y,
-            },
-            sourceIndex,
-            sourceZIndex,
-            targetZIndex,
-            // Include size for resize tracking (position and size can both change)
-            isResize
-              ? {
-                  width: snapshot.layouts.desktop.width,
-                  height: snapshot.layouts.desktop.height,
-                }
-              : undefined,
-            isResize
-              ? {
-                  width: updatedItem.layouts.desktop.width,
-                  height: updatedItem.layouts.desktop.height,
-                }
-              : undefined,
-          ),
-        );
+        if (this.undoRedoManagerInstance) {
+          this.undoRedoManagerInstance.push(
+            new MoveItemCommand(
+              updatedItem.id,
+              snapshot.canvasId,
+              updatedItem.canvasId,
+              {
+                x: snapshot.layouts.desktop.x,
+                y: snapshot.layouts.desktop.y,
+              },
+              {
+                x: updatedItem.layouts.desktop.x,
+                y: updatedItem.layouts.desktop.y,
+              },
+              sourceIndex,
+              sourceZIndex,
+              targetZIndex,
+              // Include size for resize tracking (position and size can both change)
+              isResize
+                ? {
+                    width: snapshot.layouts.desktop.width,
+                    height: snapshot.layouts.desktop.height,
+                  }
+                : undefined,
+              isResize
+                ? {
+                    width: updatedItem.layouts.desktop.width,
+                    height: updatedItem.layouts.desktop.height,
+                  }
+                : undefined,
+            ),
+          );
+        }
       }
     }
 
     // Update item in state (triggers re-render)
-    // Use instance state if available, fall back to global state
-    const canvases = this.stateInstance?.canvases || gridState.canvases;
+    const canvases = this.stateInstance.canvases;
     const canvas = canvases[this.item.canvasId];
     const itemIndex = canvas.items.findIndex((i) => i.id === this.item.id);
     if (itemIndex !== -1) {
@@ -1167,34 +1172,32 @@ export class GridItemWrapper {
       // Create new canvases object
       const newCanvases = { ...canvases, [this.item.canvasId]: newCanvas };
 
-      // Update the appropriate state object
-      if (this.stateInstance) {
-        this.stateInstance.canvases = newCanvases;
-      } else {
-        gridState.canvases = newCanvases;
-      }
+      // Update state
+      this.stateInstance.canvases = newCanvases;
     }
 
-    // Emit events for plugins
-    if (isDrag) {
-      (this.eventManagerInstance || eventManager).emit("componentDragged", {
-        itemId: updatedItem.id,
-        canvasId: updatedItem.canvasId,
-        position: {
-          x: updatedItem.layouts.desktop.x,
-          y: updatedItem.layouts.desktop.y,
-        },
-      });
-    }
-    if (isResize) {
-      (this.eventManagerInstance || eventManager).emit("componentResized", {
-        itemId: updatedItem.id,
-        canvasId: updatedItem.canvasId,
-        size: {
-          width: updatedItem.layouts.desktop.width,
-          height: updatedItem.layouts.desktop.height,
-        },
-      });
+    // Emit events for plugins (Phase 4: only if manager exists)
+    if (this.eventManagerInstance) {
+      if (isDrag) {
+        this.eventManagerInstance.emit("componentDragged", {
+          itemId: updatedItem.id,
+          canvasId: updatedItem.canvasId,
+          position: {
+            x: updatedItem.layouts.desktop.x,
+            y: updatedItem.layouts.desktop.y,
+          },
+        });
+      }
+      if (isResize) {
+        this.eventManagerInstance.emit("componentResized", {
+          itemId: updatedItem.id,
+          canvasId: updatedItem.canvasId,
+          size: {
+            width: updatedItem.layouts.desktop.width,
+            height: updatedItem.layouts.desktop.height,
+          },
+        });
+      }
     }
   };
 
@@ -1234,20 +1237,20 @@ export class GridItemWrapper {
 
     debug.log("  ✅ Proceeding with click handling");
 
-    // Set selection state immediately (use instance state if available)
-    if (this.stateInstance) {
-      this.stateInstance.selectedItemId = this.item.id;
-      this.stateInstance.selectedCanvasId = this.item.canvasId;
-    } else {
-      gridState.selectedItemId = this.item.id;
-      gridState.selectedCanvasId = this.item.canvasId;
-    }
+    // Set selection state immediately
+    this.stateInstance.selectedItemId = this.item.id;
+    this.stateInstance.selectedCanvasId = this.item.canvasId;
 
     // Set this canvas as active
-    setActiveCanvas(this.item.canvasId);
+    this.stateInstance.activeCanvasId = this.item.canvasId;
+
+    // Emit canvas activation event
+    this.eventManagerInstance.emit("canvasActivated", {
+      canvasId: this.item.canvasId,
+    });
 
     // Emit selection event for plugins
-    (this.eventManagerInstance || eventManager).emit("componentSelected", {
+    this.eventManagerInstance.emit("componentSelected", {
       itemId: this.item.id,
       canvasId: this.item.canvasId,
     });
