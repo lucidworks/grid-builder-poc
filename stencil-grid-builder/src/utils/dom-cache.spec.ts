@@ -1,9 +1,11 @@
-import { domCache } from "./dom-cache";
+import { DOMCache } from "./dom-cache";
 
 describe("dom-cache", () => {
+  let domCache: DOMCache;
+
   beforeEach(() => {
-    // Clear cache and DOM before each test
-    domCache.clear();
+    // Create new instance for each test
+    domCache = new DOMCache();
     document.body.innerHTML = "";
   });
 
@@ -175,6 +177,108 @@ describe("dom-cache", () => {
       expect(getElementByIdSpy).toHaveBeenCalledTimes(1); // Still only 1 call
 
       // Clean up spy
+      getElementByIdSpy.mockRestore();
+    });
+  });
+
+  describe("Multiple Instance Independence", () => {
+    it("should allow multiple independent cache instances", () => {
+      // Create two separate cache instances
+      const cache1 = new DOMCache();
+      const cache2 = new DOMCache();
+
+      // Create canvas elements
+      const canvas1Element = document.createElement("div");
+      canvas1Element.id = "canvas1";
+      document.body.appendChild(canvas1Element);
+
+      const canvas2Element = document.createElement("div");
+      canvas2Element.id = "canvas2";
+      document.body.appendChild(canvas2Element);
+
+      // Cache canvas1 in cache1
+      cache1.getCanvas("canvas1");
+
+      // Cache canvas2 in cache2
+      cache2.getCanvas("canvas2");
+
+      // Verify each instance has its own cache
+      // cache1 should NOT have canvas2 cached
+      const getElementByIdSpy = jest.spyOn(document, "getElementById");
+
+      cache1.getCanvas("canvas2"); // Should query DOM (not cached in cache1)
+      expect(getElementByIdSpy).toHaveBeenCalledTimes(1);
+
+      cache2.getCanvas("canvas1"); // Should query DOM (not cached in cache2)
+      expect(getElementByIdSpy).toHaveBeenCalledTimes(2);
+
+      // But repeated calls within same instance should use cache
+      cache1.getCanvas("canvas2"); // Should NOT query DOM (now cached)
+      expect(getElementByIdSpy).toHaveBeenCalledTimes(2); // Still 2
+
+      cache2.getCanvas("canvas1"); // Should NOT query DOM (now cached)
+      expect(getElementByIdSpy).toHaveBeenCalledTimes(2); // Still 2
+
+      getElementByIdSpy.mockRestore();
+    });
+
+    it("should not share cache between instances", () => {
+      const cache1 = new DOMCache();
+      const cache2 = new DOMCache();
+
+      // Create canvas
+      const canvasElement = document.createElement("div");
+      canvasElement.id = "canvas1";
+      document.body.appendChild(canvasElement);
+
+      // Cache in cache1
+      cache1.getCanvas("canvas1");
+
+      // Clear cache1
+      cache1.clear();
+
+      // Cache in cache2
+      cache2.getCanvas("canvas1");
+
+      // Verify cache2 still has cached value after cache1 was cleared
+      const getElementByIdSpy = jest.spyOn(document, "getElementById");
+
+      cache2.getCanvas("canvas1"); // Should use cache (cache2 not cleared)
+      expect(getElementByIdSpy).toHaveBeenCalledTimes(0);
+
+      cache1.getCanvas("canvas1"); // Should query DOM (cache1 was cleared)
+      expect(getElementByIdSpy).toHaveBeenCalledTimes(1);
+
+      getElementByIdSpy.mockRestore();
+    });
+
+    it("should support invalidation per instance", () => {
+      const cache1 = new DOMCache();
+      const cache2 = new DOMCache();
+
+      // Create canvas
+      const canvasElement = document.createElement("div");
+      canvasElement.id = "canvas1";
+      document.body.appendChild(canvasElement);
+
+      // Cache in both instances
+      cache1.getCanvas("canvas1");
+      cache2.getCanvas("canvas1");
+
+      // Invalidate in cache1 only
+      cache1.invalidate("canvas1");
+
+      // Spy on getElementById
+      const getElementByIdSpy = jest.spyOn(document, "getElementById");
+
+      // cache1 should re-query DOM (invalidated)
+      cache1.getCanvas("canvas1");
+      expect(getElementByIdSpy).toHaveBeenCalledTimes(1);
+
+      // cache2 should use cache (not invalidated)
+      cache2.getCanvas("canvas1");
+      expect(getElementByIdSpy).toHaveBeenCalledTimes(1); // Still 1
+
       getElementByIdSpy.mockRestore();
     });
   });
