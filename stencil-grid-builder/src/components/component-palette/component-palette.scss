@@ -11,7 +11,7 @@
   padding: 20px;
   border-right: 1px solid #ddd;
   background: white;
-  overflow-y: auto;
+  overflow-y: visible; /* Allow scrolling with parent container */
 }
 
 .palette h2 {
