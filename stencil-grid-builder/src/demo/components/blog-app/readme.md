@@ -5,14 +5,6 @@
 <!-- Auto Generated Below -->
 
 
-## Overview
-
-Blog App Demo - Host Application for grid-builder Library
-==========================================================
-
-This component demonstrates how to build a complete page builder application
-using the
-
 ## Dependencies
 
 ### Depends on
