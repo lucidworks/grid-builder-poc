@@ -105,6 +105,9 @@ describe('layer-panel', () => {
               { id: 'item1', name: 'Header', type: 'header', zIndex: 1 },
             ],
           },
+          canvas2: {
+            items: [],
+          },
         },
         activeCanvasId: 'canvas1',
         selectedItemId: null,
