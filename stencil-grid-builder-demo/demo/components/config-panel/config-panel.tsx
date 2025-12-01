@@ -24,15 +24,15 @@
  * @module config-panel
  */
 
-import { Component, h, Listen, Prop, State } from "@stencil/core";
+import { Component, h, Listen, Prop, State, Watch } from "@stencil/core";
 
 // Internal imports
-import { eventManager } from "../../../services/event-manager";
 import { gridState } from "../../../services/state-manager";
 import {
   ComponentDefinition,
   ConfigField,
 } from "../../../types/component-definition";
+import { GridBuilderAPI } from "../../../services/grid-builder-api";
 
 /**
  * ConfigPanel Component
@@ -49,6 +49,15 @@ import {
   shadow: false,
 })
 export class ConfigPanel {
+  /**
+   * Grid Builder API instance
+   *
+   * **Source**: Parent component (e.g., blog-app)
+   * **Purpose**: Access grid state and subscribe to events
+   * **Required**: Component won't work without valid API reference
+   */
+  @Prop() api?: GridBuilderAPI;
+
   /**
    * Component registry (from parent grid-builder)
    *
@@ -92,13 +101,18 @@ export class ConfigPanel {
   } | null = null;
 
   /**
-   * Callback for componentDeleted event (stored for unsubscribe)
+   * Flag to track if we've subscribed to events
    */
-  private handleComponentDeleted = (event: {
+  private eventsSubscribed: boolean = false;
+
+  /**
+   * Callback for itemRemoved event (stored for unsubscribe)
+   */
+  private handleItemRemoved = (event: {
     itemId: string;
     canvasId: string;
   }) => {
-    console.log("🔔 config-panel received componentDeleted event", {
+    console.log("🔔 config-panel received itemRemoved event", {
       eventItemId: event.itemId,
       selectedItemId: this.selectedItemId,
       isOpen: this.isOpen,
@@ -124,6 +138,35 @@ export class ConfigPanel {
   };
 
   /**
+   * Ensure event subscription is set up (lazy initialization)
+   */
+  private ensureEventSubscription() {
+    if (this.eventsSubscribed || !this.api) {
+      return;
+    }
+
+    // Subscribe to itemRemoved events via API
+    this.api.on("itemRemoved", this.handleItemRemoved);
+    this.eventsSubscribed = true;
+    console.log("  ✅ Config panel: Subscribed to itemRemoved event");
+  }
+
+  /**
+   * Watch for API prop changes
+   */
+  @Watch("api")
+  handleApiChange(newApi: GridBuilderAPI) {
+    console.log("📋 config-panel API prop changed", {
+      hasNewApi: !!newApi,
+    });
+
+    // When API becomes available, ensure event subscription
+    if (newApi && !this.eventsSubscribed) {
+      this.ensureEventSubscription();
+    }
+  }
+
+  /**
    * Listen for item-click events to open panel
    */
   @Listen("item-click", { target: "document" })
@@ -133,22 +176,24 @@ export class ConfigPanel {
   }
 
   /**
-   * Component lifecycle: Subscribe to componentDeleted event
+   * Component lifecycle: Subscribe to itemRemoved event
    */
   componentDidLoad() {
     console.log(
-      "📋 config-panel componentDidLoad - subscribing to componentDeleted event",
+      "📋 config-panel componentDidLoad - subscribing to itemRemoved event",
     );
-    // Subscribe to componentDeleted events to auto-close panel when selected item is deleted
-    eventManager.on("componentDeleted", this.handleComponentDeleted);
-    console.log("  ✅ Subscribed to componentDeleted event");
+    // Try to subscribe to events (will retry on first item click if API not ready)
+    this.ensureEventSubscription();
   }
 
   /**
    * Component lifecycle: Cleanup event subscriptions
    */
   disconnectedCallback() {
-    eventManager.off("componentDeleted", this.handleComponentDeleted);
+    if (this.api && this.eventsSubscribed) {
+      this.api.off("itemRemoved", this.handleItemRemoved);
+      this.eventsSubscribed = false;
+    }
   }
 
   /**

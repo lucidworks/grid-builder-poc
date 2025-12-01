@@ -1,0 +1,17 @@
+import { r as registerInstance, h, e as Host } from './index-CoCbyscT.js';
+
+const dashboardWidgetCss = "dashboard-widget{display:block;width:100%;height:100%;border-radius:8px;overflow:hidden;box-sizing:border-box}.dashboard-widget{font-size:11px;line-height:1.4;padding:12px;height:100%;box-sizing:border-box}.stats-row{display:flex;justify-content:space-between;margin-bottom:8px;gap:4px}.stat-card{flex:1;padding:6px;border-radius:3px;background:#f0f0f0}.stat-label{color:#666;font-weight:600}.stat-value{font-size:16px;font-weight:700}.stat-primary{color:#4a90e2}.stat-success{color:#28a745}.chart-container{margin-bottom:6px;padding:8px;border-radius:3px;background:#f8f8f8}.chart-title{margin-bottom:4px;font-weight:600}.chart-bars{display:flex;align-items:flex-end;height:40px;gap:2px}.chart-bar{flex:1;background:#4a90e2}.metrics-list{color:#999;font-size:10px}";
+
+const DashboardWidget = class {
+    constructor(hostRef) {
+        registerInstance(this, hostRef);
+        this.backgroundColor = "#ffccbc";
+    }
+    render() {
+        return (h(Host, { key: '71d48f0f4d699c59db00fda7d320097bd3935188' }, h("div", { key: 'ccbe695c82b34860ed210603984c74d55ea05af7', class: "dashboard-widget" }, h("div", { key: 'a730acee355559282a4c10b2a33bf5227edaee5e', class: "stats-row" }, h("div", { key: '7d7d48a9221258b29e36e8a59e75d8001a73d2e3', class: "stat-card" }, h("div", { key: '77432bf0f613b4daf52f2296a6f716e9aa9a7968', class: "stat-label" }, "Users"), h("div", { key: '0e7bc48c559f3c54dd79c65ce2bd0c618cd12e2a', class: "stat-value stat-primary" }, "2,547")), h("div", { key: '875c01bad389601a0e98867490e193d9ab1de92e', class: "stat-card" }, h("div", { key: '6590ade54cd9fe3b083c1681fd4e0f285c3ec899', class: "stat-label" }, "Revenue"), h("div", { key: 'b24d8fb17f79d72cb206f0ae3ea7f871f8a708e9', class: "stat-value stat-success" }, "$12.4K"))), h("div", { key: '834994c98697be9c57dfb8415fbc365d3ec66104', class: "chart-container" }, h("div", { key: '15a9ac848ddfc7d6e3048a932858aa461efd1da8', class: "chart-title" }, "Activity Chart"), h("div", { key: '3070e99b87ca7173deb7fc228b6c8061eeb98a16', class: "chart-bars" }, h("div", { key: 'f96c5b4d611487626a4817c513f548c6a5aac796', class: "chart-bar", style: { height: "60%" } }), h("div", { key: 'a7a80113ad8f9c48fb012c8a3e1923b9e43a303b', class: "chart-bar", style: { height: "80%" } }), h("div", { key: '2d48fc722125b16d5e5e3cad6ffd2d7f1e6a61f1', class: "chart-bar", style: { height: "40%" } }), h("div", { key: '07e26769d567cf487226499f9f7ea58b1cec8bb2', class: "chart-bar", style: { height: "90%" } }), h("div", { key: '260b3f6abf221cb41dd42d6c0e196006ad4a0a5c', class: "chart-bar", style: { height: "70%" } }), h("div", { key: '13f5a915b5e590467d4a02726ed92f82e08f3b34', class: "chart-bar", style: { height: "85%" } }), h("div", { key: '1e624fff2f8d8a5010fc6309865ad03ad5c6b635', class: "chart-bar", style: { height: "95%" } }))), h("div", { key: 'a73a1cc0b44938e932e9e251df313a3f5016ceab', class: "metrics-list" }, h("div", { key: '7ac1f3619f51a191ee2db64a3f0a5dfcdb102dec' }, "\u2022 24 active sessions"), h("div", { key: '5e776672c5e3eb5466c3c9eab74d18b7df5a3fd6' }, "\u2022 156 page views"), h("div", { key: '5bf2d703b2f6715e8e0db08174b4bb41d93fd534' }, "\u2022 89% bounce rate")))));
+    }
+};
+DashboardWidget.style = dashboardWidgetCss;
+
+export { DashboardWidget as dashboard_widget };
+//# sourceMappingURL=dashboard-widget.entry.esm.js.map

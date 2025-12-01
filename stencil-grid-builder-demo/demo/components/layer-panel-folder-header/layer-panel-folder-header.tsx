@@ -83,6 +83,11 @@ export class LayerPanelFolderHeader {
   @Event() activateCanvas: EventEmitter<{ canvasId: string }>;
 
   /**
+   * Emitted when user double-clicks the folder header to scroll canvas into view
+   */
+  @Event() scrollToCanvas: EventEmitter<{ canvasId: string }>;
+
+  /**
    * Handle toggle button click
    */
   private handleToggle = (e: Event) => {
@@ -95,6 +100,13 @@ export class LayerPanelFolderHeader {
    */
   private handleClick = () => {
     this.activateCanvas.emit({ canvasId: this.canvasId });
+  };
+
+  /**
+   * Handle folder header double-click to scroll canvas into view
+   */
+  private handleDblClick = () => {
+    this.scrollToCanvas.emit({ canvasId: this.canvasId });
   };
 
   render() {
@@ -113,7 +125,11 @@ export class LayerPanelFolderHeader {
         : this.itemCount;
 
     return (
-      <div class={headerClasses} onClick={this.handleClick}>
+      <div
+        class={headerClasses}
+        onClick={this.handleClick}
+        onDblClick={this.handleDblClick}
+      >
         <button
           class="layer-panel-folder-header__toggle"
           onClick={this.handleToggle}

@@ -125,17 +125,22 @@ blog-app {
     .demo-layout {
       display: flex;
       width: 100%;
+      height: calc(100vh - 120px); /* Fixed height - account for header */
       gap: 0; /* No gap - sidebar has border-right */
+      overflow: hidden; /* Prevent parent from scrolling */
     }
 
     /* Categorized Palette Sidebar */
     .categorized-palette-sidebar {
+      display: flex;
+      flex-direction: column;
       width: 280px;
+      height: 100%; /* Fill parent height */
       flex-shrink: 0; /* Don't shrink below 280px */
       border-right: 1px solid #ddd;
       background: white;
-      overflow-y: auto;
-      max-height: calc(100vh - 120px); /* Account for header */
+      overflow-y: auto; /* Enable scrolling for entire sidebar */
+      overflow-x: hidden; /* Prevent horizontal scrolling */
 
       .palette-header {
         display: flex;
@@ -143,6 +148,11 @@ blog-app {
         justify-content: space-between;
         padding: 20px 20px 16px;
         border-bottom: 1px solid #f0f0f0;
+        flex-shrink: 0; /* Don't shrink header */
+        position: sticky; /* Keep header visible when scrolling */
+        top: 0;
+        background: white;
+        z-index: 10;
 
         .palette-title {
           padding: 0;
@@ -247,11 +257,16 @@ blog-app {
 
       /* Override palette default styles for chromeless mode */
       component-palette {
+        display: block;
+        width: 100%;
+
         .palette {
           width: 100%;
           padding: 12px 20px;
           border: none;
           background: white;
+          box-sizing: border-box;
+          /* overflow-y and height now controlled by component-palette.scss source */
         }
 
         /* Remove blue background from palette items with custom components */
@@ -287,12 +302,12 @@ blog-app {
       }
 
       .layer-panel-container {
-        height: 400px; // Fixed height for layer panel
-        overflow: hidden;
+        overflow-x: hidden; /* Prevent horizontal scrolling */
 
         layer-panel {
           display: block;
-          height: 100%;
+          width: 100%;
+          box-sizing: border-box;
         }
       }
     }
@@ -300,8 +315,10 @@ blog-app {
     /* Grid Builder Area */
     .grid-builder-area {
       flex: 1; /* Take remaining space */
+      height: 100%; /* Fill parent height */
       min-width: 0; /* Allow flex shrinking - critical for preventing overflow */
-      overflow-x: auto; /* Allow scrolling if content is too wide */
+      overflow-y: auto; /* Vertical scrolling for canvas content */
+      overflow-x: auto; /* Horizontal scrolling if needed */
 
       /* Grid Builder - canvas area styling */
       grid-builder {

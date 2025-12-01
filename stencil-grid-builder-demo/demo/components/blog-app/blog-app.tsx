@@ -13,8 +13,8 @@ import {
   getGridSizeVertical,
   clearGridSizeCache,
 } from "../../../utils/grid-calculations";
-import { domCache } from "../../../utils/dom-cache";
 import { setActiveCanvas } from "../../../services/state-manager";
+import { Command } from "../../../services/undo-redo";
 
 // Pre-import drag clone components to ensure they're eagerly loaded (not lazy)
 import "../blog-header-drag-clone/blog-header-drag-clone";
@@ -220,6 +220,68 @@ import "../live-data-drag-clone/live-data-drag-clone";
  * - Auto-closes when selected component is deleted
  */
 
+/**
+ * Section Metadata Command - Undo/Redo Support for Canvas Metadata
+ * ==================================================================
+ *
+ * Implements Command pattern for section title and background color changes.
+ * Integrates demo app metadata changes into library's unified undo/redo stack.
+ *
+ * **Purpose**:
+ * - Enable undo/redo for section title changes
+ * - Enable undo/redo for section background color changes
+ * - Maintain unified undo/redo history (library operations + demo app metadata)
+ *
+ * **Integration**:
+ * - Pushed to library's undo/redo stack via api.pushCommand()
+ * - Works with library's Ctrl+Z/Ctrl+Y keyboard shortcuts
+ * - Works with library's undo/redo buttons
+ *
+ * **Usage Pattern**:
+ * ```typescript
+ * // 1. Capture current state before change
+ * const beforeState = { ...this.canvasMetadata[canvasId] };
+ *
+ * // 2. Create command with before/after states
+ * const command = new SectionMetadataCommand(
+ *   canvasId,
+ *   beforeState,
+ *   { title: 'New Title', backgroundColor: '#ffffff' },
+ *   (canvasId, metadata) => {
+ *     this.canvasMetadata = {
+ *       ...this.canvasMetadata,
+ *       [canvasId]: metadata
+ *     };
+ *   }
+ * );
+ *
+ * // 3. Push to undo/redo stack
+ * this.api.pushCommand(command);
+ *
+ * // 4. Apply the change (command.redo() not needed, we apply directly)
+ * this.canvasMetadata = { ...this.canvasMetadata, [canvasId]: afterState };
+ * ```
+ */
+class SectionMetadataCommand implements Command {
+  constructor(
+    private canvasId: string,
+    private beforeState: { title: string; backgroundColor: string },
+    private afterState: { title: string; backgroundColor: string },
+    private updateCallback: (
+      canvasId: string,
+      metadata: { title: string; backgroundColor: string },
+    ) => void,
+  ) {}
+
+  undo(): void {
+    this.updateCallback(this.canvasId, this.beforeState);
+  }
+
+  redo(): void {
+    this.updateCallback(this.canvasId, this.afterState);
+  }
+}
+
 @Component({
   tag: "blog-app",
   styleUrl: "blog-app.scss",
@@ -322,7 +384,8 @@ export class BlogApp {
    *
    * Note on Undo/Redo:
    * - Canvas add/remove operations support undo/redo (handled by library)
-   * - Color changes are immediate (no undo for now - could be added)
+   * - Section metadata changes (title, color) support undo/redo via pushCommand API
+   * - Custom commands integrate with library's unified undo/redo stack
    */
   @State() canvasMetadata: Record<
     string,
@@ -723,13 +786,34 @@ export class BlogApp {
     }>,
   ) => {
     const { canvasId, title, backgroundColor } = event.detail;
+
+    // Capture current state before change (for undo)
+    const beforeState = { ...this.canvasMetadata[canvasId] };
+    const afterState = { title, backgroundColor };
+
+    // Create undo/redo command
+    const command = new SectionMetadataCommand(
+      canvasId,
+      beforeState,
+      afterState,
+      (canvasId, metadata) => {
+        // Callback used by undo/redo to update state
+        this.canvasMetadata = {
+          ...this.canvasMetadata,
+          [canvasId]: metadata,
+        };
+      },
+    );
+
+    // Push to library's undo/redo stack
+    this.api.pushCommand(command);
+
+    // Apply the change immediately
     this.canvasMetadata = {
       ...this.canvasMetadata,
-      [canvasId]: {
-        title,
-        backgroundColor,
-      },
+      [canvasId]: afterState,
     };
+
     // Clear preview state for this canvas after saving
     const { [canvasId]: _, ...rest } = this.previewMetadata;
     this.previewMetadata = rest;
@@ -976,13 +1060,9 @@ export class BlogApp {
 
     this.isPreviewMode = !this.isPreviewMode;
 
-    // Clear both caches to force fresh calculations
-    // Grid size cache: Clears cached grid unit sizes
-    // DOM cache: Clears cached canvas element references (prevents stale DOM references)
-    clearGridSizeCache();
-    domCache.clear();
-
+    // Clear grid size cache to force fresh calculations
     // This ensures items render at correct positions when switching modes
+    clearGridSizeCache();
   };
 
   /**
@@ -1423,7 +1503,10 @@ export class BlogApp {
                   <h3 class="palette-section-title">Layers</h3>
                 </div>
                 <div class="layer-panel-container">
-                  <layer-panel canvasMetadata={mergedCanvasMetadata} />
+                  <layer-panel
+                    api={this.api}
+                    canvasMetadata={mergedCanvasMetadata}
+                  />
                 </div>
               </div>
             </div>
