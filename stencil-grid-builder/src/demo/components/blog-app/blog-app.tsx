@@ -1503,7 +1503,10 @@ export class BlogApp {
                   <h3 class="palette-section-title">Layers</h3>
                 </div>
                 <div class="layer-panel-container">
-                  <layer-panel canvasMetadata={mergedCanvasMetadata} />
+                  <layer-panel
+                    api={this.api}
+                    canvasMetadata={mergedCanvasMetadata}
+                  />
                 </div>
               </div>
             </div>

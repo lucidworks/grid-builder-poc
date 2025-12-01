@@ -11,9 +11,9 @@ export class BlogArticleDragClone {
       <div class="article-preview">
         <div class="article-title">Article Title</div>
         <div class="article-content">
-          <div class="content-line"></div>
-          <div class="content-line"></div>
-          <div class="content-line short"></div>
+          <div class="content-line" />
+          <div class="content-line" />
+          <div class="content-line short" />
         </div>
         <div class="article-meta">
           <span>Author</span>

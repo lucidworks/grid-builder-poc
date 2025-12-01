@@ -13,8 +13,8 @@ import {
   getGridSizeVertical,
   clearGridSizeCache,
 } from "../../../utils/grid-calculations";
-import { domCache } from "../../../utils/dom-cache";
 import { setActiveCanvas } from "../../../services/state-manager";
+import { Command } from "../../../services/undo-redo";
 
 // Pre-import drag clone components to ensure they're eagerly loaded (not lazy)
 import "../blog-header-drag-clone/blog-header-drag-clone";
@@ -143,13 +143,13 @@ import "../live-data-drag-clone/live-data-drag-clone";
  *      ...
  *    />
  *    ```
-
-
-
-
-
-
-
+ 
+ 
+ 
+ 
+ 
+ 
+ 
  *
  * 2. Access the Grid Builder API:
  *    ```typescript
@@ -220,6 +220,68 @@ import "../live-data-drag-clone/live-data-drag-clone";
  * - Auto-closes when selected component is deleted
  */
 
+/**
+ * Section Metadata Command - Undo/Redo Support for Canvas Metadata
+ * ==================================================================
+ *
+ * Implements Command pattern for section title and background color changes.
+ * Integrates demo app metadata changes into library's unified undo/redo stack.
+ *
+ * **Purpose**:
+ * - Enable undo/redo for section title changes
+ * - Enable undo/redo for section background color changes
+ * - Maintain unified undo/redo history (library operations + demo app metadata)
+ *
+ * **Integration**:
+ * - Pushed to library's undo/redo stack via api.pushCommand()
+ * - Works with library's Ctrl+Z/Ctrl+Y keyboard shortcuts
+ * - Works with library's undo/redo buttons
+ *
+ * **Usage Pattern**:
+ * ```typescript
+ * // 1. Capture current state before change
+ * const beforeState = { ...this.canvasMetadata[canvasId] };
+ *
+ * // 2. Create command with before/after states
+ * const command = new SectionMetadataCommand(
+ *   canvasId,
+ *   beforeState,
+ *   { title: 'New Title', backgroundColor: '#ffffff' },
+ *   (canvasId, metadata) => {
+ *     this.canvasMetadata = {
+ *       ...this.canvasMetadata,
+ *       [canvasId]: metadata
+ *     };
+ *   }
+ * );
+ *
+ * // 3. Push to undo/redo stack
+ * this.api.pushCommand(command);
+ *
+ * // 4. Apply the change (command.redo() not needed, we apply directly)
+ * this.canvasMetadata = { ...this.canvasMetadata, [canvasId]: afterState };
+ * ```
+ */
+class SectionMetadataCommand implements Command {
+  constructor(
+    private canvasId: string,
+    private beforeState: { title: string; backgroundColor: string },
+    private afterState: { title: string; backgroundColor: string },
+    private updateCallback: (
+      canvasId: string,
+      metadata: { title: string; backgroundColor: string },
+    ) => void,
+  ) {}
+
+  undo(): void {
+    this.updateCallback(this.canvasId, this.beforeState);
+  }
+
+  redo(): void {
+    this.updateCallback(this.canvasId, this.afterState);
+  }
+}
+
 @Component({
   tag: "blog-app",
   styleUrl: "blog-app.scss",
@@ -271,6 +333,18 @@ export class BlogApp {
   private sectionCounter = 1;
 
   /**
+   * Grid Configuration
+   * ------------------
+   *
+   * Configuration for grid-builder component.
+   * Stored as class property so it can be reused in render calculations.
+   */
+  private gridConfig = {
+    enableAnimations: true,
+    animationDuration: 100,
+  };
+
+  /**
    * Event Handler References for Cleanup
    * -------------------------------------
    *
@@ -310,7 +384,8 @@ export class BlogApp {
    *
    * Note on Undo/Redo:
    * - Canvas add/remove operations support undo/redo (handled by library)
-   * - Color changes are immediate (no undo for now - could be added)
+   * - Section metadata changes (title, color) support undo/redo via pushCommand API
+   * - Custom commands integrate with library's unified undo/redo stack
    */
   @State() canvasMetadata: Record<
     string,
@@ -438,7 +513,10 @@ export class BlogApp {
     // Listen for palette-item-click events from external palettes
     // Note: External palettes are siblings to grid-builder, so @Listen decorator
     // in grid-builder can't catch these events. We need to listen on document.
-    document.addEventListener('palette-item-click', this.handleExternalPaletteClick as EventListener);
+    document.addEventListener(
+      "palette-item-click",
+      this.handleExternalPaletteClick as EventListener,
+    );
   }
 
   /**
@@ -469,7 +547,10 @@ export class BlogApp {
     }
 
     // Remove palette-item-click listener
-    document.removeEventListener('palette-item-click', this.handleExternalPaletteClick as EventListener);
+    document.removeEventListener(
+      "palette-item-click",
+      this.handleExternalPaletteClick as EventListener,
+    );
 
     // Remove API event listeners
     if (this.api) {
@@ -602,7 +683,9 @@ export class BlogApp {
    * This demonstrates the pattern for using multiple external palettes with
    * grid-builder in custom layouts.
    */
-  private handleExternalPaletteClick = async (event: CustomEvent<{ componentType: string }>) => {
+  private handleExternalPaletteClick = async (
+    event: CustomEvent<{ componentType: string }>,
+  ) => {
     if (!this.api) {
       console.warn("API not ready for palette click");
       return;
@@ -621,11 +704,11 @@ export class BlogApp {
     // Since we're listening on document, we need to manually trigger
     // grid-builder's handler by dispatching to it directly.
 
-    const gridBuilderElement = document.querySelector('grid-builder');
+    const gridBuilderElement = document.querySelector("grid-builder");
     if (gridBuilderElement) {
       // Re-dispatch event to grid-builder so its @Listen decorator catches it
       // IMPORTANT: bubbles: false prevents infinite loop (event bubbling back to document)
-      const newEvent = new CustomEvent('palette-item-click', {
+      const newEvent = new CustomEvent("palette-item-click", {
         detail: { componentType },
         bubbles: false, // Don't bubble - prevents infinite loop
         composed: true,
@@ -703,13 +786,34 @@ export class BlogApp {
     }>,
   ) => {
     const { canvasId, title, backgroundColor } = event.detail;
+
+    // Capture current state before change (for undo)
+    const beforeState = { ...this.canvasMetadata[canvasId] };
+    const afterState = { title, backgroundColor };
+
+    // Create undo/redo command
+    const command = new SectionMetadataCommand(
+      canvasId,
+      beforeState,
+      afterState,
+      (canvasId, metadata) => {
+        // Callback used by undo/redo to update state
+        this.canvasMetadata = {
+          ...this.canvasMetadata,
+          [canvasId]: metadata,
+        };
+      },
+    );
+
+    // Push to library's undo/redo stack
+    this.api.pushCommand(command);
+
+    // Apply the change immediately
     this.canvasMetadata = {
       ...this.canvasMetadata,
-      [canvasId]: {
-        title,
-        backgroundColor,
-      },
+      [canvasId]: afterState,
     };
+
     // Clear preview state for this canvas after saving
     const { [canvasId]: _, ...rest } = this.previewMetadata;
     this.previewMetadata = rest;
@@ -923,6 +1027,22 @@ export class BlogApp {
   };
 
   /**
+   * Handle Category Header Keyboard Events
+   * ----------------------------------------
+   *
+   * Accessibility: Support keyboard navigation for category headers.
+   * - Enter key: Toggle category expand/collapse
+   * - Space key: Toggle category expand/collapse
+   * - Prevents default behavior to avoid page scrolling on Space
+   */
+  private handleCategoryKeyDown = (event: KeyboardEvent, category: string) => {
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      this.toggleCategory(category);
+    }
+  };
+
+  /**
    * Toggle Preview Mode
    * -------------------
    *
@@ -940,13 +1060,9 @@ export class BlogApp {
 
     this.isPreviewMode = !this.isPreviewMode;
 
-    // Clear both caches to force fresh calculations
-    // Grid size cache: Clears cached grid unit sizes
-    // DOM cache: Clears cached canvas element references (prevents stale DOM references)
-    clearGridSizeCache();
-    domCache.clear();
-
+    // Clear grid size cache to force fresh calculations
     // This ensures items render at correct positions when switching modes
+    clearGridSizeCache();
   };
 
   /**
@@ -1004,7 +1120,7 @@ export class BlogApp {
             type: "blog-button",
             name: "Hero CTA",
             layouts: {
-              desktop: { x: 15, y: 7, width: 20, height: 4 },  // 4 units × 20px = 80px (matches CSS min-height)
+              desktop: { x: 15, y: 7, width: 20, height: 4 }, // 4 units × 20px = 80px (matches CSS min-height)
               mobile: {
                 x: null,
                 y: null,
@@ -1148,7 +1264,7 @@ export class BlogApp {
             type: "blog-button",
             name: "Subscribe Button",
             layouts: {
-              desktop: { x: 15, y: 5, width: 20, height: 4 },  // 4 units × 20px = 80px (matches CSS min-height)
+              desktop: { x: 15, y: 5, width: 20, height: 4 }, // 4 units × 20px = 80px (matches CSS min-height)
               mobile: {
                 x: null,
                 y: null,
@@ -1174,7 +1290,6 @@ export class BlogApp {
    *
    * Merges canvas metadata with preview state for rendering.
    * Preview state takes precedence over saved metadata for live preview.
-   *
    * @param canvasId - Canvas ID to get metadata for
    * @returns Merged metadata object with title and backgroundColor
    */
@@ -1196,7 +1311,7 @@ export class BlogApp {
 
   render() {
     // Calculate canvas header overlay margin from grid size (1.4 grid units)
-    const verticalGridSize = getGridSizeVertical();
+    const verticalGridSize = getGridSizeVertical(this.gridConfig);
     const canvasHeaderOverlayMargin = -(verticalGridSize * 1.4);
 
     // Build merged metadata (canvas metadata + preview state) for all canvases
@@ -1286,60 +1401,113 @@ export class BlogApp {
               <div class="palette-category">
                 <div
                   class="category-header"
+                  role="button"
+                  tabindex={0}
+                  aria-expanded={this.categoryStates.content ? "true" : "false"}
+                  aria-controls="content-palette-panel"
+                  aria-label="Content components category"
                   onClick={() => this.toggleCategory("content")}
+                  onKeyDown={(e) => this.handleCategoryKeyDown(e, "content")}
                 >
-                  <span class="category-icon">
+                  <span class="category-icon" aria-hidden="true">
                     {this.categoryStates.content ? "▼" : "▶"}
                   </span>
                   <span class="category-name">Content</span>
                 </div>
-                {this.categoryStates.content && (
-                  <component-palette
-                    components={contentComponents}
-                    showHeader={false}
-                    config={this.paletteConfig}
-                  />
-                )}
+                <div
+                  id="content-palette-panel"
+                  role="region"
+                  aria-labelledby="content-category-header"
+                >
+                  {this.categoryStates.content && (
+                    <component-palette
+                      components={contentComponents}
+                      showHeader={false}
+                      config={this.paletteConfig}
+                    />
+                  )}
+                </div>
               </div>
 
               {/* Interactive Category */}
               <div class="palette-category">
                 <div
                   class="category-header"
+                  role="button"
+                  tabindex={0}
+                  aria-expanded={
+                    this.categoryStates.interactive ? "true" : "false"
+                  }
+                  aria-controls="interactive-palette-panel"
+                  aria-label="Interactive components category"
                   onClick={() => this.toggleCategory("interactive")}
+                  onKeyDown={(e) =>
+                    this.handleCategoryKeyDown(e, "interactive")
+                  }
                 >
-                  <span class="category-icon">
+                  <span class="category-icon" aria-hidden="true">
                     {this.categoryStates.interactive ? "▼" : "▶"}
                   </span>
                   <span class="category-name">Interactive</span>
                 </div>
-                {this.categoryStates.interactive && (
-                  <component-palette
-                    components={interactiveComponents}
-                    showHeader={false}
-                    config={this.paletteConfig}
-                  />
-                )}
+                <div
+                  id="interactive-palette-panel"
+                  role="region"
+                  aria-labelledby="interactive-category-header"
+                >
+                  {this.categoryStates.interactive && (
+                    <component-palette
+                      components={interactiveComponents}
+                      showHeader={false}
+                      config={this.paletteConfig}
+                    />
+                  )}
+                </div>
               </div>
 
               {/* Media Category */}
               <div class="palette-category">
                 <div
                   class="category-header"
+                  role="button"
+                  tabindex={0}
+                  aria-expanded={this.categoryStates.media ? "true" : "false"}
+                  aria-controls="media-palette-panel"
+                  aria-label="Media components category"
                   onClick={() => this.toggleCategory("media")}
+                  onKeyDown={(e) => this.handleCategoryKeyDown(e, "media")}
                 >
-                  <span class="category-icon">
+                  <span class="category-icon" aria-hidden="true">
                     {this.categoryStates.media ? "▼" : "▶"}
                   </span>
                   <span class="category-name">Media</span>
                 </div>
-                {this.categoryStates.media && (
-                  <component-palette
-                    components={mediaComponents}
-                    showHeader={false}
-                    config={this.paletteConfig}
+                <div
+                  id="media-palette-panel"
+                  role="region"
+                  aria-labelledby="media-category-header"
+                >
+                  {this.categoryStates.media && (
+                    <component-palette
+                      components={mediaComponents}
+                      showHeader={false}
+                      config={this.paletteConfig}
+                    />
+                  )}
+                </div>
+              </div>
+
+              {/* Layer Panel - shows z-index stacking order */}
+              <div class="palette-section">
+                <div class="palette-section-header">
+                  <h3 class="palette-section-title">Layers</h3>
+                </div>
+                <div class="layer-panel-container">
+                  <layer-panel
+                    api={this.api}
+                    canvasMetadata={mergedCanvasMetadata}
                   />
-                )}
+                </div>
               </div>
             </div>
           )}
@@ -1368,10 +1536,7 @@ export class BlogApp {
               <grid-builder
                 key="builder"
                 components={blogComponentDefinitions}
-                config={{
-                  enableAnimations: true,
-                  animationDuration: 100,
-                }}
+                config={this.gridConfig}
                 initialState={this.initialState}
                 canvasMetadata={mergedCanvasMetadata}
                 onBeforeDelete={this.handleBeforeDelete}

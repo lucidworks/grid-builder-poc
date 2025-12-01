@@ -7,11 +7,12 @@
 
 ## Properties
 
-| Property  | Attribute | Description | Type     | Default                       |
-| --------- | --------- | ----------- | -------- | ----------------------------- |
-| `author`  | `author`  |             | `string` | `undefined`                   |
-| `content` | `content` |             | `string` | `"Article content goes here"` |
-| `date`    | `date`    |             | `string` | `undefined`                   |
+| Property          | Attribute          | Description | Type     | Default                       |
+| ----------------- | ------------------ | ----------- | -------- | ----------------------------- |
+| `author`          | `author`           |             | `string` | `undefined`                   |
+| `backgroundColor` | `background-color` |             | `string` | `"#fff9c4"`                   |
+| `content`         | `content`          |             | `string` | `"Article content goes here"` |
+| `date`            | `date`             |             | `string` | `undefined`                   |
 
 
 ## Dependencies

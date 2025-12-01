@@ -706,6 +706,10 @@ export namespace Components {
     }
     interface LayerPanel {
         /**
+          * Grid Builder API instance (Phase 4: Instance-based architecture)  **Required**: Must be provided or component won't display items **Source**: Host app (blog-app) passes this via prop **Purpose**: Access instance-based state instead of singleton  **Why needed**: With Phase 4 instance-based architecture, grid-builder uses its own state instance. The layer panel must access that same instance, not the singleton, to display items correctly.  **Migration from singleton**: - Before: `import { gridState } from '../../services/state-manager'` - After: `this.api.getState().canvases`
+         */
+        "api"?: any;
+        /**
           * Canvas metadata for folder titles Map of canvasId → { title: string }
           * @default {}
          */
@@ -1249,6 +1253,7 @@ declare global {
     interface HTMLLayerPanelFolderHeaderElementEventMap {
         "toggleFolder": { canvasId: string };
         "activateCanvas": { canvasId: string };
+        "scrollToCanvas": { canvasId: string };
     }
     interface HTMLLayerPanelFolderHeaderElement extends Components.LayerPanelFolderHeader, HTMLStencilElement {
         addEventListener<K extends keyof HTMLLayerPanelFolderHeaderElementEventMap>(type: K, listener: (this: HTMLLayerPanelFolderHeaderElement, ev: LayerPanelFolderHeaderCustomEvent<HTMLLayerPanelFolderHeaderElementEventMap[K]>) => any, options?: boolean | AddEventListenerOptions): void;
@@ -2010,6 +2015,10 @@ declare namespace LocalJSX {
     }
     interface LayerPanel {
         /**
+          * Grid Builder API instance (Phase 4: Instance-based architecture)  **Required**: Must be provided or component won't display items **Source**: Host app (blog-app) passes this via prop **Purpose**: Access instance-based state instead of singleton  **Why needed**: With Phase 4 instance-based architecture, grid-builder uses its own state instance. The layer panel must access that same instance, not the singleton, to display items correctly.  **Migration from singleton**: - Before: `import { gridState } from '../../services/state-manager'` - After: `this.api.getState().canvases`
+         */
+        "api"?: any;
+        /**
           * Canvas metadata for folder titles Map of canvasId → { title: string }
           * @default {}
          */
@@ -2072,6 +2081,10 @@ declare namespace LocalJSX {
           * Emitted when user clicks the folder header to activate canvas
          */
         "onActivateCanvas"?: (event: LayerPanelFolderHeaderCustomEvent<{ canvasId: string }>) => void;
+        /**
+          * Emitted when user double-clicks the folder header to scroll canvas into view
+         */
+        "onScrollToCanvas"?: (event: LayerPanelFolderHeaderCustomEvent<{ canvasId: string }>) => void;
         /**
           * Emitted when user clicks the expand/collapse toggle
          */

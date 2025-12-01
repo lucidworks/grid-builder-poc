@@ -5,19 +5,12 @@
 <!-- Auto Generated Below -->
 
 
-## Overview
-
-Blog App Demo - Host Application for grid-builder Library
-==========================================================
-
-This component demonstrates how to build a complete page builder application
-using the
-
 ## Dependencies
 
 ### Depends on
 
 - [component-palette](../../../components/component-palette)
+- [layer-panel](../layer-panel)
 - [grid-viewer](../../../components/grid-viewer)
 - [grid-builder](../../../components/grid-builder)
 - [canvas-header](../canvas-header)
@@ -44,6 +37,7 @@ using the
 ```mermaid
 graph TD;
   blog-app --> component-palette
+  blog-app --> layer-panel
   blog-app --> grid-viewer
   blog-app --> grid-builder
   blog-app --> canvas-header
@@ -65,9 +59,10 @@ graph TD;
   blog-app --> dashboard-widget
   blog-app --> live-data-drag-clone
   blog-app --> live-data
+  layer-panel --> layer-panel-folder-header
+  layer-panel --> layer-panel-item
   grid-viewer --> canvas-section-viewer
   canvas-section-viewer --> grid-item-wrapper
-  grid-builder --> component-palette
   grid-builder --> canvas-section
   canvas-section --> grid-item-wrapper
   custom-config-panel --> custom-palette-item

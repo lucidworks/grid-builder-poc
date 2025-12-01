@@ -33,14 +33,8 @@
  * @module layer-panel
  */
 
-import { Component, h, State, Listen, Element, Prop } from "@stencil/core";
-import {
-  gridState,
-  onChange,
-  setItemZIndex,
-  moveItemToCanvas,
-  type GridItem,
-} from "../../../services/state-manager";
+import { Component, h, State, Listen, Element, Prop, Watch } from "@stencil/core";
+import { type GridItem } from "../../../services/state-manager";
 import { eventManager } from "../../../services/event-manager";
 
 /**
@@ -75,6 +69,23 @@ interface VirtualItem {
 })
 export class LayerPanel {
   @Element() hostElement: HTMLElement;
+
+  /**
+   * Grid Builder API instance (Phase 4: Instance-based architecture)
+   *
+   * **Required**: Must be provided or component won't display items
+   * **Source**: Host app (blog-app) passes this via prop
+   * **Purpose**: Access instance-based state instead of singleton
+   *
+   * **Why needed**: With Phase 4 instance-based architecture, grid-builder
+   * uses its own state instance. The layer panel must access that same
+   * instance, not the singleton, to display items correctly.
+   *
+   * **Migration from singleton**:
+   * - Before: `import { gridState } from '../../services/state-manager'`
+   * - After: `this.api.getState().canvases`
+   */
+  @Prop() api?: any;
 
   /**
    * Canvas metadata for folder titles
@@ -160,9 +171,54 @@ export class LayerPanel {
   } | null = null;
 
   /**
+   * Watch API prop for changes
+   *
+   * **Why needed**: Layer panel's componentDidLoad() runs before blog-app
+   * has retrieved and passed the API prop. We need to initialize when
+   * the API prop becomes available.
+   */
+  @Watch("api")
+  handleApiChange(newApi: any) {
+    console.log("🔧 Layer panel: API prop changed", { hasApi: !!newApi });
+
+    if (newApi) {
+      this.setupLayerPanel();
+    }
+  }
+
+  /**
    * Component did load - subscribe to events
    */
   componentDidLoad() {
+    console.log("🔧 Layer panel componentDidLoad called");
+    console.log("  API available:", !!this.api);
+
+    // If API is already available, initialize immediately
+    // Otherwise, @Watch("api") will initialize when API prop is set
+    if (this.api) {
+      this.setupLayerPanel();
+    } else {
+      console.warn("  ⚠️ API not yet available, waiting for prop...");
+    }
+  }
+
+  /**
+   * Setup layer panel (called when API becomes available)
+   */
+  private setupLayerPanel = () => {
+    console.log("🔧 setupLayerPanel called");
+
+    if (!this.api) {
+      console.warn("  ⚠️ No API - aborting");
+      return;
+    }
+
+    // Prevent double initialization
+    if (this.cleanupFunctions.length > 0) {
+      console.log("  ℹ️ Already initialized, skipping");
+      return;
+    }
+
     // Initialize folder expanded state
     // Default: active canvas expanded, others collapsed
     this.initializeFolderState();
@@ -170,42 +226,68 @@ export class LayerPanel {
     // Initial data load
     this.refreshItems();
 
-    // Subscribe to grid state changes
-    const unsubscribe = onChange("canvases", () => {
-      this.refreshItems();
-    });
-    this.cleanupFunctions.push(unsubscribe);
-
-    // Subscribe to z-index change events
-    const zIndexHandler = () => {
+    // Subscribe to API events for state changes
+    const refreshHandler = () => {
       this.refreshItems();
     };
-    eventManager.on("zIndexChanged", zIndexHandler);
-    this.cleanupFunctions.push(() =>
-      eventManager.off("zIndexChanged", zIndexHandler),
-    );
 
-    const zIndexBatchHandler = () => {
-      this.refreshItems();
+    // Listen to all events that modify items
+    this.api.on("componentAdded", refreshHandler);
+    this.api.on("componentDeleted", refreshHandler);
+    this.api.on("componentDragged", refreshHandler);
+    this.api.on("componentResized", refreshHandler);
+    this.api.on("componentsBatchAdded", refreshHandler);
+    this.api.on("componentsBatchDeleted", refreshHandler);
+    this.api.on("zIndexChanged", refreshHandler);
+    this.api.on("zIndexBatchChanged", refreshHandler);
+
+    // Store cleanup functions
+    this.cleanupFunctions.push(() => {
+      this.api.off("componentAdded", refreshHandler);
+      this.api.off("componentDeleted", refreshHandler);
+      this.api.off("componentDragged", refreshHandler);
+      this.api.off("componentResized", refreshHandler);
+      this.api.off("componentsBatchAdded", refreshHandler);
+      this.api.off("componentsBatchDeleted", refreshHandler);
+      this.api.off("zIndexChanged", refreshHandler);
+      this.api.off("zIndexBatchChanged", refreshHandler);
+    });
+
+    // Subscribe to selection/canvas changes for visual feedback
+    const visualUpdateHandler = () => {
+      // Force re-render to update visual feedback
+      this.allItems = [...this.allItems];
     };
-    eventManager.on("zIndexBatchChanged", zIndexBatchHandler);
-    this.cleanupFunctions.push(() =>
-      eventManager.off("zIndexBatchChanged", zIndexBatchHandler),
-    );
 
-    // Subscribe to active canvas changes
-    const unsubActiveCanvas = onChange("activeCanvasId", () => {
-      // Force re-render to update visual feedback
-      this.allItems = [...this.allItems];
-    });
-    this.cleanupFunctions.push(unsubActiveCanvas);
+    this.api.on("componentSelected", visualUpdateHandler);
+    this.api.on("canvasActivated", visualUpdateHandler);
 
-    // Subscribe to selection changes
-    const unsubSelection = onChange("selectedItemId", () => {
-      // Force re-render to update visual feedback
-      this.allItems = [...this.allItems];
+    this.cleanupFunctions.push(() => {
+      this.api.off("componentSelected", visualUpdateHandler);
+      this.api.off("canvasActivated", visualUpdateHandler);
     });
-    this.cleanupFunctions.push(unsubSelection);
+
+    // Subscribe to canvas activation to auto-expand the active section
+    const canvasActivationHandler = () => {
+      const state = this.api.getState();
+      const activeCanvasId = state.activeCanvasId;
+
+      if (activeCanvasId) {
+        console.log("📁 Canvas activated, expanding folder:", activeCanvasId);
+        // Update folder state to expand only the active canvas
+        const newFolderState: Record<string, boolean> = {};
+        Object.keys(state.canvases).forEach((canvasId) => {
+          newFolderState[canvasId] = canvasId === activeCanvasId;
+        });
+        this.folderExpandedState = newFolderState;
+      }
+    };
+
+    this.api.on("canvasActivated", canvasActivationHandler);
+
+    this.cleanupFunctions.push(() => {
+      this.api.off("canvasActivated", canvasActivationHandler);
+    });
 
     // Initialize virtual scrolling
     this.initializeVirtualScrolling();
@@ -216,13 +298,24 @@ export class LayerPanel {
    * Default: active canvas expanded, others collapsed
    */
   private initializeFolderState = () => {
-    const activeCanvasId = gridState.activeCanvasId;
+    console.log("📁 initializeFolderState called");
+
+    if (!this.api) {
+      console.warn("  ⚠️ No API - aborting");
+      return;
+    }
+
+    const state = this.api.getState();
+    const activeCanvasId = state.activeCanvasId;
+    console.log("  Active canvas:", activeCanvasId);
+
     const folderState: Record<string, boolean> = {};
 
-    Object.keys(gridState.canvases).forEach((canvasId) => {
+    Object.keys(state.canvases).forEach((canvasId) => {
       folderState[canvasId] = canvasId === activeCanvasId;
     });
 
+    console.log("  Folder state:", folderState);
     this.folderExpandedState = folderState;
   };
 
@@ -245,10 +338,22 @@ export class LayerPanel {
    * Top items (highest z-index) appear first in the list.
    */
   private refreshItems = () => {
+    console.log("🔄 refreshItems called");
+
+    if (!this.api) {
+      console.warn("  ⚠️ No API - aborting");
+      return;
+    }
+
+    const state = this.api.getState();
+    console.log("  State from API:", state);
+    console.log("  Canvases:", Object.keys(state.canvases || {}));
+
     const items: LayerItem[] = [];
 
     // Collect all items from all canvases
-    Object.entries(gridState.canvases).forEach(([canvasId, canvas]) => {
+    Object.entries(state.canvases).forEach(([canvasId, canvas]: [string, any]) => {
+      console.log(`  Canvas ${canvasId}: ${canvas.items?.length || 0} items`);
       canvas.items.forEach((item) => {
         items.push({
           ...item,
@@ -257,11 +362,16 @@ export class LayerPanel {
       });
     });
 
+    console.log(`  Total items collected: ${items.length}`);
+
     // Sort by z-index (descending - highest first)
     items.sort((a, b) => b.zIndex - a.zIndex);
 
     this.allItems = items;
+    console.log("  this.allItems set to:", this.allItems.length, "items");
+
     this.applySearchFilter();
+    console.log("  After filter:", this.filteredItems.length, "items");
   };
 
   /**
@@ -376,7 +486,14 @@ export class LayerPanel {
     const filteredItemsByCanvas = this.groupItemsByCanvas(this.filteredItems);
 
     // Build virtual items list (folders + items)
-    Object.keys(allItemsByCanvas).forEach((canvasId) => {
+    // Iterate in canvasMetadata order to match visual order on page
+    const canvasOrder = this.canvasMetadata
+      ? Object.keys(this.canvasMetadata)
+      : Object.keys(allItemsByCanvas);
+
+    canvasOrder.forEach((canvasId) => {
+      // Skip canvases that don't exist in state (e.g., removed canvases)
+      if (!allItemsByCanvas[canvasId]) return;
       const allCanvasItems = allItemsByCanvas[canvasId] || [];
       const filteredCanvasItems = filteredItemsByCanvas[canvasId] || [];
       const isExpanded = this.folderExpandedState[canvasId] ?? true;
@@ -479,12 +596,15 @@ export class LayerPanel {
   handleLayerItemSelect(
     event: CustomEvent<{ itemId: string; canvasId: string }>,
   ) {
+    if (!this.api) return;
+
     const { itemId, canvasId } = event.detail;
 
-    // Update grid state
-    gridState.selectedItemId = itemId;
-    gridState.selectedCanvasId = canvasId;
-    gridState.activeCanvasId = canvasId;
+    // Update grid state via API
+    const state = this.api.getState();
+    state.selectedItemId = itemId;
+    state.selectedCanvasId = canvasId;
+    state.activeCanvasId = canvasId;
   }
 
   /**
@@ -500,7 +620,32 @@ export class LayerPanel {
    */
   @Listen("activateCanvas")
   handleActivateCanvas(event: CustomEvent<{ canvasId: string }>) {
-    gridState.activeCanvasId = event.detail.canvasId;
+    if (!this.api) return;
+
+    const state = this.api.getState();
+    state.activeCanvasId = event.detail.canvasId;
+  }
+
+  /**
+   * Handle scroll to canvas (double-click on folder header)
+   */
+  @Listen("scrollToCanvas")
+  handleScrollToCanvas(event: CustomEvent<{ canvasId: string }>) {
+    const { canvasId } = event.detail;
+    console.log("📜 Scrolling to canvas:", canvasId);
+
+    // Find the canvas element in the DOM
+    const canvasElement = document.getElementById(canvasId);
+    if (canvasElement) {
+      canvasElement.scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+        inline: "nearest",
+      });
+      console.log("  ✅ Scrolled to canvas element");
+    } else {
+      console.warn("  ⚠️ Canvas element not found:", canvasId);
+    }
   }
 
   /**
@@ -537,8 +682,9 @@ export class LayerPanel {
       dropAbove: boolean;
     }>,
   ) {
-    if (!this.draggedItem) return;
+    if (!this.draggedItem || !this.api) return;
 
+    const state = this.api.getState();
     const { targetItemId, targetCanvasId, targetZIndex, dropAbove } =
       event.detail;
     const {
@@ -555,11 +701,24 @@ export class LayerPanel {
 
     // Handle cross-canvas movement
     if (draggedCanvasId !== targetCanvasId) {
-      // Move item to new canvas
-      moveItemToCanvas(draggedCanvasId, targetCanvasId, draggedItemId);
+      // Move item to new canvas - direct state manipulation
+      const sourceCanvas = state.canvases[draggedCanvasId];
+      const targetCanvas = state.canvases[targetCanvasId];
+
+      if (!sourceCanvas || !targetCanvas) return;
+
+      const itemIndex = sourceCanvas.items.findIndex(i => i.id === draggedItemId);
+      if (itemIndex === -1) return;
+
+      const item = sourceCanvas.items[itemIndex];
+
+      // Remove from source canvas
+      sourceCanvas.items = sourceCanvas.items.filter(i => i.id !== draggedItemId);
+
+      // Add to target canvas
+      targetCanvas.items = [...targetCanvas.items, { ...item, canvasId: targetCanvasId }];
 
       // Get all items in target canvas sorted by z-index
-      const targetCanvas = gridState.canvases[targetCanvasId];
       const sortedItems = [...targetCanvas.items].sort(
         (a, b) => a.zIndex - b.zIndex,
       );
@@ -595,11 +754,17 @@ export class LayerPanel {
         }
       }
 
-      // Set new z-index for dragged item
-      setItemZIndex(targetCanvasId, draggedItemId, newZIndex);
+      // Set new z-index for dragged item - direct state manipulation
+      const draggedItem = targetCanvas.items.find(i => i.id === draggedItemId);
+      if (draggedItem) {
+        draggedItem.zIndex = newZIndex;
+      }
+
+      // Trigger reactivity
+      state.canvases = { ...state.canvases };
     } else {
       // Same canvas reordering
-      const canvas = gridState.canvases[draggedCanvasId];
+      const canvas = state.canvases[draggedCanvasId];
       const sortedItems = [...canvas.items].sort((a, b) => a.zIndex - b.zIndex);
 
       // Find indices
@@ -653,8 +818,14 @@ export class LayerPanel {
         }
       }
 
-      // Set new z-index
-      setItemZIndex(draggedCanvasId, draggedItemId, newZIndex);
+      // Set new z-index - direct state manipulation
+      const draggedItem = canvas.items.find(i => i.id === draggedItemId);
+      if (draggedItem) {
+        draggedItem.zIndex = newZIndex;
+      }
+
+      // Trigger reactivity
+      state.canvases = { ...state.canvases };
     }
 
     // Trigger re-render
@@ -668,7 +839,7 @@ export class LayerPanel {
       canvasId: targetCanvasId,
       itemId: draggedItemId,
       oldZIndex: draggedZIndex,
-      newZIndex: gridState.canvases[targetCanvasId]?.items.find(
+      newZIndex: state.canvases[targetCanvasId]?.items.find(
         (i) => i.id === draggedItemId,
       )?.zIndex,
     });
@@ -676,6 +847,12 @@ export class LayerPanel {
 
   render() {
     const { visibleItems, totalHeight } = this.calculateVirtualScrolling();
+
+    // Get state for selection/active canvas checks
+    const state = this.api?.getState();
+    const activeCanvasId = state?.activeCanvasId;
+    const selectedItemId = state?.selectedItemId;
+    const selectedCanvasId = state?.selectedCanvasId;
 
     return (
       <div class="layer-panel">
@@ -728,7 +905,7 @@ export class LayerPanel {
                     isExpanded={
                       this.folderExpandedState[folderData.canvasId] ?? true
                     }
-                    isActive={folderData.canvasId === gridState.activeCanvasId}
+                    isActive={folderData.canvasId === activeCanvasId}
                     isEmpty={folderData.isEmpty}
                     style={{
                       position: "absolute",
@@ -752,8 +929,8 @@ export class LayerPanel {
                     type={item.type}
                     zIndex={item.zIndex}
                     isActive={
-                      item.id === gridState.selectedItemId &&
-                      item.canvasId === gridState.selectedCanvasId
+                      item.id === selectedItemId &&
+                      item.canvasId === selectedCanvasId
                     }
                     style={{
                       position: "absolute",

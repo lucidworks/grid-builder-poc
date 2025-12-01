@@ -1,11 +1,17 @@
 blog-article {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 8px;
+  overflow: hidden;
+  box-sizing: border-box; // CRITICAL: Include padding in dimensions
+
   .blog-article-content {
     display: flex;
     width: 100%;
     height: 100%;
     flex-direction: column;
     padding: min(5%, 12px); // Container-relative padding
-    overflow: hidden; // Prevent overall overflow
     box-sizing: border-box;
 
     .article-text {
