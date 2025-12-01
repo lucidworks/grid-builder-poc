@@ -234,6 +234,10 @@ export namespace Components {
          */
         "items": GridItem[];
         /**
+          * State instance (viewer state with editing fields set to null)  **Optional**: Provided by grid-viewer to eliminate defensive guards in grid-item-wrapper **Purpose**: Provide minimal state object matching StateManager structure **Value**: ViewerState with selectedItemId/selectedCanvasId/activeCanvasId always null
+         */
+        "stateInstance"?: any;
+        /**
           * Virtual renderer service instance (Phase 4)  **Optional**: Provided by grid-viewer if virtual rendering enabled **Purpose**: Lazy loading of grid items for better performance
          */
         "virtualRendererInstance"?: VirtualRendererService;
@@ -1602,6 +1606,10 @@ declare namespace LocalJSX {
           * Items to render in this canvas  **Required**: Array of GridItem objects **Source**: Passed from grid-viewer component  **Unlike canvas-section**: Items passed via props, not from global state
          */
         "items": GridItem[];
+        /**
+          * State instance (viewer state with editing fields set to null)  **Optional**: Provided by grid-viewer to eliminate defensive guards in grid-item-wrapper **Purpose**: Provide minimal state object matching StateManager structure **Value**: ViewerState with selectedItemId/selectedCanvasId/activeCanvasId always null
+         */
+        "stateInstance"?: any;
         /**
           * Virtual renderer service instance (Phase 4)  **Optional**: Provided by grid-viewer if virtual rendering enabled **Purpose**: Lazy loading of grid items for better performance
          */
