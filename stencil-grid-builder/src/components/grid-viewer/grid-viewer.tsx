@@ -231,10 +231,15 @@ export class GridViewer {
       debug.warn("GridViewer: Duplicate component types detected");
     }
 
-    // Initialize local viewer state store
+    // Initialize local viewer state store with editing-only fields set to null
+    // This allows grid-item-wrapper to access these fields without defensive guards
+    // while maintaining viewer mode as display-only (no actual selection/editing)
     const initialViewerState: ViewerState = {
       canvases: {},
       currentViewport: "desktop",
+      selectedItemId: null, // Always null in viewer mode (no selection)
+      selectedCanvasId: null, // Always null in viewer mode (no selection)
+      activeCanvasId: null, // Always null in viewer mode (no active canvas)
     };
 
     // Restore initial state if provided
@@ -439,6 +444,7 @@ export class GridViewer {
                     this.canvasMetadata?.[canvasId]?.backgroundColor
                   }
                   virtualRendererInstance={this.virtualRendererInstance}
+                  stateInstance={this.viewerState.state}
                 />
               ))}
             </div>
