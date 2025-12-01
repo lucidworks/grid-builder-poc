@@ -206,28 +206,3 @@ export class DOMCache {
   }
 }
 
-/**
- * Global DOMCache Instance
- * =========================
- *
- * Global singleton instance for backward compatibility and utility usage.
- *
- * **Why keep this**:
- * - DOMCache is stateful but globally shareable (element IDs are globally unique)
- * - Utilities (drag-handler, resize-handler, grid-calculations) can use global instance
- * - Test files can mock or create instances as needed
- * - Grid-builder instances can still create their own if needed for isolation
- *
- * **Hybrid approach**:
- * - Grid-builder creates instance and passes to components (Phase 2)
- * - Components accept instance props with fallback (Phase 3)
- * - Utilities use global singleton (simpler, no need to thread through)
- * - Multiple grid-builder instances still work correctly (isolated state in other services)
- *
- * **Usage**:
- * ```typescript
- * import { domCache } from './dom-cache';
- * const canvas = domCache.getCanvas('canvas1');
- * ```
- */
-export const domCache = new DOMCache();
