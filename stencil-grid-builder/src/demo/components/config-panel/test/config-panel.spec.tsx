@@ -10,7 +10,8 @@
 
 import { h } from "@stencil/core";
 import { ConfigPanel } from "../config-panel";
-import { eventManager } from "../../../../services/event-manager";
+import { EventManager } from "../../../../services/event-manager";
+import { GridBuilderAPI } from "../../../../services/grid-builder-api";
 import {
   gridState,
   reset as resetState,
@@ -38,10 +39,14 @@ const mockComponentDefinitions = [
 ];
 
 describe("config-panel", () => {
+  let mockEventManager: EventManager;
+  let mockAPI: GridBuilderAPI;
+
   beforeEach(() => {
     resetState();
-    // Clear any existing event listeners
-    eventManager["listeners"] = new Map();
+    // Create new EventManager and API instances for each test
+    mockEventManager = new EventManager();
+    mockAPI = new GridBuilderAPI(mockEventManager);
   });
 
   describe("Component Instantiation", () => {
@@ -70,36 +75,40 @@ describe("config-panel", () => {
       expect(typeof component.disconnectedCallback).toBe("function");
     });
 
-    it("should subscribe to componentDeleted event on componentDidLoad", () => {
+    it("should subscribe to itemRemoved event on componentDidLoad", () => {
       const component = new ConfigPanel();
       const registry = new Map(
         mockComponentDefinitions.map((def) => [def.type, def]),
       );
       component.componentRegistry = registry;
+      component.api = mockAPI;
 
       component.componentDidLoad();
 
-      // Verify subscription exists
-      expect(eventManager["listeners"].get("componentDeleted")).toBeDefined();
-      expect(eventManager["listeners"].get("componentDeleted")?.size).toBe(1);
+      // Verify subscription exists (check the API's eventEmitter)
+      const eventEmitter = mockAPI["eventEmitter"];
+      expect(eventEmitter["listeners"].get("itemRemoved")).toBeDefined();
+      expect(eventEmitter["listeners"].get("itemRemoved")?.size).toBe(1);
 
       // Cleanup
       component.disconnectedCallback();
     });
 
-    it("should unsubscribe from componentDeleted event on disconnectedCallback", () => {
+    it("should unsubscribe from itemRemoved event on disconnectedCallback", () => {
       const component = new ConfigPanel();
       const registry = new Map(
         mockComponentDefinitions.map((def) => [def.type, def]),
       );
       component.componentRegistry = registry;
+      component.api = mockAPI;
 
       component.componentDidLoad();
-      expect(eventManager["listeners"].get("componentDeleted")?.size).toBe(1);
+      const eventEmitter = mockAPI["eventEmitter"];
+      expect(eventEmitter["listeners"].get("itemRemoved")?.size).toBe(1);
 
       component.disconnectedCallback();
-      // After unsubscribing the last listener, EventManager removes the key from the Map
-      expect(eventManager["listeners"].get("componentDeleted")).toBeUndefined();
+      // After unsubscribing, the listener set should be empty (EventEmitter keeps empty Sets)
+      expect(eventEmitter["listeners"].get("itemRemoved")?.size).toBe(0);
     });
   });
 
@@ -110,11 +119,12 @@ describe("config-panel", () => {
         mockComponentDefinitions.map((def) => [def.type, def]),
       );
       component.componentRegistry = registry;
+      component.api = mockAPI;
 
       // Initialize lifecycle
       component.componentDidLoad();
 
-      // Create canvas1 before adding items (Phase 3: canvases start empty)
+      // Create canvas1 before adding items (canvases start empty)
       gridState.canvases.canvas1 = { items: [], zIndexCounter: 0 };
 
       // Add a test item to state
@@ -146,8 +156,8 @@ describe("config-panel", () => {
 
       expect(component.isOpen).toBe(true);
 
-      // Emit componentDeleted event for item-1
-      eventManager.emit("componentDeleted", {
+      // Emit itemRemoved event for item-1 through API
+      mockAPI["eventEmitter"].emit("itemRemoved", {
         itemId: "item-1",
         canvasId: "canvas1",
       });
@@ -167,11 +177,12 @@ describe("config-panel", () => {
         mockComponentDefinitions.map((def) => [def.type, def]),
       );
       component.componentRegistry = registry;
+      component.api = mockAPI;
 
       // Initialize lifecycle
       component.componentDidLoad();
 
-      // Create canvas1 before adding items (Phase 3: canvases start empty)
+      // Create canvas1 before adding items (canvases start empty)
       gridState.canvases.canvas1 = { items: [], zIndexCounter: 0 };
 
       // Add test items to state
@@ -221,8 +232,8 @@ describe("config-panel", () => {
 
       expect(component.isOpen).toBe(true);
 
-      // Emit componentDeleted event for item-2 (different item)
-      eventManager.emit("componentDeleted", {
+      // Emit itemRemoved event for item-2 (different item) through API
+      mockAPI["eventEmitter"].emit("itemRemoved", {
         itemId: "item-2",
         canvasId: "canvas1",
       });
@@ -236,12 +247,13 @@ describe("config-panel", () => {
       component.disconnectedCallback();
     });
 
-    it("should NOT crash when componentDeleted is emitted but panel is closed", () => {
+    it("should NOT crash when itemRemoved is emitted but panel is closed", () => {
       const component = new ConfigPanel();
       const registry = new Map(
         mockComponentDefinitions.map((def) => [def.type, def]),
       );
       component.componentRegistry = registry;
+      component.api = mockAPI;
 
       // Initialize lifecycle
       component.componentDidLoad();
@@ -249,9 +261,9 @@ describe("config-panel", () => {
       // Panel is closed (default state)
       expect(component.isOpen).toBe(false);
 
-      // Emit componentDeleted event - should not crash
+      // Emit itemRemoved event through API - should not crash
       expect(() => {
-        eventManager.emit("componentDeleted", {
+        mockAPI["eventEmitter"].emit("itemRemoved", {
           itemId: "item-1",
           canvasId: "canvas1",
         });
@@ -264,12 +276,13 @@ describe("config-panel", () => {
       component.disconnectedCallback();
     });
 
-    it("should NOT crash when componentDeleted is emitted but no item is selected", () => {
+    it("should NOT crash when itemRemoved is emitted but no item is selected", () => {
       const component = new ConfigPanel();
       const registry = new Map(
         mockComponentDefinitions.map((def) => [def.type, def]),
       );
       component.componentRegistry = registry;
+      component.api = mockAPI;
 
       // Initialize lifecycle
       component.componentDidLoad();
@@ -279,9 +292,9 @@ describe("config-panel", () => {
       component.selectedItemId = null;
       component.selectedCanvasId = null;
 
-      // Emit componentDeleted event - should not crash
+      // Emit itemRemoved event through API - should not crash
       expect(() => {
-        eventManager.emit("componentDeleted", {
+        mockAPI["eventEmitter"].emit("itemRemoved", {
           itemId: "item-1",
           canvasId: "canvas1",
         });
@@ -303,11 +316,12 @@ describe("config-panel", () => {
         mockComponentDefinitions.map((def) => [def.type, def]),
       );
       component.componentRegistry = registry;
+      component.api = mockAPI;
 
       // Initialize lifecycle
       component.componentDidLoad();
 
-      // Create canvas1 before adding items (Phase 3: canvases start empty)
+      // Create canvas1 before adding items (canvases start empty)
       gridState.canvases.canvas1 = { items: [], zIndexCounter: 0 };
 
       // Add test item to state
@@ -344,8 +358,8 @@ describe("config-panel", () => {
       expect(component.isOpen).toBe(true);
       expect(component.selectedItemId).toBe("test-item");
 
-      // Step 3: Delete the item (simulate deletion flow)
-      eventManager.emit("componentDeleted", {
+      // Step 3: Delete the item (simulate deletion flow) through API
+      mockAPI["eventEmitter"].emit("itemRemoved", {
         itemId: "test-item",
         canvasId: "canvas1",
       });
