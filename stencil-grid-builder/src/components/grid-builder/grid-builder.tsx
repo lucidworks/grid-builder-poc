@@ -623,7 +623,7 @@ export class GridBuilder {
         return;
       }
       canvasId = canvasIds[0];
-      this.stateManager!.setActiveCanvas(canvasId);
+      this.api?.setActiveCanvas(canvasId);
       debug.log(`  🎯 Auto-selected first canvas: ${canvasId}`);
     }
 
@@ -694,7 +694,7 @@ export class GridBuilder {
     }
 
     // Activate the canvas where the component was dropped
-    this.stateManager!.setActiveCanvas(canvasId);
+    this.api?.setActiveCanvas(canvasId);
     debug.log(`  🎯 Activated canvas: ${canvasId}`);
 
     // Animate component in (after DOM update completes)
@@ -921,8 +921,7 @@ export class GridBuilder {
       debug.log("  Created item:", newItem);
 
       // Set the target canvas as active when item is dropped
-      this.stateManager!.state.activeCanvasId = canvasId;
-      this.eventManagerInstance?.emit("canvasActivated", { canvasId });
+      this.api?.setActiveCanvas(canvasId);
     };
 
     this.hostElement.addEventListener("canvas-drop", this.canvasDropHandler);
@@ -1004,7 +1003,7 @@ export class GridBuilder {
       this.stateManager!.state.canvases = { ...this.stateManager!.state.canvases }; // Trigger reactivity
 
       // 9. Set target canvas as active
-      this.stateManager!.state.activeCanvasId = targetCanvasId;
+      this.api?.setActiveCanvas(targetCanvasId);
 
       // 10. Update selection state if item was selected
       if (this.stateManager!.state.selectedItemId === itemId) {
@@ -1031,8 +1030,6 @@ export class GridBuilder {
         targetCanvasId,
         position: targetPosition,
       });
-
-      this.eventManagerInstance?.emit("canvasActivated", { canvasId: targetCanvasId });
 
       debug.log("✅ Cross-canvas move completed:", {
         itemId,
