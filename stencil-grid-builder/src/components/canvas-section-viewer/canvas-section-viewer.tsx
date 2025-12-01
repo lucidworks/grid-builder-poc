@@ -45,7 +45,7 @@ import { Component, h, Prop, State, Watch } from "@stencil/core";
 // Internal imports - no interact.js
 import { GridItem } from "../../services/state-manager";
 import {
-  clearGridSizeCache,
+  setGridSizeCache,
   gridToPixelsY,
 } from "../../utils/grid-calculations";
 import { calculateCanvasHeightFromItems } from "../../utils/canvas-height-calculator";
@@ -236,20 +236,26 @@ export class CanvasSectionViewer {
   };
 
   /**
-   * Setup ResizeObserver for grid cache invalidation
+   * Setup ResizeObserver for grid cache pre-population
    *
-   * **Purpose**: Detect container size changes and force grid recalculation
+   * **Purpose**: Detect container size changes and pre-populate cache before re-render
+   *
+   * **Critical Implementation Detail**:
+   * Instead of clearing cache and triggering re-render (which causes clientWidth=0 during
+   * DOM transient state), we PRE-POPULATE the cache with the correct value from ResizeObserver,
+   * THEN trigger re-render. This ensures grid calculations never read stale/zero values.
    *
    * **Observer callback**:
-   * 1. Clear grid size cache (grid-calculations.ts)
-   * 2. Increment renderVersion (triggers item re-renders)
+   * 1. Get width from entry.contentRect.width (reliable during re-render)
+   * 2. Pre-calculate and cache correct grid size using setGridSizeCache()
    * 3. Recalculate canvas height
+   * 4. Increment renderVersion (triggers item re-renders with cached correct value)
    *
-   * **Why needed**:
-   * - Grid calculations cached for performance
-   * - Cache based on container width (responsive 2% units)
-   * - Container resize invalidates cache
-   * - Items need to recalculate positions with new dimensions
+   * **Why this approach**:
+   * - ResizeObserver provides accurate width via entry.contentRect
+   * - Pre-populating cache bypasses DOM reads during re-render
+   * - Prevents reading clientWidth=0 during StencilJS transient DOM state
+   * - Grid calculations hit cache instead of reading DOM
    */
   private setupResizeObserver = () => {
     if (!this.gridContainerRef || this.resizeObserver) {
@@ -257,15 +263,28 @@ export class CanvasSectionViewer {
     }
 
     // Watch for canvas container size changes
-    this.resizeObserver = new ResizeObserver(() => {
-      // Clear grid size cache when container resizes
-      clearGridSizeCache();
+    this.resizeObserver = new ResizeObserver((entries) => {
+      // Use requestAnimationFrame to ensure layout is complete before recalculating
+      // This prevents reading containerWidth=0 during StencilJS re-render cycle
+      requestAnimationFrame(() => {
+        for (const entry of entries) {
+          const width = entry.contentRect.width;
 
-      // Recalculate canvas height
-      this.updateCanvasHeight();
+          // Only proceed if container is laid out (width > 100px)
+          if (width > 100) {
+            // Pre-populate cache with correct value BEFORE triggering re-render
+            // This ensures grid calculations never read clientWidth=0 during re-render
+            setGridSizeCache(this.canvasId, width, this.config);
 
-      // Force re-render to update item positions
-      this.renderVersion++;
+            // Recalculate canvas height
+            this.updateCanvasHeight();
+
+            // Force re-render to update item positions
+            // Grid calculations will now use the cached correct value
+            this.renderVersion++;
+          }
+        }
+      });
     });
 
     this.resizeObserver.observe(this.gridContainerRef);

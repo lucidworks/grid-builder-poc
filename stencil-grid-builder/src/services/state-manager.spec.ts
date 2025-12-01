@@ -20,10 +20,18 @@ describe("state-manager", () => {
   beforeEach(() => {
     // Reset state before each test
     reset();
+
+    // Create test canvases (library now starts empty in Phase 2)
+    gridState.canvases = {
+      canvas1: { items: [], zIndexCounter: 0 },
+      canvas2: { items: [], zIndexCounter: 0 },
+      canvas3: { items: [], zIndexCounter: 0 },
+    };
   });
 
   describe("Initial State", () => {
-    it("should have three canvases", () => {
+    it("should start with empty canvases after reset", () => {
+      // After reset and setup, we should have 3 empty canvases
       expect(Object.keys(gridState.canvases)).toHaveLength(3);
       expect(gridState.canvases.canvas1).toBeDefined();
       expect(gridState.canvases.canvas2).toBeDefined();
@@ -47,7 +55,7 @@ describe("state-manager", () => {
       expect(gridState.activeCanvasId).toBeNull();
     });
 
-    it("should have empty canvases (library starts empty)", () => {
+    it("should have empty items arrays (library starts empty)", () => {
       expect(gridState.canvases.canvas1.items).toHaveLength(0); // Library starts empty
       expect(gridState.canvases.canvas2.items).toHaveLength(0);
       expect(gridState.canvases.canvas3.items).toHaveLength(0);

@@ -699,10 +699,13 @@ export class ComponentPalette {
               height: 6,
             };
 
-            // Get first available canvas ID from gridState for size calculation
-            const gridState = (window as any).gridState;
-            const canvasIds = gridState?.canvases
-              ? Object.keys(gridState.canvases)
+            // Get first available canvas ID from grid-builder API instance for size calculation
+            // Use targetGridBuilderId to access the correct instance (supports multiple grid-builders)
+            const apiKey = this.targetGridBuilderId || 'gridBuilderAPI';
+            const api = (window as any)[apiKey];
+            const state = api?.getState?.();
+            const canvasIds = state?.canvases
+              ? Object.keys(state.canvases)
               : [];
             const canvasId = canvasIds.length > 0 ? canvasIds[0] : null;
 
@@ -713,7 +716,7 @@ export class ComponentPalette {
             if (canvasId) {
               // Use actual canvas for accurate sizing
               widthPx = gridToPixelsX(defaultSize.width, canvasId, this.config);
-              heightPx = gridToPixelsY(defaultSize.height);
+              heightPx = gridToPixelsY(defaultSize.height, this.config);
             } else {
               // Fallback: estimate size based on default grid settings (2% of 1000px = 20px per unit)
               const estimatedGridSize = 20; // Approximate default grid size

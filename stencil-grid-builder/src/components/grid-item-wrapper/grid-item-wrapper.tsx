@@ -122,6 +122,22 @@ export class GridItemWrapper {
   @Prop() onBeforeDelete?: (context: any) => boolean | Promise<boolean>;
 
   /**
+   * Theme configuration (from parent grid-builder)
+   *
+   * **Source**: grid-builder → canvas-section → grid-item-wrapper
+   * **Purpose**: Access theme.selectionColor for component selection styling
+   *
+   * **Fallback chain for selection color**:
+   * 1. ComponentDefinition.selectionColor (per-component override)
+   * 2. theme.selectionColor (global theme default)
+   * 3. "#f59e0b" (hardcoded fallback - amber/gold)
+   *
+   * **Why passed**: grid-item-wrapper doesn't have access to global theme,
+   * so must be passed through component tree
+   */
+  @Prop() theme?: any;
+
+  /**
    * Viewer mode flag
    *
    * **Purpose**: Disable editing features for rendering-only mode
@@ -286,8 +302,9 @@ export class GridItemWrapper {
    * Update component state (selection and snapshot)
    */
   private updateComponentState() {
-    // Update selection state
-    this.isSelected = gridState.selectedItemId === this.item.id;
+    // Update selection state (use instance state if available, fall back to global)
+    const selectedItemId = this.stateInstance?.selectedItemId || gridState.selectedItemId;
+    this.isSelected = selectedItemId === this.item.id;
 
     // Capture item snapshot for undo/redo
     this.captureItemSnapshot();
@@ -593,7 +610,8 @@ export class GridItemWrapper {
   @Listen("item-bring-to-front")
   handleItemBringToFrontEvent(event: CustomEvent) {
     event.stopPropagation();
-    const canvas = gridState.canvases[this.item.canvasId];
+    const canvases = this.stateInstance?.canvases || gridState.canvases;
+    const canvas = canvases[this.item.canvasId];
     if (!canvas) return;
 
     const maxZ = Math.max(...canvas.items.map((i) => i.zIndex));
@@ -606,7 +624,8 @@ export class GridItemWrapper {
   @Listen("item-send-to-back")
   handleItemSendToBackEvent(event: CustomEvent) {
     event.stopPropagation();
-    const canvas = gridState.canvases[this.item.canvasId];
+    const canvases = this.stateInstance?.canvases || gridState.canvases;
+    const canvas = canvases[this.item.canvasId];
     if (!canvas) return;
 
     const minZ = Math.min(...canvas.items.map((i) => i.zIndex));
@@ -757,10 +776,10 @@ export class GridItemWrapper {
     const itemIdForDelete = this.item.id;
     const canvasIdForDelete = this.item.canvasId;
 
-    // Use prop-based viewport in viewer mode, global state in builder mode
+    // Use prop-based viewport in viewer mode, instance or global state in builder mode
     const currentViewport = this.viewerMode
       ? this.currentViewport || "desktop"
-      : gridState.currentViewport;
+      : (this.stateInstance?.currentViewport || gridState.currentViewport);
 
     const layout = this.item.layouts[currentViewport];
 
@@ -769,10 +788,11 @@ export class GridItemWrapper {
     if (currentViewport === "mobile" && !this.item.layouts.mobile.customized) {
       // Auto-layout for mobile: stack components vertically at full width
 
-      // Use prop-based items in viewer mode, global state in builder mode
+      // Use prop-based items in viewer mode, instance or global state in builder mode
+      const canvases = this.stateInstance?.canvases || gridState.canvases;
       const canvasItems = this.viewerMode
         ? this.canvasItems || []
-        : gridState.canvases[this.item.canvasId]?.items || [];
+        : canvases[this.item.canvasId]?.items || [];
 
       const itemIndex =
         canvasItems.findIndex((i) => i.id === this.item.id) ?? 0;
@@ -794,9 +814,11 @@ export class GridItemWrapper {
       };
     }
 
-    // Compute selection directly from gridState (only in editing mode)
+    // Compute selection directly from state (only in editing mode)
+    // Use instance state if available, fall back to global state
+    const selectedItemId = this.stateInstance?.selectedItemId || gridState.selectedItemId;
     const isSelected =
-      !this.viewerMode && gridState.selectedItemId === this.item.id;
+      !this.viewerMode && selectedItemId === this.item.id;
 
     const itemClasses = {
       "grid-item": true,
@@ -810,19 +832,26 @@ export class GridItemWrapper {
       this.item.canvasId,
       this.config,
     );
-    const yPixels = gridToPixelsY(actualLayout.y);
+    const yPixels = gridToPixelsY(actualLayout.y, this.config);
     const widthPixels = gridToPixelsX(
       actualLayout.width,
       this.item.canvasId,
       this.config,
     );
-    const heightPixels = gridToPixelsY(actualLayout.height);
+    const heightPixels = gridToPixelsY(actualLayout.height, this.config);
 
     // Get component definition for icon, name, and selection color
     const definition = this.componentRegistry?.get(this.item.type);
     const icon = definition?.icon || "�";
     const displayName = this.item.name || definition?.name || this.item.type;
-    const selectionColor = definition?.selectionColor || "#f59e0b"; // Default yellow/gold
+    // Selection color fallback chain:
+    // 1. Component-specific override (ComponentDefinition.selectionColor)
+    // 2. Theme default (theme.selectionColor)
+    // 3. Hardcoded fallback (amber/gold)
+    const selectionColor =
+      definition?.selectionColor ||
+      this.theme?.selectionColor ||
+      "#f59e0b";
 
     // Get backgroundColor from config, or fall back to configSchema default
     const backgroundColorField = definition?.configSchema?.find(
@@ -1066,8 +1095,9 @@ export class GridItemWrapper {
       isResize = sizeChanged;
 
       if (isDrag || isResize) {
-        // Find source canvas and index
-        const sourceCanvas = gridState.canvases[snapshot.canvasId];
+        // Find source canvas and index (use instance state if available)
+        const canvases = this.stateInstance?.canvases || gridState.canvases;
+        const sourceCanvas = canvases[snapshot.canvasId];
         const sourceIndex =
           sourceCanvas?.items.findIndex((i) => i.id === this.item.id) || 0;
 
@@ -1077,7 +1107,7 @@ export class GridItemWrapper {
 
         // If moving to different canvas, assign new z-index from target canvas
         if (snapshot.canvasId !== updatedItem.canvasId) {
-          const targetCanvas = gridState.canvases[updatedItem.canvasId];
+          const targetCanvas = canvases[updatedItem.canvasId];
           if (targetCanvas) {
             targetZIndex = targetCanvas.zIndexCounter++;
             updatedItem.zIndex = targetZIndex; // Update item's z-index
@@ -1121,11 +1151,28 @@ export class GridItemWrapper {
     }
 
     // Update item in state (triggers re-render)
-    const canvas = gridState.canvases[this.item.canvasId];
+    // Use instance state if available, fall back to global state
+    const canvases = this.stateInstance?.canvases || gridState.canvases;
+    const canvas = canvases[this.item.canvasId];
     const itemIndex = canvas.items.findIndex((i) => i.id === this.item.id);
     if (itemIndex !== -1) {
-      canvas.items[itemIndex] = updatedItem;
-      gridState.canvases = { ...gridState.canvases };
+      // Create new items array (immutable update)
+      const newItems = canvas.items.map((item, i) =>
+        i === itemIndex ? updatedItem : item
+      );
+
+      // Create new canvas with new items array
+      const newCanvas = { ...canvas, items: newItems };
+
+      // Create new canvases object
+      const newCanvases = { ...canvases, [this.item.canvasId]: newCanvas };
+
+      // Update the appropriate state object
+      if (this.stateInstance) {
+        this.stateInstance.canvases = newCanvases;
+      } else {
+        gridState.canvases = newCanvases;
+      }
     }
 
     // Emit events for plugins
@@ -1187,9 +1234,14 @@ export class GridItemWrapper {
 
     debug.log("  ✅ Proceeding with click handling");
 
-    // Set selection state immediately
-    gridState.selectedItemId = this.item.id;
-    gridState.selectedCanvasId = this.item.canvasId;
+    // Set selection state immediately (use instance state if available)
+    if (this.stateInstance) {
+      this.stateInstance.selectedItemId = this.item.id;
+      this.stateInstance.selectedCanvasId = this.item.canvasId;
+    } else {
+      gridState.selectedItemId = this.item.id;
+      gridState.selectedCanvasId = this.item.canvasId;
+    }
 
     // Set this canvas as active
     setActiveCanvas(this.item.canvasId);

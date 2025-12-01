@@ -10,6 +10,11 @@ describe("GridBuilderAPI", () => {
     resetState();
     clearHistory();
 
+    // Create canvases (Phase 3: resetState() no longer pre-populates canvases)
+    gridState.canvases.canvas1 = { items: [], zIndexCounter: 1 };
+    gridState.canvases.canvas2 = { items: [], zIndexCounter: 1 };
+    gridState.canvases.canvas3 = { items: [], zIndexCounter: 1 };
+
     // Create new API instance
     api = new GridBuilderAPI();
   });
@@ -531,7 +536,8 @@ describe("GridBuilderAPI", () => {
 
         api.reset();
 
-        expect(gridState.canvases.canvas1.items).toHaveLength(0);
+        // Phase 3: reset() clears ALL canvases (returns to empty state)
+        expect(Object.keys(gridState.canvases)).toHaveLength(0);
         expect(gridState.currentViewport).toBe("desktop");
         expect(gridState.showGrid).toBe(true);
       });

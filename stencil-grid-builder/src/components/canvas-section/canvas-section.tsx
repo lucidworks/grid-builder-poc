@@ -76,7 +76,7 @@ import {
   setActiveCanvas,
 } from "../../services/state-manager";
 import {
-  clearGridSizeCache,
+  setGridSizeCache,
   gridToPixelsX,
   gridToPixelsY,
   getGridSizeVertical,
@@ -253,6 +253,31 @@ export class CanvasSection {
   @Prop() stateInstance?: any;
 
   /**
+   * State change subscription function (Phase 3: Instance-based architecture)
+   *
+   * **Optional prop**: Function to subscribe to instance state changes
+   * **Default**: Falls back to singleton onChange if not provided
+   * **Source**: grid-builder (this.stateManager.onChange)
+   *
+   * **Purpose**: Subscribe to instance-specific state changes for reactivity
+   *
+   * **Usage**:
+   * ```typescript
+   * onStateChange={(key, callback) => this.stateManager.onChange(key, callback)}
+   * ```
+   */
+  @Prop() onStateChange?: (key: string, callback: Function) => void;
+
+  /**
+   * Theme configuration (from parent grid-builder)
+   *
+   * **Optional prop**: Theme for selection colors
+   * **Source**: grid-builder → canvas-section → grid-item-wrapper
+   * **Purpose**: Pass theme.selectionColor to grid-item-wrapper for component selection styling
+   */
+  @Prop() theme?: any;
+
+  /**
    * Canvas state (reactive)
    *
    * **Source**: gridState.canvases[canvasId]
@@ -348,20 +373,22 @@ export class CanvasSection {
     // Initial load
     this.canvas = (this.stateInstance || gridState).canvases[this.canvasId];
 
-    // Calculate initial height
-    this.calculatedHeight = calculateCanvasHeight(this.canvasId, this.config);
+    // Calculate initial height (use instance state if available)
+    this.calculatedHeight = calculateCanvasHeight(this.canvasId, this.config, this.stateInstance);
 
-    // Subscribe to state changes
-    onChange("canvases", () => {
+    // Subscribe to state changes (use instance onChange if available, fall back to global)
+    const subscribeToChanges = this.onStateChange || onChange;
+    subscribeToChanges("canvases", () => {
       try {
         if (this.canvasId && (this.stateInstance || gridState).canvases[this.canvasId]) {
           this.canvas = (this.stateInstance || gridState).canvases[this.canvasId];
           this.renderVersion++; // Force re-render
 
-          // Recalculate canvas height based on content
+          // Recalculate canvas height based on content (use instance state if available)
           this.calculatedHeight = calculateCanvasHeight(
             this.canvasId,
             this.config,
+            this.stateInstance,
           );
         }
       } catch (error) {
@@ -370,13 +397,13 @@ export class CanvasSection {
     });
 
     // Subscribe to viewport changes (desktop ↔ mobile)
-    onChange("currentViewport", () => {
-      // Recalculate height for new viewport layout
-      this.calculatedHeight = calculateCanvasHeight(this.canvasId, this.config);
+    subscribeToChanges("currentViewport", () => {
+      // Recalculate height for new viewport layout (use instance state if available)
+      this.calculatedHeight = calculateCanvasHeight(this.canvasId, this.config, this.stateInstance);
     });
 
     // Subscribe to grid visibility changes
-    onChange("showGrid", () => {
+    subscribeToChanges("showGrid", () => {
       // Force re-render to update grid visibility class
       this.renderVersion++;
     });
@@ -443,8 +470,8 @@ export class CanvasSection {
     // Reload canvas data from state
     this.canvas = (this.stateInstance || gridState).canvases[newCanvasId];
 
-    // Recalculate canvas height for new canvas
-    this.calculatedHeight = calculateCanvasHeight(newCanvasId, this.config);
+    // Recalculate canvas height for new canvas (use instance state if available)
+    this.calculatedHeight = calculateCanvasHeight(newCanvasId, this.config, this.stateInstance);
 
     // Reinitialize dropzone with new canvas ID
     // (dropzone needs to know which canvas it belongs to)
@@ -471,8 +498,8 @@ export class CanvasSection {
     // Skip if config reference hasn't changed
     if (newConfig === oldConfig) return;
 
-    // Recalculate canvas height with new config
-    this.calculatedHeight = calculateCanvasHeight(this.canvasId, newConfig);
+    // Recalculate canvas height with new config (use instance state if available)
+    this.calculatedHeight = calculateCanvasHeight(this.canvasId, newConfig, this.stateInstance);
 
     // Force re-render to update item positions with new grid size
     this.renderVersion++;
@@ -558,19 +585,25 @@ export class CanvasSection {
   };
 
   /**
-   * Setup ResizeObserver for grid cache invalidation
+   * Setup ResizeObserver for grid cache pre-population
    *
-   * **Purpose**: Detect container size changes and force grid recalculation
+   * **Purpose**: Detect container size changes and pre-populate cache before re-render
+   *
+   * **Critical Implementation Detail**:
+   * Instead of clearing cache and triggering re-render (which causes clientWidth=0 during
+   * DOM transient state), we PRE-POPULATE the cache with the correct value from ResizeObserver,
+   * THEN trigger re-render. This ensures grid calculations never read stale/zero values.
    *
    * **Observer callback**:
-   * 1. Clear grid size cache (grid-calculations.ts)
-   * 2. Increment renderVersion (triggers item re-renders)
+   * 1. Get width from entry.contentRect.width (reliable during re-render)
+   * 2. Pre-calculate and cache correct grid size using setGridSizeCache()
+   * 3. Increment renderVersion (triggers item re-renders with cached correct value)
    *
-   * **Why needed**:
-   * - Grid calculations cached for performance
-   * - Cache based on container width (responsive 2% units)
-   * - Container resize invalidates cache
-   * - Items need to recalculate positions with new dimensions
+   * **Why this approach**:
+   * - ResizeObserver provides accurate width via entry.contentRect
+   * - Pre-populating cache bypasses DOM reads during re-render
+   * - Prevents reading clientWidth=0 during StencilJS transient DOM state
+   * - Grid calculations hit cache instead of reading DOM
    */
   private setupResizeObserver = () => {
     if (!this.gridContainerRef) {
@@ -578,12 +611,36 @@ export class CanvasSection {
     }
 
     // Watch for canvas container size changes
-    this.resizeObserver = new ResizeObserver(() => {
-      // Clear grid size cache when container resizes
-      clearGridSizeCache();
+    this.resizeObserver = new ResizeObserver((entries) => {
+      // Use requestAnimationFrame to ensure layout is complete before recalculating
+      // This prevents reading containerWidth=0 during StencilJS re-render cycle
+      requestAnimationFrame(() => {
+        for (const entry of entries) {
+          // Get width from ResizeObserver entry (more reliable than clientWidth during re-render)
+          const width = entry.contentRect.width;
 
-      // Force re-render to update item positions
-      this.renderVersion++;
+          console.log('[BUILD-2025-12-01-02:15] ResizeObserver fired (RAF)', {
+            canvasId: this.canvasId,
+            instanceId: this.config?.instanceId,
+            observedWidth: width,
+            clientWidth: this.gridContainerRef?.clientWidth
+          });
+
+          // Only proceed if container is laid out (width > 100px)
+          if (width > 100) {
+            // Pre-populate cache with correct value BEFORE triggering re-render
+            // This ensures grid calculations never read clientWidth=0 during re-render
+            setGridSizeCache(this.canvasId, width, this.config);
+            console.log('  → Pre-populated cache with correct value');
+
+            // Force re-render to update item positions
+            // Grid calculations will now use the cached correct value
+            this.renderVersion++;
+          } else {
+            console.log('  → Skipped (width too small, waiting for layout)');
+          }
+        }
+      });
     });
 
     this.resizeObserver.observe(this.gridContainerRef);
@@ -712,7 +769,7 @@ export class CanvasSection {
               this.canvasId,
               this.config,
             );
-            const heightPx = gridToPixelsY(defaultHeight);
+            const heightPx = gridToPixelsY(defaultHeight, this.config);
             const halfWidth = widthPx / 2;
             const halfHeight = heightPx / 2;
 
@@ -813,7 +870,11 @@ export class CanvasSection {
           style={{
             backgroundColor: this.backgroundColor || "#ffffff",
             backgroundSize: `2% ${verticalGridSize}px`,
+            backgroundImage: showGrid
+              ? `linear-gradient(${this.theme?.gridLineColor || "rgba(0, 0, 0, 0.05)"} 1px, transparent 1px), linear-gradient(90deg, ${this.theme?.gridLineColor || "rgba(0, 0, 0, 0.05)"} 1px, transparent 1px)`
+              : "none",
             minHeight: `${minHeightPx}px`,
+            ["--primary-color" as any]: this.theme?.primaryColor || "#007bff",
             ...(this.calculatedHeight > 0
               ? { height: `${this.calculatedHeight}px` }
               : {}),
@@ -832,6 +893,7 @@ export class CanvasSection {
               virtualRendererInstance={this.virtualRendererInstance}
               eventManagerInstance={this.eventManagerInstance}
               stateInstance={this.stateInstance}
+              theme={this.theme}
             />
           ))}
         </div>

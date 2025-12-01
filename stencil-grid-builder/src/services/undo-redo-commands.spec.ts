@@ -38,6 +38,13 @@ describe("undo-redo-commands", () => {
   beforeEach(() => {
     // Reset state before each test
     reset();
+
+    // Create test canvases (library now starts empty in Phase 2)
+    gridState.canvases = {
+      canvas1: { items: [], zIndexCounter: 0 },
+      canvas2: { items: [], zIndexCounter: 0 },
+      canvas3: { items: [], zIndexCounter: 0 },
+    };
   });
 
   describe("AddItemCommand", () => {

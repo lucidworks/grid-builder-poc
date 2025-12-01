@@ -31,7 +31,7 @@
  * @module space-finder
  */
 
-import { gridState } from "../services/state-manager";
+import { gridState, GridState } from "../services/state-manager";
 
 /**
  * Canvas width in grid units
@@ -162,10 +162,12 @@ export function getCenteredPosition(width: number): { x: number; y: number } {
  * // Returns { x: 0, y: 0 }
  * ```
  * @param canvasId - Canvas ID to check
+ * @param state - Optional state instance (falls back to global gridState)
  * @returns Position { x, y } at canvas bottom
  */
-export function getBottomPosition(canvasId: string): { x: number; y: number } {
-  const canvas = gridState.canvases[canvasId];
+export function getBottomPosition(canvasId: string, state?: GridState): { x: number; y: number } {
+  const stateToUse = state || gridState;
+  const canvas = stateToUse.canvases[canvasId];
 
   // Empty canvas → start at top
   if (!canvas || canvas.items.length === 0) {
@@ -228,14 +230,17 @@ export function getBottomPosition(canvasId: string): { x: number; y: number } {
  * @param canvasId - Canvas ID to search
  * @param width - Component width in grid units
  * @param height - Component height in grid units
+ * @param state - Optional state instance (falls back to global gridState)
  * @returns Position { x, y } or null if canvas doesn't exist
  */
 export function findFreeSpace(
   canvasId: string,
   width: number,
   height: number,
+  state?: GridState,
 ): { x: number; y: number } | null {
-  const canvas = gridState.canvases[canvasId];
+  const stateToUse = state || gridState;
+  const canvas = stateToUse.canvases[canvasId];
 
   // Canvas doesn't exist
   if (!canvas) {
@@ -289,5 +294,5 @@ export function findFreeSpace(
   }
 
   // No free space found → place at bottom (canvas will auto-expand)
-  return getBottomPosition(canvasId);
+  return getBottomPosition(canvasId, stateToUse);
 }

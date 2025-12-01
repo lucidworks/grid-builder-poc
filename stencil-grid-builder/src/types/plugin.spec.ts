@@ -6,7 +6,7 @@
  */
 
 import { GridBuilderAPI } from "../services/grid-builder-api";
-import { reset as resetState } from "../services/state-manager";
+import { reset as resetState, gridState } from "../services/state-manager";
 import { clearHistory } from "../services/undo-redo";
 
 /**
@@ -45,6 +45,13 @@ describe("Plugin System - Standalone", () => {
   beforeEach(() => {
     resetState();
     clearHistory();
+
+    // Create test canvases (library now starts empty in Phase 2)
+    gridState.canvases = {
+      canvas1: { items: [], zIndexCounter: 0 },
+      canvas2: { items: [], zIndexCounter: 0 },
+      canvas3: { items: [], zIndexCounter: 0 },
+    };
   });
 
   describe("Plugin Interface Implementation", () => {

@@ -192,9 +192,9 @@ export function showPositionIndicator(
   import("./grid-calculations").then(({ gridToPixelsX, gridToPixelsY }) => {
     // Convert grid units to pixels (respecting GridConfig)
     const xPixels = gridToPixelsX(x, canvasId, config);
-    const yPixels = gridToPixelsY(y);
+    const yPixels = gridToPixelsY(y, config);
     const widthPixels = gridToPixelsX(width, canvasId, config);
-    const heightPixels = gridToPixelsY(height);
+    const heightPixels = gridToPixelsY(height, config);
 
     // Create ghost indicator element
     const indicator = document.createElement("div");

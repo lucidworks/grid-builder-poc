@@ -5,6 +5,7 @@ blog-image {
   width: 100%;
   height: 100%;
   position: relative;
+  border-radius: 8px;
   overflow: hidden; // CRITICAL: Prevent any overflow from this element
   box-sizing: border-box; // CRITICAL: Include padding in dimensions
 }
@@ -19,7 +20,6 @@ blog-image {
   display: flex;
   flex-direction: column;
   overflow: hidden; // CRITICAL: Prevent overflow
-  background: #f8f9fa;
   box-sizing: border-box; // CRITICAL: Include padding in dimensions
 }
 

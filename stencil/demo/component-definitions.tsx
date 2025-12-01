@@ -76,10 +76,33 @@ export const contentComponents: ComponentDefinition[] = [
       />
     ),
     renderDragClone: () => <blog-header-drag-clone />,
+    configSchema: [
+      {
+        name: "headerTitle",
+        label: "Header Title",
+        type: "text",
+        defaultValue: "Default Header",
+        placeholder: "Enter header title",
+      },
+      {
+        name: "subtitle",
+        label: "Subtitle",
+        type: "text",
+        defaultValue: "",
+        placeholder: "Optional subtitle",
+      },
+      {
+        name: "backgroundColor",
+        label: "Background Color",
+        type: "color",
+        defaultValue: "#e8eaf6",
+      },
+    ],
     render: ({ config }) => (
       <blog-header
-        headerTitle={config?.title || "Default Header"}
+        headerTitle={config?.headerTitle || "Default Header"}
         subtitle={config?.subtitle}
+        backgroundColor={config?.backgroundColor}
       />
     ),
   },
@@ -97,11 +120,41 @@ export const contentComponents: ComponentDefinition[] = [
       />
     ),
     renderDragClone: () => <blog-article-drag-clone />,
+    configSchema: [
+      {
+        name: "content",
+        label: "Article Content",
+        type: "textarea",
+        defaultValue: "Article content goes here",
+        placeholder: "Enter article text",
+      },
+      {
+        name: "author",
+        label: "Author",
+        type: "text",
+        defaultValue: "",
+        placeholder: "Optional author name",
+      },
+      {
+        name: "date",
+        label: "Date",
+        type: "text",
+        defaultValue: "",
+        placeholder: "Optional date",
+      },
+      {
+        name: "backgroundColor",
+        label: "Background Color",
+        type: "color",
+        defaultValue: "#fff9c4",
+      },
+    ],
     render: ({ config }) => (
       <blog-article
         content={config?.content || "Article content goes here"}
         author={config?.author}
         date={config?.date}
+        backgroundColor={config?.backgroundColor}
       />
     ),
   },
@@ -153,6 +206,12 @@ export const contentComponents: ComponentDefinition[] = [
           { value: "cover", label: "Cover (fill, may crop)" },
         ],
       },
+      {
+        name: "backgroundColor",
+        label: "Background Color",
+        type: "color",
+        defaultValue: "#c8e6c9",
+      },
     ],
     render: ({ config }) => (
       <blog-image
@@ -163,6 +222,7 @@ export const contentComponents: ComponentDefinition[] = [
         alt={config?.alt || "Placeholder image"}
         caption={config?.caption}
         objectFit={config?.objectFit || "contain"}
+        backgroundColor={config?.backgroundColor}
       />
     ),
   },
@@ -174,8 +234,8 @@ export const interactiveComponents: ComponentDefinition[] = [
     type: "blog-button",
     name: "Blog Button",
     icon: "🔘",
-    defaultSize: { width: 20, height: 4 },  // 4 units × 20px = 80px (matches CSS min-height)
-    minSize: { width: 5, height: 4 },       // 5 units × 20px = 100px width, 4 units × 20px = 80px height (matches CSS)
+    defaultSize: { width: 20, height: 4 }, // 4 units × 20px = 80px (matches CSS min-height)
+    minSize: { width: 5, height: 4 }, // 5 units × 20px = 100px width, 4 units × 20px = 80px height (matches CSS)
     maxSize: { width: 30, height: 5 },
     selectionColor: "#ef4444",
     renderPaletteItem: ({ componentType, name, icon }) => (
@@ -186,11 +246,44 @@ export const interactiveComponents: ComponentDefinition[] = [
       />
     ),
     renderDragClone: () => <blog-button-drag-clone />,
+    configSchema: [
+      {
+        name: "label",
+        label: "Button Label",
+        type: "text",
+        defaultValue: "Click me!",
+        placeholder: "Enter button text",
+      },
+      {
+        name: "variant",
+        label: "Button Style",
+        type: "select",
+        defaultValue: "primary",
+        options: [
+          { value: "primary", label: "Primary (filled)" },
+          { value: "secondary", label: "Secondary (outlined)" },
+        ],
+      },
+      {
+        name: "href",
+        label: "Link URL",
+        type: "text",
+        defaultValue: "",
+        placeholder: "Optional link URL",
+      },
+      {
+        name: "backgroundColor",
+        label: "Background Color",
+        type: "color",
+        defaultValue: "#bbdefb",
+      },
+    ],
     render: ({ config }) => (
       <blog-button
         label={config?.label || "Click me!"}
         variant={config?.variant || "primary"}
         href={config?.href}
+        backgroundColor={config?.backgroundColor}
       />
     ),
   },
@@ -226,9 +319,18 @@ export const mediaComponents: ComponentDefinition[] = [
           { value: "12", label: "12 images" },
         ],
       },
+      {
+        name: "backgroundColor",
+        label: "Background Color",
+        type: "color",
+        defaultValue: "#f5f5f5",
+      },
     ],
     render: ({ config }) => (
-      <image-gallery imageCount={parseInt(config?.imageCount || "6")} />
+      <image-gallery
+        imageCount={parseInt(config?.imageCount || "6")}
+        backgroundColor={config?.backgroundColor}
+      />
     ),
   },
   {
@@ -246,7 +348,17 @@ export const mediaComponents: ComponentDefinition[] = [
       />
     ),
     renderDragClone: () => <dashboard-widget-drag-clone />,
-    render: () => <dashboard-widget />,
+    configSchema: [
+      {
+        name: "backgroundColor",
+        label: "Background Color",
+        type: "color",
+        defaultValue: "#ffccbc",
+      },
+    ],
+    render: ({ config }) => (
+      <dashboard-widget backgroundColor={config?.backgroundColor} />
+    ),
   },
   {
     type: "live-data",
@@ -263,7 +375,17 @@ export const mediaComponents: ComponentDefinition[] = [
       />
     ),
     renderDragClone: () => <live-data-drag-clone />,
-    render: () => <live-data />,
+    configSchema: [
+      {
+        name: "backgroundColor",
+        label: "Background Color",
+        type: "color",
+        defaultValue: "#b2ebf2",
+      },
+    ],
+    render: ({ config }) => (
+      <live-data backgroundColor={config?.backgroundColor} />
+    ),
   },
 ];
 

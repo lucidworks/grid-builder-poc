@@ -268,23 +268,47 @@ blog-app {
       }
     }
 
+    /* Layer Panel Section */
+    .palette-section {
+      border-top: 2px solid #e0e0e0;
+      background: #fafafa;
+
+      .palette-section-header {
+        padding: 12px 20px;
+        background: #f8f9fa;
+        border-bottom: 1px solid #e0e0e0;
+
+        .palette-section-title {
+          margin: 0;
+          color: #495057;
+          font-size: 14px;
+          font-weight: 600;
+        }
+      }
+
+      .layer-panel-container {
+        height: 400px; // Fixed height for layer panel
+        overflow: hidden;
+
+        layer-panel {
+          display: block;
+          height: 100%;
+        }
+      }
+    }
+
     /* Grid Builder Area */
     .grid-builder-area {
       flex: 1; /* Take remaining space */
       min-width: 0; /* Allow flex shrinking - critical for preventing overflow */
       overflow-x: auto; /* Allow scrolling if content is too wide */
 
-      /* Hide grid-builder's default palette */
+      /* Grid Builder - canvas area styling */
       grid-builder {
         display: block;
         width: 100%;
         min-height: 600px;
         box-sizing: border-box;
-
-        /* Hide the built-in palette since we're using custom categorized ones */
-        .palette-area {
-          display: none;
-        }
 
         /* Ensure main area uses available width */
         .main-area {

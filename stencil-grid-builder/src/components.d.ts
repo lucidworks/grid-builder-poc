@@ -330,9 +330,17 @@ export namespace Components {
          */
         "onBeforeDelete"?: DeletionHook;
         /**
+          * State change subscription function (Phase 3: Instance-based architecture)  **Optional prop**: Function to subscribe to instance state changes **Default**: Falls back to singleton onChange if not provided **Source**: grid-builder (this.stateManager.onChange)  **Purpose**: Subscribe to instance-specific state changes for reactivity  **Usage**: ```typescript onStateChange={(key, callback) => this.stateManager.onChange(key, callback)} ```
+         */
+        "onStateChange"?: (key: string, callback: Function) => void;
+        /**
           * State manager instance (Phase 3: Instance-based architecture)  **Optional prop**: Grid state instance for utilities **Default**: grid-item-wrapper falls back to singleton if not provided **Source**: grid-builder → canvas-section → grid-item-wrapper  **Purpose**: Support multiple grid-builder instances with isolated state  **Migration strategy**: - Phase 3: Add as optional prop (this phase) - Phase 4: Remove singleton fallback and make required  **Used by**: DragHandler, ResizeHandler for accessing canvases and viewport
          */
         "stateInstance"?: any;
+        /**
+          * Theme configuration (from parent grid-builder)  **Optional prop**: Theme for selection colors **Source**: grid-builder → canvas-section → grid-item-wrapper **Purpose**: Pass theme.selectionColor to grid-item-wrapper for component selection styling
+         */
+        "theme"?: any;
         /**
           * Virtual renderer service instance (Phase 3: Instance-based architecture)  **Optional prop**: Service instance for lazy loading **Default**: grid-item-wrapper falls back to singleton if not provided **Source**: grid-builder → canvas-section → grid-item-wrapper  **Purpose**: Support multiple grid-builder instances with isolated services  **Migration strategy**: - Phase 3: Add as optional prop (this phase) - Phase 4: Remove singleton fallback and make required
          */
@@ -765,6 +773,10 @@ export namespace Components {
           * State manager instance (Phase 3: Instance-based architecture)  **Optional prop**: Grid state instance for utilities **Default**: Falls back to singleton gridState if not provided **Source**: grid-builder → canvas-section → grid-item-wrapper  **Purpose**: Support multiple grid-builder instances with isolated state  **Migration strategy**: - Phase 3: Add as optional prop (this phase) - Phase 4: Remove singleton fallback and make required  **Used by**: DragHandler, ResizeHandler for accessing canvases and viewport
          */
         "stateInstance"?: any;
+        /**
+          * Theme configuration (from parent grid-builder)  **Source**: grid-builder → canvas-section → grid-item-wrapper **Purpose**: Access theme.selectionColor for component selection styling  **Fallback chain for selection color**: 1. ComponentDefinition.selectionColor (per-component override) 2. theme.selectionColor (global theme default) 3. "#f59e0b" (hardcoded fallback - amber/gold)  **Why passed**: grid-item-wrapper doesn't have access to global theme, so must be passed through component tree
+         */
+        "theme"?: any;
         /**
           * Viewer mode flag  **Purpose**: Disable editing features for rendering-only mode **Default**: false (editing enabled)  **When true**: - ❌ No drag-and-drop handlers - ❌ No resize handles - ❌ No item header (drag handle) - ❌ No delete button - ❌ No selection state - ✅ Only renders component content  **Use case**: grid-viewer component for display-only mode
           * @default false
@@ -1983,9 +1995,17 @@ declare namespace LocalJSX {
          */
         "onBeforeDelete"?: DeletionHook;
         /**
+          * State change subscription function (Phase 3: Instance-based architecture)  **Optional prop**: Function to subscribe to instance state changes **Default**: Falls back to singleton onChange if not provided **Source**: grid-builder (this.stateManager.onChange)  **Purpose**: Subscribe to instance-specific state changes for reactivity  **Usage**: ```typescript onStateChange={(key, callback) => this.stateManager.onChange(key, callback)} ```
+         */
+        "onStateChange"?: (key: string, callback: Function) => void;
+        /**
           * State manager instance (Phase 3: Instance-based architecture)  **Optional prop**: Grid state instance for utilities **Default**: grid-item-wrapper falls back to singleton if not provided **Source**: grid-builder → canvas-section → grid-item-wrapper  **Purpose**: Support multiple grid-builder instances with isolated state  **Migration strategy**: - Phase 3: Add as optional prop (this phase) - Phase 4: Remove singleton fallback and make required  **Used by**: DragHandler, ResizeHandler for accessing canvases and viewport
          */
         "stateInstance"?: any;
+        /**
+          * Theme configuration (from parent grid-builder)  **Optional prop**: Theme for selection colors **Source**: grid-builder → canvas-section → grid-item-wrapper **Purpose**: Pass theme.selectionColor to grid-item-wrapper for component selection styling
+         */
+        "theme"?: any;
         /**
           * Virtual renderer service instance (Phase 3: Instance-based architecture)  **Optional prop**: Service instance for lazy loading **Default**: grid-item-wrapper falls back to singleton if not provided **Source**: grid-builder → canvas-section → grid-item-wrapper  **Purpose**: Support multiple grid-builder instances with isolated services  **Migration strategy**: - Phase 3: Add as optional prop (this phase) - Phase 4: Remove singleton fallback and make required
          */
@@ -2349,6 +2369,10 @@ declare namespace LocalJSX {
           * State manager instance (Phase 3: Instance-based architecture)  **Optional prop**: Grid state instance for utilities **Default**: Falls back to singleton gridState if not provided **Source**: grid-builder → canvas-section → grid-item-wrapper  **Purpose**: Support multiple grid-builder instances with isolated state  **Migration strategy**: - Phase 3: Add as optional prop (this phase) - Phase 4: Remove singleton fallback and make required  **Used by**: DragHandler, ResizeHandler for accessing canvases and viewport
          */
         "stateInstance"?: any;
+        /**
+          * Theme configuration (from parent grid-builder)  **Source**: grid-builder → canvas-section → grid-item-wrapper **Purpose**: Access theme.selectionColor for component selection styling  **Fallback chain for selection color**: 1. ComponentDefinition.selectionColor (per-component override) 2. theme.selectionColor (global theme default) 3. "#f59e0b" (hardcoded fallback - amber/gold)  **Why passed**: grid-item-wrapper doesn't have access to global theme, so must be passed through component tree
+         */
+        "theme"?: any;
         /**
           * Viewer mode flag  **Purpose**: Disable editing features for rendering-only mode **Default**: false (editing enabled)  **When true**: - ❌ No drag-and-drop handlers - ❌ No resize handles - ❌ No item header (drag handle) - ❌ No delete button - ❌ No selection state - ✅ Only renders component content  **Use case**: grid-viewer component for display-only mode
           * @default false

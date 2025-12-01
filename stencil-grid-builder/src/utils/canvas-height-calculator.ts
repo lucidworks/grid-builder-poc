@@ -37,7 +37,7 @@
  * @module canvas-height-calculator
  */
 
-import { gridState } from "../services/state-manager";
+import { gridState, GridState } from "../services/state-manager";
 import { gridToPixelsY } from "./grid-calculations";
 import { GridConfig } from "../types/grid-config";
 
@@ -168,16 +168,18 @@ export function calculateCanvasHeightFromItems(
 export function calculateCanvasHeight(
   canvasId: string,
   config?: GridConfig,
+  state?: GridState,
 ): number {
-  // Get canvas from state
-  const canvas = gridState.canvases[canvasId];
+  // Get canvas from state (use instance state if available, fall back to global)
+  const stateToUse = state || gridState;
+  const canvas = stateToUse.canvases[canvasId];
   if (!canvas || !canvas.items || canvas.items.length === 0) {
     // Empty canvas - return 0 (CSS min-height will apply)
     return 0;
   }
 
   // Get current viewport
-  const viewport = gridState.currentViewport || "desktop";
+  const viewport = stateToUse.currentViewport || "desktop";
 
   // Delegate to reusable function
   return calculateCanvasHeightFromItems(canvas.items, viewport, config);

@@ -271,6 +271,18 @@ export class BlogApp {
   private sectionCounter = 1;
 
   /**
+   * Grid Configuration
+   * ------------------
+   *
+   * Configuration for grid-builder component.
+   * Stored as class property so it can be reused in render calculations.
+   */
+  private gridConfig = {
+    enableAnimations: true,
+    animationDuration: 100,
+  };
+
+  /**
    * Event Handler References for Cleanup
    * -------------------------------------
    *
@@ -1219,7 +1231,7 @@ export class BlogApp {
 
   render() {
     // Calculate canvas header overlay margin from grid size (1.4 grid units)
-    const verticalGridSize = getGridSizeVertical();
+    const verticalGridSize = getGridSizeVertical(this.gridConfig);
     const canvasHeaderOverlayMargin = -(verticalGridSize * 1.4);
 
     // Build merged metadata (canvas metadata + preview state) for all canvases
@@ -1441,10 +1453,7 @@ export class BlogApp {
               <grid-builder
                 key="builder"
                 components={blogComponentDefinitions}
-                config={{
-                  enableAnimations: true,
-                  animationDuration: 100,
-                }}
+                config={this.gridConfig}
                 initialState={this.initialState}
                 canvasMetadata={mergedCanvasMetadata}
                 onBeforeDelete={this.handleBeforeDelete}

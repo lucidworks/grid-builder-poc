@@ -85,37 +85,142 @@ const DEFAULT_MAX_GRID_SIZE = 50;
 
 /**
  * Grid size cache to avoid repeated DOM queries
- * Key format: `${canvasId}-h` for horizontal grid sizes
- * Cleared on canvas resize events
+ *
+ * **Cache key format**: `${instanceId}-${canvasId}-h` for horizontal grid sizes
+ * **Instance isolation**: Each grid-builder instance gets its own cache namespace
+ *
+ * **Why instance-aware**:
+ * - Multiple instances on same page can have different container widths for same canvasId
+ * - Prevents cache collisions when instances share canvasIds
+ * - Supports Storybook story switching (each story is a new instance)
+ *
+ * **Cleared on**:
+ * - Canvas container resize (via ResizeObserver)
+ * - Viewport changes (desktop ↔ mobile)
+ * - Component unmount (disconnectedCallback)
  */
 const gridSizeCache = new Map<string, number>();
 
 /**
- * Clear the grid size cache for all canvases
+ * Clear the grid size cache for all canvases or a specific instance
  *
  * **When to call**:
  * - Canvas container is resized (via ResizeObserver)
  * - Viewport changes (desktop ↔ mobile)
  * - Canvas is added/removed from DOM
+ * - Component unmounts (clear only that instance's cache)
+ *
+ * **Instance-specific clearing**:
+ * If instanceId provided, only clears cache entries for that instance.
+ * Useful when unmounting a specific grid-builder instance.
  *
  * **Why needed**:
  * Cached grid sizes become stale when container widths change. This ensures
  * fresh calculations on next access.
  *
  * **Performance note**:
- * Clearing cache is cheap (O(1)). The cost is in recalculation, which happens
- * lazily on next access.
+ * Clearing cache is cheap (O(1) for all, O(n) for instance-specific where n = cache size).
+ * The cost is in recalculation, which happens lazily on next access.
+ * @param instanceId - Optional instance ID to clear only that instance's cache
  * @example
  * ```typescript
+ * // Clear all caches (all instances)
  * resizeObserver.observe(canvasElement);
  * resizeCallback = () => {
  *   clearGridSizeCache();
- *   // Components will recalculate on next render
+ *   // All instances will recalculate on next render
  * };
+ *
+ * // Clear only specific instance's cache (on unmount)
+ * disconnectedCallback() {
+ *   clearGridSizeCache(this.config?.instanceId);
+ *   // Only this instance's cache is cleared
+ * }
  * ```
  */
-export function clearGridSizeCache() {
-  gridSizeCache.clear();
+export function clearGridSizeCache(instanceId?: string) {
+  if (instanceId) {
+    // Clear only cache entries for this instance
+    const prefix = `${instanceId}-`;
+    for (const key of gridSizeCache.keys()) {
+      if (key.startsWith(prefix)) {
+        gridSizeCache.delete(key);
+      }
+    }
+  } else {
+    // Clear all (backward compatibility, window resize, etc.)
+    gridSizeCache.clear();
+  }
+}
+
+/**
+ * Pre-populate grid size cache with known container width
+ *
+ * **Purpose**: Set cache value BEFORE triggering re-render to avoid reading DOM during transient state
+ *
+ * **Use case**: ResizeObserver gives us correct width via entry.contentRect.width.
+ * By pre-calculating and caching this value before triggering re-render, we ensure
+ * grid calculations never read clientWidth=0 during StencilJS re-render cycle.
+ *
+ * **Why needed**:
+ * When ResizeObserver fires and we trigger re-render (renderVersion++), the DOM enters
+ * a transient state where clientWidth returns 0. By pre-populating cache with the correct
+ * value from ResizeObserver, we bypass DOM reads entirely during re-render.
+ *
+ * **Implementation**:
+ * Uses same calculation logic as getGridSizeHorizontal() but accepts width parameter
+ * instead of reading from DOM.
+ * @param canvasId - Canvas element ID for cache key
+ * @param containerWidth - Width from ResizeObserver entry.contentRect.width
+ * @param config - Optional GridConfig for customization (gridSizePercent, min/max, instanceId)
+ * @example
+ * ```typescript
+ * // In ResizeObserver callback
+ * this.resizeObserver = new ResizeObserver((entries) => {
+ *   for (const entry of entries) {
+ *     const width = entry.contentRect.width;
+ *
+ *     // Pre-populate cache before triggering re-render
+ *     setGridSizeCache(this.canvasId, width, this.config);
+ *
+ *     // Now trigger re-render - calculations will use cached value
+ *     this.renderVersion++;
+ *   }
+ * });
+ * ```
+ */
+export function setGridSizeCache(
+  canvasId: string,
+  containerWidth: number,
+  config?: GridConfig
+): void {
+  // Build cache key (same logic as getGridSizeHorizontal)
+  const cacheKey = config?.instanceId
+    ? `${config.instanceId}-${canvasId}-h`
+    : `${canvasId}-h`;
+
+  // Get grid size percent from config or use default
+  const gridSizePercent = config?.gridSizePercent
+    ? config.gridSizePercent / 100
+    : GRID_SIZE_HORIZONTAL_PERCENT;
+
+  // Calculate raw grid size from provided width
+  const rawSize = containerWidth * gridSizePercent;
+
+  // Apply min/max constraints from config or use defaults
+  const minSize = config?.minGridSize ?? DEFAULT_MIN_GRID_SIZE;
+  const maxSize = config?.maxGridSize ?? DEFAULT_MAX_GRID_SIZE;
+  const size = Math.max(minSize, Math.min(maxSize, rawSize));
+
+  // Set in cache
+  gridSizeCache.set(cacheKey, size);
+
+  console.log('[BUILD-2025-12-01-02:15] Pre-populated cache from ResizeObserver', {
+    cacheKey,
+    containerWidth,
+    rawSize,
+    finalSize: size
+  });
 }
 
 /**
@@ -164,10 +269,16 @@ export function getGridSizeHorizontal(
   config?: GridConfig,
   forceRecalc: boolean = false,
 ): number {
-  const cacheKey = `${canvasId}-h`;
+  // Instance-aware cache key: ${instanceId}-${canvasId}-h
+  // Fallback to ${canvasId}-h for backward compatibility if no instanceId
+  const cacheKey = config?.instanceId
+    ? `${config.instanceId}-${canvasId}-h`
+    : `${canvasId}-h`;
 
   if (!forceRecalc && gridSizeCache.has(cacheKey)) {
-    return gridSizeCache.get(cacheKey)!;
+    const cachedValue = gridSizeCache.get(cacheKey)!;
+    console.log('[BUILD-2025-12-01-01:40] Cache HIT', { cacheKey, cachedValue });
+    return cachedValue;
   }
 
   // Use DOM cache instead of getElementById
@@ -191,7 +302,23 @@ export function getGridSizeHorizontal(
   const maxSize = config?.maxGridSize ?? DEFAULT_MAX_GRID_SIZE;
   const size = Math.max(minSize, Math.min(maxSize, rawSize));
 
-  gridSizeCache.set(cacheKey, size);
+  console.log('[BUILD-2025-12-01-01:40] Cache MISS - calculated', {
+    cacheKey,
+    containerWidth: container.clientWidth,
+    rawSize,
+    finalSize: size
+  });
+
+  // Don't cache if container not laid out yet (prevents caching 0-width or tiny containers)
+  // Critical for initial load: canvas element exists in DOM but CSS layout hasn't happened yet
+  // ResizeObserver will fire when layout completes, then we'll cache the correct value
+  if (container.clientWidth > 100) {
+    gridSizeCache.set(cacheKey, size);
+    console.log('  → Cached (containerWidth > 100px)');
+  } else {
+    console.log('  → NOT cached (containerWidth too small, waiting for layout)');
+  }
+
   return size;
 }
 

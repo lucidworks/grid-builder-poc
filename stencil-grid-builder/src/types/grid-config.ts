@@ -694,4 +694,43 @@ export interface GridConfig {
     type: string;
     itemId: string;
   }) => any;
+
+  /**
+   * Instance identifier (internal use)
+   *
+   * **What it does**: Uniquely identifies this grid-builder instance for cache isolation
+   * **Why**: Prevents grid size cache collisions when multiple instances share canvasIds
+   *
+   * **Default**: Automatically set from apiRef.key (e.g., 'gridBuilderAPI')
+   *
+   * **Set automatically by**:
+   * - grid-builder component in componentWillLoad()
+   * - Derived from apiRef.key prop (default: 'gridBuilderAPI')
+   *
+   * **Cache key format**: `${instanceId}-${canvasId}-h`
+   *
+   * **Use cases**:
+   * - **Multiple instances on same page**: Each instance gets isolated cache
+   * - **Storybook story switching**: Cache cleared per instance, not globally
+   * - **Dynamic instance creation**: Prevents cache conflicts
+   *
+   * **Example - Explicit instance IDs**:
+   * ```typescript
+   * // Instance 1
+   * <grid-builder api-ref={{ key: 'gridAPI1' }} />
+   * // Cache keys: 'gridAPI1-canvas1-h', 'gridAPI1-canvas2-h'
+   *
+   * // Instance 2 (can use same canvasIds!)
+   * <grid-builder api-ref={{ key: 'gridAPI2' }} />
+   * // Cache keys: 'gridAPI2-canvas1-h', 'gridAPI2-canvas2-h'
+   * ```
+   *
+   * **Important**:
+   * - This is set automatically - consumers should NOT set this manually
+   * - If you pass a custom config, instanceId will be added automatically
+   * - Modifying this can break grid calculations
+   * @default Derived from apiRef.key
+   * @internal
+   */
+  instanceId?: string;
 }

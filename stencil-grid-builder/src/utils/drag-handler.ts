@@ -851,8 +851,8 @@ export class DragHandler {
       return;
     }
 
-    const gridSizeX = getGridSizeHorizontal(targetCanvasId);
-    const gridSizeY = getGridSizeVertical();
+    const gridSizeX = getGridSizeHorizontal(targetCanvasId, this.config);
+    const gridSizeY = getGridSizeVertical(this.config);
 
     // Final position is base position + drag delta
     let newX = this.basePosition.x + deltaX;
@@ -886,8 +886,8 @@ export class DragHandler {
     );
 
     // Convert back to pixels
-    const gridSizeXForConversion = getGridSizeHorizontal(targetCanvasId);
-    const gridSizeYForConversion = getGridSizeVertical();
+    const gridSizeXForConversion = getGridSizeHorizontal(targetCanvasId, this.config);
+    const gridSizeYForConversion = getGridSizeVertical(this.config);
     newX = constrained.x * gridSizeXForConversion;
     newY = constrained.y * gridSizeYForConversion;
 

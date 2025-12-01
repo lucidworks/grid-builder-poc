@@ -455,26 +455,17 @@ describe("grid-item-wrapper - Active Canvas", () => {
   });
 
   describe("Virtual Rendering Configuration", () => {
-    // Mock virtualRenderer to track calls
-    let mockVirtualRendererObserve: jest.SpyInstance;
-    let mockVirtualRendererUnobserve: jest.SpyInstance;
+    // Create mock virtualRenderer instance
+    const mockObserveVR = jest.fn();
+    const mockUnobserveVR = jest.fn();
+    const mockVirtualRendererInstance = {
+      observe: mockObserveVR,
+      unobserve: mockUnobserveVR,
+    };
 
-    beforeEach(async () => {
-      // Dynamically import and mock virtualRenderer
-      const virtualRendererModule = await import(
-        "../../../services/virtual-renderer"
-      );
-      mockVirtualRendererObserve = jest
-        .spyOn(virtualRendererModule.virtualRenderer, "observe")
-        .mockImplementation(() => {});
-      mockVirtualRendererUnobserve = jest
-        .spyOn(virtualRendererModule.virtualRenderer, "unobserve")
-        .mockImplementation(() => {});
-    });
-
-    afterEach(() => {
-      mockVirtualRendererObserve.mockRestore();
-      mockVirtualRendererUnobserve.mockRestore();
+    beforeEach(() => {
+      mockObserveVR.mockClear();
+      mockUnobserveVR.mockClear();
     });
 
     it("should render immediately when enableVirtualRendering is false", async () => {
@@ -484,6 +475,7 @@ describe("grid-item-wrapper - Active Canvas", () => {
           <grid-item-wrapper
             item={mockItem}
             componentRegistry={mockComponentRegistry}
+            virtualRendererInstance={mockVirtualRendererInstance as any}
             config={{ enableVirtualRendering: false }}
           />
         ),
@@ -492,7 +484,7 @@ describe("grid-item-wrapper - Active Canvas", () => {
       await page.waitForChanges();
 
       // Should NOT call virtualRenderer.observe when disabled
-      expect(mockVirtualRendererObserve).not.toHaveBeenCalled();
+      expect(mockObserveVR).not.toHaveBeenCalled();
 
       // Component should be visible immediately
       expect((page.rootInstance as any).isVisible).toBe(true);
@@ -510,6 +502,7 @@ describe("grid-item-wrapper - Active Canvas", () => {
           <grid-item-wrapper
             item={mockItem}
             componentRegistry={mockComponentRegistry}
+            virtualRendererInstance={mockVirtualRendererInstance as any}
             config={{ enableVirtualRendering: true }}
           />
         ),
@@ -517,9 +510,12 @@ describe("grid-item-wrapper - Active Canvas", () => {
 
       await page.waitForChanges();
 
+      // Wait for requestAnimationFrame to execute
+      await new Promise(resolve => setTimeout(resolve, 50));
+
       // Should call virtualRenderer.observe when enabled
-      expect(mockVirtualRendererObserve).toHaveBeenCalled();
-      expect(mockVirtualRendererObserve).toHaveBeenCalledWith(
+      expect(mockObserveVR).toHaveBeenCalled();
+      expect(mockObserveVR).toHaveBeenCalledWith(
         expect.any(Object), // itemRef element
         "item-1", // item.id
         expect.any(Function), // callback
@@ -533,6 +529,7 @@ describe("grid-item-wrapper - Active Canvas", () => {
           <grid-item-wrapper
             item={mockItem}
             componentRegistry={mockComponentRegistry}
+            virtualRendererInstance={mockVirtualRendererInstance as any}
             config={{}} // No enableVirtualRendering specified
           />
         ),
@@ -540,9 +537,12 @@ describe("grid-item-wrapper - Active Canvas", () => {
 
       await page.waitForChanges();
 
+      // Wait for requestAnimationFrame to execute
+      await new Promise(resolve => setTimeout(resolve, 50));
+
       // Should call virtualRenderer.observe when undefined (default behavior)
-      expect(mockVirtualRendererObserve).toHaveBeenCalled();
-      expect(mockVirtualRendererObserve).toHaveBeenCalledWith(
+      expect(mockObserveVR).toHaveBeenCalled();
+      expect(mockObserveVR).toHaveBeenCalledWith(
         expect.any(Object),
         "item-1",
         expect.any(Function),
@@ -556,15 +556,19 @@ describe("grid-item-wrapper - Active Canvas", () => {
           <grid-item-wrapper
             item={mockItem}
             componentRegistry={mockComponentRegistry}
+            virtualRendererInstance={mockVirtualRendererInstance as any}
           />
         ),
       });
 
       await page.waitForChanges();
 
+      // Wait for requestAnimationFrame to execute
+      await new Promise(resolve => setTimeout(resolve, 50));
+
       // Should call virtualRenderer.observe when config is undefined (default behavior)
-      expect(mockVirtualRendererObserve).toHaveBeenCalled();
-      expect(mockVirtualRendererObserve).toHaveBeenCalledWith(
+      expect(mockObserveVR).toHaveBeenCalled();
+      expect(mockObserveVR).toHaveBeenCalledWith(
         expect.any(Object),
         "item-1",
         expect.any(Function),
@@ -573,7 +577,7 @@ describe("grid-item-wrapper - Active Canvas", () => {
 
     it("should render placeholder when virtual rendering is enabled and not visible", async () => {
       // Mock observe to NOT trigger visibility callback (component stays invisible)
-      mockVirtualRendererObserve.mockImplementation(() => {
+      mockObserveVR.mockImplementation(() => {
         // Don't call the visibility callback, leaving isVisible = false
       });
 
@@ -583,6 +587,7 @@ describe("grid-item-wrapper - Active Canvas", () => {
           <grid-item-wrapper
             item={mockItem}
             componentRegistry={mockComponentRegistry}
+            virtualRendererInstance={mockVirtualRendererInstance as any}
             config={{ enableVirtualRendering: true }}
           />
         ),
@@ -590,8 +595,11 @@ describe("grid-item-wrapper - Active Canvas", () => {
 
       await page.waitForChanges();
 
+      // Wait for requestAnimationFrame to execute
+      await new Promise(resolve => setTimeout(resolve, 50));
+
       // Should call virtualRenderer.observe
-      expect(mockVirtualRendererObserve).toHaveBeenCalled();
+      expect(mockObserveVR).toHaveBeenCalled();
 
       // Component should NOT be visible yet
       expect((page.rootInstance as any).isVisible).toBe(false);
@@ -608,7 +616,7 @@ describe("grid-item-wrapper - Active Canvas", () => {
       let visibilityCallback: (isVisible: boolean) => void;
 
       // Mock observe to capture the visibility callback
-      mockVirtualRendererObserve.mockImplementation((_el, _id, callback) => {
+      mockObserveVR.mockImplementation((_el, _id, callback) => {
         visibilityCallback = callback;
       });
 
@@ -618,6 +626,7 @@ describe("grid-item-wrapper - Active Canvas", () => {
           <grid-item-wrapper
             item={mockItem}
             componentRegistry={mockComponentRegistry}
+            virtualRendererInstance={mockVirtualRendererInstance as any}
             config={{ enableVirtualRendering: true }}
           />
         ),
@@ -625,13 +634,16 @@ describe("grid-item-wrapper - Active Canvas", () => {
 
       await page.waitForChanges();
 
+      // Wait for requestAnimationFrame to execute
+      await new Promise(resolve => setTimeout(resolve, 50));
+
       // Initially should show placeholder
       expect((page.rootInstance as any).isVisible).toBe(false);
       let content = page.root.querySelector(".grid-item-content");
       expect(content.querySelector(".component-placeholder")).toBeTruthy();
 
       // Trigger visibility callback (simulate item entering viewport)
-      visibilityCallback(true);
+      visibilityCallback!(true);
       await page.waitForChanges();
 
       // Now should render actual component

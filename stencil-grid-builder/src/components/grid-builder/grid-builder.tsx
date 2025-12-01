@@ -80,8 +80,6 @@ import {
   deleteItemsBatch,
   addItemsBatch,
   updateItemsBatch,
-  setActiveCanvas,
-  moveItemToCanvas,
 } from "../../services/state-manager";
 import { VirtualRendererService } from "../../services/virtual-renderer";
 import { EventManager } from "../../services/event-manager";
@@ -100,7 +98,11 @@ import {
 import { DOMCache } from "../../utils/dom-cache";
 
 // Utility imports
-import { pixelsToGridX, pixelsToGridY } from "../../utils/grid-calculations";
+import {
+  pixelsToGridX,
+  pixelsToGridY,
+  clearGridSizeCache,
+} from "../../utils/grid-calculations";
 import {
   applyBoundaryConstraints,
   constrainPositionToCanvas,
@@ -459,6 +461,16 @@ export class GridBuilder {
   private domCacheInstance?: DOMCache;
 
   /**
+   * Instance-specific ID for cache isolation
+   *
+   * **Purpose**: Unique identifier for this grid-builder instance
+   * **Used for**: Cache namespacing to prevent collisions between instances
+   * **Generated from**: apiRef.key prop (defaults to 'gridBuilderAPI')
+   * **Lifecycle**: Set in componentWillLoad, used throughout component lifetime
+   */
+  private instanceId: string;
+
+  /**
    * Host element reference
    *
    * **Purpose**: Access to host element for event listeners
@@ -611,7 +623,7 @@ export class GridBuilder {
         return;
       }
       canvasId = canvasIds[0];
-      setActiveCanvas(canvasId);
+      this.stateManager!.state.activeCanvasId = canvasId;
       debug.log(`  🎯 Auto-selected first canvas: ${canvasId}`);
     }
 
@@ -630,11 +642,12 @@ export class GridBuilder {
     // Import space-finder utility (dynamic import to avoid circular dependency)
     const { findFreeSpace } = await import("../../utils/space-finder");
 
-    // Find free space on canvas
+    // Find free space on canvas (pass state instance for multi-instance support)
     const position = findFreeSpace(
       canvasId,
       defaultSize.width,
       defaultSize.height,
+      this.stateManager!.state,
     );
 
     if (!position) {
@@ -743,6 +756,30 @@ export class GridBuilder {
       eventManagerInstance: !!this.eventManagerInstance,
       virtualRendererInstance: !!this.virtualRendererInstance,
       domCacheInstance: !!this.domCacheInstance,
+    });
+
+    // Set instanceId for cache isolation (stored as private property to avoid mutating config prop)
+    // This prevents cache collisions when multiple instances share canvasIds
+    this.instanceId = this.apiRef?.key || 'gridBuilderAPI';
+
+    console.log('[BUILD-2025-12-01-01:40] GridBuilder instanceId set', {
+      instanceId: this.instanceId,
+      hasCustomConfig: !!this.config,
+    });
+    debug.log("GridBuilder: Instance ID set", {
+      instanceId: this.instanceId,
+      hasCustomConfig: !!this.config,
+    });
+
+    // Clear this instance's cache on load to prevent stale values when remounting
+    // Critical for Storybook tab switching: prevents cache from previous tab (Docs/Canvas)
+    // ResizeObserver only fires on changes, not initial load, so we must clear here
+    clearGridSizeCache(this.instanceId);
+    console.log('[BUILD-2025-12-01-01:40] Cleared instance cache on load', {
+      instanceId: this.instanceId,
+    });
+    debug.log("GridBuilder: Cleared instance cache on load", {
+      instanceId: this.instanceId,
     });
 
     // Restore initial state if provided
@@ -887,7 +924,7 @@ export class GridBuilder {
       debug.log("  Created item:", newItem);
 
       // Set the target canvas as active when item is dropped
-      setActiveCanvas(canvasId);
+      this.stateManager!.state.activeCanvasId = canvasId;
       this.eventManagerInstance?.emit("canvasActivated", { canvasId });
     };
 
@@ -954,16 +991,23 @@ export class GridBuilder {
       item.layouts.desktop.y = gridY;
 
       // 7. Move item between canvases (updates canvasId, removes from source, adds to target)
-      moveItemToCanvas(sourceCanvasId, targetCanvasId, itemId);
+      // Remove from source canvas
+      sourceCanvas.items = sourceCanvas.items.filter((i) => i.id !== itemId);
+
+      // Update item's canvasId
+      item.canvasId = targetCanvasId;
+
+      // Add to target canvas
+      const targetCanvas = this.stateManager!.state.canvases[targetCanvasId];
+      targetCanvas.items.push(item);
 
       // 8. Assign new z-index in target canvas (prevents z-index conflicts)
-      const targetCanvas = this.stateManager!.state.canvases[targetCanvasId];
       const targetZIndex = targetCanvas.zIndexCounter++;
       item.zIndex = targetZIndex;
       this.stateManager!.state.canvases = { ...this.stateManager!.state.canvases }; // Trigger reactivity
 
       // 9. Set target canvas as active
-      setActiveCanvas(targetCanvasId);
+      this.stateManager!.state.activeCanvasId = targetCanvasId;
 
       // 10. Update selection state if item was selected
       if (this.stateManager!.state.selectedItemId === itemId) {
@@ -1280,6 +1324,14 @@ export class GridBuilder {
     }
     // StateManager will be garbage collected (no explicit cleanup needed)
 
+    // Clear grid size cache for this instance only (instance-aware cleanup)
+    if (this.instanceId) {
+      clearGridSizeCache(this.instanceId);
+      debug.log("GridBuilder: Cleared grid size cache for instance", {
+        instanceId: this.instanceId,
+      });
+    }
+
     // Clear global references
     if (this.apiRef && this.apiRef.key) {
       // Clear API
@@ -1300,6 +1352,19 @@ export class GridBuilder {
     this.componentRegistry = new Map(
       newComponents.map((comp) => [comp.type, comp]),
     );
+  }
+
+  /**
+   * Watch theme prop changes and reapply theme
+   *
+   * **When triggered**: Theme prop changes (e.g., from Storybook controls)
+   * **Purpose**: Reapply CSS custom properties when theme colors change
+   */
+  @Watch("theme")
+  handleThemeChange(newTheme: GridBuilderTheme) {
+    if (newTheme) {
+      this.applyTheme(newTheme);
+    }
   }
 
   /**
@@ -1386,9 +1451,11 @@ export class GridBuilder {
           config: config || {},
         };
 
-        // Add to canvas
-        canvas.items.push(newItem);
-        this.stateManager!.state.canvases = { ...this.stateManager!.state.canvases };
+        // Add to canvas (immutable update)
+        const newItems = [...canvas.items, newItem];
+        const newCanvas = { ...canvas, items: newItems };
+        const newCanvases = { ...this.stateManager!.state.canvases, [canvasId]: newCanvas };
+        this.stateManager!.state.canvases = newCanvases;
 
         // Add to undo/redo history
         this.undoRedoManager?.push(new BatchAddCommand([newItem.id]));
@@ -1677,7 +1744,7 @@ export class GridBuilder {
       },
 
       setActiveCanvas: (canvasId: string) => {
-        setActiveCanvas(canvasId);
+        this.stateManager!.state.activeCanvasId = canvasId;
         this.eventManagerInstance?.emit("canvasActivated", { canvasId });
       },
 
@@ -1772,9 +1839,22 @@ export class GridBuilder {
     // Watch for grid-builder container size changes
     this.viewportResizeObserver = new ResizeObserver((entries) => {
       for (const entry of entries) {
-        // Get container width (use borderBoxSize for better accuracy)
+        // Get container width directly from the element
+        // Note: We use offsetWidth instead of entry.contentRect.width because
+        // the grid-builder uses Shadow DOM and contentRect can return 0 for elements with height: 100%
         const width =
-          entry.borderBoxSize?.[0]?.inlineSize || entry.contentRect.width;
+          this.hostElement.offsetWidth ||
+          entry.borderBoxSize?.[0]?.inlineSize ||
+          entry.contentRect.width;
+
+        // Skip viewport switching if width is 0 or very small (container not yet laid out)
+        // This prevents premature switching to mobile before CSS layout is complete
+        if (width < 100) {
+          debug.log(
+            `📱 Skipping viewport switch - container not yet laid out (width: ${Math.round(width)}px)`,
+          );
+          return;
+        }
 
         // Determine target viewport based on container width
         const targetViewport = width < 768 ? "mobile" : "desktop";
@@ -2346,6 +2426,11 @@ export class GridBuilder {
   render() {
     const canvasIds = Object.keys(this.stateManager!.state.canvases);
 
+    // Merge instanceId into config for child components (avoids mutating prop)
+    const configWithInstance = this.config
+      ? { ...this.config, instanceId: this.instanceId }
+      : { instanceId: this.instanceId };
+
     return (
       <Host ref={(el) => (this.el = el)}>
         {/* ARIA Live Region for Screen Reader Announcements */}
@@ -2400,7 +2485,7 @@ export class GridBuilder {
                     <canvas-section
                       canvasId={canvasId}
                       isActive={isActive}
-                      config={this.config}
+                      config={configWithInstance}
                       componentRegistry={this.componentRegistry}
                       backgroundColor={metadata.backgroundColor}
                       canvasTitle={metadata.title}
@@ -2408,6 +2493,8 @@ export class GridBuilder {
                       virtualRendererInstance={this.virtualRendererInstance}
                       eventManagerInstance={this.eventManagerInstance}
                       stateInstance={this.stateManager!.state}
+                      onStateChange={(key: string, callback: Function) => this.stateManager!.onChange(key, callback)}
+                      theme={this.theme}
                     />
                   </div>
                 );

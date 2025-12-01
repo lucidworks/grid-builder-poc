@@ -114,6 +114,9 @@ describe("config-panel", () => {
       // Initialize lifecycle
       component.componentDidLoad();
 
+      // Create canvas1 before adding items (Phase 3: canvases start empty)
+      gridState.canvases.canvas1 = { items: [], zIndexCounter: 0 };
+
       // Add a test item to state
       gridState.canvases.canvas1.items = [
         {
@@ -167,6 +170,9 @@ describe("config-panel", () => {
 
       // Initialize lifecycle
       component.componentDidLoad();
+
+      // Create canvas1 before adding items (Phase 3: canvases start empty)
+      gridState.canvases.canvas1 = { items: [], zIndexCounter: 0 };
 
       // Add test items to state
       gridState.canvases.canvas1.items = [
@@ -300,6 +306,9 @@ describe("config-panel", () => {
 
       // Initialize lifecycle
       component.componentDidLoad();
+
+      // Create canvas1 before adding items (Phase 3: canvases start empty)
+      gridState.canvases.canvas1 = { items: [], zIndexCounter: 0 };
 
       // Add test item to state
       const testItem = {
