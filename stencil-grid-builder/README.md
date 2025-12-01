@@ -482,11 +482,74 @@ You can use multiple `grid-builder` or `grid-viewer` instances on the same page.
 </script>
 ```
 
+**Instance Isolation Architecture**:
+
+Each grid-builder instance creates **isolated service instances** with no cross-instance interference:
+
+- **State isolation**: Each instance has its own `StateManager` with independent canvases, selection, and viewport
+- **Event isolation**: Each instance has its own `EventManager` - events only fire within their instance
+- **Undo/redo isolation**: Each instance has its own `UndoRedoManager` with independent command history
+- **Virtual rendering isolation**: Each instance has its own `VirtualRendererService` for lazy loading
+
+**Plugin Instance Isolation**:
+
+Plugins automatically receive **instance-specific APIs**:
+
+```typescript
+class MyPlugin implements GridBuilderPlugin {
+  name = 'my-plugin';
+
+  init(api: GridBuilderAPI) {
+    // This API is instance-specific!
+    // Events, state, and operations are isolated to this grid instance
+    api.on('componentAdded', (e) => {
+      console.log('Component added to THIS instance:', e);
+    });
+  }
+
+  destroy() { /* cleanup */ }
+}
+
+// Each grid gets its own plugin instance with isolated API
+<grid-builder api-ref='{ "key": "grid1" }' plugins={[new MyPlugin()]} />
+<grid-builder api-ref='{ "key": "grid2" }' plugins={[new MyPlugin()]} />
+```
+
 **Important Notes**:
 - If you only have **one grid instance** per page, you don't need to configure `api-ref` - the default `window.gridBuilderAPI` works perfectly
 - The `api-ref` prop only supports setting a custom `key` on the `window` object
 - Passing custom `target` objects (like `this`) through Stencil/JSX props is not supported due to JSX serialization limitations
 - For namespace isolation, use unique key names like `window.myApp.gridAPI1` by setting `api-ref='{ "key": "myApp.gridAPI1" }'`
+
+**Complete Instance Isolation** (Phase 4 Architecture):
+
+After Phase 4 migration (completed 2024), the library achieves **complete instance isolation** with no singleton fallbacks:
+
+```typescript
+// Child components use instance props (optional syntax for viewer mode compatibility)
+<grid-item-wrapper
+  stateInstance={this.stateManager}                      // grid-builder provides
+  eventManagerInstance={this.eventManagerInstance}       // grid-builder provides
+  undoRedoManagerInstance={this.undoRedoManager}         // grid-builder provides
+  virtualRendererInstance={this.virtualRendererInstance} // both provide (if enabled)
+/>
+
+// Internally: Direct usage when provided, no singleton fallbacks
+// const state = this.stateInstance;  // Direct use (no || gridState)
+```
+
+**Benefits**:
+- ✅ **True isolation**: No shared global state between instances
+- ✅ **Viewer mode support**: Virtual rendering now works in grid-viewer too
+- ✅ **Cleaner code**: No complex fallback logic
+- ✅ **Better testing**: All dependencies explicit and mockable
+
+**How it works**:
+- `grid-builder` provides all instances (state, events, undo/redo, virtual rendering)
+- `grid-viewer` provides only `virtualRendererInstance` (for lazy loading performance)
+- No editing services needed in viewer mode, no singleton fallbacks anywhere
+
+**Note**: If you're using the `<grid-builder>` or `<grid-viewer>` components (recommended), you don't need to worry about this - they automatically create and pass the appropriate instances. This only matters if you're directly using child components like `<canvas-section>` or `<grid-item-wrapper>`.
 
 #### grid-viewer Props
 
