@@ -1,0 +1,63 @@
+# custom-config-panel
+
+
+
+<!-- Auto Generated Below -->
+
+
+## Properties
+
+| Property | Attribute | Description                                                                                                                                                                                                                                           | Type             | Default     |
+| -------- | --------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------- | ----------- |
+| `api`    | --        | Grid Builder API (accessed from window.gridBuilderAPI or passed as prop)  **Source**: window.gridBuilderAPI (set by grid-builder component) **Purpose**: Access grid state and methods **Required**: Component won't work without valid API reference | `GridBuilderAPI` | `undefined` |
+
+
+## Dependencies
+
+### Used by
+
+ - [blog-app](../blog-app)
+
+### Depends on
+
+- [custom-palette-item](../custom-palette-item)
+- [blog-header-drag-clone](../blog-header-drag-clone)
+- [blog-header](../blog-header)
+- [blog-article-drag-clone](../blog-article-drag-clone)
+- [blog-article](../blog-article)
+- [blog-image-drag-clone](../blog-image-drag-clone)
+- [blog-image](../blog-image)
+- [blog-button-drag-clone](../blog-button-drag-clone)
+- [blog-button](../blog-button)
+- [image-gallery-drag-clone](../image-gallery-drag-clone)
+- [image-gallery](../image-gallery)
+- [dashboard-widget-drag-clone](../dashboard-widget-drag-clone)
+- [dashboard-widget](../dashboard-widget)
+- [live-data-drag-clone](../live-data-drag-clone)
+- [live-data](../live-data)
+
+### Graph
+```mermaid
+graph TD;
+  custom-config-panel --> custom-palette-item
+  custom-config-panel --> blog-header-drag-clone
+  custom-config-panel --> blog-header
+  custom-config-panel --> blog-article-drag-clone
+  custom-config-panel --> blog-article
+  custom-config-panel --> blog-image-drag-clone
+  custom-config-panel --> blog-image
+  custom-config-panel --> blog-button-drag-clone
+  custom-config-panel --> blog-button
+  custom-config-panel --> image-gallery-drag-clone
+  custom-config-panel --> image-gallery
+  custom-config-panel --> dashboard-widget-drag-clone
+  custom-config-panel --> dashboard-widget
+  custom-config-panel --> live-data-drag-clone
+  custom-config-panel --> live-data
+  blog-app --> custom-config-panel
+  style custom-config-panel fill:#f9f,stroke:#333,stroke-width:4px
+```
+
+----------------------------------------------
+
+*Built with [StencilJS](https://stenciljs.com/)*

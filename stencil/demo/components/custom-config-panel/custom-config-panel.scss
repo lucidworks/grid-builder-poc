@@ -185,36 +185,6 @@
     }
   }
 
-  .textarea-input {
-    width: 100%;
-    padding: 10px 12px;
-    border: 2px solid #e5e7eb;
-    border-radius: 6px;
-    font-size: 14px;
-    color: #1f2937;
-    font-family: inherit;
-    line-height: 1.5;
-    min-height: 80px;
-    resize: vertical;
-    transition: all 0.2s ease;
-
-    &:focus {
-      outline: none;
-      border-color: #667eea;
-      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-    }
-
-    &:disabled {
-      background: #f9fafb;
-      color: #9ca3af;
-      cursor: not-allowed;
-    }
-
-    &::placeholder {
-      color: #9ca3af;
-    }
-  }
-
   .select-input {
     width: 100%;
     padding: 10px 12px;

@@ -7,13 +7,12 @@
 
 ## Properties
 
-| Property          | Attribute          | Description | Type                   | Default                                                                               |
-| ----------------- | ------------------ | ----------- | ---------------------- | ------------------------------------------------------------------------------------- |
-| `alt`             | `alt`              |             | `string`               | `"Placeholder image"`                                                                 |
-| `backgroundColor` | `background-color` |             | `string`               | `"#c8e6c9"`                                                                           |
-| `caption`         | `caption`          |             | `string`               | `undefined`                                                                           |
-| `objectFit`       | `object-fit`       |             | `"contain" \| "cover"` | `"contain"`                                                                           |
-| `src`             | `src`              |             | `string`               | `"https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&h=600&fit=crop"` |
+| Property    | Attribute    | Description | Type                   | Default                                                                               |
+| ----------- | ------------ | ----------- | ---------------------- | ------------------------------------------------------------------------------------- |
+| `alt`       | `alt`        |             | `string`               | `"Placeholder image"`                                                                 |
+| `caption`   | `caption`    |             | `string`               | `undefined`                                                                           |
+| `objectFit` | `object-fit` |             | `"contain" \| "cover"` | `"contain"`                                                                           |
+| `src`       | `src`        |             | `string`               | `"https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&h=600&fit=crop"` |
 
 
 ## Dependencies

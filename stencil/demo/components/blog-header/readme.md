@@ -7,11 +7,10 @@
 
 ## Properties
 
-| Property          | Attribute          | Description | Type     | Default            |
-| ----------------- | ------------------ | ----------- | -------- | ------------------ |
-| `backgroundColor` | `background-color` |             | `string` | `"#e8eaf6"`        |
-| `headerTitle`     | `header-title`     |             | `string` | `"Default Header"` |
-| `subtitle`        | `subtitle`         |             | `string` | `undefined`        |
+| Property      | Attribute      | Description | Type     | Default            |
+| ------------- | -------------- | ----------- | -------- | ------------------ |
+| `headerTitle` | `header-title` |             | `string` | `"Default Header"` |
+| `subtitle`    | `subtitle`     |             | `string` | `undefined`        |
 
 
 ## Dependencies

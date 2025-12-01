@@ -1,0 +1,149 @@
+/**
+ * Layer Panel Item Styles
+ * =======================
+ *
+ * Styling for individual layer panel items with drag-to-reorder functionality.
+ */
+
+.layer-item {
+  position: relative; // For ::before and ::after drop indicators
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition:
+    background 180ms cubic-bezier(0.4, 0, 0.2, 1),
+    border-color 180ms cubic-bezier(0.4, 0, 0.2, 1),
+    box-shadow 180ms cubic-bezier(0.4, 0, 0.2, 1),
+    transform 120ms cubic-bezier(0.4, 0, 0.2, 1),
+    opacity 120ms cubic-bezier(0.4, 0, 0.2, 1);
+  background: #ffffff;
+  border: 1px solid #e0e0e0;
+  margin-bottom: 4px;
+  user-select: none;
+
+  &:hover {
+    background: #f5f5f5;
+    border-color: #4a90e2;
+  }
+
+  &--active {
+    background: #e3f2fd;
+    border-color: #4a90e2;
+    box-shadow: 0 2px 4px rgba(74, 144, 226, 0.2);
+
+    &:hover {
+      background: #d1e7f7;
+    }
+  }
+
+  &.dragging {
+    opacity: 0.5;
+    cursor: grabbing;
+  }
+
+  // Drop target states
+  &.drop-target {
+    background: #f0f8ff;
+    border-color: #4a90e2;
+  }
+
+  &.drop-above::before {
+    content: '';
+    position: absolute;
+    top: -2px;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: #4a90e2;
+    border-radius: 2px;
+    z-index: 10;
+    animation: dropIndicatorFadeIn 200ms cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  &.drop-below::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: #4a90e2;
+    border-radius: 2px;
+    z-index: 10;
+    animation: dropIndicatorFadeIn 200ms cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  &__drag-handle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    cursor: grab;
+    color: #9e9e9e;
+    font-size: 12px;
+    line-height: 1;
+    flex-shrink: 0;
+
+    &:hover {
+      color: #4a90e2;
+    }
+
+    &:active {
+      cursor: grabbing;
+    }
+  }
+
+  &__icon {
+    font-size: 20px;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  &__info {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  &__name {
+    font-size: 14px;
+    font-weight: 500;
+    color: #333;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  &__meta {
+    font-size: 11px;
+    color: #757575;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
+
+/**
+ * Drop indicator fade-in animation
+ * Smooth appearance when dragging over target
+ */
+@keyframes dropIndicatorFadeIn {
+  from {
+    opacity: 0;
+    transform: scaleX(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: scaleX(1);
+  }
+}

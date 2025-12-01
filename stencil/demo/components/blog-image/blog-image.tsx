@@ -1,4 +1,4 @@
-import { Component, h, Prop, State, Host } from "@stencil/core";
+import { Component, h, Prop, State } from "@stencil/core";
 
 @Component({
   tag: "blog-image",
@@ -11,7 +11,6 @@ export class BlogImage {
   @Prop() alt: string = "Placeholder image";
   @Prop() caption?: string;
   @Prop() objectFit: "contain" | "cover" = "contain";
-  @Prop() backgroundColor?: string = "#c8e6c9";
 
   @State() imageLoaded: boolean = false;
   @State() imageError: boolean = false;
@@ -37,37 +36,35 @@ export class BlogImage {
 
   render() {
     return (
-      <Host>
-        <div class="blog-image-content">
-          <div class="image-container">
-            {!this.imageLoaded && !this.imageError && (
-              <div class="image-placeholder">
-                <div class="spinner" />
-              </div>
-            )}
-            {this.imageError && (
-              <div class="image-error">
-                <span class="error-icon">🖼️</span>
-                <span class="error-text">Failed to load image</span>
-              </div>
-            )}
-            <img
-              ref={(el) => (this.imgRef = el)}
-              src={this.src}
-              alt={this.alt}
-              class={{
-                "blog-image": true,
-                loaded: this.imageLoaded,
-                "fit-contain": this.objectFit === "contain",
-                "fit-cover": this.objectFit === "cover",
-              }}
-              onLoad={this.handleImageLoad}
-              onError={this.handleImageError}
-            />
-          </div>
-          {this.caption && <div class="image-caption">{this.caption}</div>}
+      <div class="blog-image-content">
+        <div class="image-container">
+          {!this.imageLoaded && !this.imageError && (
+            <div class="image-placeholder">
+              <div class="spinner"></div>
+            </div>
+          )}
+          {this.imageError && (
+            <div class="image-error">
+              <span class="error-icon">🖼️</span>
+              <span class="error-text">Failed to load image</span>
+            </div>
+          )}
+          <img
+            ref={(el) => (this.imgRef = el)}
+            src={this.src}
+            alt={this.alt}
+            class={{
+              "blog-image": true,
+              loaded: this.imageLoaded,
+              "fit-contain": this.objectFit === "contain",
+              "fit-cover": this.objectFit === "cover",
+            }}
+            onLoad={this.handleImageLoad}
+            onError={this.handleImageError}
+          />
         </div>
-      </Host>
+        {this.caption && <div class="image-caption">{this.caption}</div>}
+      </div>
     );
   }
 }

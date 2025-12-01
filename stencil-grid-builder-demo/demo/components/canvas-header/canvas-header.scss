@@ -1,0 +1,101 @@
+/**
+ * Canvas Header Component Styles
+ * ===============================
+ *
+ * Styling for canvas section headers with title badges and delete buttons.
+ *
+ * **Positioning**:
+ * - Headers are rendered inside .canvas-wrapper (sibling to canvas-section)
+ * - Headers overlay the top of their associated canvas using absolute positioning
+ * - No gaps between canvases - headers use negative margin to overlap with canvas above
+ *
+ * **Negative Margin Pattern**:
+ * - All headers EXCEPT the first one get negative top margin
+ * - This pulls headers up to overlap with the canvas above
+ * - Eliminates gaps between sections
+ * - First header starts at top of its canvas (no overlap needed)
+ *
+ * **Active State Behavior**:
+ * - Canvas title starts dimmed (opacity 0.6) when canvas is inactive
+ * - Full opacity when canvas is active (isActive prop)
+ */
+
+.canvas-header {
+  position: absolute; // Overlay canvas without adding vertical space
+  top: 0;
+  right: 0;
+  z-index: 10; // Above canvas content
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 12px;
+  margin: 0;
+  gap: 8px;
+
+  // Pull up all headers except the first one to eliminate gaps
+  // Tab effect: significant overlap creates clean tab appearance
+  .canvas-wrapper:not(:first-child) & {
+    margin-top: -38px;
+  }
+
+  .canvas-title {
+    display: inline-flex;
+    align-items: center;
+    padding: 6px 12px;
+    border-radius: 4px;
+    margin: 0;
+    background: #4a90e2;
+    box-shadow: 0 1px 3px rgba(74, 144, 226, 0.2);
+    color: white;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 500;
+    text-transform: none;
+    opacity: 0.6; // Dimmed by default
+    transition: all 0.15s;
+
+    &:hover {
+      background: #357abd;
+      box-shadow: 0 2px 6px rgba(74, 144, 226, 0.3);
+    }
+  }
+
+  // Undim title when canvas is active
+  &.is-active .canvas-title {
+    opacity: 1;
+  }
+
+  .canvas-actions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+
+    .delete-canvas-btn {
+      display: flex;
+      width: 28px;
+      height: 28px;
+      align-items: center;
+      justify-content: center;
+      padding: 0;
+      border: 1px solid #dee2e6;
+      border-radius: 4px;
+      background: white;
+      color: #dc3545;
+      cursor: pointer;
+      font-size: 20px;
+      font-weight: 300;
+      line-height: 1;
+      transition: all 0.15s;
+
+      &:hover {
+        border-color: #dc3545;
+        background: rgba(220, 53, 69, 0.1);
+        transform: scale(1.1);
+      }
+
+      &:active {
+        transform: scale(1);
+      }
+    }
+  }
+}

@@ -1,4 +1,4 @@
-import { Component, h, Prop, Event, EventEmitter, Host } from "@stencil/core";
+import { Component, h, Prop, Event, EventEmitter } from "@stencil/core";
 
 @Component({
   tag: "blog-button",
@@ -9,7 +9,6 @@ export class BlogButton {
   @Prop() label: string = "Click me!";
   @Prop() variant: "primary" | "secondary" = "primary";
   @Prop() href?: string;
-  @Prop() backgroundColor?: string = "#bbdefb";
 
   @Event() buttonClick: EventEmitter<void>;
 
@@ -22,16 +21,14 @@ export class BlogButton {
 
   render() {
     return (
-      <Host>
-        <div class="blog-button-content">
-          <button
-            class={`demo-button ${this.variant}`}
-            onClick={this.handleClick}
-          >
-            {this.label}
-          </button>
-        </div>
-      </Host>
+      <div class="blog-button-content">
+        <button
+          class={`demo-button ${this.variant}`}
+          onClick={this.handleClick}
+        >
+          {this.label}
+        </button>
+      </div>
     );
   }
 }

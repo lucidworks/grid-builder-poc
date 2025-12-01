@@ -7,12 +7,11 @@
 
 ## Properties
 
-| Property          | Attribute          | Description | Type                       | Default       |
-| ----------------- | ------------------ | ----------- | -------------------------- | ------------- |
-| `backgroundColor` | `background-color` |             | `string`                   | `"#bbdefb"`   |
-| `href`            | `href`             |             | `string`                   | `undefined`   |
-| `label`           | `label`            |             | `string`                   | `"Click me!"` |
-| `variant`         | `variant`          |             | `"primary" \| "secondary"` | `"primary"`   |
+| Property  | Attribute | Description | Type                       | Default       |
+| --------- | --------- | ----------- | -------------------------- | ------------- |
+| `href`    | `href`    |             | `string`                   | `undefined`   |
+| `label`   | `label`   |             | `string`                   | `"Click me!"` |
+| `variant` | `variant` |             | `"primary" \| "secondary"` | `"primary"`   |
 
 
 ## Events

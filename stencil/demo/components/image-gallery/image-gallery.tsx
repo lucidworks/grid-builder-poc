@@ -1,4 +1,4 @@
-import { Component, h, Prop, Host } from "@stencil/core";
+import { Component, h, Prop } from "@stencil/core";
 
 @Component({
   tag: "image-gallery",
@@ -7,7 +7,6 @@ import { Component, h, Prop, Host } from "@stencil/core";
 })
 export class ImageGallery {
   @Prop() imageCount: number = 6;
-  @Prop() backgroundColor?: string = "#f5f5f5";
 
   private getRandomImageUrl() {
     return `https://picsum.photos/400?random=${Math.random()}`;
@@ -19,19 +18,13 @@ export class ImageGallery {
     );
 
     return (
-      <Host>
-        <div class="image-gallery">
-          {images.map((url, index) => (
-            <div class="gallery-item" key={index}>
-              <img
-                src={url}
-                alt={`Gallery image ${index + 1}`}
-                loading="lazy"
-              />
-            </div>
-          ))}
-        </div>
-      </Host>
+      <div class="image-gallery">
+        {images.map((url, index) => (
+          <div class="gallery-item" key={index}>
+            <img src={url} alt={`Gallery image ${index + 1}`} loading="lazy" />
+          </div>
+        ))}
+      </div>
     );
   }
 }

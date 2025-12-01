@@ -1,4 +1,4 @@
-import { Component, h, Prop, Host } from "@stencil/core";
+import { Component, h, Prop } from "@stencil/core";
 
 @Component({
   tag: "blog-header",
@@ -8,16 +8,13 @@ import { Component, h, Prop, Host } from "@stencil/core";
 export class BlogHeader {
   @Prop() headerTitle: string = "Default Header";
   @Prop() subtitle?: string;
-  @Prop() backgroundColor?: string = "#e8eaf6";
 
   render() {
     return (
-      <Host>
-        <div class="blog-header-content">
-          <h1>{this.headerTitle}</h1>
-          {this.subtitle && <h2 class="subtitle">{this.subtitle}</h2>}
-        </div>
-      </Host>
+      <div class="blog-header-content">
+        <h1>{this.headerTitle}</h1>
+        {this.subtitle && <h2 class="subtitle">{this.subtitle}</h2>}
+      </div>
     );
   }
 }

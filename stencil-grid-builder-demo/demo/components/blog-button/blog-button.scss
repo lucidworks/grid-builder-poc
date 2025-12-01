@@ -1,0 +1,59 @@
+blog-button {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 8px;
+  overflow: hidden;
+  box-sizing: border-box; // CRITICAL: Include padding in dimensions
+
+  .blog-button-content {
+    display: flex;
+    width: 100%;
+    height: 100%;
+    align-items: center;
+    justify-content: center;
+    padding: min(3%, 8px); // Container-relative padding
+    box-sizing: border-box;
+  }
+
+  .demo-button {
+    max-width: 100%; // Don't exceed container width
+    max-height: 100%; // Don't exceed container height
+    padding: min(4%, 12px) min(8%, 28px); // Container-relative padding
+    border: none;
+    border-radius: min(2%, 6px); // Container-relative border radius
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    cursor: pointer;
+    font-size: clamp(12px, 4cqw, 16px); // Container query width units
+    font-weight: 600;
+    line-height: 1.2;
+    transition: all 0.2s ease;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap; // Single line with ellipsis
+    box-sizing: border-box;
+
+    &.primary {
+      background: #4a90e2;
+      color: white;
+
+      &:hover {
+        background: #357abd;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        transform: translateY(-1px);
+      }
+    }
+
+    &.secondary {
+      border: 2px solid #4a90e2;
+      background: white;
+      color: #4a90e2;
+
+      &:hover {
+        background: #F7FBFF;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        transform: translateY(-1px);
+      }
+    }
+  }
+}

@@ -143,13 +143,13 @@ import "../live-data-drag-clone/live-data-drag-clone";
  *      ...
  *    />
  *    ```
- 
- 
- 
- 
- 
- 
- 
+
+
+
+
+
+
+
  *
  * 2. Access the Grid Builder API:
  *    ```typescript
@@ -269,18 +269,6 @@ export class BlogApp {
   @State() private canRedo: boolean = false;
 
   private sectionCounter = 1;
-
-  /**
-   * Grid Configuration
-   * ------------------
-   *
-   * Configuration for grid-builder component.
-   * Stored as class property so it can be reused in render calculations.
-   */
-  private gridConfig = {
-    enableAnimations: true,
-    animationDuration: 100,
-  };
 
   /**
    * Event Handler References for Cleanup
@@ -450,10 +438,7 @@ export class BlogApp {
     // Listen for palette-item-click events from external palettes
     // Note: External palettes are siblings to grid-builder, so @Listen decorator
     // in grid-builder can't catch these events. We need to listen on document.
-    document.addEventListener(
-      "palette-item-click",
-      this.handleExternalPaletteClick as EventListener,
-    );
+    document.addEventListener('palette-item-click', this.handleExternalPaletteClick as EventListener);
   }
 
   /**
@@ -484,10 +469,7 @@ export class BlogApp {
     }
 
     // Remove palette-item-click listener
-    document.removeEventListener(
-      "palette-item-click",
-      this.handleExternalPaletteClick as EventListener,
-    );
+    document.removeEventListener('palette-item-click', this.handleExternalPaletteClick as EventListener);
 
     // Remove API event listeners
     if (this.api) {
@@ -620,9 +602,7 @@ export class BlogApp {
    * This demonstrates the pattern for using multiple external palettes with
    * grid-builder in custom layouts.
    */
-  private handleExternalPaletteClick = async (
-    event: CustomEvent<{ componentType: string }>,
-  ) => {
+  private handleExternalPaletteClick = async (event: CustomEvent<{ componentType: string }>) => {
     if (!this.api) {
       console.warn("API not ready for palette click");
       return;
@@ -641,11 +621,11 @@ export class BlogApp {
     // Since we're listening on document, we need to manually trigger
     // grid-builder's handler by dispatching to it directly.
 
-    const gridBuilderElement = document.querySelector("grid-builder");
+    const gridBuilderElement = document.querySelector('grid-builder');
     if (gridBuilderElement) {
       // Re-dispatch event to grid-builder so its @Listen decorator catches it
       // IMPORTANT: bubbles: false prevents infinite loop (event bubbling back to document)
-      const newEvent = new CustomEvent("palette-item-click", {
+      const newEvent = new CustomEvent('palette-item-click', {
         detail: { componentType },
         bubbles: false, // Don't bubble - prevents infinite loop
         composed: true,
@@ -943,22 +923,6 @@ export class BlogApp {
   };
 
   /**
-   * Handle Category Header Keyboard Events
-   * ----------------------------------------
-   *
-   * Accessibility: Support keyboard navigation for category headers.
-   * - Enter key: Toggle category expand/collapse
-   * - Space key: Toggle category expand/collapse
-   * - Prevents default behavior to avoid page scrolling on Space
-   */
-  private handleCategoryKeyDown = (event: KeyboardEvent, category: string) => {
-    if (event.key === "Enter" || event.key === " ") {
-      event.preventDefault();
-      this.toggleCategory(category);
-    }
-  };
-
-  /**
    * Toggle Preview Mode
    * -------------------
    *
@@ -1040,7 +1004,7 @@ export class BlogApp {
             type: "blog-button",
             name: "Hero CTA",
             layouts: {
-              desktop: { x: 15, y: 7, width: 20, height: 4 }, // 4 units × 20px = 80px (matches CSS min-height)
+              desktop: { x: 15, y: 7, width: 20, height: 4 },  // 4 units × 20px = 80px (matches CSS min-height)
               mobile: {
                 x: null,
                 y: null,
@@ -1184,7 +1148,7 @@ export class BlogApp {
             type: "blog-button",
             name: "Subscribe Button",
             layouts: {
-              desktop: { x: 15, y: 5, width: 20, height: 4 }, // 4 units × 20px = 80px (matches CSS min-height)
+              desktop: { x: 15, y: 5, width: 20, height: 4 },  // 4 units × 20px = 80px (matches CSS min-height)
               mobile: {
                 x: null,
                 y: null,
@@ -1210,6 +1174,7 @@ export class BlogApp {
    *
    * Merges canvas metadata with preview state for rendering.
    * Preview state takes precedence over saved metadata for live preview.
+   *
    * @param canvasId - Canvas ID to get metadata for
    * @returns Merged metadata object with title and backgroundColor
    */
@@ -1231,7 +1196,7 @@ export class BlogApp {
 
   render() {
     // Calculate canvas header overlay margin from grid size (1.4 grid units)
-    const verticalGridSize = getGridSizeVertical(this.gridConfig);
+    const verticalGridSize = getGridSizeVertical();
     const canvasHeaderOverlayMargin = -(verticalGridSize * 1.4);
 
     // Build merged metadata (canvas metadata + preview state) for all canvases
@@ -1321,110 +1286,60 @@ export class BlogApp {
               <div class="palette-category">
                 <div
                   class="category-header"
-                  role="button"
-                  tabindex={0}
-                  aria-expanded={this.categoryStates.content ? "true" : "false"}
-                  aria-controls="content-palette-panel"
-                  aria-label="Content components category"
                   onClick={() => this.toggleCategory("content")}
-                  onKeyDown={(e) => this.handleCategoryKeyDown(e, "content")}
                 >
-                  <span class="category-icon" aria-hidden="true">
+                  <span class="category-icon">
                     {this.categoryStates.content ? "▼" : "▶"}
                   </span>
                   <span class="category-name">Content</span>
                 </div>
-                <div
-                  id="content-palette-panel"
-                  role="region"
-                  aria-labelledby="content-category-header"
-                >
-                  {this.categoryStates.content && (
-                    <component-palette
-                      components={contentComponents}
-                      showHeader={false}
-                      config={this.paletteConfig}
-                    />
-                  )}
-                </div>
+                {this.categoryStates.content && (
+                  <component-palette
+                    components={contentComponents}
+                    showHeader={false}
+                    config={this.paletteConfig}
+                  />
+                )}
               </div>
 
               {/* Interactive Category */}
               <div class="palette-category">
                 <div
                   class="category-header"
-                  role="button"
-                  tabindex={0}
-                  aria-expanded={
-                    this.categoryStates.interactive ? "true" : "false"
-                  }
-                  aria-controls="interactive-palette-panel"
-                  aria-label="Interactive components category"
                   onClick={() => this.toggleCategory("interactive")}
-                  onKeyDown={(e) =>
-                    this.handleCategoryKeyDown(e, "interactive")
-                  }
                 >
-                  <span class="category-icon" aria-hidden="true">
+                  <span class="category-icon">
                     {this.categoryStates.interactive ? "▼" : "▶"}
                   </span>
                   <span class="category-name">Interactive</span>
                 </div>
-                <div
-                  id="interactive-palette-panel"
-                  role="region"
-                  aria-labelledby="interactive-category-header"
-                >
-                  {this.categoryStates.interactive && (
-                    <component-palette
-                      components={interactiveComponents}
-                      showHeader={false}
-                      config={this.paletteConfig}
-                    />
-                  )}
-                </div>
+                {this.categoryStates.interactive && (
+                  <component-palette
+                    components={interactiveComponents}
+                    showHeader={false}
+                    config={this.paletteConfig}
+                  />
+                )}
               </div>
 
               {/* Media Category */}
               <div class="palette-category">
                 <div
                   class="category-header"
-                  role="button"
-                  tabindex={0}
-                  aria-expanded={this.categoryStates.media ? "true" : "false"}
-                  aria-controls="media-palette-panel"
-                  aria-label="Media components category"
                   onClick={() => this.toggleCategory("media")}
-                  onKeyDown={(e) => this.handleCategoryKeyDown(e, "media")}
                 >
-                  <span class="category-icon" aria-hidden="true">
+                  <span class="category-icon">
                     {this.categoryStates.media ? "▼" : "▶"}
                   </span>
                   <span class="category-name">Media</span>
                 </div>
-                <div
-                  id="media-palette-panel"
-                  role="region"
-                  aria-labelledby="media-category-header"
-                >
-                  {this.categoryStates.media && (
-                    <component-palette
-                      components={mediaComponents}
-                      showHeader={false}
-                      config={this.paletteConfig}
-                    />
-                  )}
-                </div>
-              </div>
-
-              {/* Layer Panel - shows z-index stacking order */}
-              <div class="palette-section">
-                <div class="palette-section-header">
-                  <h3 class="palette-section-title">Layers</h3>
-                </div>
-                <div class="layer-panel-container">
-                  <layer-panel canvasMetadata={mergedCanvasMetadata} />
-                </div>
+                {this.categoryStates.media && (
+                  <component-palette
+                    components={mediaComponents}
+                    showHeader={false}
+                    config={this.paletteConfig}
+                  />
+                )}
               </div>
             </div>
           )}
@@ -1453,7 +1368,10 @@ export class BlogApp {
               <grid-builder
                 key="builder"
                 components={blogComponentDefinitions}
-                config={this.gridConfig}
+                config={{
+                  enableAnimations: true,
+                  animationDuration: 100,
+                }}
                 initialState={this.initialState}
                 canvasMetadata={mergedCanvasMetadata}
                 onBeforeDelete={this.handleBeforeDelete}

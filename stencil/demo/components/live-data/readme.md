@@ -5,13 +5,6 @@
 <!-- Auto Generated Below -->
 
 
-## Properties
-
-| Property          | Attribute          | Description | Type     | Default     |
-| ----------------- | ------------------ | ----------- | -------- | ----------- |
-| `backgroundColor` | `background-color` |             | `string` | `"#b2ebf2"` |
-
-
 ## Dependencies
 
 ### Used by

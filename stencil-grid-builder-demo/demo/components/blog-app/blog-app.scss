@@ -1,0 +1,396 @@
+blog-app {
+  .blog-app-container {
+    min-height: 100vh;
+    padding: 24px;
+    background: #f8f9fa;
+    box-sizing: border-box; /* Ensure padding is included in width */
+
+    /* Hide canvas headers in preview mode */
+    &.preview-mode {
+      .canvas-header {
+        display: none;
+      }
+    }
+
+
+    .app-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 20px;
+      border-radius: 8px;
+      margin-bottom: 24px;
+      background: white;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+
+      .app-header-content {
+        flex: 1;
+
+        .app-title {
+          margin: 0 0 4px 0;
+          color: #212529;
+          font-size: 24px;
+          font-weight: 700;
+        }
+
+        .app-subtitle {
+          margin: 0;
+          color: #6c757d;
+          font-size: 14px;
+        }
+      }
+
+      .global-controls {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+
+        .preview-toggle-btn {
+          padding: 8px 16px;
+          border: 1px solid #10b981;
+          border-radius: 6px;
+          background: white;
+          color: #10b981;
+          cursor: pointer;
+          font-size: 14px;
+          font-weight: 500;
+          transition: all 0.15s;
+
+          &:hover {
+            background: #10b981;
+            color: white;
+          }
+
+          &:active {
+            transform: translateY(1px);
+          }
+        }
+
+        .metadata-undo-redo {
+          display: flex;
+          gap: 6px;
+
+          button {
+            padding: 8px 14px;
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+            background: #e9ecef;
+            color: #495057;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 500;
+            transition: all 0.15s;
+
+            &:hover:not(:disabled) {
+              border-color: #adb5bd;
+              background: #dee2e6;
+            }
+
+            &:active:not(:disabled) {
+              transform: translateY(1px);
+            }
+
+            &:disabled {
+              cursor: not-allowed;
+              opacity: 0.4;
+            }
+          }
+        }
+
+        .add-section-btn {
+          padding: 8px 16px;
+          border: none;
+          border-radius: 6px;
+          background: #4a90e2;
+          color: white;
+          cursor: pointer;
+          font-size: 14px;
+          font-weight: 500;
+          transition: background 0.15s;
+
+          &:hover {
+            background: #357abd;
+          }
+
+          &:active {
+            transform: translateY(1px);
+          }
+        }
+      }
+    }
+
+    /* Canvas header styles moved to canvas-header component */
+
+    /* Demo Layout - Categorized Palettes + Grid Builder */
+    .demo-layout {
+      display: flex;
+      width: 100%;
+      gap: 0; /* No gap - sidebar has border-right */
+    }
+
+    /* Categorized Palette Sidebar */
+    .categorized-palette-sidebar {
+      width: 280px;
+      flex-shrink: 0; /* Don't shrink below 280px */
+      border-right: 1px solid #ddd;
+      background: white;
+      overflow-y: auto;
+      max-height: calc(100vh - 120px); /* Account for header */
+
+      .palette-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 20px 20px 16px;
+        border-bottom: 1px solid #f0f0f0;
+
+        .palette-title {
+          padding: 0;
+          margin: 0;
+          color: #333;
+          font-size: 18px;
+          font-weight: 600;
+        }
+
+        .sidebar-collapse-btn {
+          display: flex;
+          width: 28px;
+          height: 28px;
+          align-items: center;
+          justify-content: center;
+          padding: 0;
+          border: 1px solid #dee2e6;
+          border-radius: 4px;
+          background: white;
+          color: #495057;
+          cursor: pointer;
+          font-size: 14px;
+          transition: all 0.15s;
+
+          &:hover {
+            border-color: #4a90e2;
+            background: #f8f9fa;
+            color: #4a90e2;
+          }
+
+          &:active {
+            transform: scale(0.95);
+          }
+        }
+      }
+    }
+
+    /* Floating expand button (when sidebar collapsed) */
+    .sidebar-expand-btn {
+      position: fixed;
+      top: 200px;
+      left: 24px;
+      z-index: 1000;
+      display: flex;
+      width: 40px;
+      height: 40px;
+      align-items: center;
+      justify-content: center;
+      padding: 0;
+      border: 1px solid #4a90e2;
+      border-radius: 6px;
+      background: white;
+      box-shadow: 0 2px 8px rgba(74, 144, 226, 0.2);
+      color: #4a90e2;
+      cursor: pointer;
+      font-size: 16px;
+      transition: all 0.15s;
+
+      &:hover {
+        background: #4a90e2;
+        box-shadow: 0 4px 12px rgba(74, 144, 226, 0.3);
+        color: white;
+        transform: translateX(2px);
+      }
+
+      &:active {
+        transform: translateX(2px) scale(0.95);
+      }
+    }
+
+    /* Category Sections */
+    .palette-category {
+      border-bottom: 1px solid #f0f0f0;
+
+      .category-header {
+        display: flex;
+        align-items: center;
+        padding: 12px 20px;
+        background: #f8f9fa;
+        cursor: pointer;
+        transition: background 0.15s;
+        user-select: none;
+
+        &:hover {
+          background: #e9ecef;
+        }
+
+        .category-icon {
+          width: 16px;
+          color: #6c757d;
+          font-size: 12px;
+          font-weight: bold;
+        }
+
+        .category-name {
+          margin-left: 8px;
+          color: #495057;
+          font-size: 14px;
+          font-weight: 500;
+        }
+      }
+
+      /* Override palette default styles for chromeless mode */
+      component-palette {
+        .palette {
+          width: 100%;
+          padding: 12px 20px;
+          border: none;
+          background: white;
+        }
+
+        /* Remove blue background from palette items with custom components */
+        .palette-item:has(custom-palette-item) {
+          background: transparent;
+          padding: 0;
+          margin-bottom: 12px;
+        }
+
+        .palette-item {
+          margin-bottom: 8px;
+          font-size: 13px;
+        }
+      }
+    }
+
+    /* Layer Panel Section */
+    .palette-section {
+      border-top: 2px solid #e0e0e0;
+      background: #fafafa;
+
+      .palette-section-header {
+        padding: 12px 20px;
+        background: #f8f9fa;
+        border-bottom: 1px solid #e0e0e0;
+
+        .palette-section-title {
+          margin: 0;
+          color: #495057;
+          font-size: 14px;
+          font-weight: 600;
+        }
+      }
+
+      .layer-panel-container {
+        height: 400px; // Fixed height for layer panel
+        overflow: hidden;
+
+        layer-panel {
+          display: block;
+          height: 100%;
+        }
+      }
+    }
+
+    /* Grid Builder Area */
+    .grid-builder-area {
+      flex: 1; /* Take remaining space */
+      min-width: 0; /* Allow flex shrinking - critical for preventing overflow */
+      overflow-x: auto; /* Allow scrolling if content is too wide */
+
+      /* Grid Builder - canvas area styling */
+      grid-builder {
+        display: block;
+        width: 100%;
+        min-height: 600px;
+        box-sizing: border-box;
+
+        /* Ensure main area uses available width */
+        .main-area {
+          width: 100%;
+          box-sizing: border-box;
+        }
+
+        /* Ensure canvas area constrains width */
+        .canvas-area {
+          width: 100%;
+          min-width: 0; /* Allow shrinking */
+          overflow-x: hidden; /* Prevent horizontal scroll */
+          box-sizing: border-box;
+        }
+
+        /* Ensure canvases fit within container */
+        .canvases-container {
+          width: 100%;
+          max-width: 100%;
+          box-sizing: border-box;
+        }
+
+        /* Ensure individual canvas sections fit */
+        canvas-section {
+          display: block;
+          width: 100%;
+          max-width: 100%;
+          box-sizing: border-box;
+
+          /* Ensure grid container inside canvas-section takes full width */
+          .grid-container {
+            width: 100%;
+            box-sizing: border-box;
+          }
+        }
+      }
+
+      /* Grid Viewer - same sizing constraints as grid-builder */
+      grid-viewer {
+        display: block;
+        width: 100%;
+        min-height: 600px;
+        box-sizing: border-box;
+
+        /* Override grid-viewer's height: 100% to prevent layout issues */
+        .grid-viewer-container {
+          height: auto;
+          min-height: 600px;
+          width: 100%;
+          box-sizing: border-box;
+        }
+
+        /* Ensure canvas area uses full width */
+        .canvas-area {
+          width: 100%;
+          min-width: 0;
+          overflow-x: hidden;
+          box-sizing: border-box;
+          height: auto;
+        }
+
+        /* Ensure canvases fit within container */
+        .canvases-container {
+          width: 100%;
+          max-width: 100%;
+          box-sizing: border-box;
+        }
+
+        /* Ensure individual canvas sections fit */
+        canvas-section-viewer {
+          display: block;
+          width: 100%;
+          max-width: 100%;
+          box-sizing: border-box;
+
+          /* Ensure grid container inside canvas-section-viewer takes full width */
+          .grid-container {
+            width: 100%;
+            box-sizing: border-box;
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,144 @@
+/**
+ * Layer Panel Folder Header Styles
+ * =================================
+ *
+ * Styling for canvas folder headers in the layer panel.
+ * Includes active state, empty (dimmed) state, and expand/collapse animations.
+ */
+
+.layer-panel-folder-header {
+  display: flex;
+  align-items: center;
+  height: 40px;
+  padding: 0 8px;
+  background: var(--color-surface-secondary, #f5f5f5);
+  border-bottom: 1px solid var(--color-border, #e0e0e0);
+  cursor: pointer;
+  user-select: none;
+  transition: background 150ms ease-out;
+
+  &:hover {
+    background: var(--color-surface-hover, #eeeeee);
+  }
+
+  /**
+   * Active canvas state
+   * Shows blue left border and light blue background
+   */
+  &--active {
+    background: var(--color-primary-light, #e3f2fd);
+    border-left: 3px solid var(--color-primary, #1976d2);
+    padding-left: 5px; // Compensate for left border
+
+    &:hover {
+      background: var(--color-primary-lighter, #d1e9fc);
+    }
+  }
+
+  /**
+   * Empty state (no items matching search)
+   * Dimmed appearance with reduced opacity
+   */
+  &--empty {
+    opacity: 0.5;
+    background: var(--color-surface-tertiary, #fafafa);
+
+    .layer-panel-folder-header__title {
+      color: var(--color-text-secondary, #999);
+    }
+
+    &:hover {
+      opacity: 0.6;
+    }
+  }
+
+  /**
+   * Toggle button (expand/collapse arrow)
+   */
+  &__toggle {
+    width: 24px;
+    height: 24px;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    &:hover {
+      background: rgba(0, 0, 0, 0.05);
+      border-radius: 4px;
+    }
+
+    &:focus {
+      outline: 2px solid var(--color-primary, #1976d2);
+      outline-offset: 2px;
+      border-radius: 4px;
+    }
+  }
+
+  /**
+   * Toggle arrow icon
+   * Rotates when folder expands/collapses
+   */
+  &__toggle-icon {
+    font-size: 12px;
+    color: var(--color-text-secondary, #666);
+    transition: transform 200ms ease-out;
+    display: inline-block;
+  }
+
+  // Expanded state: arrow points down (▼)
+  &--expanded &__toggle-icon {
+    transform: rotate(0deg);
+  }
+
+  // Collapsed state: arrow points right (▶)
+  &:not(&--expanded) &__toggle-icon {
+    transform: rotate(-90deg);
+  }
+
+  /**
+   * Canvas title
+   */
+  &__title {
+    flex: 1;
+    font-weight: 600;
+    font-size: 13px;
+    color: var(--color-text-primary, #333);
+    margin-left: 8px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  /**
+   * Item count badge
+   * Shows number of items in folder
+   * During search, shows "0 / 15" format for empty folders
+   */
+  &__count {
+    font-size: 11px;
+    color: var(--color-text-secondary, #666);
+    background: var(--color-surface-tertiary, #e0e0e0);
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-weight: 500;
+    min-width: 24px;
+    text-align: center;
+  }
+
+  // Active folder count badge uses primary color
+  &--active &__count {
+    background: var(--color-primary, #1976d2);
+    color: white;
+  }
+
+  // Empty folder count badge is more subdued
+  &--empty &__count {
+    background: transparent;
+    border: 1px solid var(--color-border, #e0e0e0);
+    color: var(--color-text-tertiary, #999);
+  }
+}

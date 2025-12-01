@@ -1,11 +1,4 @@
 blog-button {
-  display: block;
-  width: 100%;
-  height: 100%;
-  border-radius: 8px;
-  overflow: hidden;
-  box-sizing: border-box; // CRITICAL: Include padding in dimensions
-
   .blog-button-content {
     display: flex;
     width: 100%;
@@ -13,6 +6,7 @@ blog-button {
     align-items: center;
     justify-content: center;
     padding: min(3%, 8px); // Container-relative padding
+    overflow: hidden; // Prevent content overflow
     box-sizing: border-box;
   }
 

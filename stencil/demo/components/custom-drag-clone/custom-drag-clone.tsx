@@ -74,9 +74,9 @@ export class CustomDragClone {
       <div class="drag-clone-article">
         <div class="article-title">Article Title</div>
         <div class="article-content">
-          <div class="content-line" />
-          <div class="content-line" />
-          <div class="content-line short" />
+          <div class="content-line"></div>
+          <div class="content-line"></div>
+          <div class="content-line short"></div>
         </div>
         <div class="article-meta">
           <span class="meta-item">Author</span>

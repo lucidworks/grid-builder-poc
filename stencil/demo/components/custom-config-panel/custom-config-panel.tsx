@@ -447,6 +447,7 @@ export class CustomConfigPanel {
 
     switch (field.type) {
       case "text":
+      case "textarea":
         return (
           <input
             type="text"
@@ -459,22 +460,6 @@ export class CustomConfigPanel {
               )
             }
             placeholder={field.placeholder}
-          />
-        );
-
-      case "textarea":
-        return (
-          <textarea
-            class="textarea-input"
-            value={value}
-            onInput={(e) =>
-              this.handleConfigChange(
-                field.name,
-                (e.target as HTMLTextAreaElement).value,
-              )
-            }
-            placeholder={field.placeholder}
-            rows={field.rows || 3}
           />
         );
 

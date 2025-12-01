@@ -1,4 +1,4 @@
-import { Component, h, State, Prop, Host } from "@stencil/core";
+import { Component, h, State } from "@stencil/core";
 
 @Component({
   tag: "live-data",
@@ -6,8 +6,6 @@ import { Component, h, State, Prop, Host } from "@stencil/core";
   shadow: false,
 })
 export class LiveData {
-  @Prop() backgroundColor?: string = "#b2ebf2";
-
   @State() temperature: string = "20.0";
   @State() cpu: string = "0";
   @State() memory: string = "40";
@@ -42,44 +40,42 @@ export class LiveData {
 
   render() {
     return (
-      <Host>
-        <div class="live-data">
-          <div class="temperature-display">
-            <div class="temperature-label">🌡️ Temperature</div>
-            <div class="temperature-value">{this.temperature}°C</div>
-          </div>
+      <div class="live-data">
+        <div class="temperature-display">
+          <div class="temperature-label">🌡️ Temperature</div>
+          <div class="temperature-value">{this.temperature}°C</div>
+        </div>
 
-          <div class="metric">
-            <div class="metric-header">
-              <span class="metric-label">CPU</span>
-              <span class="metric-percentage">{this.cpu}%</span>
-            </div>
-            <div class="progress-bar">
-              <div
-                class="progress-fill progress-primary"
-                style={{ width: `${this.cpu}%` }}
-              />
-            </div>
+        <div class="metric">
+          <div class="metric-header">
+            <span class="metric-label">CPU</span>
+            <span class="metric-percentage">{this.cpu}%</span>
           </div>
-
-          <div class="metric">
-            <div class="metric-header">
-              <span class="metric-label">Memory</span>
-              <span class="metric-percentage">{this.memory}%</span>
-            </div>
-            <div class="progress-bar">
-              <div
-                class="progress-fill progress-success"
-                style={{ width: `${this.memory}%` }}
-              />
-            </div>
-          </div>
-
-          <div class="update-info">
-            Updated {this.updateCount} times • Last: {this.lastUpdate}
+          <div class="progress-bar">
+            <div
+              class="progress-fill progress-primary"
+              style={{ width: `${this.cpu}%` }}
+            ></div>
           </div>
         </div>
-      </Host>
+
+        <div class="metric">
+          <div class="metric-header">
+            <span class="metric-label">Memory</span>
+            <span class="metric-percentage">{this.memory}%</span>
+          </div>
+          <div class="progress-bar">
+            <div
+              class="progress-fill progress-success"
+              style={{ width: `${this.memory}%` }}
+            ></div>
+          </div>
+        </div>
+
+        <div class="update-info">
+          Updated {this.updateCount} times • Last: {this.lastUpdate}
+        </div>
+      </div>
     );
   }
 }
