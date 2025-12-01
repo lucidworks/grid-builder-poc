@@ -63,6 +63,7 @@ import { GridExport } from "../../types/grid-export";
 import { ViewerState } from "../../services/state-manager";
 import { createStore } from "@stencil/store";
 import { createDebugLogger } from "../../utils/debug";
+import { VirtualRendererService } from "../../services/virtual-renderer";
 
 const debug = createDebugLogger("grid-viewer");
 
@@ -201,6 +202,14 @@ export class GridViewer {
   private viewportResizeObserver?: ResizeObserver;
 
   /**
+   * Virtual renderer service instance (Phase 4)
+   *
+   * **Optional**: Created if config.enableVirtualRendering !== false
+   * **Purpose**: Lazy loading of grid items for better performance with large layouts
+   */
+  private virtualRendererInstance?: VirtualRendererService;
+
+  /**
    * Component will load lifecycle
    *
    * **Purpose**: Initialize component registry and viewer state
@@ -246,6 +255,11 @@ export class GridViewer {
 
     // Create local store (not global like grid-builder)
     this.viewerState = createStore<ViewerState>(initialViewerState);
+
+    // Create virtual renderer if enabled (Phase 4: Performance for large layouts)
+    if (this.config?.enableVirtualRendering !== false) {
+      this.virtualRendererInstance = new VirtualRendererService();
+    }
   }
 
   /**
@@ -424,6 +438,7 @@ export class GridViewer {
                   backgroundColor={
                     this.canvasMetadata?.[canvasId]?.backgroundColor
                   }
+                  virtualRendererInstance={this.virtualRendererInstance}
                 />
               ))}
             </div>

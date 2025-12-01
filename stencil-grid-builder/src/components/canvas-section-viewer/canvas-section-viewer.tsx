@@ -51,6 +51,7 @@ import {
 import { calculateCanvasHeightFromItems } from "../../utils/canvas-height-calculator";
 import { GridConfig } from "../../types/grid-config";
 import { ComponentDefinition } from "../../types/component-definition";
+import { VirtualRendererService } from "../../services/virtual-renderer";
 
 /**
  * CanvasSectionViewer Component
@@ -120,6 +121,14 @@ export class CanvasSectionViewer {
    * **Default**: '#ffffff'
    */
   @Prop() backgroundColor?: string;
+
+  /**
+   * Virtual renderer service instance (Phase 4)
+   *
+   * **Optional**: Provided by grid-viewer if virtual rendering enabled
+   * **Purpose**: Lazy loading of grid items for better performance
+   */
+  @Prop() virtualRendererInstance?: VirtualRendererService;
 
   /**
    * Render version counter (forces re-renders)
@@ -333,6 +342,7 @@ export class CanvasSectionViewer {
               viewerMode
               currentViewport={this.currentViewport}
               canvasItems={this.items}
+              virtualRendererInstance={this.virtualRendererInstance}
             />
           ))}
         </div>
