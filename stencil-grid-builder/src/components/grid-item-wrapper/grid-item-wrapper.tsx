@@ -310,6 +310,12 @@ export class GridItemWrapper {
    * Update component state (selection and snapshot)
    */
   private updateComponentState() {
+    // Skip in viewer mode (no state management needed)
+    if (this.viewerMode) {
+      this.isSelected = false;
+      return;
+    }
+
     // Update selection state
     const selectedItemId = this.stateInstance.selectedItemId;
     this.isSelected = selectedItemId === this.item.id;
@@ -622,6 +628,10 @@ export class GridItemWrapper {
   @Listen("item-bring-to-front")
   handleItemBringToFrontEvent(event: CustomEvent) {
     event.stopPropagation();
+
+    // Skip in viewer mode (no editing support)
+    if (this.viewerMode) return;
+
     const canvas = this.stateInstance.canvases[this.item.canvasId];
     if (!canvas) return;
 
@@ -641,6 +651,10 @@ export class GridItemWrapper {
   @Listen("item-send-to-back")
   handleItemSendToBackEvent(event: CustomEvent) {
     event.stopPropagation();
+
+    // Skip in viewer mode (no editing support)
+    if (this.viewerMode) return;
+
     const canvas = this.stateInstance.canvases[this.item.canvasId];
     if (!canvas) return;
 
@@ -801,7 +815,7 @@ export class GridItemWrapper {
     // Use prop-based viewport in viewer mode, instance state in builder mode
     const currentViewport = this.viewerMode
       ? this.currentViewport || "desktop"
-      : this.stateInstance.currentViewport;
+      : this.stateInstance.currentViewport || "desktop";
 
     const layout = this.item.layouts[currentViewport];
 
