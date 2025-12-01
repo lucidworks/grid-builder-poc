@@ -895,7 +895,11 @@ export class DragHandler {
     // that occurred during drag (e.g., backgroundColor changes)
     const canvas = this.state.canvases[this.item.canvasId];
     const latestItem = canvas?.items.find((i) => i.id === this.item.id);
-    const itemToUpdate = latestItem || this.item; // Fallback to stored item if not found
+    const baseItem = latestItem || this.item; // Fallback to stored item if not found
+
+    // Create a NEW object to avoid mutating the state directly
+    // This ensures handleItemUpdate can properly detect changes by comparing with snapshot
+    const itemToUpdate = JSON.parse(JSON.stringify(baseItem));
 
     // Update item position in current viewport's layout (use constrained grid units)
     const currentViewport = this.state.currentViewport || "desktop";
