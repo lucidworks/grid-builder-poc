@@ -166,7 +166,7 @@ export class GridItemWrapper {
   @Prop() currentViewport?: "desktop" | "mobile";
 
   /**
-   * Virtual renderer service instance (Phase 4)
+   * Virtual renderer service instance (passed from grid-builder)
    *
    * **Required for editing mode** (grid-builder provides this)
    * **Optional for viewer mode** (grid-viewer doesn't need it)
@@ -177,7 +177,7 @@ export class GridItemWrapper {
   @Prop() virtualRendererInstance?: VirtualRendererService;
 
   /**
-   * Event manager service instance (Phase 4)
+   * Event manager service instance (passed from grid-builder)
    *
    * **Required for editing mode** (grid-builder provides this)
    * **Optional for viewer mode** (grid-viewer doesn't need it)
@@ -188,7 +188,7 @@ export class GridItemWrapper {
   @Prop() eventManagerInstance?: EventManager;
 
   /**
-   * State manager instance (Phase 4)
+   * State manager instance (passed from grid-builder)
    *
    * **Required for editing mode** (grid-builder provides this)
    * **Optional for viewer mode** (grid-viewer doesn't need it)
@@ -200,7 +200,7 @@ export class GridItemWrapper {
   @Prop() stateInstance?: any;
 
   /**
-   * Undo/Redo manager service instance (Phase 4)
+   * Undo/Redo manager service instance (passed from grid-builder)
    *
    * **Required for editing mode** (grid-builder provides this)
    * **Optional for viewer mode** (grid-viewer doesn't need it)
@@ -212,7 +212,7 @@ export class GridItemWrapper {
   @Prop() undoRedoManagerInstance?: UndoRedoManager;
 
   /**
-   * DOM cache service instance (Phase 4)
+   * DOM cache service instance (passed from grid-builder)
    *
    * **Required for editing mode** (grid-builder provides this)
    * **Optional for viewer mode** (grid-viewer doesn't need it)
@@ -1149,7 +1149,7 @@ export class GridItemWrapper {
           }
         }
 
-        // Push undo command before updating state (Phase 4: only if manager exists)
+        // Push undo command before updating state (only if manager exists)
         // Include size tracking for resize operations (also handles resize with position change)
         if (this.undoRedoManagerInstance) {
           this.undoRedoManagerInstance.push(
@@ -1207,7 +1207,7 @@ export class GridItemWrapper {
       this.stateInstance.canvases = newCanvases;
     }
 
-    // Emit events for plugins (Phase 4: only if manager exists)
+    // Emit events for plugins (only if manager exists)
     if (this.eventManagerInstance) {
       if (isDrag) {
         this.eventManagerInstance.emit("componentDragged", {

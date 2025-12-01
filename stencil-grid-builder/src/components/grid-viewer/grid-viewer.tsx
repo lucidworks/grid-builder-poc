@@ -202,7 +202,7 @@ export class GridViewer {
   private viewportResizeObserver?: ResizeObserver;
 
   /**
-   * Virtual renderer service instance (Phase 4)
+   * Virtual renderer service instance (passed from grid-builder)
    *
    * **Optional**: Created if config.enableVirtualRendering !== false
    * **Purpose**: Lazy loading of grid items for better performance with large layouts
@@ -261,7 +261,7 @@ export class GridViewer {
     // Create local store (not global like grid-builder)
     this.viewerState = createStore<ViewerState>(initialViewerState);
 
-    // Create virtual renderer if enabled (Phase 4: Performance for large layouts)
+    // Create virtual renderer if enabled (Performance for large layouts)
     if (this.config?.enableVirtualRendering !== false) {
       this.virtualRendererInstance = new VirtualRendererService();
     }

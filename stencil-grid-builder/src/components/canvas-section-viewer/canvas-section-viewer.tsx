@@ -123,7 +123,7 @@ export class CanvasSectionViewer {
   @Prop() backgroundColor?: string;
 
   /**
-   * Virtual renderer service instance (Phase 4)
+   * Virtual renderer service instance (passed from grid-builder)
    *
    * **Optional**: Provided by grid-viewer if virtual rendering enabled
    * **Purpose**: Lazy loading of grid items for better performance

@@ -205,7 +205,7 @@ export class CanvasSection {
   @Prop() onBeforeDelete?: DeletionHook;
 
   /**
-   * Virtual renderer service instance (Phase 4)
+   * Virtual renderer service instance (passed from grid-builder)
    *
    * **Required for editing mode** (grid-builder provides this)
    *
@@ -215,7 +215,7 @@ export class CanvasSection {
   @Prop() virtualRendererInstance?: VirtualRendererService;
 
   /**
-   * Undo/Redo manager service instance (Phase 4)
+   * Undo/Redo manager service instance (passed from grid-builder)
    *
    * **Required for editing mode** (grid-builder provides this)
    *
@@ -225,7 +225,7 @@ export class CanvasSection {
   @Prop() undoRedoManagerInstance?: UndoRedoManager;
 
   /**
-   * Event manager service instance (Phase 4)
+   * Event manager service instance (passed from grid-builder)
    *
    * **Required for editing mode** (grid-builder provides this)
    *
@@ -235,7 +235,7 @@ export class CanvasSection {
   @Prop() eventManagerInstance?: EventManager;
 
   /**
-   * State manager instance (Phase 4)
+   * State manager instance (passed from grid-builder)
    *
    * **Required for editing mode** (grid-builder provides this)
    *
@@ -246,7 +246,7 @@ export class CanvasSection {
   @Prop() stateInstance?: any;
 
   /**
-   * State change subscription function (Phase 4)
+   * State change subscription function (passed from grid-builder)
    *
    * **Required for editing mode** (grid-builder provides this)
    *
@@ -261,7 +261,7 @@ export class CanvasSection {
   @Prop() onStateChange?: (key: string, callback: Function) => void;
 
   /**
-   * DOM cache service instance (Phase 4)
+   * DOM cache service instance (passed from grid-builder)
    *
    * **Required for editing mode** (grid-builder provides this)
    *
