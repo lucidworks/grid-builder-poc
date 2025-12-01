@@ -15,10 +15,12 @@ import { GridItemWrapper } from "../grid-item-wrapper";
 import {
   reset,
 } from "../../../services/state-manager";
-import { domCache } from "../../../utils/dom-cache";
+import { DOMCache } from "../../../utils/dom-cache";
 import { mockDragClone } from "../../../utils/test-helpers";
 
 // Create mock instances for Phase 4
+const domCacheInstance = new DOMCache();
+
 const createMockStateInstance = () => ({
   canvases: {
     canvas1: { items: [], zIndexCounter: 1 },
@@ -100,7 +102,7 @@ describe("grid-item-wrapper - Active Canvas", () => {
     canvases.forEach((canvas) => canvas.remove());
 
     // Clear domCache to prevent stale references
-    domCache.clear();
+    domCacheInstance.clear();
   });
 
   describe("Canvas Activation on Click", () => {
@@ -121,7 +123,8 @@ describe("grid-item-wrapper - Active Canvas", () => {
           <grid-item-wrapper
             item={mockItem}
             componentRegistry={mockComponentRegistry}
-          
+            domCacheInstance={domCacheInstance}
+
             virtualRendererInstance={mockVirtualRendererInstance}
             eventManagerInstance={mockEventManagerInstance}
             undoRedoManagerInstance={mockUndoRedoManagerInstance}
@@ -178,7 +181,8 @@ describe("grid-item-wrapper - Active Canvas", () => {
           <grid-item-wrapper
             item={item1}
             componentRegistry={mockComponentRegistry}
-          
+            domCacheInstance={domCacheInstance}
+
             virtualRendererInstance={mockVirtualRendererInstance}
             eventManagerInstance={mockEventManagerInstance}
             undoRedoManagerInstance={mockUndoRedoManagerInstance}
@@ -228,7 +232,8 @@ describe("grid-item-wrapper - Active Canvas", () => {
           <grid-item-wrapper
             item={mockItem}
             componentRegistry={mockComponentRegistry}
-          
+            domCacheInstance={domCacheInstance}
+
             virtualRendererInstance={mockVirtualRendererInstance}
             eventManagerInstance={mockEventManagerInstance}
             undoRedoManagerInstance={mockUndoRedoManagerInstance}
@@ -294,7 +299,8 @@ describe("grid-item-wrapper - Active Canvas", () => {
           <grid-item-wrapper
             item={mockItem}
             componentRegistry={mockComponentRegistry}
-          
+            domCacheInstance={domCacheInstance}
+
             virtualRendererInstance={mockVirtualRendererInstance}
             eventManagerInstance={mockEventManagerInstance}
             undoRedoManagerInstance={mockUndoRedoManagerInstance}
@@ -331,7 +337,8 @@ describe("grid-item-wrapper - Active Canvas", () => {
           <grid-item-wrapper
             item={mockItem}
             componentRegistry={mockComponentRegistry}
-          
+            domCacheInstance={domCacheInstance}
+
             virtualRendererInstance={mockVirtualRendererInstance}
             eventManagerInstance={mockEventManagerInstance}
             undoRedoManagerInstance={mockUndoRedoManagerInstance}
@@ -362,7 +369,8 @@ describe("grid-item-wrapper - Active Canvas", () => {
           <grid-item-wrapper
             item={mockItem}
             componentRegistry={mockComponentRegistry}
-          
+            domCacheInstance={domCacheInstance}
+
             virtualRendererInstance={mockVirtualRendererInstance}
             eventManagerInstance={mockEventManagerInstance}
             undoRedoManagerInstance={mockUndoRedoManagerInstance}
@@ -395,7 +403,8 @@ describe("grid-item-wrapper - Active Canvas", () => {
           <grid-item-wrapper
             item={mockItem}
             componentRegistry={mockComponentRegistry}
-          
+            domCacheInstance={domCacheInstance}
+
             virtualRendererInstance={mockVirtualRendererInstance}
             eventManagerInstance={mockEventManagerInstance}
             undoRedoManagerInstance={mockUndoRedoManagerInstance}
@@ -461,7 +470,8 @@ describe("grid-item-wrapper - Active Canvas", () => {
           <grid-item-wrapper
             item={item1}
             componentRegistry={mockComponentRegistry}
-          
+            domCacheInstance={domCacheInstance}
+
             virtualRendererInstance={mockVirtualRendererInstance}
             eventManagerInstance={mockEventManagerInstance}
             undoRedoManagerInstance={mockUndoRedoManagerInstance}
@@ -514,7 +524,8 @@ describe("grid-item-wrapper - Active Canvas", () => {
           <grid-item-wrapper
             item={mockItem}
             componentRegistry={mockComponentRegistry}
-          
+            domCacheInstance={domCacheInstance}
+
             virtualRendererInstance={mockVirtualRendererInstance}
             eventManagerInstance={mockEventManagerInstance}
             undoRedoManagerInstance={mockUndoRedoManagerInstance}

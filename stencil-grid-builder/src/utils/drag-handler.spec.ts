@@ -1,6 +1,7 @@
 import { DragHandler } from "./drag-handler";
 import { gridState, reset, setActiveCanvas } from "../services/state-manager";
 import { GridItem } from "../services/state-manager";
+import { DOMCache } from "./dom-cache";
 
 // Mock interact.js
 jest.mock("interactjs", () => {
@@ -22,9 +23,11 @@ describe("DragHandler - Active Canvas", () => {
   let mockElement: HTMLElement;
   let onUpdateCallback: jest.Mock;
   let handler: DragHandler;
+  let domCacheInstance: DOMCache;
 
   beforeEach(() => {
     reset();
+    domCacheInstance = new DOMCache();
 
     mockItem = {
       id: "item-1",
@@ -67,7 +70,7 @@ describe("DragHandler - Active Canvas", () => {
 
   describe("Constructor and Initialization", () => {
     it("should create handler with item canvasId", () => {
-      handler = new DragHandler(mockElement, mockItem, gridState, onUpdateCallback, {});
+      handler = new DragHandler(mockElement, mockItem, gridState, onUpdateCallback, domCacheInstance, {});
 
       // Handler stores the item's canvasId
       expect((handler as any).item.canvasId).toBe("canvas1");
@@ -90,9 +93,9 @@ describe("DragHandler - Active Canvas", () => {
       element3.id = "item-3";
       element3.style.transform = "translate(0px, 0px)";
 
-      const handler1 = new DragHandler(element1, item1, gridState, jest.fn(), {});
-      const handler2 = new DragHandler(element2, item2, gridState, jest.fn(), {});
-      const handler3 = new DragHandler(element3, item3, gridState, jest.fn(), {});
+      const handler1 = new DragHandler(element1, item1, gridState, jest.fn(), domCacheInstance, {});
+      const handler2 = new DragHandler(element2, item2, gridState, jest.fn(), domCacheInstance, {});
+      const handler3 = new DragHandler(element3, item3, gridState, jest.fn(), domCacheInstance, {});
 
       expect((handler1 as any).item.canvasId).toBe("canvas1");
       expect((handler2 as any).item.canvasId).toBe("canvas2");
@@ -106,7 +109,7 @@ describe("DragHandler - Active Canvas", () => {
     it("should register draggable with interact.js", () => {
       const interact = require("interactjs");
 
-      handler = new DragHandler(mockElement, mockItem, gridState, onUpdateCallback, {});
+      handler = new DragHandler(mockElement, mockItem, gridState, onUpdateCallback, domCacheInstance, {});
 
       expect(interact).toHaveBeenCalledWith(mockElement);
       expect(interact.mockInteractable.draggable).toHaveBeenCalled();
@@ -132,7 +135,7 @@ describe("DragHandler - Active Canvas", () => {
       gridState.selectedItemId = "item-2";
       gridState.selectedCanvasId = "canvas2";
 
-      handler = new DragHandler(mockElement, mockItem, gridState, onUpdateCallback, {});
+      handler = new DragHandler(mockElement, mockItem, gridState, onUpdateCallback, domCacheInstance, {});
 
       // Set active canvas
       setActiveCanvas("canvas1");
@@ -148,14 +151,14 @@ describe("DragHandler - Active Canvas", () => {
     it("should cleanup interact.js on destroy", () => {
       const interact = require("interactjs");
 
-      handler = new DragHandler(mockElement, mockItem, gridState, onUpdateCallback, {});
+      handler = new DragHandler(mockElement, mockItem, gridState, onUpdateCallback, domCacheInstance, {});
       handler.destroy();
 
       expect(interact.mockInteractable.unset).toHaveBeenCalled();
     });
 
     it("should handle multiple destroy calls", () => {
-      handler = new DragHandler(mockElement, mockItem, gridState, onUpdateCallback, {});
+      handler = new DragHandler(mockElement, mockItem, gridState, onUpdateCallback, domCacheInstance, {});
 
       handler.destroy();
       handler.destroy(); // Should not throw
@@ -174,6 +177,7 @@ describe("DragHandler - Active Canvas", () => {
         mockItem,
         gridState,
         onUpdateCallback,
+        domCacheInstance,
         {},
         handleElement,
       );
@@ -182,7 +186,7 @@ describe("DragHandler - Active Canvas", () => {
     });
 
     it("should work without drag handle element", () => {
-      handler = new DragHandler(mockElement, mockItem, gridState, onUpdateCallback, {});
+      handler = new DragHandler(mockElement, mockItem, gridState, onUpdateCallback, domCacheInstance, {});
 
       expect(handler).toBeDefined();
     });

@@ -19,7 +19,7 @@ import {
   setActiveCanvas,
 } from "../services/state-manager";
 import { ComponentDefinition } from "../types/component-definition";
-import { domCache } from "./dom-cache";
+import { DOMCache } from "./dom-cache";
 import { mockDragClone } from "./test-helpers";
 
 // Mock interact.js
@@ -111,11 +111,12 @@ describe("ResizeHandler", () => {
   let mockElement: HTMLElement;
   let mockItem: GridItem;
   let onUpdate: jest.Mock;
+  let domCacheInstance: DOMCache;
 
   beforeEach(() => {
     // Clear DOM
     document.body.innerHTML = "";
-    domCache.clear();
+    domCacheInstance = new DOMCache();
 
     // Create mock canvas and item
     mockCanvas = createMockCanvas("test-canvas", 1000);
@@ -129,7 +130,6 @@ describe("ResizeHandler", () => {
 
   afterEach(() => {
     document.body.innerHTML = "";
-    domCache.clear();
   });
 
   describe("Constructor and Initialization", () => {
@@ -150,6 +150,7 @@ describe("ResizeHandler", () => {
         mockItem,
         gridState,
         onUpdate,
+        domCacheInstance,
         definition,
       );
       expect(handler).toBeDefined();
@@ -161,7 +162,7 @@ describe("ResizeHandler", () => {
     });
 
     it("should initialize without component definition", () => {
-      const handler = new ResizeHandler(mockElement, mockItem, gridState, onUpdate);
+      const handler = new ResizeHandler(mockElement, mockItem, gridState, onUpdate, domCacheInstance);
       expect(handler).toBeDefined();
 
       handler.destroy();
@@ -171,7 +172,7 @@ describe("ResizeHandler", () => {
       const elementNoSize = document.createElement("div");
       document.body.appendChild(elementNoSize);
 
-      const handler = new ResizeHandler(elementNoSize, mockItem, gridState, onUpdate);
+      const handler = new ResizeHandler(elementNoSize, mockItem, gridState, onUpdate, domCacheInstance);
       expect(handler).toBeDefined();
 
       handler.destroy();
@@ -195,6 +196,7 @@ describe("ResizeHandler", () => {
         mockItem,
         gridState,
         onUpdate,
+        domCacheInstance,
         definition,
       );
 
@@ -225,6 +227,7 @@ describe("ResizeHandler", () => {
         mockItem,
         gridState,
         onUpdate,
+        domCacheInstance,
         definition,
       );
 
@@ -251,6 +254,7 @@ describe("ResizeHandler", () => {
         mockItem,
         gridState,
         onUpdate,
+        domCacheInstance,
         definition,
       );
 
@@ -276,6 +280,7 @@ describe("ResizeHandler", () => {
         mockItem,
         gridState,
         onUpdate,
+        domCacheInstance,
         definition,
       );
 
@@ -291,7 +296,7 @@ describe("ResizeHandler", () => {
     });
 
     it("should use default min/max when no component definition provided", () => {
-      const handler = new ResizeHandler(mockElement, mockItem, gridState, onUpdate);
+      const handler = new ResizeHandler(mockElement, mockItem, gridState, onUpdate, domCacheInstance);
 
       const interactInstance = (window as any).interact(mockElement);
       expect(interactInstance.resizable).toHaveBeenCalled();
@@ -322,6 +327,7 @@ describe("ResizeHandler", () => {
         mockItem,
         gridState,
         onUpdate,
+        domCacheInstance,
         definition,
       );
 
@@ -350,6 +356,7 @@ describe("ResizeHandler", () => {
         mockItem,
         gridState,
         onUpdate,
+        domCacheInstance,
         definition,
       );
 
@@ -382,6 +389,7 @@ describe("ResizeHandler", () => {
         wideItem,
         gridState,
         onUpdate,
+        domCacheInstance,
         definition,
       );
 
@@ -398,7 +406,7 @@ describe("ResizeHandler", () => {
 
   describe("Destroy and Cleanup", () => {
     it("should cleanup interact.js instance", () => {
-      const handler = new ResizeHandler(mockElement, mockItem, gridState, onUpdate);
+      const handler = new ResizeHandler(mockElement, mockItem, gridState, onUpdate, domCacheInstance);
 
       const interactInstance = (window as any).interact(mockElement);
       handler.destroy();
@@ -407,7 +415,7 @@ describe("ResizeHandler", () => {
     });
 
     it("should be safe to call destroy multiple times", () => {
-      const handler = new ResizeHandler(mockElement, mockItem, gridState, onUpdate);
+      const handler = new ResizeHandler(mockElement, mockItem, gridState, onUpdate, domCacheInstance);
 
       handler.destroy();
       handler.destroy(); // Should not throw
@@ -423,7 +431,7 @@ describe("ResizeHandler", () => {
 
       const consoleWarnSpy = jest.spyOn(console, "warn").mockImplementation();
 
-      const handler = new ResizeHandler(mockElement, mockItem, gridState, onUpdate);
+      const handler = new ResizeHandler(mockElement, mockItem, gridState, onUpdate, domCacheInstance);
 
       expect(consoleWarnSpy).toHaveBeenCalledWith("interact.js not loaded");
 
@@ -451,6 +459,7 @@ describe("ResizeHandler", () => {
         mockItem,
         gridState,
         onUpdate,
+        domCacheInstance,
         definition,
       );
 
@@ -477,6 +486,7 @@ describe("ResizeHandler", () => {
         mockItem,
         gridState,
         onUpdate,
+        domCacheInstance,
         definition,
       );
 
@@ -489,7 +499,7 @@ describe("ResizeHandler", () => {
 
   describe("Resize Configuration", () => {
     it("should enable all 8 resize handles", () => {
-      const handler = new ResizeHandler(mockElement, mockItem, gridState, onUpdate);
+      const handler = new ResizeHandler(mockElement, mockItem, gridState, onUpdate, domCacheInstance);
 
       const interactInstance = (window as any).interact(mockElement);
       const resizeConfig = interactInstance.resizable.mock.calls[0][0];
@@ -505,7 +515,7 @@ describe("ResizeHandler", () => {
     });
 
     it("should configure grid snapping with endOnly", () => {
-      const handler = new ResizeHandler(mockElement, mockItem, gridState, onUpdate);
+      const handler = new ResizeHandler(mockElement, mockItem, gridState, onUpdate, domCacheInstance);
 
       const interactInstance = (window as any).interact(mockElement);
       const resizeConfig = interactInstance.resizable.mock.calls[0][0];
@@ -518,7 +528,7 @@ describe("ResizeHandler", () => {
     });
 
     it("should attach resize event listeners", () => {
-      const handler = new ResizeHandler(mockElement, mockItem, gridState, onUpdate);
+      const handler = new ResizeHandler(mockElement, mockItem, gridState, onUpdate, domCacheInstance);
 
       const interactInstance = (window as any).interact(mockElement);
       const resizeConfig = interactInstance.resizable.mock.calls[0][0];
@@ -537,7 +547,6 @@ describe("ResizeHandler", () => {
       reset();
       // Reset mock calls
       (window as any).interact.mockClear();
-      domCache.clear();
     });
 
     it("should set active canvas when resize starts", () => {
@@ -563,7 +572,7 @@ describe("ResizeHandler", () => {
         zIndex: 1,
       };
 
-      const handler = new ResizeHandler(mockElement, mockItem, gridState, onUpdate);
+      const handler = new ResizeHandler(mockElement, mockItem, gridState, onUpdate, domCacheInstance);
 
       expect(gridState.activeCanvasId).toBeNull();
 
@@ -628,8 +637,8 @@ describe("ResizeHandler", () => {
         zIndex: 1,
       };
 
-      const handler1 = new ResizeHandler(element1, item1, gridState, jest.fn());
-      const handler2 = new ResizeHandler(element2, item2, gridState, jest.fn());
+      const handler1 = new ResizeHandler(element1, item1, gridState, jest.fn(), domCacheInstance);
+      const handler2 = new ResizeHandler(element2, item2, gridState, jest.fn(), domCacheInstance);
 
       // Resize item1
       handler1["handleResizeStart"]({
@@ -680,7 +689,7 @@ describe("ResizeHandler", () => {
         zIndex: 1,
       };
 
-      const handler = new ResizeHandler(mockElement, mockItem, gridState, onUpdate);
+      const handler = new ResizeHandler(mockElement, mockItem, gridState, onUpdate, domCacheInstance);
 
       expect(mockElement.classList.contains("resizing")).toBe(false);
 
@@ -734,7 +743,7 @@ describe("ResizeHandler", () => {
         zIndex: 1,
       };
 
-      const handler = new ResizeHandler(mockElement, mockItem, gridState, onUpdate);
+      const handler = new ResizeHandler(mockElement, mockItem, gridState, onUpdate, domCacheInstance);
 
       const mockEvent = {
         target: mockElement,
@@ -781,7 +790,7 @@ describe("ResizeHandler", () => {
         zIndex: 1,
       };
 
-      const handler = new ResizeHandler(mockElement, mockItem, gridState, onUpdate);
+      const handler = new ResizeHandler(mockElement, mockItem, gridState, onUpdate, domCacheInstance);
 
       const mockEvent = {
         target: mockElement,

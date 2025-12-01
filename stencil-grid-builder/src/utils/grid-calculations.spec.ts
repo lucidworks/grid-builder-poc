@@ -7,7 +7,6 @@ import {
   pixelsToGridX,
   pixelsToGridY,
 } from "./grid-calculations";
-import { domCache } from "./dom-cache";
 
 // Mock canvas element with specific width
 function createMockCanvas(id: string, width: number): HTMLElement {
@@ -28,7 +27,6 @@ describe("grid-calculations", () => {
   beforeEach(() => {
     // Clear cache before each test
     clearGridSizeCache();
-    domCache.clear();
     // Remove any existing mock canvases
     document.body.innerHTML = "";
   });
