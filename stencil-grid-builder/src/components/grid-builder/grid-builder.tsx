@@ -623,7 +623,7 @@ export class GridBuilder {
         return;
       }
       canvasId = canvasIds[0];
-      this.stateManager!.state.activeCanvasId = canvasId;
+      this.stateManager!.setActiveCanvas(canvasId);
       debug.log(`  🎯 Auto-selected first canvas: ${canvasId}`);
     }
 
@@ -692,6 +692,10 @@ export class GridBuilder {
       debug.error("Failed to add component to canvas");
       return;
     }
+
+    // Activate the canvas where the component was dropped
+    this.stateManager!.setActiveCanvas(canvasId);
+    debug.log(`  🎯 Activated canvas: ${canvasId}`);
 
     // Animate component in (after DOM update completes)
     // Use double requestAnimationFrame to ensure:
