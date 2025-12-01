@@ -2,17 +2,13 @@
  * Canvas Height Calculator Tests (Instance-Based)
  * =================================================
  *
- * Instance-based version of canvas-height-calculator tests for Phase 3.5 dual coverage.
- * Tests the same functionality using explicit state instances instead of global gridState.
+ * Tests the same functionality using explicit state instances.
  *
  * **Test Coverage**:
  * - calculateCanvasHeightFromItems (pure function) - no state needed
  * - calculateCanvasHeight with instance state - explicit state parameter
  * - Integration tests - instance state delegation
- *
- * **Migration Notes**:
- * - In Phase 4, delete canvas-height-calculator.spec.ts and rename this file
- * - All tests use explicit `testState` parameter, no global fallback
+ * - All tests use explicit `testState` parameter
  */
 
 import {

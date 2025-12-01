@@ -8,6 +8,7 @@
 import { GridBuilderAPI } from "../services/grid-builder-api";
 import { reset as resetState, gridState } from "../services/state-manager";
 import { clearHistory } from "../services/undo-redo";
+import { EventManager } from "../services/event-manager";
 
 /**
  * Mock Logger Plugin
@@ -66,7 +67,8 @@ describe("Plugin System - Standalone", () => {
 
     it("should call init with API instance", () => {
       const plugin = new MockLoggerPlugin();
-      const mockAPI = new GridBuilderAPI();
+      const eventManager = new EventManager();
+      const mockAPI = new GridBuilderAPI(eventManager);
 
       plugin.init(mockAPI);
 
@@ -76,7 +78,8 @@ describe("Plugin System - Standalone", () => {
 
     it("should subscribe to events during init", () => {
       const plugin = new MockLoggerPlugin();
-      const mockAPI = new GridBuilderAPI();
+      const eventManager = new EventManager();
+      const mockAPI = new GridBuilderAPI(eventManager);
 
       plugin.init(mockAPI);
 
@@ -88,7 +91,8 @@ describe("Plugin System - Standalone", () => {
 
     it("should call destroy when cleanup needed", () => {
       const plugin = new MockLoggerPlugin();
-      const mockAPI = new GridBuilderAPI();
+      const eventManager = new EventManager();
+      const mockAPI = new GridBuilderAPI(eventManager);
 
       plugin.init(mockAPI);
       plugin.destroy();
@@ -100,7 +104,8 @@ describe("Plugin System - Standalone", () => {
   describe("Plugin Event Subscriptions", () => {
     it("should receive itemAdded events", () => {
       const plugin = new MockLoggerPlugin();
-      const api = new GridBuilderAPI();
+      const eventManager = new EventManager();
+      const api = new GridBuilderAPI(eventManager);
 
       plugin.init(api);
 
@@ -113,7 +118,8 @@ describe("Plugin System - Standalone", () => {
 
     it("should receive itemRemoved events", () => {
       const plugin = new MockLoggerPlugin();
-      const api = new GridBuilderAPI();
+      const eventManager = new EventManager();
+      const api = new GridBuilderAPI(eventManager);
 
       plugin.init(api);
 
@@ -130,7 +136,8 @@ describe("Plugin System - Standalone", () => {
   describe("Plugin API Access", () => {
     it("should allow plugins to access grid state", () => {
       const plugin = new MockLoggerPlugin();
-      const api = new GridBuilderAPI();
+      const eventManager = new EventManager();
+      const api = new GridBuilderAPI(eventManager);
 
       plugin.init(api);
 
@@ -141,7 +148,8 @@ describe("Plugin System - Standalone", () => {
 
     it("should allow plugins to modify grid state", () => {
       const plugin = new MockLoggerPlugin();
-      const api = new GridBuilderAPI();
+      const eventManager = new EventManager();
+      const api = new GridBuilderAPI(eventManager);
 
       plugin.init(api);
 
@@ -153,7 +161,8 @@ describe("Plugin System - Standalone", () => {
 
     it("should allow plugins to use undo/redo", () => {
       const plugin = new MockLoggerPlugin();
-      const api = new GridBuilderAPI();
+      const eventManager = new EventManager();
+      const api = new GridBuilderAPI(eventManager);
 
       plugin.init(api);
 
@@ -176,7 +185,8 @@ describe("Plugin System - Standalone", () => {
   describe("Plugin Batch Operations", () => {
     it("should allow plugins to use addItemsBatch", () => {
       const plugin = new MockLoggerPlugin();
-      const api = new GridBuilderAPI();
+      const eventManager = new EventManager();
+      const api = new GridBuilderAPI(eventManager);
 
       plugin.init(api);
 
@@ -208,7 +218,8 @@ describe("Plugin System - Standalone", () => {
 
     it("should allow plugins to use deleteItemsBatch", () => {
       const plugin = new MockLoggerPlugin();
-      const api = new GridBuilderAPI();
+      const eventManager = new EventManager();
+      const api = new GridBuilderAPI(eventManager);
 
       plugin.init(api);
 
@@ -239,7 +250,8 @@ describe("Plugin System - Standalone", () => {
 
     it("should allow plugins to use updateConfigsBatch", () => {
       const plugin = new MockLoggerPlugin();
-      const api = new GridBuilderAPI();
+      const eventManager = new EventManager();
+      const api = new GridBuilderAPI(eventManager);
 
       plugin.init(api);
 
@@ -266,7 +278,8 @@ describe("Plugin System - Standalone", () => {
 
     it("should receive batch events from batch operations", () => {
       const plugin = new MockLoggerPlugin();
-      const api = new GridBuilderAPI();
+      const eventManager = new EventManager();
+      const api = new GridBuilderAPI(eventManager);
 
       plugin.init(api);
 
@@ -301,7 +314,8 @@ describe("Plugin System - Standalone", () => {
 
     it("should allow batch operations with undo/redo", () => {
       const plugin = new MockLoggerPlugin();
-      const api = new GridBuilderAPI();
+      const eventManager = new EventManager();
+      const api = new GridBuilderAPI(eventManager);
 
       plugin.init(api);
 

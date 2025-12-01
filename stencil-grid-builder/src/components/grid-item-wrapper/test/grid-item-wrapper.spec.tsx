@@ -18,7 +18,7 @@ import {
 import { DOMCache } from "../../../utils/dom-cache";
 import { mockDragClone } from "../../../utils/test-helpers";
 
-// Create mock instances for Phase 4
+// Create mock instances for instance-based architecture
 const domCacheInstance = new DOMCache();
 
 const createMockStateInstance = () => ({

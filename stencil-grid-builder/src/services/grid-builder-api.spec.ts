@@ -1,22 +1,27 @@
 import { GridBuilderAPI } from "./grid-builder-api";
 import { gridState, reset as resetState } from "./state-manager";
 import { clearHistory } from "./undo-redo";
+import { EventManager } from "./event-manager";
 
 describe("GridBuilderAPI", () => {
   let api: GridBuilderAPI;
+  let eventManager: EventManager;
 
   beforeEach(() => {
     // Reset state before each test
     resetState();
     clearHistory();
 
-    // Create canvases (Phase 3: resetState() no longer pre-populates canvases)
+    // Create canvases (resetState() no longer pre-populates canvases)
     gridState.canvases.canvas1 = { items: [], zIndexCounter: 1 };
     gridState.canvases.canvas2 = { items: [], zIndexCounter: 1 };
     gridState.canvases.canvas3 = { items: [], zIndexCounter: 1 };
 
+    // Create EventManager instance
+    eventManager = new EventManager();
+
     // Create new API instance
-    api = new GridBuilderAPI();
+    api = new GridBuilderAPI(eventManager);
   });
 
   afterEach(() => {
@@ -536,7 +541,7 @@ describe("GridBuilderAPI", () => {
 
         api.reset();
 
-        // Phase 3: reset() clears ALL canvases (returns to empty state)
+        // reset() clears ALL canvases (returns to empty state)
         expect(Object.keys(gridState.canvases)).toHaveLength(0);
         expect(gridState.currentViewport).toBe("desktop");
         expect(gridState.showGrid).toBe(true);

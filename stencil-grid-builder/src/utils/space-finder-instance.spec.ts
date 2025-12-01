@@ -2,8 +2,7 @@
  * Space Finding Utility Tests (Instance-Based)
  * ==============================================
  *
- * Instance-based version of space-finder tests for Phase 3.5 dual coverage.
- * Tests the same functionality using explicit state instances instead of global gridState.
+ * Tests the same functionality using explicit state instances.
  *
  * **Test Coverage**:
  * - Collision detection (AABB algorithm) - no state needed
@@ -11,10 +10,7 @@
  * - Bottom positioning fallback - instance state
  * - Free space finding (hybrid strategy) - instance state
  * - Edge cases and boundary conditions - instance state
- *
- * **Migration Notes**:
- * - In Phase 4, delete space-finder.spec.ts and rename this file
- * - All tests use explicit `testState` parameter, no global fallback
+ * - All tests use explicit `testState` parameter
  */
 
 import {

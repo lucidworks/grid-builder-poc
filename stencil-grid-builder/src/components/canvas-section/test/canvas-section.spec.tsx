@@ -16,7 +16,7 @@ import {
   reset,
 } from "../../../services/state-manager";
 
-// Create mock instances for Phase 4
+// Create mock instances for instance-based architecture
 const createMockStateInstance = () => ({
   canvases: {
     canvas1: { items: [], zIndexCounter: 1 },
