@@ -12,9 +12,7 @@ const mockDisconnect = jest.fn();
 import { h } from "@stencil/core";
 import { newSpecPage } from "@stencil/core/testing";
 import { CanvasSection } from "../canvas-section";
-import {
-  reset,
-} from "../../../services/state-manager";
+import { reset } from "../../../services/state-manager";
 
 // Create mock instances for instance-based architecture
 const createMockStateInstance = () => ({
@@ -25,7 +23,7 @@ const createMockStateInstance = () => ({
   },
   activeCanvasId: null,
   showGrid: true,
-  currentViewport: 'desktop',
+  currentViewport: "desktop",
   selectedItemId: null,
   selectedCanvasId: null,
 });
@@ -75,7 +73,7 @@ describe("canvas-section - Active Canvas", () => {
   });
 
   // Helper function to create spec page with instance props
-  const createCanvasSectionPage = async (canvasId: string = 'canvas1') => {
+  const createCanvasSectionPage = async (canvasId: string = "canvas1") => {
     const page = await newSpecPage({
       components: [CanvasSection],
       template: () => (
@@ -95,7 +93,7 @@ describe("canvas-section - Active Canvas", () => {
 
   describe("isActive Prop", () => {
     it("should render with active class when isActive is true", async () => {
-      const page = await createCanvasSectionPage('canvas1');
+      const page = await createCanvasSectionPage("canvas1");
 
       page.root.isActive = true;
       await page.waitForChanges();
@@ -105,7 +103,7 @@ describe("canvas-section - Active Canvas", () => {
     });
 
     it("should render without active class when isActive is false", async () => {
-      const page = await createCanvasSectionPage('canvas1');
+      const page = await createCanvasSectionPage("canvas1");
 
       page.root.isActive = false;
       await page.waitForChanges();
@@ -115,14 +113,14 @@ describe("canvas-section - Active Canvas", () => {
     });
 
     it("should default to inactive when isActive prop not provided", async () => {
-      const page = await createCanvasSectionPage('canvas1');
+      const page = await createCanvasSectionPage("canvas1");
 
       const gridContainer = page.root.querySelector(".grid-container");
       expect(gridContainer.classList.contains("active")).toBe(false);
     });
 
     it("should update active class when isActive prop changes", async () => {
-      const page = await createCanvasSectionPage('canvas1');
+      const page = await createCanvasSectionPage("canvas1");
 
       page.root.isActive = false;
       await page.waitForChanges();
@@ -138,7 +136,7 @@ describe("canvas-section - Active Canvas", () => {
     });
 
     it("should toggle active class multiple times", async () => {
-      const page = await createCanvasSectionPage('canvas1');
+      const page = await createCanvasSectionPage("canvas1");
 
       // Start inactive
       page.root.isActive = false;
@@ -168,7 +166,7 @@ describe("canvas-section - Active Canvas", () => {
 
   describe("Canvas Activation Events", () => {
     it("should emit canvas-activated event when canvas background is clicked", async () => {
-      const page = await createCanvasSectionPage('canvas1');
+      const page = await createCanvasSectionPage("canvas1");
 
       await page.waitForChanges();
 
@@ -190,7 +188,7 @@ describe("canvas-section - Active Canvas", () => {
     });
 
     it("should emit canvas-click event for backward compatibility", async () => {
-      const page = await createCanvasSectionPage('canvas1');
+      const page = await createCanvasSectionPage("canvas1");
 
       await page.waitForChanges();
 
@@ -211,7 +209,7 @@ describe("canvas-section - Active Canvas", () => {
     });
 
     it("should call setActiveCanvas when canvas background is clicked", async () => {
-      const page = await createCanvasSectionPage('canvas2');
+      const page = await createCanvasSectionPage("canvas2");
 
       await page.waitForChanges();
 
@@ -230,7 +228,7 @@ describe("canvas-section - Active Canvas", () => {
     });
 
     it("should not emit events when clicking on child elements", async () => {
-      const page = await createCanvasSectionPage('canvas1');
+      const page = await createCanvasSectionPage("canvas1");
 
       await page.waitForChanges();
 
@@ -254,7 +252,7 @@ describe("canvas-section - Active Canvas", () => {
     });
 
     it("should emit events with correct canvasId for different canvases", async () => {
-      const page = await createCanvasSectionPage('canvas1');
+      const page = await createCanvasSectionPage("canvas1");
 
       await page.waitForChanges();
 
@@ -285,14 +283,14 @@ describe("canvas-section - Active Canvas", () => {
 
   describe("CSS Classes and Styling", () => {
     it("should always have grid-container class", async () => {
-      const page = await createCanvasSectionPage('canvas1');
+      const page = await createCanvasSectionPage("canvas1");
 
       const gridContainer = page.root.querySelector(".grid-container");
       expect(gridContainer.classList.contains("grid-container")).toBe(true);
     });
 
     it("should combine active class with other classes", async () => {
-      const page = await createCanvasSectionPage('canvas1');
+      const page = await createCanvasSectionPage("canvas1");
 
       page.root.isActive = true;
       await page.waitForChanges();
@@ -306,7 +304,7 @@ describe("canvas-section - Active Canvas", () => {
       // Start with hide-grid class
       mockStateInstance.showGrid = false;
 
-      const page = await createCanvasSectionPage('canvas1');
+      const page = await createCanvasSectionPage("canvas1");
 
       let gridContainer = page.root.querySelector(".grid-container");
       expect(gridContainer.classList.contains("hide-grid")).toBe(true);
@@ -332,7 +330,7 @@ describe("canvas-section - Active Canvas", () => {
 
   describe("Integration with State", () => {
     it("should update global state when clicked", async () => {
-      const page = await createCanvasSectionPage('canvas2');
+      const page = await createCanvasSectionPage("canvas2");
 
       await page.waitForChanges();
 
@@ -354,7 +352,7 @@ describe("canvas-section - Active Canvas", () => {
     });
 
     it("should reflect external state changes via isActive prop", async () => {
-      const page = await createCanvasSectionPage('canvas1');
+      const page = await createCanvasSectionPage("canvas1");
 
       await page.waitForChanges();
 

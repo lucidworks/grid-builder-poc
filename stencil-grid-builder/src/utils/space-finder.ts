@@ -165,7 +165,10 @@ export function getCenteredPosition(width: number): { x: number; y: number } {
  * @param state - Optional state instance (falls back to global gridState)
  * @returns Position { x, y } at canvas bottom
  */
-export function getBottomPosition(canvasId: string, state?: GridState): { x: number; y: number } {
+export function getBottomPosition(
+  canvasId: string,
+  state?: GridState,
+): { x: number; y: number } {
   const stateToUse = state || gridState;
   const canvas = stateToUse.canvases[canvasId];
 

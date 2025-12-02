@@ -192,7 +192,7 @@ export function clearGridSizeCache(instanceId?: string) {
 export function setGridSizeCache(
   canvasId: string,
   containerWidth: number,
-  config?: GridConfig
+  config?: GridConfig,
 ): void {
   // Build cache key (same logic as getGridSizeHorizontal)
   const cacheKey = config?.instanceId

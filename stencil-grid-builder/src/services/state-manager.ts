@@ -231,10 +231,7 @@
 
 import { createStore } from "@stencil/store";
 import { createDebugLogger } from "../utils/debug";
-import {
-  validateGridItem,
-  validateItemUpdates,
-} from "../utils/validation";
+import { validateGridItem, validateItemUpdates } from "../utils/validation";
 
 /**
  * Grid Item Interface
@@ -920,7 +917,6 @@ export class StateManager {
 
   /**
    * Create new StateManager instance
-   *
    * @param initialState - Optional custom initial state (for import/restore)
    * @example
    * ```typescript
@@ -940,9 +936,8 @@ export class StateManager {
     };
 
     // Create StencilJS reactive store
-    const { state, onChange, dispose } = createStore<GridState>(
-      fullInitialState,
-    );
+    const { state, onChange, dispose } =
+      createStore<GridState>(fullInitialState);
 
     this.state = state;
     this.onChange = onChange;
@@ -986,7 +981,9 @@ export class StateManager {
     this.itemIdCounter = 0;
 
     // Restore initial state (deep clone to prevent mutations)
-    this.state.canvases = JSON.parse(JSON.stringify(this.initialState.canvases));
+    this.state.canvases = JSON.parse(
+      JSON.stringify(this.initialState.canvases),
+    );
     this.state.selectedItemId = this.initialState.selectedItemId;
     this.state.selectedCanvasId = this.initialState.selectedCanvasId;
     this.state.activeCanvasId = this.initialState.activeCanvasId;
@@ -1054,34 +1051,34 @@ export class StateManager {
 
   /**
    * Remove item from canvas
- *
- * **Use cases**:
- * - User deletes item (Delete key or button)
- * - Undo add operation
- * - Clearing canvas
- *
- * **Filter pattern**:
- * Creates new array without the item, preserving array order.
- * Reassignment triggers reactivity.
- *
- * **Index preservation**:
- * Array order maintained for z-index rendering.
- * Other items' indexes shift down by 1.
- *
- * **Safety**: No-op if canvas or item doesn't exist
- * @param canvasId - Canvas containing the item
- * @param itemId - Item ID to remove
- * @example
- * ```typescript
- * // Delete selected item
- * if (gridState.selectedItemId && gridState.selectedCanvasId) {
- *   removeItemFromCanvas(
- *     gridState.selectedCanvasId,
- *     gridState.selectedItemId
- *   );
- *   deselectItem(); // Clear selection
- * }
- * ```
+   *
+   * **Use cases**:
+   * - User deletes item (Delete key or button)
+   * - Undo add operation
+   * - Clearing canvas
+   *
+   * **Filter pattern**:
+   * Creates new array without the item, preserving array order.
+   * Reassignment triggers reactivity.
+   *
+   * **Index preservation**:
+   * Array order maintained for z-index rendering.
+   * Other items' indexes shift down by 1.
+   *
+   * **Safety**: No-op if canvas or item doesn't exist
+   * @param canvasId - Canvas containing the item
+   * @param itemId - Item ID to remove
+   * @example
+   * ```typescript
+   * // Delete selected item
+   * if (gridState.selectedItemId && gridState.selectedCanvasId) {
+   *   removeItemFromCanvas(
+   *     gridState.selectedCanvasId,
+   *     gridState.selectedItemId
+   *   );
+   *   deselectItem(); // Clear selection
+   * }
+   * ```
    */
   removeItemFromCanvas(canvasId: string, itemId: string): void {
     const canvas = this.state.canvases[canvasId];
@@ -1166,32 +1163,32 @@ export class StateManager {
 
   /**
    * Get item by ID
- *
- * **Use cases**:
- * - Reading item data before update
- * - Validation checks
- * - Getting item for undo/redo snapshots
- * - Checking if item exists
- *
- * **Read-only**: Returns reference to item in state.
- * To modify, use `updateItem()` to trigger reactivity.
- *
- * **Safety**: Returns null if canvas or item doesn't exist
- * @param canvasId - Canvas containing the item
- * @param itemId - Item ID to retrieve
- * @returns GridItem or null if not found
- * @example
- * ```typescript
- * // Check item before operation
- * const item = getItem('canvas1', 'item-3');
- * if (item) {
- *   console.log(`Item at (${item.layouts.desktop.x}, ${item.layouts.desktop.y})`);
- * }
- *
- * // Create snapshot for undo
- * const snapshot = JSON.parse(JSON.stringify(getItem(canvasId, itemId)));
- * ```
- */
+   *
+   * **Use cases**:
+   * - Reading item data before update
+   * - Validation checks
+   * - Getting item for undo/redo snapshots
+   * - Checking if item exists
+   *
+   * **Read-only**: Returns reference to item in state.
+   * To modify, use `updateItem()` to trigger reactivity.
+   *
+   * **Safety**: Returns null if canvas or item doesn't exist
+   * @param canvasId - Canvas containing the item
+   * @param itemId - Item ID to retrieve
+   * @returns GridItem or null if not found
+   * @example
+   * ```typescript
+   * // Check item before operation
+   * const item = getItem('canvas1', 'item-3');
+   * if (item) {
+   *   console.log(`Item at (${item.layouts.desktop.x}, ${item.layouts.desktop.y})`);
+   * }
+   *
+   * // Create snapshot for undo
+   * const snapshot = JSON.parse(JSON.stringify(getItem(canvasId, itemId)));
+   * ```
+   */
   getItem(canvasId: string, itemId: string): GridItem | null {
     const canvas = this.state.canvases[canvasId];
     if (!canvas) {
@@ -1203,47 +1200,47 @@ export class StateManager {
 
   /**
    * Move item to different canvas
- *
- * **Use cases**:
- * - Dragging item across canvas boundaries
- * - Reorganizing multi-section layouts
- * - Undo move operation
- *
- * **Operation flow**:
- * 1. Find item in source canvas
- * 2. Remove from source canvas items array
- * 3. Update item's canvasId property
- * 4. Add to destination canvas items array
- * 5. Trigger reactivity with spread
- *
- * **Important**: Item keeps its existing zIndex.
- * May want to update with destination canvas's zIndexCounter.
- *
- * **Position handling**:
- * Item keeps its grid coordinates. Caller should validate/adjust
- * position fits within destination canvas bounds.
- *
- * **Safety**: No-op if either canvas doesn't exist or item not found
- * @param fromCanvasId - Source canvas ID
- * @param toCanvasId - Destination canvas ID
- * @param itemId - Item to move
- * @example
- * ```typescript
- * // Move item on cross-canvas drag
- * handleDragEnd(event) {
- *   const targetCanvasId = event.dropTarget.id;
- *   if (targetCanvasId !== item.canvasId) {
- *     moveItemToCanvas(item.canvasId, targetCanvasId, item.id);
- *
- *     // Optionally update z-index for new canvas
- *     const canvas = gridState.canvases[targetCanvasId];
- *     updateItem(targetCanvasId, item.id, {
- *       zIndex: canvas.zIndexCounter++
- *     });
- *   }
- * }
- * ```
- */
+   *
+   * **Use cases**:
+   * - Dragging item across canvas boundaries
+   * - Reorganizing multi-section layouts
+   * - Undo move operation
+   *
+   * **Operation flow**:
+   * 1. Find item in source canvas
+   * 2. Remove from source canvas items array
+   * 3. Update item's canvasId property
+   * 4. Add to destination canvas items array
+   * 5. Trigger reactivity with spread
+   *
+   * **Important**: Item keeps its existing zIndex.
+   * May want to update with destination canvas's zIndexCounter.
+   *
+   * **Position handling**:
+   * Item keeps its grid coordinates. Caller should validate/adjust
+   * position fits within destination canvas bounds.
+   *
+   * **Safety**: No-op if either canvas doesn't exist or item not found
+   * @param fromCanvasId - Source canvas ID
+   * @param toCanvasId - Destination canvas ID
+   * @param itemId - Item to move
+   * @example
+   * ```typescript
+   * // Move item on cross-canvas drag
+   * handleDragEnd(event) {
+   *   const targetCanvasId = event.dropTarget.id;
+   *   if (targetCanvasId !== item.canvasId) {
+   *     moveItemToCanvas(item.canvasId, targetCanvasId, item.id);
+   *
+   *     // Optionally update z-index for new canvas
+   *     const canvas = gridState.canvases[targetCanvasId];
+   *     updateItem(targetCanvasId, item.id, {
+   *       zIndex: canvas.zIndexCounter++
+   *     });
+   *   }
+   * }
+   * ```
+   */
   moveItemToCanvas(
     fromCanvasId: string,
     toCanvasId: string,

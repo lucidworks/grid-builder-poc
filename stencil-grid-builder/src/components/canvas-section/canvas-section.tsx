@@ -68,10 +68,7 @@ import { Component, h, Prop, State, Watch } from "@stencil/core";
 import interact from "interactjs";
 
 // Internal imports
-import {
-  Canvas,
-  GridItem,
-} from "../../services/state-manager";
+import { Canvas, GridItem } from "../../services/state-manager";
 import {
   setGridSizeCache,
   gridToPixelsX,
@@ -377,7 +374,11 @@ export class CanvasSection {
     this.canvas = this.stateInstance.canvases[this.canvasId];
 
     // Calculate initial height
-    this.calculatedHeight = calculateCanvasHeight(this.canvasId, this.config, this.stateInstance);
+    this.calculatedHeight = calculateCanvasHeight(
+      this.canvasId,
+      this.config,
+      this.stateInstance,
+    );
 
     // Subscribe to state changes
     this.onStateChange("canvases", () => {
@@ -401,7 +402,11 @@ export class CanvasSection {
     // Subscribe to viewport changes (desktop ↔ mobile)
     this.onStateChange("currentViewport", () => {
       // Recalculate height for new viewport layout
-      this.calculatedHeight = calculateCanvasHeight(this.canvasId, this.config, this.stateInstance);
+      this.calculatedHeight = calculateCanvasHeight(
+        this.canvasId,
+        this.config,
+        this.stateInstance,
+      );
     });
 
     // Subscribe to grid visibility changes
@@ -473,7 +478,11 @@ export class CanvasSection {
     this.canvas = this.stateInstance.canvases[newCanvasId];
 
     // Recalculate canvas height for new canvas
-    this.calculatedHeight = calculateCanvasHeight(newCanvasId, this.config, this.stateInstance);
+    this.calculatedHeight = calculateCanvasHeight(
+      newCanvasId,
+      this.config,
+      this.stateInstance,
+    );
 
     // Reinitialize dropzone with new canvas ID
     // (dropzone needs to know which canvas it belongs to)
@@ -501,7 +510,11 @@ export class CanvasSection {
     if (newConfig === oldConfig) return;
 
     // Recalculate canvas height with new config (use instance state if available)
-    this.calculatedHeight = calculateCanvasHeight(this.canvasId, newConfig, this.stateInstance);
+    this.calculatedHeight = calculateCanvasHeight(
+      this.canvasId,
+      newConfig,
+      this.stateInstance,
+    );
 
     // Force re-render to update item positions with new grid size
     this.renderVersion++;

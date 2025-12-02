@@ -906,7 +906,10 @@ describe("grid-builder", () => {
         component.componentDidLoad();
 
         // Spy on instance eventManagerInstance.emit
-        const emitSpy = jest.spyOn((component as any).eventManagerInstance, "emit");
+        const emitSpy = jest.spyOn(
+          (component as any).eventManagerInstance,
+          "emit",
+        );
 
         // Get the registered handler
         const addEventListenerCalls =
@@ -989,7 +992,10 @@ describe("grid-builder", () => {
         component.componentWillLoad();
         component.componentDidLoad();
 
-        const emitSpy = jest.spyOn((component as any).eventManagerInstance, "emit");
+        const emitSpy = jest.spyOn(
+          (component as any).eventManagerInstance,
+          "emit",
+        );
 
         await component.setActiveCanvas("canvas1");
 
@@ -1064,7 +1070,10 @@ describe("grid-builder", () => {
         component.componentDidLoad();
 
         const api = (component as any).api;
-        const emitSpy = jest.spyOn((component as any).eventManagerInstance, "emit");
+        const emitSpy = jest.spyOn(
+          (component as any).eventManagerInstance,
+          "emit",
+        );
 
         api.setActiveCanvas("canvas2");
 
@@ -1687,7 +1696,10 @@ describe("grid-builder", () => {
         };
 
         // Spy on instance eventManagerInstance.emit
-        const emitSpy = jest.spyOn((component as any).eventManagerInstance, "emit");
+        const emitSpy = jest.spyOn(
+          (component as any).eventManagerInstance,
+          "emit",
+        );
 
         // Get the registered handler
         const addEventListenerCalls =
@@ -2134,7 +2146,10 @@ describe("grid-builder", () => {
       component.componentWillLoad();
       component.componentDidLoad();
 
-      const emitSpy = jest.spyOn((component as any).eventManagerInstance, "emit");
+      const emitSpy = jest.spyOn(
+        (component as any).eventManagerInstance,
+        "emit",
+      );
 
       // Get the registered canvas-drop handler
       const addEventListenerCalls = mockHostElement.addEventListener.mock.calls;
@@ -2259,7 +2274,10 @@ describe("grid-builder", () => {
       component.componentWillLoad();
       component.componentDidLoad();
 
-      const emitSpy = jest.spyOn((component as any).eventManagerInstance, "emit");
+      const emitSpy = jest.spyOn(
+        (component as any).eventManagerInstance,
+        "emit",
+      );
 
       // Get the registered canvas-drop handler
       const addEventListenerCalls = mockHostElement.addEventListener.mock.calls;
@@ -2909,7 +2927,9 @@ describe("grid-builder", () => {
         component.componentDidLoad();
 
         // Trigger canvasActivated event on instance event manager
-        (component as any).eventManagerInstance.emit("canvasActivated", { canvasId: "canvas1" });
+        (component as any).eventManagerInstance.emit("canvasActivated", {
+          canvasId: "canvas1",
+        });
 
         // Verify announcement was set with canvas title
         expect((component as any).announcement).toBe(
@@ -3711,8 +3731,8 @@ describe("grid-builder", () => {
 
       // Verify component was added (check instance state, not global)
       const state = api.getState();
-      expect(state.canvases["canvas1"].items.length).toBe(1);
-      expect(state.canvases["canvas1"].items[0].type).toBe("header");
+      expect(state.canvases.canvas1.items.length).toBe(1);
+      expect(state.canvases.canvas1.items[0].type).toBe("header");
     });
 
     it("should auto-select first canvas when no active canvas", async () => {
@@ -3749,7 +3769,7 @@ describe("grid-builder", () => {
       // Verify first canvas was auto-selected and component added
       const state = api.getState();
       expect(state.activeCanvasId).toBe("canvas1");
-      expect(state.canvases["canvas1"].items.length).toBe(1);
+      expect(state.canvases.canvas1.items.length).toBe(1);
     });
 
     it("should respect enableClickToAdd config flag when true", async () => {
@@ -3781,7 +3801,7 @@ describe("grid-builder", () => {
 
       // Component should be added
       const state = api.getState();
-      expect(state.canvases["canvas1"].items.length).toBe(1);
+      expect(state.canvases.canvas1.items.length).toBe(1);
     });
 
     it("should respect enableClickToAdd config flag when false", async () => {
@@ -3813,7 +3833,7 @@ describe("grid-builder", () => {
 
       // Component should NOT be added
       const state = api.getState();
-      expect(state.canvases["canvas1"].items.length).toBe(0);
+      expect(state.canvases.canvas1.items.length).toBe(0);
     });
 
     it("should handle missing component type gracefully", async () => {
@@ -3845,7 +3865,7 @@ describe("grid-builder", () => {
 
       // Verify no component was added (behavior test, not logging test)
       const state = api.getState();
-      expect(state.canvases["canvas1"].items.length).toBe(0);
+      expect(state.canvases.canvas1.items.length).toBe(0);
     });
 
     it("should handle missing component definition gracefully", async () => {
@@ -3877,7 +3897,7 @@ describe("grid-builder", () => {
 
       // Verify no component was added (behavior test, not logging test)
       const state = api.getState();
-      expect(state.canvases["canvas1"].items.length).toBe(0);
+      expect(state.canvases.canvas1.items.length).toBe(0);
     });
 
     it("should handle no canvases available gracefully", async () => {
@@ -3933,7 +3953,7 @@ describe("grid-builder", () => {
 
       // Verify size matches definition (header = 50×6)
       const state = api.getState();
-      const addedItem = state.canvases["canvas1"].items[0];
+      const addedItem = state.canvases.canvas1.items[0];
       expect(addedItem.layouts.desktop.width).toBe(50);
       expect(addedItem.layouts.desktop.height).toBe(6);
     });
@@ -3968,7 +3988,7 @@ describe("grid-builder", () => {
 
       // Verify selection was updated
       const state = api.getState();
-      const addedItem = state.canvases["canvas1"].items[0];
+      const addedItem = state.canvases.canvas1.items[0];
       expect(state.selectedItemId).toBe(addedItem.id);
       expect(state.selectedCanvasId).toBe("canvas1");
     });
@@ -3992,7 +4012,10 @@ describe("grid-builder", () => {
       instanceState.activeCanvasId = "canvas1";
 
       // Spy on instance's eventManagerInstance.emit
-      const emitSpy = jest.spyOn((component as any).eventManagerInstance, "emit");
+      const emitSpy = jest.spyOn(
+        (component as any).eventManagerInstance,
+        "emit",
+      );
 
       const event = new CustomEvent("palette-item-click", {
         detail: { componentType: "header" },
@@ -4047,7 +4070,7 @@ describe("grid-builder", () => {
 
       // Verify mobile layout
       const state = api.getState();
-      const addedItem = state.canvases["canvas1"].items[0];
+      const addedItem = state.canvases.canvas1.items[0];
       expect(addedItem.layouts.mobile.width).toBe(50); // Full width
       expect(addedItem.layouts.mobile.customized).toBe(false);
     });
@@ -4093,7 +4116,7 @@ describe("grid-builder", () => {
 
       // Verify z-index is higher than existing item
       const state = api.getState();
-      const addedItem = state.canvases["canvas1"].items[1];
+      const addedItem = state.canvases.canvas1.items[1];
       expect(addedItem.zIndex).toBe(2); // zIndexCounter was 1, so new item gets 2
     });
 
@@ -4138,10 +4161,10 @@ describe("grid-builder", () => {
 
       // Verify all 3 components were added
       const state = api.getState();
-      expect(state.canvases["canvas1"].items.length).toBe(3);
-      expect(state.canvases["canvas1"].items[0].type).toBe("header");
-      expect(state.canvases["canvas1"].items[1].type).toBe("text");
-      expect(state.canvases["canvas1"].items[2].type).toBe("button");
+      expect(state.canvases.canvas1.items.length).toBe(3);
+      expect(state.canvases.canvas1.items[0].type).toBe("header");
+      expect(state.canvases.canvas1.items[1].type).toBe("text");
+      expect(state.canvases.canvas1.items[2].type).toBe("button");
     });
 
     it("should place components without collision", async () => {
@@ -4186,7 +4209,7 @@ describe("grid-builder", () => {
 
       // Verify new component was placed without collision
       const state = api.getState();
-      const addedItem = state.canvases["canvas1"].items[1];
+      const addedItem = state.canvases.canvas1.items[1];
       expect(addedItem).toBeDefined();
 
       // New item should NOT be at (0,0) since that's occupied
@@ -4236,7 +4259,7 @@ describe("grid-builder", () => {
 
       // Verify all IDs are unique
       const state = api.getState();
-      const ids = state.canvases["canvas1"].items.map((item) => item.id);
+      const ids = state.canvases.canvas1.items.map((item) => item.id);
       const uniqueIds = new Set(ids);
       expect(uniqueIds.size).toBe(3); // All IDs should be unique
     });
@@ -4270,7 +4293,7 @@ describe("grid-builder", () => {
 
       // Should be treated as missing type - verify no component was added
       const state = api.getState();
-      expect(state.canvases["canvas1"].items.length).toBe(0);
+      expect(state.canvases.canvas1.items.length).toBe(0);
     });
 
     it("should set component name from definition", async () => {
@@ -4301,7 +4324,7 @@ describe("grid-builder", () => {
 
       // Verify name matches definition
       const state = api.getState();
-      const addedItem = state.canvases["canvas1"].items[0];
+      const addedItem = state.canvases.canvas1.items[0];
       const headerDef = mockComponentDefinitions.find(
         (c) => c.type === "header",
       );
@@ -4336,7 +4359,7 @@ describe("grid-builder", () => {
 
       // Verify config is initialized as empty object
       const state = api.getState();
-      const addedItem = state.canvases["canvas1"].items[0];
+      const addedItem = state.canvases.canvas1.items[0];
       expect(addedItem.config).toEqual({});
       expect(typeof addedItem.config).toBe("object");
     });
@@ -4379,7 +4402,7 @@ describe("grid-builder", () => {
 
       // Verify fallback size is used (10×6)
       const state = api.getState();
-      const addedItem = state.canvases["canvas1"].items[0];
+      const addedItem = state.canvases.canvas1.items[0];
       expect(addedItem.layouts.desktop.width).toBe(10);
       expect(addedItem.layouts.desktop.height).toBe(6);
     });

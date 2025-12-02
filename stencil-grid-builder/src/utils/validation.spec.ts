@@ -34,9 +34,7 @@ describe("validation utilities", () => {
       const result = validateLayout(null, "desktop");
 
       expect(result.valid).toBe(false);
-      expect(result.errors).toContain(
-        "desktop layout is missing or undefined",
-      );
+      expect(result.errors).toContain("desktop layout is missing or undefined");
     });
 
     it("should reject layout with missing properties", () => {
@@ -54,9 +52,7 @@ describe("validation utilities", () => {
       const result = validateLayout(layout, "desktop");
 
       expect(result.valid).toBe(false);
-      expect(result.errors).toContain(
-        "desktop layout.x must be >= 0, got: -5",
-      );
+      expect(result.errors).toContain("desktop layout.x must be >= 0, got: -5");
     });
 
     it("should reject negative y coordinate", () => {
@@ -122,9 +118,7 @@ describe("validation utilities", () => {
       const result = validateLayout(layout, "desktop");
 
       expect(result.valid).toBe(false);
-      expect(result.errors.some((e) => e.includes("finite number"))).toBe(
-        true,
-      );
+      expect(result.errors.some((e) => e.includes("finite number"))).toBe(true);
     });
 
     it("should reject NaN values", () => {
@@ -183,9 +177,7 @@ describe("validation utilities", () => {
       const result = validateGridItem(item);
 
       expect(result.valid).toBe(false);
-      expect(result.errors.some((e) => e.includes("Item.canvasId"))).toBe(
-        true,
-      );
+      expect(result.errors.some((e) => e.includes("Item.canvasId"))).toBe(true);
     });
 
     it("should reject item with empty type", () => {

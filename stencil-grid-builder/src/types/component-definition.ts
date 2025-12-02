@@ -240,11 +240,11 @@ export interface ComponentDefinition {
    * import DOMPurify from 'dompurify';
    *
    * render: ({ config }) => {
-   *   const safeHTML = DOMPurify.sanitize(config.userHTML, {
-   *     ALLOWED_TAGS: ['b', 'i', 'p', 'br'],
-   *     ALLOWED_ATTR: []
-   *   });
-   *   return <div innerHTML={safeHTML}></div>;
+   * const safeHTML = DOMPurify.sanitize(config.userHTML, {
+   * ALLOWED_TAGS: ['b', 'i', 'p', 'br'],
+   * ALLOWED_ATTR: []
+   * });
+   * return <div innerHTML={safeHTML}></div>;
    * }
    * ```
    *
@@ -254,7 +254,6 @@ export interface ComponentDefinition {
    * - [ ] Sanitize any HTML before rendering (DOMPurify)
    * - [ ] Validate URLs before using in src/href attributes
    * - [ ] Never execute code from config values
-   *
    * @param props - Contains itemId and config
    * @returns StencilJS component reference
    * @example

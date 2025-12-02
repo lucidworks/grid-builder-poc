@@ -129,12 +129,12 @@ export const BasicBuilder = (args) => {
 
   return html`
     <div style="display: flex; width: 100%; height: ${args.height || "600px"};">
-      <div style="width: 250px; flex-shrink: 0; border-right: 1px solid #ddd; background: #f5f5f5; overflow-y: auto;">
+      <div
+        style="width: 250px; flex-shrink: 0; border-right: 1px solid #ddd; background: #f5f5f5; overflow-y: auto;"
+      >
         ${paletteEl}
       </div>
-      <div style="flex: 1;">
-        ${builderEl}
-      </div>
+      <div style="flex: 1;">${builderEl}</div>
     </div>
   `;
 };
@@ -330,9 +330,7 @@ export const WithCustomTheme = (args) => {
         >
           ${paletteEl}
         </div>
-        <div style="flex: 1;">
-          ${builderEl}
-        </div>
+        <div style="flex: 1;">${builderEl}</div>
       </div>
 
       <div
@@ -753,7 +751,7 @@ export const ResponsiveViewportDemo = () => {
 
     const builderEl = document.createElement("grid-builder");
     builderEl.components = simpleComponents;
-  builderEl.apiRef = { key: apiKey }; // Isolated instance for this story
+    builderEl.apiRef = { key: apiKey }; // Isolated instance for this story
     builderEl.initialState = {
       canvases: {
         "canvas-1": {
@@ -1936,12 +1934,12 @@ export const MultipleSectionsBuilder = () => {
       <div
         style="display: flex; width: 100%; height: 700px; border: 2px solid #17a2b8; border-radius: 8px; overflow: hidden;"
       >
-        <div style="width: 250px; flex-shrink: 0; border-right: 1px solid #ddd; background: #f5f5f5; overflow-y: auto;">
+        <div
+          style="width: 250px; flex-shrink: 0; border-right: 1px solid #ddd; background: #f5f5f5; overflow-y: auto;"
+        >
           ${paletteEl}
         </div>
-        <div style="flex: 1; overflow: auto;">
-          ${builderEl}
-        </div>
+        <div style="flex: 1; overflow: auto;">${builderEl}</div>
       </div>
 
       <div
@@ -2264,12 +2262,12 @@ export const ActiveCanvasManagement = () => {
       <div
         style="display: flex; width: 100%; height: 600px; border: 2px solid #007bff; border-radius: 8px; overflow: hidden;"
       >
-        <div style="width: 250px; flex-shrink: 0; border-right: 1px solid #ddd; background: #f5f5f5; overflow-y: auto;">
+        <div
+          style="width: 250px; flex-shrink: 0; border-right: 1px solid #ddd; background: #f5f5f5; overflow-y: auto;"
+        >
           ${paletteEl}
         </div>
-        <div style="flex: 1; overflow: auto;">
-          ${builderEl}
-        </div>
+        <div style="flex: 1; overflow: auto;">${builderEl}</div>
       </div>
 
       <div
@@ -2613,12 +2611,12 @@ export const UndoRedoDemo = () => {
       <div
         style="display: flex; width: 100%; height: 500px; border: 2px solid #6f42c1; border-radius: 8px; overflow: hidden;"
       >
-        <div style="width: 250px; flex-shrink: 0; border-right: 1px solid #ddd; background: #f5f5f5; overflow-y: auto;">
+        <div
+          style="width: 250px; flex-shrink: 0; border-right: 1px solid #ddd; background: #f5f5f5; overflow-y: auto;"
+        >
           ${paletteEl}
         </div>
-        <div style="flex: 1; overflow: auto;">
-          ${builderEl}
-        </div>
+        <div style="flex: 1; overflow: auto;">${builderEl}</div>
       </div>
 
       <div
@@ -3367,12 +3365,12 @@ export const EventsDemo = () => {
       <div
         style="display: flex; width: 100%; height: 500px; border: 2px solid #17a2b8; border-radius: 8px; overflow: hidden;"
       >
-        <div style="width: 250px; flex-shrink: 0; border-right: 1px solid #ddd; background: #f5f5f5; overflow-y: auto;">
+        <div
+          style="width: 250px; flex-shrink: 0; border-right: 1px solid #ddd; background: #f5f5f5; overflow-y: auto;"
+        >
           ${paletteEl}
         </div>
-        <div style="flex: 1; overflow: auto;">
-          ${builderEl}
-        </div>
+        <div style="flex: 1; overflow: auto;">${builderEl}</div>
       </div>
 
       <div
@@ -3850,12 +3848,12 @@ export const APIIntegrationDemo = () => {
       <div
         style="display: flex; width: 100%; height: 500px; border: 2px solid #007bff; border-radius: 8px; overflow: hidden;"
       >
-        <div style="width: 250px; flex-shrink: 0; border-right: 1px solid #ddd; background: #f5f5f5; overflow-y: auto;">
+        <div
+          style="width: 250px; flex-shrink: 0; border-right: 1px solid #ddd; background: #f5f5f5; overflow-y: auto;"
+        >
           ${paletteEl}
         </div>
-        <div style="flex: 1; overflow: auto;">
-          ${builderEl}
-        </div>
+        <div style="flex: 1; overflow: auto;">${builderEl}</div>
       </div>
 
       <div
@@ -4351,12 +4349,12 @@ export const ClickToAddFeature = () => {
       <div
         style="display: flex; width: 100%; height: 600px; border: 2px solid #0ea5e9; border-radius: 8px; overflow: hidden;"
       >
-        <div style="width: 250px; flex-shrink: 0; border-right: 1px solid #ddd; background: #f5f5f5; overflow-y: auto;">
+        <div
+          style="width: 250px; flex-shrink: 0; border-right: 1px solid #ddd; background: #f5f5f5; overflow-y: auto;"
+        >
           ${paletteEl}
         </div>
-        <div style="flex: 1;">
-          ${builderEl}
-        </div>
+        <div style="flex: 1;">${builderEl}</div>
       </div>
 
       <div
@@ -5741,7 +5739,10 @@ export const UnknownComponentHandling = () => {
   return html`
     <style>
       .unknown-demo-container {
-        font-family: system-ui, -apple-system, sans-serif;
+        font-family:
+          system-ui,
+          -apple-system,
+          sans-serif;
         background: #f0f2f5;
         min-height: 100vh;
         padding: 20px;
@@ -5846,9 +5847,10 @@ export const UnknownComponentHandling = () => {
           Unknown Component Handling Demo
         </h2>
         <p style="color: #666; margin: 0;">
-          Visual comparison of three strategies for handling unknown component types.
-          Each canvas below has a pre-loaded "Mystery Component" (unknown type) and
-          a "Normal Header" (known type) to show how each mode handles missing components.
+          Visual comparison of three strategies for handling unknown component
+          types. Each canvas below has a pre-loaded "Mystery Component" (unknown
+          type) and a "Normal Header" (known type) to show how each mode handles
+          missing components.
         </p>
       </div>
 
@@ -5864,17 +5866,13 @@ export const UnknownComponentHandling = () => {
 
         <!-- Mode 2: Hidden Mode -->
         <div class="unknown-demo-mode">
-          <div class="unknown-demo-mode-header hidden">
-            🙈 Hidden Mode
-          </div>
+          <div class="unknown-demo-mode-header hidden">🙈 Hidden Mode</div>
           <div class="unknown-demo-mode-content">${hiddenBuilder}</div>
         </div>
 
         <!-- Mode 3: Custom Renderer -->
         <div class="unknown-demo-mode">
-          <div class="unknown-demo-mode-header custom">
-            🎨 Custom Renderer
-          </div>
+          <div class="unknown-demo-mode-header custom">🎨 Custom Renderer</div>
           <div class="unknown-demo-mode-content">${customBuilder}</div>
         </div>
       </div>
@@ -5888,9 +5886,7 @@ export const UnknownComponentHandling = () => {
         <div class="unknown-demo-code-comparison">
           <!-- Default Config -->
           <div>
-            <strong
-              style="display: block; margin-bottom: 8px; color: #1565c0;"
-            >
+            <strong style="display: block; margin-bottom: 8px; color: #1565c0;">
               1️⃣ Default (No Config)
             </strong>
             <div class="unknown-demo-code-block default">
@@ -5898,12 +5894,8 @@ export const UnknownComponentHandling = () => {
                 // No special config needed
               </div>
               <div>const config = {</div>
-              <div style="margin-left: 15px;">
-                // hideUnknownComponents
-              </div>
-              <div style="margin-left: 15px;">
-                // not set (default: false)
-              </div>
+              <div style="margin-left: 15px;">// hideUnknownComponents</div>
+              <div style="margin-left: 15px;">// not set (default: false)</div>
               <div>};</div>
               <div style="margin-top: 10px; color: #666;">
                 ✅ Shows improved error
@@ -5915,9 +5907,7 @@ export const UnknownComponentHandling = () => {
 
           <!-- Hidden Config -->
           <div>
-            <strong
-              style="display: block; margin-bottom: 8px; color: #6a1b9a;"
-            >
+            <strong style="display: block; margin-bottom: 8px; color: #6a1b9a;">
               2️⃣ Hidden Mode
             </strong>
             <div class="unknown-demo-code-block hidden">
@@ -5946,27 +5936,33 @@ export const UnknownComponentHandling = () => {
                 renderUnknownComponent:
               </div>
               <div style="margin-left: 30px;">({ type, itemId }) => {</div>
-              <div style="margin-left: 45px; color: #666;">
-                // Analytics
-              </div>
+              <div style="margin-left: 45px; color: #666;">// Analytics</div>
               <div style="margin-left: 45px;">return customJSX;</div>
               <div style="margin-left: 30px;">}</div>
               <div>};</div>
-              <div style="margin-top: 10px; color: #666;">✅ Branded errors</div>
+              <div style="margin-top: 10px; color: #666;">
+                ✅ Branded errors
+              </div>
               <div style="color: #666;">✅ Track missing types</div>
             </div>
           </div>
         </div>
 
         <!-- Use Cases -->
-        <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #e0e0e0;">
+        <div
+          style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #e0e0e0;"
+        >
           <h4 style="margin: 0 0 10px 0; color: #333; font-size: 14px;">
             💡 When to Use Each Mode
           </h4>
-          <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; font-size: 13px;">
+          <div
+            style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; font-size: 13px;"
+          >
             <div>
               <strong style="color: #1565c0;">Default Error:</strong>
-              <ul style="margin: 5px 0; padding-left: 20px; color: #666; line-height: 1.6;">
+              <ul
+                style="margin: 5px 0; padding-left: 20px; color: #666; line-height: 1.6;"
+              >
                 <li>Development environments</li>
                 <li>Debugging missing components</li>
                 <li>Testing component registries</li>
@@ -5974,7 +5970,9 @@ export const UnknownComponentHandling = () => {
             </div>
             <div>
               <strong style="color: #6a1b9a;">Hidden Mode:</strong>
-              <ul style="margin: 5px 0; padding-left: 20px; color: #666; line-height: 1.6;">
+              <ul
+                style="margin: 5px 0; padding-left: 20px; color: #666; line-height: 1.6;"
+              >
                 <li>Production apps</li>
                 <li>A/B testing features</li>
                 <li>Partial component imports</li>
@@ -5982,7 +5980,9 @@ export const UnknownComponentHandling = () => {
             </div>
             <div>
               <strong style="color: #e65100;">Custom Renderer:</strong>
-              <ul style="margin: 5px 0; padding-left: 20px; color: #666; line-height: 1.6;">
+              <ul
+                style="margin: 5px 0; padding-left: 20px; color: #666; line-height: 1.6;"
+              >
                 <li>Production with logging</li>
                 <li>Branded error messages</li>
                 <li>Analytics integration</li>

@@ -205,4 +205,3 @@ export class DOMCache {
     this.canvases.clear();
   }
 }
-

@@ -285,7 +285,11 @@ describe("canvas-height-calculator (instance-based)", () => {
   describe("calculateCanvasHeight (from instance state)", () => {
     it("should return 0 when canvas does not exist", () => {
       // Pass testState explicitly (instance-based)
-      const height = calculateCanvasHeight("nonexistent-canvas", undefined, testState);
+      const height = calculateCanvasHeight(
+        "nonexistent-canvas",
+        undefined,
+        testState,
+      );
       expect(height).toBe(0);
     });
 
@@ -504,10 +508,18 @@ describe("canvas-height-calculator (instance-based)", () => {
       testState.currentViewport = "desktop";
 
       // Pass testState explicitly (instance-based)
-      const heroHeight = calculateCanvasHeight("hero-section", undefined, testState);
+      const heroHeight = calculateCanvasHeight(
+        "hero-section",
+        undefined,
+        testState,
+      );
       expect(heroHeight).toBe(260); // (8 + 5) * 20
 
-      const footerHeight = calculateCanvasHeight("footer-section", undefined, testState);
+      const footerHeight = calculateCanvasHeight(
+        "footer-section",
+        undefined,
+        testState,
+      );
       expect(footerHeight).toBe(280); // (5 + 4 + 5) * 20 = (9 + 5) * 20 = 280
     });
 
@@ -573,9 +585,13 @@ describe("canvas-height-calculator (instance-based)", () => {
       testState.currentViewport = "desktop";
 
       // Pass testState explicitly (instance-based)
-      const heightFromState = calculateCanvasHeight("canvas1", undefined, testState);
+      const heightFromState = calculateCanvasHeight(
+        "canvas1",
+        undefined,
+        testState,
+      );
       const heightFromItems = calculateCanvasHeightFromItems(
-        testState.canvases["canvas1"].items,
+        testState.canvases.canvas1.items,
         "desktop",
       );
 

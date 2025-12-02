@@ -541,7 +541,7 @@ describe("canvas-height-calculator", () => {
 
       const heightFromState = calculateCanvasHeight("canvas1");
       const heightFromItems = calculateCanvasHeightFromItems(
-        gridState.canvases["canvas1"].items,
+        gridState.canvases.canvas1.items,
         "desktop",
       );
 

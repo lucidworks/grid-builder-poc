@@ -690,10 +690,7 @@ export interface GridConfig {
    * - If `hideUnknownComponents: false`, this renderer is used (or default if undefined)
    * @default undefined
    */
-  renderUnknownComponent?: (context: {
-    type: string;
-    itemId: string;
-  }) => any;
+  renderUnknownComponent?: (context: { type: string; itemId: string }) => any;
 
   /**
    * Instance identifier (internal use)

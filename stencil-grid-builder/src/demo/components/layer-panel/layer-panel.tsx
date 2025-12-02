@@ -33,7 +33,15 @@
  * @module layer-panel
  */
 
-import { Component, h, State, Listen, Element, Prop, Watch } from "@stencil/core";
+import {
+  Component,
+  h,
+  State,
+  Listen,
+  Element,
+  Prop,
+  Watch,
+} from "@stencil/core";
 import { type GridItem } from "../../../services/state-manager";
 
 /**
@@ -285,7 +293,7 @@ export class LayerPanel {
 
     // Initialize virtual scrolling
     this.initializeVirtualScrolling();
-  }
+  };
 
   /**
    * Initialize folder expanded state
@@ -346,15 +354,17 @@ export class LayerPanel {
     const items: LayerItem[] = [];
 
     // Collect all items from all canvases
-    Object.entries(state.canvases).forEach(([canvasId, canvas]: [string, any]) => {
-      console.log(`  Canvas ${canvasId}: ${canvas.items?.length || 0} items`);
-      canvas.items.forEach((item) => {
-        items.push({
-          ...item,
-          canvasId,
+    Object.entries(state.canvases).forEach(
+      ([canvasId, canvas]: [string, any]) => {
+        console.log(`  Canvas ${canvasId}: ${canvas.items?.length || 0} items`);
+        canvas.items.forEach((item) => {
+          items.push({
+            ...item,
+            canvasId,
+          });
         });
-      });
-    });
+      },
+    );
 
     console.log(`  Total items collected: ${items.length}`);
 
@@ -678,7 +688,11 @@ export class LayerPanel {
       dropAbove: boolean;
     }>,
   ) {
-    console.log("🎯 Layer item dropped", { event: event.detail, draggedItem: this.draggedItem, hasApi: !!this.api });
+    console.log("🎯 Layer item dropped", {
+      event: event.detail,
+      draggedItem: this.draggedItem,
+      hasApi: !!this.api,
+    });
 
     if (!this.draggedItem || !this.api) {
       console.warn("  ⚠️ No draggedItem or API, aborting");
@@ -701,10 +715,22 @@ export class LayerPanel {
       return;
     }
 
-    console.log("  📦 Processing drop:", { draggedItemId, draggedCanvasId, draggedZIndex, targetItemId, targetCanvasId, targetZIndex, dropAbove });
+    console.log("  📦 Processing drop:", {
+      draggedItemId,
+      draggedCanvasId,
+      draggedZIndex,
+      targetItemId,
+      targetCanvasId,
+      targetZIndex,
+      dropAbove,
+    });
 
     // Collect all z-index changes to apply in batch
-    const zIndexChanges: { itemId: string; canvasId: string; newZIndex: number }[] = [];
+    const zIndexChanges: {
+      itemId: string;
+      canvasId: string;
+      newZIndex: number;
+    }[] = [];
 
     // Handle cross-canvas movement
     if (draggedCanvasId !== targetCanvasId) {

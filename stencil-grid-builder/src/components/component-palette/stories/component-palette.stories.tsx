@@ -1458,13 +1458,19 @@ export const MultiCanvasClickToAdd = () => {
           Multi-Canvas Click-to-Add
         </h2>
         <p style="color: #666; margin: 0 0 10px 0;">
-          This story demonstrates click-to-add with <strong>multiple canvas sections</strong> (Hero, Content, Footer).
-          Click-to-add is <strong>canvas-aware</strong> - components are added to the <strong>active canvas</strong> (highlighted with blue border).
+          This story demonstrates click-to-add with
+          <strong>multiple canvas sections</strong> (Hero, Content, Footer).
+          Click-to-add is <strong>canvas-aware</strong> - components are added
+          to the <strong>active canvas</strong> (highlighted with blue border).
         </p>
-        <div style="padding: 12px; background: #e7f3ff; border-radius: 4px; border-left: 4px solid #007bff;">
+        <div
+          style="padding: 12px; background: #e7f3ff; border-radius: 4px; border-left: 4px solid #007bff;"
+        >
           <strong style="color: #004085;">💡 How it works:</strong>
           <span style="color: #004085; font-size: 14px;">
-            Click any canvas section below to activate it, then click a palette item to add it to that section. Scroll down to see all three sections.
+            Click any canvas section below to activate it, then click a palette
+            item to add it to that section. Scroll down to see all three
+            sections.
           </span>
         </div>
       </div>
@@ -1487,19 +1493,28 @@ export const MultiCanvasClickToAdd = () => {
       <div
         style="padding: 12px 20px; background: white; border-top: 1px solid #ddd;"
       >
-        <div style="display: flex; gap: 30px; align-items: center; margin-bottom: 8px;">
+        <div
+          style="display: flex; gap: 30px; align-items: center; margin-bottom: 8px;"
+        >
           <div style="color: #666; font-size: 13px;">
-            <strong style="color: #007bff;">🎯 Try it:</strong> Click a canvas to activate it (blue border), then click palette items to add components
+            <strong style="color: #007bff;">🎯 Try it:</strong> Click a canvas
+            to activate it (blue border), then click palette items to add
+            components
           </div>
           <div style="color: #666; font-size: 13px;">
-            <strong style="color: #28a745;">💡 Tip:</strong> Click = smart position | Drag = exact position
+            <strong style="color: #28a745;">💡 Tip:</strong> Click = smart
+            position | Drag = exact position
           </div>
         </div>
         <details style="margin-top: 8px;">
-          <summary style="cursor: pointer; color: #007bff; font-size: 12px; user-select: none;">
+          <summary
+            style="cursor: pointer; color: #007bff; font-size: 12px; user-select: none;"
+          >
             📖 Show detailed instructions
           </summary>
-          <div style="margin-top: 12px; padding: 12px; background: #f8f9fa; border-radius: 4px; font-size: 13px; line-height: 1.6;">
+          <div
+            style="margin-top: 12px; padding: 12px; background: #f8f9fa; border-radius: 4px; font-size: 13px; line-height: 1.6;"
+          >
             <div style="margin-bottom: 12px;">
               <strong style="color: #333;">Active Canvas Selection:</strong>
               <ul style="margin: 4px 0 0 20px; color: #666;">
@@ -1788,8 +1803,7 @@ export const ComponentSizingBestPractices = () => {
                 grid-item-wrapper
               </li>
               <li>
-                Grid-item-wrapper positions resize handles based on its own
-                size
+                Grid-item-wrapper positions resize handles based on its own size
               </li>
               <li>
                 Component must fill wrapper completely for handles to align with

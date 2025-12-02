@@ -701,7 +701,7 @@ export class ComponentPalette {
 
             // Get first available canvas ID from grid-builder API instance for size calculation
             // Use targetGridBuilderId to access the correct instance (supports multiple grid-builders)
-            const apiKey = this.targetGridBuilderId || 'gridBuilderAPI';
+            const apiKey = this.targetGridBuilderId || "gridBuilderAPI";
             const api = (window as any)[apiKey];
             const state = api?.getState?.();
             const canvasIds = state?.canvases

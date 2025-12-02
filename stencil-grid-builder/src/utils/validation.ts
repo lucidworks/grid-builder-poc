@@ -40,7 +40,6 @@
  * - canvasId: non-empty string
  * - type: non-empty string
  * - zIndex: finite number
- *
  * @module validation
  */
 
@@ -72,7 +71,6 @@ const LAYOUT_BOUNDS = {
  * - All required properties present (x, y, width, height)
  * - All values are finite numbers
  * - Values within valid bounds
- *
  * @param layout - Layout object to validate
  * @param layoutType - 'desktop' or 'mobile' (for error messages)
  * @returns ValidationResult with errors if any
@@ -152,10 +150,9 @@ export function validateLayout(
  * ```typescript
  * const result = validateGridItem(item);
  * if (!result.valid) {
- *   debug.warn('Invalid item:', { itemId: item.id, errors: result.errors });
+ * debug.warn('Invalid item:', { itemId: item.id, errors: result.errors });
  * }
  * ```
- *
  * @param item - Grid item to validate
  * @returns ValidationResult with errors if any
  */
@@ -230,10 +227,9 @@ export function validateGridItem(item: any): ValidationResult {
  * ```typescript
  * const result = validateItemUpdates(updates);
  * if (!result.valid) {
- *   debug.warn('Invalid updates:', { itemId, errors: result.errors });
+ * debug.warn('Invalid updates:', { itemId, errors: result.errors });
  * }
  * ```
- *
  * @param updates - Partial item updates to validate
  * @returns ValidationResult with errors if any
  */
@@ -283,7 +279,9 @@ export function validateItemUpdates(updates: any): ValidationResult {
 
   // Validate config if present (must be object, but any shape is allowed)
   if ("config" in updates && typeof updates.config !== "object") {
-    errors.push(`Updates.config must be an object, got: ${typeof updates.config}`);
+    errors.push(
+      `Updates.config must be an object, got: ${typeof updates.config}`,
+    );
   }
 
   return {

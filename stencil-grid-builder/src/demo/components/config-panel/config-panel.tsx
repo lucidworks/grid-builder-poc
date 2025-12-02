@@ -107,10 +107,7 @@ export class ConfigPanel {
   /**
    * Callback for itemRemoved event (stored for unsubscribe)
    */
-  private handleItemRemoved = (event: {
-    itemId: string;
-    canvasId: string;
-  }) => {
+  private handleItemRemoved = (event: { itemId: string; canvasId: string }) => {
     console.log("🔔 config-panel received itemRemoved event", {
       eventItemId: event.itemId,
       selectedItemId: this.selectedItemId,
@@ -518,7 +515,12 @@ export class ConfigPanel {
    */
   private closePanel = () => {
     // Revert changes on cancel
-    if (this.selectedItemId && this.selectedCanvasId && this.originalState && this.api) {
+    if (
+      this.selectedItemId &&
+      this.selectedCanvasId &&
+      this.originalState &&
+      this.api
+    ) {
       const state = this.api.getState();
       const canvas = state.canvases[this.selectedCanvasId];
       const itemIndex = canvas?.items.findIndex(

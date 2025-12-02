@@ -447,7 +447,6 @@ export class UndoRedoManager {
 
   /**
    * Create new UndoRedoManager instance
-   *
    * @example
    * ```typescript
    * // Empty history (default)
@@ -485,66 +484,66 @@ export class UndoRedoManager {
 
   /**
    * Push a new command to the history stack
- *
- * **Use cases**:
- * - After drag operation completes
- * - After resize operation completes
- * - After adding new item
- * - After deleting item
- *
- * **Branching behavior** (discards future):
- * ```
- * Before: [cmd1, cmd2, cmd3, cmd4]
- * ↑ position = 1 (undid twice)
- *
- * Push cmd5: [cmd1, cmd2, cmd5]
- * ↑ position = 2
- *
- * Note: cmd3 and cmd4 discarded!
- * ```
- *
- * **Why discard future**:
- * - Matches user mental model (new action erases "undone" history)
- * - Simpler implementation than tree-based history
- * - Standard undo/redo UX pattern
- *
- * **Memory management**:
- * - If history exceeds MAX_HISTORY (50), oldest command removed
- * - Position adjusted to maintain integrity
- *
- * **Operation sequence**:
- * 1. Discard commands after current position (splice)
- * 2. Append new command to history
- * 3. If over limit, remove oldest (shift)
- * 4. Update position pointer
- * 5. Update button states (triggers UI)
- *
- * **Typical usage**:
- * ```typescript
- * // After drag end
- * const command = new MoveItemCommand(item, oldPos, newPos);
- * pushCommand(command);
- * ```
- *
- * **Important**: Command should be fully constructed (with snapshots taken)
- * before being pushed. This function does NOT execute the command - it's
- * assumed the operation already happened.
- * @param command - Fully constructed command with before/after snapshots
- * @example
- * ```typescript
- * // Delete item example
- * handleDelete(itemId: string, canvasId: string) {
- *   const item = getItem(canvasId, itemId);
- *   const index = gridState.canvases[canvasId].items.indexOf(item);
- *
- *   // Perform the delete
- *   removeItemFromCanvas(canvasId, itemId);
- *
- *   // Push command for undo (AFTER operation)
- *   const command = new DeleteItemCommand(canvasId, item, index);
- *   pushCommand(command);
- * }
- * ```
+   *
+   * **Use cases**:
+   * - After drag operation completes
+   * - After resize operation completes
+   * - After adding new item
+   * - After deleting item
+   *
+   * **Branching behavior** (discards future):
+   * ```
+   * Before: [cmd1, cmd2, cmd3, cmd4]
+   * ↑ position = 1 (undid twice)
+   *
+   * Push cmd5: [cmd1, cmd2, cmd5]
+   * ↑ position = 2
+   *
+   * Note: cmd3 and cmd4 discarded!
+   * ```
+   *
+   * **Why discard future**:
+   * - Matches user mental model (new action erases "undone" history)
+   * - Simpler implementation than tree-based history
+   * - Standard undo/redo UX pattern
+   *
+   * **Memory management**:
+   * - If history exceeds MAX_HISTORY (50), oldest command removed
+   * - Position adjusted to maintain integrity
+   *
+   * **Operation sequence**:
+   * 1. Discard commands after current position (splice)
+   * 2. Append new command to history
+   * 3. If over limit, remove oldest (shift)
+   * 4. Update position pointer
+   * 5. Update button states (triggers UI)
+   *
+   * **Typical usage**:
+   * ```typescript
+   * // After drag end
+   * const command = new MoveItemCommand(item, oldPos, newPos);
+   * pushCommand(command);
+   * ```
+   *
+   * **Important**: Command should be fully constructed (with snapshots taken)
+   * before being pushed. This function does NOT execute the command - it's
+   * assumed the operation already happened.
+   * @param command - Fully constructed command with before/after snapshots
+   * @example
+   * ```typescript
+   * // Delete item example
+   * handleDelete(itemId: string, canvasId: string) {
+   *   const item = getItem(canvasId, itemId);
+   *   const index = gridState.canvases[canvasId].items.indexOf(item);
+   *
+   *   // Perform the delete
+   *   removeItemFromCanvas(canvasId, itemId);
+   *
+   *   // Push command for undo (AFTER operation)
+   *   const command = new DeleteItemCommand(canvasId, item, index);
+   *   pushCommand(command);
+   * }
+   * ```
    * @param command - Fully constructed command with before/after snapshots
    */
   push(command: Command): void {

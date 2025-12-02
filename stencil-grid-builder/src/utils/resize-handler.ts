@@ -961,7 +961,7 @@ export class ResizeHandler {
     event.target.classList.remove("resizing");
 
     // Explicitly stop the interaction to prevent it from continuing on mouse move
-    if (event.interaction && typeof event.interaction.stop === 'function') {
+    if (event.interaction && typeof event.interaction.stop === "function") {
       event.interaction.stop();
     }
 
@@ -972,7 +972,12 @@ export class ResizeHandler {
     }
 
     const containerRect = container.getBoundingClientRect();
-    const gridSizeX = getGridSizeHorizontal(this.item.canvasId, this.config, false, this.domCacheInstance);
+    const gridSizeX = getGridSizeHorizontal(
+      this.item.canvasId,
+      this.config,
+      false,
+      this.domCacheInstance,
+    );
     const gridSizeY = getGridSizeVertical(this.config);
 
     // Get final deltas from data attributes BEFORE cleaning them up (like drag-handler)

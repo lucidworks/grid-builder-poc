@@ -44,10 +44,7 @@ import { Component, h, Prop, State, Watch } from "@stencil/core";
 
 // Internal imports - no interact.js
 import { GridItem } from "../../services/state-manager";
-import {
-  setGridSizeCache,
-  gridToPixelsY,
-} from "../../utils/grid-calculations";
+import { setGridSizeCache, gridToPixelsY } from "../../utils/grid-calculations";
 import { calculateCanvasHeightFromItems } from "../../utils/canvas-height-calculator";
 import { GridConfig } from "../../types/grid-config";
 import { ComponentDefinition } from "../../types/component-definition";

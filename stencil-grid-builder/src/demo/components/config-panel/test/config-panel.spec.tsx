@@ -46,7 +46,7 @@ describe("config-panel", () => {
     resetState();
     // Create new EventManager and API instances for each test
     mockEventManager = new EventManager();
-    mockAPI = new GridBuilderAPI(mockEventManager);
+    mockAPI = new GridBuilderAPI(mockEventManager, gridState);
   });
 
   describe("Component Instantiation", () => {
@@ -86,9 +86,9 @@ describe("config-panel", () => {
       component.componentDidLoad();
 
       // Verify subscription exists (check the API's eventEmitter)
-      const eventEmitter = mockAPI["eventEmitter"];
-      expect(eventEmitter["listeners"].get("itemRemoved")).toBeDefined();
-      expect(eventEmitter["listeners"].get("itemRemoved")?.size).toBe(1);
+      const eventEmitter = mockAPI.eventEmitter;
+      expect(eventEmitter.listeners.get("itemRemoved")).toBeDefined();
+      expect(eventEmitter.listeners.get("itemRemoved")?.size).toBe(1);
 
       // Cleanup
       component.disconnectedCallback();
@@ -103,12 +103,12 @@ describe("config-panel", () => {
       component.api = mockAPI;
 
       component.componentDidLoad();
-      const eventEmitter = mockAPI["eventEmitter"];
-      expect(eventEmitter["listeners"].get("itemRemoved")?.size).toBe(1);
+      const eventEmitter = mockAPI.eventEmitter;
+      expect(eventEmitter.listeners.get("itemRemoved")?.size).toBe(1);
 
       component.disconnectedCallback();
       // After unsubscribing, the listener set should be empty (EventEmitter keeps empty Sets)
-      expect(eventEmitter["listeners"].get("itemRemoved")?.size).toBe(0);
+      expect(eventEmitter.listeners.get("itemRemoved")?.size).toBe(0);
     });
   });
 
@@ -157,7 +157,7 @@ describe("config-panel", () => {
       expect(component.isOpen).toBe(true);
 
       // Emit itemRemoved event for item-1 through API
-      mockAPI["eventEmitter"].emit("itemRemoved", {
+      mockAPI.eventEmitter.emit("itemRemoved", {
         itemId: "item-1",
         canvasId: "canvas1",
       });
@@ -233,7 +233,7 @@ describe("config-panel", () => {
       expect(component.isOpen).toBe(true);
 
       // Emit itemRemoved event for item-2 (different item) through API
-      mockAPI["eventEmitter"].emit("itemRemoved", {
+      mockAPI.eventEmitter.emit("itemRemoved", {
         itemId: "item-2",
         canvasId: "canvas1",
       });
@@ -263,7 +263,7 @@ describe("config-panel", () => {
 
       // Emit itemRemoved event through API - should not crash
       expect(() => {
-        mockAPI["eventEmitter"].emit("itemRemoved", {
+        mockAPI.eventEmitter.emit("itemRemoved", {
           itemId: "item-1",
           canvasId: "canvas1",
         });
@@ -294,7 +294,7 @@ describe("config-panel", () => {
 
       // Emit itemRemoved event through API - should not crash
       expect(() => {
-        mockAPI["eventEmitter"].emit("itemRemoved", {
+        mockAPI.eventEmitter.emit("itemRemoved", {
           itemId: "item-1",
           canvasId: "canvas1",
         });
@@ -359,7 +359,7 @@ describe("config-panel", () => {
       expect(component.selectedItemId).toBe("test-item");
 
       // Step 3: Delete the item (simulate deletion flow) through API
-      mockAPI["eventEmitter"].emit("itemRemoved", {
+      mockAPI.eventEmitter.emit("itemRemoved", {
         itemId: "test-item",
         canvasId: "canvas1",
       });

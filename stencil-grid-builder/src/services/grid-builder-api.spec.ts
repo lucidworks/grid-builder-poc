@@ -20,8 +20,8 @@ describe("GridBuilderAPI", () => {
     // Create EventManager instance
     eventManager = new EventManager();
 
-    // Create new API instance
-    api = new GridBuilderAPI(eventManager);
+    // Create new API instance with singleton state (for testing)
+    api = new GridBuilderAPI(eventManager, gridState);
   });
 
   afterEach(() => {
