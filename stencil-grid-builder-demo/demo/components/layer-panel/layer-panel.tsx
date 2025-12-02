@@ -678,7 +678,12 @@ export class LayerPanel {
       dropAbove: boolean;
     }>,
   ) {
-    if (!this.draggedItem || !this.api) return;
+    console.log("🎯 Layer item dropped", { event: event.detail, draggedItem: this.draggedItem, hasApi: !!this.api });
+
+    if (!this.draggedItem || !this.api) {
+      console.warn("  ⚠️ No draggedItem or API, aborting");
+      return;
+    }
 
     const state = this.api.getState();
     const { targetItemId, targetCanvasId, targetZIndex, dropAbove } =
@@ -691,9 +696,12 @@ export class LayerPanel {
 
     // Don't drop on self
     if (draggedItemId === targetItemId && draggedCanvasId === targetCanvasId) {
+      console.log("  ℹ️ Dropped on self, ignoring");
       this.draggedItem = null;
       return;
     }
+
+    console.log("  📦 Processing drop:", { draggedItemId, draggedCanvasId, draggedZIndex, targetItemId, targetCanvasId, targetZIndex, dropAbove });
 
     // Collect all z-index changes to apply in batch
     const zIndexChanges: { itemId: string; canvasId: string; newZIndex: number }[] = [];

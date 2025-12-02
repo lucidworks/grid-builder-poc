@@ -2274,6 +2274,171 @@ const GridBuilder = class {
                 return this.stateManager.state.activeCanvasId;
             },
             // ======================
+            // Z-Index Management
+            // ======================
+            moveItem: (fromCanvasId, toCanvasId, itemId) => {
+                var _a, _b;
+                // Find item in source canvas
+                const sourceCanvas = this.stateManager.state.canvases[fromCanvasId];
+                if (!sourceCanvas) {
+                    console.warn(`Source canvas ${fromCanvasId} not found`);
+                    return;
+                }
+                const item = sourceCanvas.items.find((i) => i.id === itemId);
+                if (!item) {
+                    console.warn(`Item ${itemId} not found in canvas ${fromCanvasId}`);
+                    return;
+                }
+                const sourceIndex = sourceCanvas.items.findIndex((i) => i.id === itemId);
+                const sourceZIndex = item.zIndex;
+                const sourcePosition = {
+                    x: item.layouts.desktop.x,
+                    y: item.layouts.desktop.y,
+                };
+                const targetPosition = {
+                    x: item.layouts.desktop.x,
+                    y: item.layouts.desktop.y,
+                };
+                // Calculate target z-index
+                let targetZIndex = sourceZIndex;
+                if (fromCanvasId !== toCanvasId) {
+                    const targetCanvas = this.stateManager.state.canvases[toCanvasId];
+                    if (targetCanvas) {
+                        targetZIndex = ++targetCanvas.zIndexCounter;
+                    }
+                }
+                // Create and execute command
+                const command = new MoveItemCommand(itemId, fromCanvasId, toCanvasId, sourcePosition, targetPosition, sourceIndex, sourceZIndex, targetZIndex);
+                command.redo();
+                (_a = this.undoRedoManager) === null || _a === void 0 ? void 0 : _a.push(command);
+                // Emit event
+                (_b = this.eventManagerInstance) === null || _b === void 0 ? void 0 : _b.emit("componentMoved", {
+                    itemId,
+                    fromCanvasId,
+                    toCanvasId,
+                });
+            },
+            setItemsZIndexBatch: (changes) => {
+                var _a, _b;
+                if (changes.length === 0) {
+                    return;
+                }
+                // Capture old z-index values before making changes
+                const changesWithOldValues = changes
+                    .map(({ itemId, canvasId, newZIndex }) => {
+                    const canvas = this.stateManager.state.canvases[canvasId];
+                    if (!canvas) {
+                        console.warn(`Canvas ${canvasId} not found for item ${itemId}, skipping`);
+                        return null;
+                    }
+                    const item = canvas.items.find((i) => i.id === itemId);
+                    if (!item) {
+                        console.warn(`Item ${itemId} not found in canvas ${canvasId}, skipping`);
+                        return null;
+                    }
+                    const oldZIndex = item.zIndex;
+                    // Skip if already at target z-index
+                    if (oldZIndex === newZIndex) {
+                        return null;
+                    }
+                    return {
+                        itemId,
+                        canvasId,
+                        oldZIndex,
+                        newZIndex,
+                    };
+                })
+                    .filter(Boolean);
+                // No valid changes after filtering
+                if (changesWithOldValues.length === 0) {
+                    return;
+                }
+                // Apply all changes to instance state
+                changesWithOldValues.forEach(({ itemId, canvasId, newZIndex }) => {
+                    const canvas = this.stateManager.state.canvases[canvasId];
+                    const item = canvas.items.find((i) => i.id === itemId);
+                    if (item) {
+                        item.zIndex = newZIndex;
+                    }
+                });
+                // Trigger reactivity (single state update for all changes)
+                this.stateManager.state.canvases = Object.assign({}, this.stateManager.state.canvases);
+                // Create instance-aware undo/redo command
+                // TODO: Update ChangeZIndexCommand to support instance state
+                // For now, create an inline command that operates on instance state
+                const stateInstance = this.stateManager.state;
+                const eventManager = this.eventManagerInstance;
+                const command = {
+                    undo: () => {
+                        // Restore old z-index for all affected items
+                        changesWithOldValues.forEach((change) => {
+                            const canvas = stateInstance.canvases[change.canvasId];
+                            const item = canvas === null || canvas === void 0 ? void 0 : canvas.items.find((i) => i.id === change.itemId);
+                            if (item) {
+                                item.zIndex = change.oldZIndex;
+                            }
+                        });
+                        stateInstance.canvases = Object.assign({}, stateInstance.canvases);
+                        // Emit event
+                        if (changesWithOldValues.length === 1) {
+                            const change = changesWithOldValues[0];
+                            eventManager === null || eventManager === void 0 ? void 0 : eventManager.emit("zIndexChanged", {
+                                itemId: change.itemId,
+                                canvasId: change.canvasId,
+                                oldZIndex: change.newZIndex,
+                                newZIndex: change.oldZIndex,
+                            });
+                        }
+                        else {
+                            eventManager === null || eventManager === void 0 ? void 0 : eventManager.emit("zIndexBatchChanged", {
+                                changes: changesWithOldValues.map((change) => ({
+                                    itemId: change.itemId,
+                                    canvasId: change.canvasId,
+                                    oldZIndex: change.newZIndex,
+                                    newZIndex: change.oldZIndex,
+                                })),
+                            });
+                        }
+                    },
+                    redo: () => {
+                        // Reapply new z-index for all affected items
+                        changesWithOldValues.forEach((change) => {
+                            const canvas = stateInstance.canvases[change.canvasId];
+                            const item = canvas === null || canvas === void 0 ? void 0 : canvas.items.find((i) => i.id === change.itemId);
+                            if (item) {
+                                item.zIndex = change.newZIndex;
+                            }
+                        });
+                        stateInstance.canvases = Object.assign({}, stateInstance.canvases);
+                        // Emit event
+                        if (changesWithOldValues.length === 1) {
+                            const change = changesWithOldValues[0];
+                            eventManager === null || eventManager === void 0 ? void 0 : eventManager.emit("zIndexChanged", {
+                                itemId: change.itemId,
+                                canvasId: change.canvasId,
+                                oldZIndex: change.oldZIndex,
+                                newZIndex: change.newZIndex,
+                            });
+                        }
+                        else {
+                            eventManager === null || eventManager === void 0 ? void 0 : eventManager.emit("zIndexBatchChanged", {
+                                changes: changesWithOldValues.map((change) => ({
+                                    itemId: change.itemId,
+                                    canvasId: change.canvasId,
+                                    oldZIndex: change.oldZIndex,
+                                    newZIndex: change.newZIndex,
+                                })),
+                            });
+                        }
+                    },
+                };
+                (_a = this.undoRedoManager) === null || _a === void 0 ? void 0 : _a.push(command);
+                // Emit batch event
+                (_b = this.eventManagerInstance) === null || _b === void 0 ? void 0 : _b.emit("zIndexBatchChanged", {
+                    changes: changesWithOldValues,
+                });
+            },
+            // ======================
             // Custom Command Support
             // ======================
             pushCommand: (command) => {
@@ -2633,7 +2798,7 @@ const GridBuilder = class {
         // Merge instanceId into config for child components (avoids mutating prop)
         const configWithInstance = this.config
             ? Object.assign(Object.assign({}, this.config), { instanceId: this.instanceId }) : { instanceId: this.instanceId };
-        return (h(Host, { key: '4e61ef6bd49bbc96f2c4b906125347defa0af844', ref: (el) => (this.el = el) }, h("div", { key: 'ed5aa5eb93db1cb91dfc976aab3ea3e606405a1a', class: "sr-only", role: "status", "aria-live": "polite", "aria-atomic": "true" }, this.announcement), h("div", { key: 'a66639c01c7a009f2283e17c63cc9ffe7f8490e2', class: "grid-builder-container", role: "application", "aria-label": "Grid builder" }, h("div", { key: '45930bd451c9cfca8e274198ddbb35369bee43a3', class: "canvas-area" }, h("div", { key: 'a2ad5d7ff80ef99443d2ed9d73cf001c533ec2ad', class: "canvases-container" }, canvasIds.map((canvasId) => {
+        return (h(Host, { key: '53d50f56175f38a46a9201eaa6dcb705d3ccd02f', ref: (el) => (this.el = el) }, h("div", { key: '677f3a96b3be05225a5ed948c43181ab6e3f2ff8', class: "sr-only", role: "status", "aria-live": "polite", "aria-atomic": "true" }, this.announcement), h("div", { key: 'ece86e60e3efc51ec7d855c8a32aae29f788d64a', class: "grid-builder-container", role: "application", "aria-label": "Grid builder" }, h("div", { key: '10025639271963860ad2b3ffd14a933b65639662', class: "canvas-area" }, h("div", { key: '716b149f1c667a51cc41fe265e348c5635a662f3', class: "canvases-container" }, canvasIds.map((canvasId) => {
             var _a, _b, _c;
             const isActive = this.stateManager.state.activeCanvasId === canvasId;
             const metadata = ((_a = this.canvasMetadata) === null || _a === void 0 ? void 0 : _a[canvasId]) || {};

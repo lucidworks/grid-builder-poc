@@ -1778,6 +1778,213 @@ export class GridBuilder {
       },
 
       // ======================
+      // Z-Index Management
+      // ======================
+
+      moveItem: (fromCanvasId: string, toCanvasId: string, itemId: string) => {
+        // Find item in source canvas
+        const sourceCanvas = this.stateManager!.state.canvases[fromCanvasId];
+        if (!sourceCanvas) {
+          console.warn(`Source canvas ${fromCanvasId} not found`);
+          return;
+        }
+
+        const item = sourceCanvas.items.find((i) => i.id === itemId);
+        if (!item) {
+          console.warn(`Item ${itemId} not found in canvas ${fromCanvasId}`);
+          return;
+        }
+
+        const sourceIndex = sourceCanvas.items.findIndex((i) => i.id === itemId);
+        const sourceZIndex = item.zIndex;
+        const sourcePosition = {
+          x: item.layouts.desktop.x,
+          y: item.layouts.desktop.y,
+        };
+        const targetPosition = {
+          x: item.layouts.desktop.x,
+          y: item.layouts.desktop.y,
+        };
+
+        // Calculate target z-index
+        let targetZIndex = sourceZIndex;
+        if (fromCanvasId !== toCanvasId) {
+          const targetCanvas = this.stateManager!.state.canvases[toCanvasId];
+          if (targetCanvas) {
+            targetZIndex = ++targetCanvas.zIndexCounter;
+          }
+        }
+
+        // Create and execute command
+        const command = new MoveItemCommand(
+          itemId,
+          fromCanvasId,
+          toCanvasId,
+          sourcePosition,
+          targetPosition,
+          sourceIndex,
+          sourceZIndex,
+          targetZIndex
+        );
+        command.redo();
+        this.undoRedoManager?.push(command);
+
+        // Emit event
+        this.eventManagerInstance?.emit("componentMoved", {
+          itemId,
+          fromCanvasId,
+          toCanvasId,
+        });
+      },
+
+      setItemsZIndexBatch: (
+        changes: {
+          itemId: string;
+          canvasId: string;
+          newZIndex: number;
+        }[]
+      ) => {
+        if (changes.length === 0) {
+          return;
+        }
+
+        // Capture old z-index values before making changes
+        const changesWithOldValues = changes
+          .map(({ itemId, canvasId, newZIndex }) => {
+            const canvas = this.stateManager!.state.canvases[canvasId];
+            if (!canvas) {
+              console.warn(
+                `Canvas ${canvasId} not found for item ${itemId}, skipping`
+              );
+              return null;
+            }
+
+            const item = canvas.items.find((i) => i.id === itemId);
+            if (!item) {
+              console.warn(
+                `Item ${itemId} not found in canvas ${canvasId}, skipping`
+              );
+              return null;
+            }
+
+            const oldZIndex = item.zIndex;
+
+            // Skip if already at target z-index
+            if (oldZIndex === newZIndex) {
+              return null;
+            }
+
+            return {
+              itemId,
+              canvasId,
+              oldZIndex,
+              newZIndex,
+            };
+          })
+          .filter(Boolean) as {
+          itemId: string;
+          canvasId: string;
+          oldZIndex: number;
+          newZIndex: number;
+        }[];
+
+        // No valid changes after filtering
+        if (changesWithOldValues.length === 0) {
+          return;
+        }
+
+        // Apply all changes to instance state
+        changesWithOldValues.forEach(({ itemId, canvasId, newZIndex }) => {
+          const canvas = this.stateManager!.state.canvases[canvasId];
+          const item = canvas.items.find((i) => i.id === itemId);
+          if (item) {
+            item.zIndex = newZIndex;
+          }
+        });
+
+        // Trigger reactivity (single state update for all changes)
+        this.stateManager!.state.canvases = { ...this.stateManager!.state.canvases };
+
+        // Create instance-aware undo/redo command
+        // TODO: Update ChangeZIndexCommand to support instance state
+        // For now, create an inline command that operates on instance state
+        const stateInstance = this.stateManager!.state;
+        const eventManager = this.eventManagerInstance;
+
+        const command = {
+          undo: () => {
+            // Restore old z-index for all affected items
+            changesWithOldValues.forEach((change) => {
+              const canvas = stateInstance.canvases[change.canvasId];
+              const item = canvas?.items.find((i) => i.id === change.itemId);
+              if (item) {
+                item.zIndex = change.oldZIndex;
+              }
+            });
+            stateInstance.canvases = { ...stateInstance.canvases };
+
+            // Emit event
+            if (changesWithOldValues.length === 1) {
+              const change = changesWithOldValues[0];
+              eventManager?.emit("zIndexChanged", {
+                itemId: change.itemId,
+                canvasId: change.canvasId,
+                oldZIndex: change.newZIndex,
+                newZIndex: change.oldZIndex,
+              });
+            } else {
+              eventManager?.emit("zIndexBatchChanged", {
+                changes: changesWithOldValues.map((change) => ({
+                  itemId: change.itemId,
+                  canvasId: change.canvasId,
+                  oldZIndex: change.newZIndex,
+                  newZIndex: change.oldZIndex,
+                })),
+              });
+            }
+          },
+          redo: () => {
+            // Reapply new z-index for all affected items
+            changesWithOldValues.forEach((change) => {
+              const canvas = stateInstance.canvases[change.canvasId];
+              const item = canvas?.items.find((i) => i.id === change.itemId);
+              if (item) {
+                item.zIndex = change.newZIndex;
+              }
+            });
+            stateInstance.canvases = { ...stateInstance.canvases };
+
+            // Emit event
+            if (changesWithOldValues.length === 1) {
+              const change = changesWithOldValues[0];
+              eventManager?.emit("zIndexChanged", {
+                itemId: change.itemId,
+                canvasId: change.canvasId,
+                oldZIndex: change.oldZIndex,
+                newZIndex: change.newZIndex,
+              });
+            } else {
+              eventManager?.emit("zIndexBatchChanged", {
+                changes: changesWithOldValues.map((change) => ({
+                  itemId: change.itemId,
+                  canvasId: change.canvasId,
+                  oldZIndex: change.oldZIndex,
+                  newZIndex: change.newZIndex,
+                })),
+              });
+            }
+          },
+        };
+
+        this.undoRedoManager?.push(command);
+
+        // Emit batch event
+        this.eventManagerInstance?.emit("zIndexBatchChanged", {
+          changes: changesWithOldValues,
+        });
+      },
+
+      // ======================
       // Custom Command Support
       // ======================
 

@@ -484,16 +484,21 @@ const LayerPanel = class {
      * Uses GridBuilderAPI methods for proper event emission and undo/redo support.
      */
     handleLayerItemDropped(event) {
-        if (!this.draggedItem || !this.api)
+        console.log("🎯 Layer item dropped", { event: event.detail, draggedItem: this.draggedItem, hasApi: !!this.api });
+        if (!this.draggedItem || !this.api) {
+            console.warn("  ⚠️ No draggedItem or API, aborting");
             return;
+        }
         const state = this.api.getState();
         const { targetItemId, targetCanvasId, targetZIndex, dropAbove } = event.detail;
         const { itemId: draggedItemId, canvasId: draggedCanvasId, zIndex: draggedZIndex, } = this.draggedItem;
         // Don't drop on self
         if (draggedItemId === targetItemId && draggedCanvasId === targetCanvasId) {
+            console.log("  ℹ️ Dropped on self, ignoring");
             this.draggedItem = null;
             return;
         }
+        console.log("  📦 Processing drop:", { draggedItemId, draggedCanvasId, draggedZIndex, targetItemId, targetCanvasId, targetZIndex, dropAbove });
         // Collect all z-index changes to apply in batch
         const zIndexChanges = [];
         // Handle cross-canvas movement
@@ -648,7 +653,7 @@ const LayerPanel = class {
         const activeCanvasId = state === null || state === void 0 ? void 0 : state.activeCanvasId;
         const selectedItemId = state === null || state === void 0 ? void 0 : state.selectedItemId;
         const selectedCanvasId = state === null || state === void 0 ? void 0 : state.selectedCanvasId;
-        return (h("div", { key: '665fcbeeb1eb24e4452750ead8a12b2ef575aca6', class: "layer-panel" }, h("div", { key: 'bdde4f0c11f3ffcb859e561f59ab4cb3afbfe448', class: "layer-panel__header" }, h("h3", { key: 'af95b074f92a05ed8694ecbdeba7d4025d9b17fb', class: "layer-panel__title" }, "Layers"), h("div", { key: '8045d01faa51213aa3864b0ce4426e7a8a87fb01', class: "layer-panel__count" }, this.filteredItems.length, " items")), h("div", { key: '99dce5a2ac1f97736c16a2512735ad4dae44b8e1', class: "layer-panel__search" }, h("input", { key: 'd46466212e808dc3f61d0a15c88f892cf12fcd76', type: "text", class: "layer-panel__search-input", placeholder: "Search layers...", onInput: this.handleSearchInput })), h("div", { key: '338e6c1f4b511ebaa38cf7d5269877041763a59f', class: "layer-panel__list" }, h("div", { key: 'a8399e96688323737f530fc9207643c24f62cc1a', class: "layer-panel__list-inner", style: { height: `${totalHeight}px`, position: "relative" } }, visibleItems.length === 0 && (h("div", { key: '120616a10f8781b5235b0f3b6bb51b27e8677c90', class: "layer-panel__empty" }, "No items found")), visibleItems.map((virtualItem) => {
+        return (h("div", { key: 'da36148db18547b56866c6dbd99297bec4effe67', class: "layer-panel" }, h("div", { key: '6b6ae84e1fcb9d3759f5790637b1cb513acd53f9', class: "layer-panel__header" }, h("h3", { key: '315c7c4a23ca02b45e20b115022046e62c8fa7f0', class: "layer-panel__title" }, "Layers"), h("div", { key: '021b4abe473becb6c8003fe4c2bfaed868c593dc', class: "layer-panel__count" }, this.filteredItems.length, " items")), h("div", { key: '4139d9ada036e769b258ebe92bdfa3ad29792ab2', class: "layer-panel__search" }, h("input", { key: 'a0cf72c1929484cd8a184b33df58749d7ded6968', type: "text", class: "layer-panel__search-input", placeholder: "Search layers...", onInput: this.handleSearchInput })), h("div", { key: '0123845d6e696e2d729b41431d98e3036280cbdd', class: "layer-panel__list" }, h("div", { key: '1085d6f53809334906bed7eac234ebc64feb61d1', class: "layer-panel__list-inner", style: { height: `${totalHeight}px`, position: "relative" } }, visibleItems.length === 0 && (h("div", { key: '932597d94315135a04afe323fd4c3efade289fc0', class: "layer-panel__empty" }, "No items found")), visibleItems.map((virtualItem) => {
             var _a;
             if (virtualItem.type === "folder") {
                 // Render folder header
@@ -673,7 +678,7 @@ const LayerPanel = class {
                         height: `${virtualItem.height}px`,
                     } }));
             }
-        }))), h("div", { key: '3bddcda297d5b9dca29e5ec13de4046805c7712d', class: "layer-panel__footer" }, h("div", { key: '0375cdbafcdf1d78011b7adfa602cc54f6c5b7d1', class: "layer-panel__hint" }, "Click folder to expand/collapse \u00B7 Click item to select"))));
+        }))), h("div", { key: '668c1801a690738f8e370760bedf276d7234c022', class: "layer-panel__footer" }, h("div", { key: '09dff3076c16baded2ae0330535ec2490739e6dc', class: "layer-panel__hint" }, "Click folder to expand/collapse \u00B7 Click item to select"))));
     }
     get hostElement() { return getElement(this); }
     static get watchers() { return {

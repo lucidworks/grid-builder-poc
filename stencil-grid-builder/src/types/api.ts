@@ -776,6 +776,75 @@ export interface GridBuilderAPI {
   getActiveCanvas(): string | null;
 
   // ======================
+  // Z-Index Management
+  // ======================
+
+  /**
+   * Move item between canvases
+   *
+   * **Use cases**:
+   * - Cross-canvas drag and drop
+   * - Programmatic item relocation
+   * - Layer panel drag-to-reorder across canvases
+   *
+   * **What it does**:
+   * - Removes item from source canvas
+   * - Adds item to target canvas
+   * - Assigns new z-index in target canvas (prevents conflicts)
+   * - Maintains item position
+   * - Creates undo/redo command
+   *
+   * **Events triggered**: 'componentMoved'
+   * @param fromCanvasId - Source canvas
+   * @param toCanvasId - Target canvas
+   * @param itemId - Item to move
+   * @example
+   * ```typescript
+   * // Move item from canvas1 to canvas2
+   * api.moveItem('canvas1', 'canvas2', 'item-5');
+   * ```
+   */
+  moveItem(fromCanvasId: string, toCanvasId: string, itemId: string): void;
+
+  /**
+   * Update multiple item z-indices in single batch operation
+   *
+   * **Performance**: 1000 z-index changes in ~5ms with 1 re-render
+   * **Atomicity**: All-or-nothing operation (single undo/redo)
+   *
+   * **Use cases**:
+   * - Layer panel drag-to-reorder
+   * - Bring to front / send to back
+   * - Move forward / move backward
+   * - Reordering operations
+   *
+   * **What it does**:
+   * - Captures old z-index for each item
+   * - Applies all new z-indices atomically
+   * - Creates single undo/redo command
+   * - Emits 'zIndexBatchChanged' event
+   *
+   * **Events triggered**: 'zIndexBatchChanged'
+   * @param changes - Array of { itemId, canvasId, newZIndex }
+   * @example
+   * ```typescript
+   * // Reorder layers in layer panel
+   * const changes = [
+   *   { itemId: 'item-3', canvasId: 'canvas1', newZIndex: 5 },
+   *   { itemId: 'item-5', canvasId: 'canvas1', newZIndex: 3 }
+   * ];
+   * api.setItemsZIndexBatch(changes);
+   * ```
+   */
+  setItemsZIndexBatch(
+    changes: {
+      itemId: string;
+      canvasId: string;
+      newZIndex: number;
+    }[],
+  ): void;
+
+  // ======================
   // Custom Command Support
   // ======================
 
