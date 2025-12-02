@@ -1,8 +1,8 @@
 import { r as registerInstance, h } from './index-CoCbyscT.js';
 import { i as interact } from './interact.min-DWbYNq4G.js';
 import { s as setGridSizeCache, a as gridToPixelsX, b as gridToPixelsY, g as getGridSizeVertical } from './grid-calculations-C87xQzOc.js';
-import { c as calculateCanvasHeight } from './canvas-height-calculator-DZUgHSLe.js';
-import './state-manager-BtBFePO6.js';
+import { c as calculateCanvasHeight } from './canvas-height-calculator-nUbKtEPu.js';
+import './state-manager-6NvKjybS.js';
 import './debug-BAq8PPFJ.js';
 
 const canvasSectionCss = ".canvas-section{position:relative;display:flex;width:100%;margin:0;padding:0;flex-direction:column}.grid-container{position:relative;width:100%;background-image:linear-gradient(rgba(0, 0, 0, 0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(0, 0, 0, 0.05) 1px, transparent 1px);transition:background-color 0.2s}.grid-container.hide-grid{background-image:none}.grid-container.active{outline:2px solid var(--primary-color, #007bff);outline-offset:-2px;box-shadow:0 0 0 1px rgba(0, 123, 255, 0.3)}.grid-container.drop-target:not(.active){outline:3px dashed var(--primary-color, #007bff);outline-offset:-3px;box-shadow:0 0 0 3px color-mix(in srgb, var(--primary-color) 25%, transparent), inset 0 0 30px color-mix(in srgb, var(--primary-color) 15%, transparent);background-color:color-mix(in srgb, var(--primary-color) 8%, transparent)}.canvas-title{opacity:0.3;transition:opacity 0.2s ease}.canvas-header:has(+canvas-section .grid-container.active) .canvas-title{opacity:1}@keyframes canvas-highlight-pulse{0%,100%{box-shadow:0 0 0 0 var(--primary-color, #f59e0b);opacity:1}50%{box-shadow:0 0 0 4px var(--primary-color, #f59e0b);opacity:0.7}}.canvas-highlight{animation:canvas-highlight-pulse 600ms ease-out}@keyframes position-indicator-fade{0%{opacity:0.8}70%{opacity:0.8}100%{opacity:0}}.position-indicator{position:absolute;border:2px dashed var(--primary-color, #007bff);opacity:0.8;pointer-events:none;z-index:9999;animation:position-indicator-fade 800ms ease-out forwards}";

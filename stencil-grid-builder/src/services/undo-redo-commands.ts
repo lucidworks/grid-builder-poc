@@ -1505,34 +1505,27 @@ export class RemoveCanvasCommand implements Command {
  * - Undo must atomically restore all affected items
  *
  * **Operation**:
- * - Uses `setItemZIndex` from state-manager for each item
  * - Updates all items' zIndex properties in single undo/redo operation
  * - Maintains canvas zIndexCounter
  * - Triggers reactivity once for UI updates
  * - Emits events for layer panel to update
  *
+ * **Instance-based architecture**:
+ * - Accepts optional stateInstance parameter for multi-instance support
+ * - Falls back to singleton gridState if not provided (backward compatibility)
+ * - Operates on instance state instead of global singleton
+ *
  * **Example usage**:
  * ```typescript
- * // Single item: Bring to front
- * const result = bringItemToFront('canvas1', 'item-3');
- * if (result) {
- * const cmd = new ChangeZIndexCommand([{
- * itemId: 'item-3',
- * canvasId: 'canvas1',
- * oldZIndex: result.oldZIndex,
- * newZIndex: result.newZIndex
- * }]);
- * undoRedoManager.push(cmd);
- * }
+ * // Instance-based (multi-grid support)
+ * const cmd = new ChangeZIndexCommand(
+ *   changes,
+ *   eventManager,
+ *   stateInstance
+ * );
  *
- * // Swap operation: Move forward (affects 2 items)
- * // moveItemForward swaps z-index with next item
- * const changes = [
- * { itemId: 'item-3', canvasId: 'canvas1', oldZIndex: 5, newZIndex: 7 },
- * { itemId: 'item-7', canvasId: 'canvas1', oldZIndex: 7, newZIndex: 5 }
- * ];
- * const cmd = new ChangeZIndexCommand(changes);
- * undoRedoManager.push(cmd);
+ * // Singleton-based (backward compatibility)
+ * const cmd = new ChangeZIndexCommand(changes, eventManager);
  * ```
  *
  * **Edge case handling**:
@@ -1550,6 +1543,7 @@ export class ChangeZIndexCommand implements Command {
     newZIndex: number;
   }[];
   private eventManager: EventManager;
+  private stateInstance: any; // GridState instance (or null for singleton)
 
   constructor(
     changes: {
@@ -1559,9 +1553,11 @@ export class ChangeZIndexCommand implements Command {
       newZIndex: number;
     }[],
     eventManager: EventManager,
+    stateInstance?: any,
   ) {
     this.changes = changes;
     this.eventManager = eventManager;
+    this.stateInstance = stateInstance || null;
 
     // Descriptive message for command history
     if (changes.length === 1) {
@@ -1573,20 +1569,23 @@ export class ChangeZIndexCommand implements Command {
   }
 
   undo(): void {
+    // Get the state to operate on (instance or singleton)
+    const state = this.stateInstance || gridState;
+
     // Restore old z-index for all affected items
     this.changes.forEach((change) => {
-      const result = setItemZIndex(
-        change.canvasId,
-        change.itemId,
-        change.oldZIndex,
-      );
-
-      if (result) {
+      const canvas = state.canvases[change.canvasId];
+      const item = canvas?.items.find((i) => i.id === change.itemId);
+      if (item) {
+        item.zIndex = change.oldZIndex;
         debug.log(
-          `Undo z-index change: ${change.itemId} from ${result.newZIndex} to ${result.oldZIndex}`,
+          `Undo z-index change: ${change.itemId} from ${change.newZIndex} to ${change.oldZIndex}`,
         );
       }
     });
+
+    // Trigger reactivity
+    state.canvases = { ...state.canvases };
 
     // Emit single event (batch or individual based on change count)
     if (this.changes.length === 1) {
@@ -1611,20 +1610,23 @@ export class ChangeZIndexCommand implements Command {
   }
 
   redo(): void {
+    // Get the state to operate on (instance or singleton)
+    const state = this.stateInstance || gridState;
+
     // Reapply new z-index for all affected items
     this.changes.forEach((change) => {
-      const result = setItemZIndex(
-        change.canvasId,
-        change.itemId,
-        change.newZIndex,
-      );
-
-      if (result) {
+      const canvas = state.canvases[change.canvasId];
+      const item = canvas?.items.find((i) => i.id === change.itemId);
+      if (item) {
+        item.zIndex = change.newZIndex;
         debug.log(
-          `Redo z-index change: ${change.itemId} from ${result.oldZIndex} to ${result.newZIndex}`,
+          `Redo z-index change: ${change.itemId} from ${change.oldZIndex} to ${change.newZIndex}`,
         );
       }
     });
+
+    // Trigger reactivity
+    state.canvases = { ...state.canvases };
 
     // Emit single event (batch or individual based on change count)
     if (this.changes.length === 1) {

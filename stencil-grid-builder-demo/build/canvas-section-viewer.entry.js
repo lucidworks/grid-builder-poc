@@ -1,7 +1,7 @@
 import { r as registerInstance, h } from './index-CoCbyscT.js';
 import { s as setGridSizeCache, b as gridToPixelsY } from './grid-calculations-C87xQzOc.js';
-import { a as calculateCanvasHeightFromItems } from './canvas-height-calculator-DZUgHSLe.js';
-import './state-manager-BtBFePO6.js';
+import { a as calculateCanvasHeightFromItems } from './canvas-height-calculator-nUbKtEPu.js';
+import './state-manager-6NvKjybS.js';
 import './debug-BAq8PPFJ.js';
 
 const canvasSectionViewerCss = "@charset \"UTF-8\";.canvas-section-viewer{display:block;width:100%;margin:0;padding:0;}.canvas-section-viewer .grid-container{position:relative;width:100%;background-color:#ffffff;background-image:none !important;overflow:visible}";

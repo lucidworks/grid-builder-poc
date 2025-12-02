@@ -90,6 +90,7 @@ import {
   AddCanvasCommand,
   RemoveCanvasCommand,
   MoveItemCommand,
+  ChangeZIndexCommand,
 } from "../../services/undo-redo-commands";
 import {
   UndoRedoManager,
@@ -1905,76 +1906,12 @@ export class GridBuilder {
         // Trigger reactivity (single state update for all changes)
         this.stateManager!.state.canvases = { ...this.stateManager!.state.canvases };
 
-        // Create instance-aware undo/redo command
-        // TODO: Update ChangeZIndexCommand to support instance state
-        // For now, create an inline command that operates on instance state
-        const stateInstance = this.stateManager!.state;
-        const eventManager = this.eventManagerInstance;
-
-        const command = {
-          undo: () => {
-            // Restore old z-index for all affected items
-            changesWithOldValues.forEach((change) => {
-              const canvas = stateInstance.canvases[change.canvasId];
-              const item = canvas?.items.find((i) => i.id === change.itemId);
-              if (item) {
-                item.zIndex = change.oldZIndex;
-              }
-            });
-            stateInstance.canvases = { ...stateInstance.canvases };
-
-            // Emit event
-            if (changesWithOldValues.length === 1) {
-              const change = changesWithOldValues[0];
-              eventManager?.emit("zIndexChanged", {
-                itemId: change.itemId,
-                canvasId: change.canvasId,
-                oldZIndex: change.newZIndex,
-                newZIndex: change.oldZIndex,
-              });
-            } else {
-              eventManager?.emit("zIndexBatchChanged", {
-                changes: changesWithOldValues.map((change) => ({
-                  itemId: change.itemId,
-                  canvasId: change.canvasId,
-                  oldZIndex: change.newZIndex,
-                  newZIndex: change.oldZIndex,
-                })),
-              });
-            }
-          },
-          redo: () => {
-            // Reapply new z-index for all affected items
-            changesWithOldValues.forEach((change) => {
-              const canvas = stateInstance.canvases[change.canvasId];
-              const item = canvas?.items.find((i) => i.id === change.itemId);
-              if (item) {
-                item.zIndex = change.newZIndex;
-              }
-            });
-            stateInstance.canvases = { ...stateInstance.canvases };
-
-            // Emit event
-            if (changesWithOldValues.length === 1) {
-              const change = changesWithOldValues[0];
-              eventManager?.emit("zIndexChanged", {
-                itemId: change.itemId,
-                canvasId: change.canvasId,
-                oldZIndex: change.oldZIndex,
-                newZIndex: change.newZIndex,
-              });
-            } else {
-              eventManager?.emit("zIndexBatchChanged", {
-                changes: changesWithOldValues.map((change) => ({
-                  itemId: change.itemId,
-                  canvasId: change.canvasId,
-                  oldZIndex: change.oldZIndex,
-                  newZIndex: change.newZIndex,
-                })),
-              });
-            }
-          },
-        };
+        // Create instance-aware undo/redo command using ChangeZIndexCommand
+        const command = new ChangeZIndexCommand(
+          changesWithOldValues,
+          this.eventManagerInstance!,
+          this.stateManager!.state
+        );
 
         this.undoRedoManager?.push(command);
 

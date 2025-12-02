@@ -1,7 +1,7 @@
 import { r as registerInstance, h } from './index-CoCbyscT.js';
 import { c as contentComponents, i as interactiveComponents, m as mediaComponents, b as blogComponentDefinitions } from './component-definitions-ZVTe1Mmn.js';
 import { c as clearGridSizeCache, g as getGridSizeVertical } from './grid-calculations-C87xQzOc.js';
-import { s as setActiveCanvas } from './state-manager-BtBFePO6.js';
+import { s as setActiveCanvas } from './state-manager-6NvKjybS.js';
 import './blog-header-drag-clone-BuA2MVsN.js';
 import './blog-article-drag-clone-lJRbfww3.js';
 import './blog-button-drag-clone-CjHN4uS7.js';
