@@ -1035,6 +1035,19 @@ export class GridBuilder {
         position: targetPosition,
       });
 
+      // 12. Auto-scroll to component after cross-canvas move
+      // Wait for DOM to update after position changes
+      requestAnimationFrame(() => {
+        const itemElement = document.getElementById(itemId);
+        if (itemElement) {
+          itemElement.scrollIntoView({
+            behavior: "smooth",
+            block: "center",
+            inline: "nearest",
+          });
+        }
+      });
+
       debug.log("✅ Cross-canvas move completed:", {
         itemId,
         from: sourceCanvasId,
@@ -1845,6 +1858,21 @@ export class GridBuilder {
           fromCanvasId,
           toCanvasId,
         });
+
+        // Auto-scroll to component if moved to different canvas
+        if (fromCanvasId !== toCanvasId) {
+          // Wait for DOM to update after command execution
+          requestAnimationFrame(() => {
+            const itemElement = document.getElementById(itemId);
+            if (itemElement) {
+              itemElement.scrollIntoView({
+                behavior: "smooth",
+                block: "center",
+                inline: "nearest",
+              });
+            }
+          });
+        }
       },
 
       setItemsZIndexBatch: (

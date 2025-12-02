@@ -1684,6 +1684,18 @@ const GridBuilder = class {
                 targetCanvasId,
                 position: targetPosition,
             });
+            // 12. Auto-scroll to component after cross-canvas move
+            // Wait for DOM to update after position changes
+            requestAnimationFrame(() => {
+                const itemElement = document.getElementById(itemId);
+                if (itemElement) {
+                    itemElement.scrollIntoView({
+                        behavior: "smooth",
+                        block: "center",
+                        inline: "nearest",
+                    });
+                }
+            });
             debug.log("✅ Cross-canvas move completed:", {
                 itemId,
                 from: sourceCanvasId,
@@ -2327,6 +2339,20 @@ const GridBuilder = class {
                     fromCanvasId,
                     toCanvasId,
                 });
+                // Auto-scroll to component if moved to different canvas
+                if (fromCanvasId !== toCanvasId) {
+                    // Wait for DOM to update after command execution
+                    requestAnimationFrame(() => {
+                        const itemElement = document.getElementById(itemId);
+                        if (itemElement) {
+                            itemElement.scrollIntoView({
+                                behavior: "smooth",
+                                block: "center",
+                                inline: "nearest",
+                            });
+                        }
+                    });
+                }
             },
             setItemsZIndexBatch: (changes) => {
                 var _a, _b;
@@ -2741,7 +2767,7 @@ const GridBuilder = class {
         // Merge instanceId into config for child components (avoids mutating prop)
         const configWithInstance = this.config
             ? Object.assign(Object.assign({}, this.config), { instanceId: this.instanceId }) : { instanceId: this.instanceId };
-        return (h(Host, { key: '66c0bc23870ad24fc3a8f28aab01e457b6ae127f', ref: (el) => (this.el = el) }, h("div", { key: '177a92afbb95b919b7a616c5ff9d111ea1053d40', class: "sr-only", role: "status", "aria-live": "polite", "aria-atomic": "true" }, this.announcement), h("div", { key: 'e189abb27b06753a6dc4c2cf5371cc7bb7d04ec1', class: "grid-builder-container", role: "application", "aria-label": "Grid builder" }, h("div", { key: 'bdc1d7b3a888ecc98865a02b5db38951b80d8ce7', class: "canvas-area" }, h("div", { key: '2bf04cf4f556de560db35e242d50d2ee51029135', class: "canvases-container" }, canvasIds.map((canvasId) => {
+        return (h(Host, { key: 'af72c1273ec000727a412d51c7be5681e6e40bd4', ref: (el) => (this.el = el) }, h("div", { key: 'ff439295ad918e108cf8eaecc0381c5aa9eca375', class: "sr-only", role: "status", "aria-live": "polite", "aria-atomic": "true" }, this.announcement), h("div", { key: '84c21b8f9c855ef2834e6631eb635d2072c78d2e', class: "grid-builder-container", role: "application", "aria-label": "Grid builder" }, h("div", { key: '749207e455f575ae84b59304444e2fd08787cfee', class: "canvas-area" }, h("div", { key: '60e38b81f762beaaeffbfaf0c7fb6770e94ed3ce', class: "canvases-container" }, canvasIds.map((canvasId) => {
             var _a, _b, _c;
             const isActive = this.stateManager.state.activeCanvasId === canvasId;
             const metadata = ((_a = this.canvasMetadata) === null || _a === void 0 ? void 0 : _a[canvasId]) || {};
