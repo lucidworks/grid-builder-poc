@@ -56,7 +56,6 @@ import {
   generateItemId,
   getItem as getItemFromState,
   GridItem,
-  gridState,
   GridState,
   moveItemBackward as moveItemBackwardInternal,
   moveItemForward as moveItemForwardInternal,
@@ -191,13 +190,16 @@ class EventEmitter {
 export class GridBuilderAPI {
   private eventEmitter: EventEmitter = new EventEmitter();
   private eventManager: EventManager;
+  private stateInstance: GridState;
 
   /**
    * Create a new GridBuilderAPI instance
    * @param eventManager - EventManager instance for emitting internal service events
+   * @param stateInstance - GridState instance for multi-instance support
    */
-  constructor(eventManager: EventManager) {
+  constructor(eventManager: EventManager, stateInstance: GridState) {
     this.eventManager = eventManager;
+    this.stateInstance = stateInstance;
   }
 
   // ============================================================================
@@ -212,7 +214,7 @@ export class GridBuilderAPI {
    * @returns Current grid state object
    */
   getState(): GridState {
-    return gridState;
+    return this.stateInstance;
   }
 
   /**
@@ -220,7 +222,7 @@ export class GridBuilderAPI {
    * @returns Object mapping canvas IDs to canvas data
    */
   getCanvases() {
-    return gridState.canvases;
+    return this.stateInstance.canvases;
   }
 
   /**
@@ -229,7 +231,7 @@ export class GridBuilderAPI {
    * @returns Canvas data or null if not found
    */
   getCanvas(canvasId: string) {
-    return gridState.canvases[canvasId] || null;
+    return this.stateInstance.canvases[canvasId] || null;
   }
 
   /**
@@ -286,7 +288,11 @@ export class GridBuilderAPI {
    * ```
    */
   addCanvas(canvasId: string): void {
-    const cmd = new AddCanvasCommand(canvasId, gridState, this.eventManager);
+    const cmd = new AddCanvasCommand(
+      canvasId,
+      this.stateInstance,
+      this.eventManager,
+    );
     pushCommand(cmd);
     cmd.redo(); // Execute the command
 
@@ -318,7 +324,11 @@ export class GridBuilderAPI {
    * ```
    */
   removeCanvas(canvasId: string): void {
-    const cmd = new RemoveCanvasCommand(canvasId, gridState, this.eventManager);
+    const cmd = new RemoveCanvasCommand(
+      canvasId,
+      this.stateInstance,
+      this.eventManager,
+    );
     pushCommand(cmd);
     cmd.redo(); // Execute the command
 
@@ -341,7 +351,7 @@ export class GridBuilderAPI {
    * @returns Current viewport ('desktop' or 'mobile')
    */
   getCurrentViewport() {
-    return gridState.currentViewport;
+    return this.stateInstance.currentViewport;
   }
 
   /**
@@ -349,7 +359,7 @@ export class GridBuilderAPI {
    * @returns True if grid is visible, false otherwise
    */
   getGridVisibility(): boolean {
-    return gridState.showGrid;
+    return this.stateInstance.showGrid;
   }
 
   /**
@@ -357,10 +367,13 @@ export class GridBuilderAPI {
    * @returns Object with itemId and canvasId, or null if nothing selected
    */
   getSelectedItem(): { itemId: string; canvasId: string } | null {
-    if (gridState.selectedItemId && gridState.selectedCanvasId) {
+    if (
+      this.stateInstance.selectedItemId &&
+      this.stateInstance.selectedCanvasId
+    ) {
       return {
-        itemId: gridState.selectedItemId,
-        canvasId: gridState.selectedCanvasId,
+        itemId: this.stateInstance.selectedItemId,
+        canvasId: this.stateInstance.selectedCanvasId,
       };
     }
     return null;
@@ -409,11 +422,11 @@ export class GridBuilderAPI {
           customized: false,
         },
       },
-      zIndex: gridState.canvases[canvasId]?.zIndexCounter || 1,
+      zIndex: this.stateInstance.canvases[canvasId]?.zIndexCounter || 1,
       config: config || {},
     };
 
-    const command = new AddItemCommand(canvasId, item);
+    const command = new AddItemCommand(canvasId, item, this.stateInstance);
     command.redo(); // Execute command first
     pushCommand(command); // Then add to history
 
@@ -436,7 +449,7 @@ export class GridBuilderAPI {
       return;
     }
 
-    const command = new RemoveItemCommand(canvasId, item);
+    const command = new RemoveItemCommand(canvasId, item, this.stateInstance);
     command.redo(); // Execute command first
     pushCommand(command); // Then add to history
 
@@ -465,7 +478,13 @@ export class GridBuilderAPI {
       return;
     }
 
-    const command = new UpdateItemCommand(canvasId, itemId, oldItem, updates);
+    const command = new UpdateItemCommand(
+      canvasId,
+      itemId,
+      oldItem,
+      updates,
+      this.stateInstance,
+    );
     command.redo(); // Execute command first
     pushCommand(command); // Then add to history
 
@@ -492,7 +511,7 @@ export class GridBuilderAPI {
     }
 
     // Get source canvas to find item index
-    const sourceCanvas = gridState.canvases[fromCanvasId];
+    const sourceCanvas = this.stateInstance.canvases[fromCanvasId];
     if (!sourceCanvas) {
       return;
     }
@@ -511,7 +530,7 @@ export class GridBuilderAPI {
     // Calculate target z-index (new z-index for cross-canvas moves)
     let targetZIndex = sourceZIndex; // Same canvas = same z-index
     if (fromCanvasId !== toCanvasId) {
-      const targetCanvas = gridState.canvases[toCanvasId];
+      const targetCanvas = this.stateInstance.canvases[toCanvasId];
       if (targetCanvas) {
         targetZIndex = targetCanvas.zIndexCounter; // Will be incremented in redo()
       }
@@ -526,6 +545,9 @@ export class GridBuilderAPI {
       sourceIndex,
       sourceZIndex,
       targetZIndex,
+      undefined, // sourceSize (not tracked for basic moves)
+      undefined, // targetSize (not tracked for basic moves)
+      this.stateInstance,
     );
     command.redo(); // Execute command first (applies targetZIndex)
     pushCommand(command); // Then add to history
@@ -651,7 +673,7 @@ export class GridBuilderAPI {
     const itemIds = addItemsBatch(partialItems);
 
     // Add to undo/redo history
-    const command = new BatchAddCommand(itemIds);
+    const command = new BatchAddCommand(itemIds, this.stateInstance);
     pushCommand(command); // Note: Batch operations store full item data, so no need to redo()
 
     // Collect all created items for event
@@ -723,7 +745,7 @@ export class GridBuilderAPI {
    */
   deleteItemsBatch(itemIds: string[]): void {
     // Add to undo/redo history BEFORE deletion (need state for undo)
-    const command = new BatchDeleteCommand(itemIds);
+    const command = new BatchDeleteCommand(itemIds, this.stateInstance);
     pushCommand(command);
 
     // Use state-manager batch operation (single state update)
@@ -731,11 +753,11 @@ export class GridBuilderAPI {
 
     // Clear selection if any deleted item was selected
     if (
-      gridState.selectedItemId &&
-      itemIds.includes(gridState.selectedItemId)
+      this.stateInstance.selectedItemId &&
+      itemIds.includes(this.stateInstance.selectedItemId)
     ) {
-      gridState.selectedItemId = null;
-      gridState.selectedCanvasId = null;
+      this.stateInstance.selectedItemId = null;
+      this.stateInstance.selectedCanvasId = null;
     }
 
     // Emit single batch event
@@ -840,7 +862,10 @@ export class GridBuilderAPI {
     }[];
 
     // Add to undo/redo history
-    const command = new BatchUpdateConfigCommand(batchUpdates);
+    const command = new BatchUpdateConfigCommand(
+      batchUpdates,
+      this.stateInstance,
+    );
     pushCommand(command);
 
     // Use state-manager batch operation (single state update)
@@ -861,8 +886,8 @@ export class GridBuilderAPI {
    * @returns Grid item or null if not found
    */
   private findItemById(itemId: string): GridItem | null {
-    for (const canvasId in gridState.canvases) {
-      const canvas = gridState.canvases[canvasId];
+    for (const canvasId in this.stateInstance.canvases) {
+      const canvas = this.stateInstance.canvases[canvasId];
       const item = canvas.items.find((i) => i.id === itemId);
       if (item) {
         return item;
@@ -945,6 +970,7 @@ export class GridBuilderAPI {
         },
       ],
       this.eventManager,
+      this.stateInstance,
     );
     pushCommand(command);
 
@@ -990,6 +1016,7 @@ export class GridBuilderAPI {
         },
       ],
       this.eventManager,
+      this.stateInstance,
     );
     pushCommand(command);
 
@@ -1035,6 +1062,7 @@ export class GridBuilderAPI {
         },
       ],
       this.eventManager,
+      this.stateInstance,
     );
     pushCommand(command);
 
@@ -1068,7 +1096,7 @@ export class GridBuilderAPI {
    */
   moveItemForward(canvasId: string, itemId: string): void {
     // Get items before the swap to capture both affected items
-    const canvas = gridState.canvases[canvasId];
+    const canvas = this.stateInstance.canvases[canvasId];
     if (!canvas) {
       return;
     }
@@ -1114,6 +1142,7 @@ export class GridBuilderAPI {
         },
       ],
       this.eventManager,
+      this.stateInstance,
     );
     pushCommand(command);
 
@@ -1157,7 +1186,7 @@ export class GridBuilderAPI {
    */
   moveItemBackward(canvasId: string, itemId: string): void {
     // Get items before the swap to capture both affected items
-    const canvas = gridState.canvases[canvasId];
+    const canvas = this.stateInstance.canvases[canvasId];
     if (!canvas) {
       return;
     }
@@ -1203,6 +1232,7 @@ export class GridBuilderAPI {
         },
       ],
       this.eventManager,
+      this.stateInstance,
     );
     pushCommand(command);
 
@@ -1273,7 +1303,7 @@ export class GridBuilderAPI {
     // Capture old z-index values before making changes
     const changesWithOldValues = changes
       .map(({ itemId, canvasId, newZIndex }) => {
-        const canvas = gridState.canvases[canvasId];
+        const canvas = this.stateInstance.canvases[canvasId];
         if (!canvas) {
           console.warn(
             `Canvas ${canvasId} not found for item ${itemId}, skipping`,
@@ -1317,7 +1347,7 @@ export class GridBuilderAPI {
 
     // Apply all changes
     changesWithOldValues.forEach(({ itemId, canvasId, newZIndex }) => {
-      const canvas = gridState.canvases[canvasId];
+      const canvas = this.stateInstance.canvases[canvasId];
       const item = canvas.items.find((i) => i.id === itemId);
       if (item) {
         item.zIndex = newZIndex;
@@ -1325,12 +1355,13 @@ export class GridBuilderAPI {
     });
 
     // Trigger reactivity (single state update for all changes)
-    gridState.canvases = { ...gridState.canvases };
+    this.stateInstance.canvases = { ...this.stateInstance.canvases };
 
     // Create undo/redo command for all changes
     const command = new ChangeZIndexCommand(
       changesWithOldValues,
       this.eventManager,
+      this.stateInstance,
     );
     pushCommand(command);
 
@@ -1352,8 +1383,12 @@ export class GridBuilderAPI {
    * @fires viewportChanged
    */
   setViewport(viewport: "desktop" | "mobile"): void {
-    const oldViewport = gridState.currentViewport;
-    const command = new SetViewportCommand(oldViewport, viewport);
+    const oldViewport = this.stateInstance.currentViewport;
+    const command = new SetViewportCommand(
+      oldViewport,
+      viewport,
+      this.stateInstance,
+    );
     command.redo(); // Execute command first
     pushCommand(command); // Then add to history
 
@@ -1371,8 +1406,12 @@ export class GridBuilderAPI {
    * @fires gridVisibilityChanged
    */
   toggleGrid(visible: boolean): void {
-    const oldValue = gridState.showGrid;
-    const command = new ToggleGridCommand(oldValue, visible);
+    const oldValue = this.stateInstance.showGrid;
+    const command = new ToggleGridCommand(
+      oldValue,
+      visible,
+      this.stateInstance,
+    );
     command.redo(); // Execute command first
     pushCommand(command); // Then add to history
 
@@ -1442,7 +1481,7 @@ export class GridBuilderAPI {
    * ```
    */
   exportState(): string {
-    return JSON.stringify(gridState);
+    return JSON.stringify(this.stateInstance);
   }
 
   /**
@@ -1465,7 +1504,7 @@ export class GridBuilderAPI {
     const newState = JSON.parse(json);
 
     // Replace state properties
-    Object.assign(gridState, newState);
+    Object.assign(this.stateInstance, newState);
 
     // Clear undo/redo history (imported state is new baseline)
     clearHistoryInternal();
