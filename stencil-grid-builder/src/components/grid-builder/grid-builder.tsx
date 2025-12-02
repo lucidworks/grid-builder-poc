@@ -45,6 +45,8 @@
 import {
   Component,
   Element,
+  Event,
+  EventEmitter,
   h,
   Host,
   Listen,
@@ -83,6 +85,7 @@ import {
 } from "../../services/state-manager";
 import { VirtualRendererService } from "../../services/virtual-renderer";
 import { EventManager } from "../../services/event-manager";
+import { ComponentRegistry } from "../../services/component-registry";
 import {
   BatchAddCommand,
   BatchDeleteCommand,
@@ -403,16 +406,47 @@ export class GridBuilder {
   };
 
   /**
-   * Component registry (internal state)
+   * Component registry (public property)
    *
    * **Purpose**: Map component type → definition for lookup
    * **Built from**: components prop
-   * **Used by**: grid-item-wrapper for dynamic rendering
+   * **Used by**: grid-item-wrapper for dynamic rendering, component-palette for Observable pattern
+   * **Visibility**: Public to allow sharing with component-palette for automatic sync
    *
-   * **Structure**: `{ 'header': ComponentDefinition, 'text': ComponentDefinition, ... }`
+   * **Structure**: ComponentRegistry service with get(), has(), getAll() methods
+   *
+   * **Why public**: Allows external code (e.g., Storybook stories) to access and share the registry
+   * with component-palette for Observer pattern. The palette subscribes to onChange() for reactive updates.
+   *
+   * **Not @State()**: Changes to registry trigger updates via Observer pattern (onChange callbacks),
+   * not via StencilJS reactivity. Subscribers update their own @State when notified.
    */
-  @State() private componentRegistry: Map<string, ComponentDefinition> =
-    new Map();
+  public componentRegistry: ComponentRegistry = new ComponentRegistry();
+
+  /**
+   * Component registry ready event
+   *
+   * **Purpose**: Notifies external code when componentRegistry has been initialized
+   * **Fired**: After componentWillLoad creates the registry with component definitions
+   * **Use case**: Allows Storybook stories and other consumers to know when registry is ready for sharing
+   *
+   * **Event detail**: { registry: ComponentRegistry } - Reference to the initialized registry
+   *
+   * **Example usage**:
+   * ```typescript
+   * builderEl.addEventListener('registryReady', (event) => {
+   *   const { registry } = event.detail;
+   *   paletteEl.componentRegistry = registry;
+   * });
+   * ```
+   */
+  @Event({
+    eventName: "registryReady",
+    composed: true,
+    cancelable: false,
+    bubbles: true,
+  })
+  registryReady: EventEmitter<{ registry: ComponentRegistry }>;
 
   /**
    * Initialized plugins (internal state)
@@ -732,14 +766,16 @@ export class GridBuilder {
     }
 
     // Build component registry
-    this.componentRegistry = new Map(
-      this.components.map((comp) => [comp.type, comp]),
-    );
+    this.componentRegistry = new ComponentRegistry(this.components);
 
     // Validate unique component types
-    if (this.componentRegistry.size !== this.components.length) {
+    if (this.componentRegistry.size() !== this.components.length) {
       debug.warn("GridBuilder: Duplicate component types detected");
     }
+
+    // Emit registry-ready event for external consumers (e.g., Storybook stories)
+    // This allows component-palette to be notified when registry is available for sharing
+    this.registryReady.emit({ registry: this.componentRegistry });
 
     // Expose interact.js globally (required for drag/drop handlers)
     (window as any).interact = interact;
@@ -1379,9 +1415,7 @@ export class GridBuilder {
    */
   @Watch("components")
   handleComponentsChange(newComponents: ComponentDefinition[]) {
-    this.componentRegistry = new Map(
-      newComponents.map((comp) => [comp.type, comp]),
-    );
+    this.componentRegistry = new ComponentRegistry(newComponents);
   }
 
   /**
@@ -2019,6 +2053,40 @@ export class GridBuilder {
 
       pushCommand: (command: any) => {
         this.undoRedoManager?.push(command);
+      },
+
+      // ======================
+      // Component Registry Management
+      // ======================
+
+      registerComponent: (definition: ComponentDefinition) => {
+        // Validate definition
+        if (!definition.type || typeof definition.type !== "string") {
+          console.error(
+            "registerComponent: Component definition must have a valid type string",
+          );
+          return;
+        }
+
+        // Register the new component
+        // The registry's onChange listeners will automatically notify subscribers (like component-palette)
+        this.componentRegistry.register(definition);
+
+        debug.log(`✅ Registered component: ${definition.type}`, {
+          name: definition.name,
+          icon: definition.icon,
+          totalComponents: this.componentRegistry.size(),
+        });
+
+        // Emit event for plugins
+        this.eventManagerInstance?.emit("componentRegistered", {
+          type: definition.type,
+          name: definition.name,
+        });
+      },
+
+      getComponents: () => {
+        return this.componentRegistry.getAll();
       },
     };
   }
