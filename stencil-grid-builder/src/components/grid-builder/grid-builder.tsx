@@ -92,10 +92,7 @@ import {
   MoveItemCommand,
   ChangeZIndexCommand,
 } from "../../services/undo-redo-commands";
-import {
-  UndoRedoManager,
-  undoRedoState,
-} from "../../services/undo-redo";
+import { UndoRedoManager, undoRedoState } from "../../services/undo-redo";
 import { DOMCache } from "../../utils/dom-cache";
 
 // Utility imports
@@ -765,7 +762,7 @@ export class GridBuilder {
 
     // Set instanceId for cache isolation (stored as private property to avoid mutating config prop)
     // This prevents cache collisions when multiple instances share canvasIds
-    this.instanceId = this.apiRef?.key || 'gridBuilderAPI';
+    this.instanceId = this.apiRef?.key || "gridBuilderAPI";
 
     debug.log("GridBuilder: Instance ID set", {
       instanceId: this.instanceId,
@@ -818,12 +815,15 @@ export class GridBuilder {
 
       // Phase 2: Expose service instances globally (for debugging)
       // Use namespaced keys to support multiple grid-builder instances
-      (window as any)[`${this.apiRef.key}_virtualRenderer`] = this.virtualRendererInstance;
+      (window as any)[`${this.apiRef.key}_virtualRenderer`] =
+        this.virtualRendererInstance;
 
       debug.log("  ✅ API and services set on window", {
         key: this.apiRef.key,
         apiExists: !!window[this.apiRef.key],
-        virtualRendererExists: !!(window as any)[`${this.apiRef.key}_virtualRenderer`],
+        virtualRendererExists: !!(window as any)[
+          `${this.apiRef.key}_virtualRenderer`
+        ],
       });
     }
 
@@ -882,9 +882,7 @@ export class GridBuilder {
       // Get component definition to determine default size
       const definition = this.componentRegistry.get(componentType);
       if (!definition) {
-        debug.warn(
-          `Component definition not found for type: ${componentType}`,
-        );
+        debug.warn(`Component definition not found for type: ${componentType}`);
         return;
       }
 
@@ -1001,7 +999,9 @@ export class GridBuilder {
       // 8. Assign new z-index in target canvas (prevents z-index conflicts)
       const targetZIndex = targetCanvas.zIndexCounter++;
       item.zIndex = targetZIndex;
-      this.stateManager!.state.canvases = { ...this.stateManager!.state.canvases }; // Trigger reactivity
+      this.stateManager!.state.canvases = {
+        ...this.stateManager!.state.canvases,
+      }; // Trigger reactivity
 
       // 9. Set target canvas as active
       this.api?.setActiveCanvas(targetCanvasId);
@@ -1023,7 +1023,7 @@ export class GridBuilder {
         targetZIndex,
         undefined, // sourceSize (not tracked for drag operations)
         undefined, // targetSize (not tracked for drag operations)
-        this.stateManager!.state // Pass instance state
+        this.stateManager!.state, // Pass instance state
       );
       this.undoRedoManager?.push(command);
 
@@ -1103,7 +1103,10 @@ export class GridBuilder {
 
       // Handle Delete key (delete selected component)
       if (event.key === "Delete" || event.key === "Backspace") {
-        if (this.stateManager!.state.selectedItemId && this.stateManager!.state.selectedCanvasId) {
+        if (
+          this.stateManager!.state.selectedItemId &&
+          this.stateManager!.state.selectedCanvasId
+        ) {
           debug.log("⌨️ Keyboard: Delete triggered", {
             itemId: this.stateManager!.state.selectedItemId,
           });
@@ -1132,7 +1135,10 @@ export class GridBuilder {
 
       // Handle Escape key (deselect component)
       if (event.key === "Escape") {
-        if (this.stateManager!.state.selectedItemId || this.stateManager!.state.selectedCanvasId) {
+        if (
+          this.stateManager!.state.selectedItemId ||
+          this.stateManager!.state.selectedCanvasId
+        ) {
           debug.log("⌨️ Keyboard: Escape triggered (deselecting)");
           event.preventDefault();
 
@@ -1148,7 +1154,10 @@ export class GridBuilder {
       }
 
       // Handle arrow key nudging (only if component is selected)
-      if (!this.stateManager!.state.selectedItemId || !this.stateManager!.state.selectedCanvasId) {
+      if (
+        !this.stateManager!.state.selectedItemId ||
+        !this.stateManager!.state.selectedCanvasId
+      ) {
         return;
       }
 
@@ -1165,12 +1174,17 @@ export class GridBuilder {
       event.preventDefault();
 
       // Get selected item
-      const canvas = this.stateManager!.state.canvases[this.stateManager!.state.selectedCanvasId];
+      const canvas =
+        this.stateManager!.state.canvases[
+          this.stateManager!.state.selectedCanvasId
+        ];
       if (!canvas) {
         return;
       }
 
-      const item = canvas.items.find((i) => i.id === this.stateManager!.state.selectedItemId);
+      const item = canvas.items.find(
+        (i) => i.id === this.stateManager!.state.selectedItemId,
+      );
       if (!item) {
         return;
       }
@@ -1240,12 +1254,14 @@ export class GridBuilder {
         item.zIndex, // targetZIndex (same canvas = no change)
         undefined, // sourceSize (not tracked for nudge operations)
         undefined, // targetSize (not tracked for nudge operations)
-        this.stateManager!.state // Pass instance state
+        this.stateManager!.state, // Pass instance state
       );
       this.undoRedoManager?.push(nudgeCommand);
 
       // Trigger state update
-      this.stateManager!.state.canvases = { ...this.stateManager!.state.canvases };
+      this.stateManager!.state.canvases = {
+        ...this.stateManager!.state.canvases,
+      };
 
       // Emit event
       this.eventManagerInstance?.emit("componentDragged", {
@@ -1468,14 +1484,22 @@ export class GridBuilder {
         // Add to canvas (immutable update)
         const newItems = [...canvas.items, newItem];
         const newCanvas = { ...canvas, items: newItems };
-        const newCanvases = { ...this.stateManager!.state.canvases, [canvasId]: newCanvas };
+        const newCanvases = {
+          ...this.stateManager!.state.canvases,
+          [canvasId]: newCanvas,
+        };
         this.stateManager!.state.canvases = newCanvases;
 
         // Add to undo/redo history
-        this.undoRedoManager?.push(new BatchAddCommand([newItem.id]));
+        this.undoRedoManager?.push(
+          new BatchAddCommand([newItem.id], this.stateManager!.state),
+        );
 
         // Emit event
-        this.eventManagerInstance?.emit("componentAdded", { item: newItem, canvasId });
+        this.eventManagerInstance?.emit("componentAdded", {
+          item: newItem,
+          canvasId,
+        });
 
         return newItem.id;
       },
@@ -1523,11 +1547,15 @@ export class GridBuilder {
         const itemIndex = canvas.items.findIndex((i) => i.id === itemId);
         if (itemIndex !== -1) {
           // Add to undo/redo history BEFORE deletion (need state for undo)
-          this.undoRedoManager?.push(new BatchDeleteCommand([itemId]));
+          this.undoRedoManager?.push(
+            new BatchDeleteCommand([itemId], this.stateManager!.state),
+          );
 
           // Delete item
           canvas.items.splice(itemIndex, 1);
-          this.stateManager!.state.canvases = { ...this.stateManager!.state.canvases };
+          this.stateManager!.state.canvases = {
+            ...this.stateManager!.state.canvases,
+          };
 
           // Deselect if deleted item was selected
           if (this.stateManager!.state.selectedItemId === itemId) {
@@ -1563,17 +1591,28 @@ export class GridBuilder {
                 updates: { config: newConfig },
               },
             ];
-            this.undoRedoManager?.push(new BatchUpdateConfigCommand(batchUpdate));
+            this.undoRedoManager?.push(
+              new BatchUpdateConfigCommand(
+                batchUpdate,
+                this.stateManager!.state,
+              ),
+            );
 
             // Merge config
             canvas.items[itemIndex] = {
               ...canvas.items[itemIndex],
               config: newConfig,
             };
-            this.stateManager!.state.canvases = { ...this.stateManager!.state.canvases };
+            this.stateManager!.state.canvases = {
+              ...this.stateManager!.state.canvases,
+            };
 
             // Emit event
-            this.eventManagerInstance?.emit("configChanged", { itemId, canvasId, config });
+            this.eventManagerInstance?.emit("configChanged", {
+              itemId,
+              canvasId,
+              config,
+            });
 
             return true;
           }
@@ -1623,7 +1662,9 @@ export class GridBuilder {
         const itemIds = addItemsBatch(partialItems);
 
         // Add to undo/redo history
-        this.undoRedoManager?.push(new BatchAddCommand(itemIds));
+        this.undoRedoManager?.push(
+          new BatchAddCommand(itemIds, this.stateManager!.state),
+        );
 
         // Emit batch event
         const createdItems = itemIds
@@ -1632,7 +1673,9 @@ export class GridBuilder {
             return item ? { item, canvasId: item.canvasId } : null;
           })
           .filter(Boolean);
-        this.eventManagerInstance?.emit("componentsBatchAdded", { items: createdItems });
+        this.eventManagerInstance?.emit("componentsBatchAdded", {
+          items: createdItems,
+        });
 
         return itemIds;
       },
@@ -1647,7 +1690,9 @@ export class GridBuilder {
           .filter(Boolean);
 
         // Add to undo/redo history BEFORE deletion (need state for undo)
-        this.undoRedoManager?.push(new BatchDeleteCommand(itemIds));
+        this.undoRedoManager?.push(
+          new BatchDeleteCommand(itemIds, this.stateManager!.state),
+        );
 
         // Use state-manager batch operation (single state update)
         deleteItemsBatch(itemIds);
@@ -1662,7 +1707,9 @@ export class GridBuilder {
         }
 
         // Emit batch event
-        this.eventManagerInstance?.emit("componentsBatchDeleted", { items: deletedItems });
+        this.eventManagerInstance?.emit("componentsBatchDeleted", {
+          items: deletedItems,
+        });
       },
 
       updateConfigsBatch: (
@@ -1689,7 +1736,9 @@ export class GridBuilder {
         }[];
 
         // Add to undo/redo history
-        this.undoRedoManager?.push(new BatchUpdateConfigCommand(batchUpdates));
+        this.undoRedoManager?.push(
+          new BatchUpdateConfigCommand(batchUpdates, this.stateManager!.state),
+        );
 
         // Use state-manager batch operation (single state update)
         updateItemsBatch(batchUpdates);
@@ -1702,7 +1751,9 @@ export class GridBuilder {
             config: updates.config,
           }),
         );
-        this.eventManagerInstance?.emit("configsBatchChanged", { items: updatedItems });
+        this.eventManagerInstance?.emit("configsBatchChanged", {
+          items: updatedItems,
+        });
       },
 
       // ======================
@@ -1748,7 +1799,7 @@ export class GridBuilder {
         const command = new AddCanvasCommand(
           canvasId,
           this.stateManager!.state,
-          this.eventManagerInstance
+          this.eventManagerInstance,
         );
 
         // Add to undo/redo stack
@@ -1778,7 +1829,7 @@ export class GridBuilder {
         const command = new RemoveCanvasCommand(
           canvasId,
           this.stateManager!.state,
-          this.eventManagerInstance
+          this.eventManagerInstance,
         );
 
         // Add to undo/redo stack
@@ -1815,7 +1866,9 @@ export class GridBuilder {
           return;
         }
 
-        const sourceIndex = sourceCanvas.items.findIndex((i) => i.id === itemId);
+        const sourceIndex = sourceCanvas.items.findIndex(
+          (i) => i.id === itemId,
+        );
         const sourceZIndex = item.zIndex;
         const sourcePosition = {
           x: item.layouts.desktop.x,
@@ -1847,7 +1900,7 @@ export class GridBuilder {
           targetZIndex,
           undefined, // sourceSize (not tracked for simple moves)
           undefined, // targetSize (not tracked for simple moves)
-          this.stateManager!.state // Pass instance state
+          this.stateManager!.state, // Pass instance state
         );
         command.redo();
         this.undoRedoManager?.push(command);
@@ -1880,7 +1933,7 @@ export class GridBuilder {
           itemId: string;
           canvasId: string;
           newZIndex: number;
-        }[]
+        }[],
       ) => {
         if (changes.length === 0) {
           return;
@@ -1892,7 +1945,7 @@ export class GridBuilder {
             const canvas = this.stateManager!.state.canvases[canvasId];
             if (!canvas) {
               console.warn(
-                `Canvas ${canvasId} not found for item ${itemId}, skipping`
+                `Canvas ${canvasId} not found for item ${itemId}, skipping`,
               );
               return null;
             }
@@ -1900,7 +1953,7 @@ export class GridBuilder {
             const item = canvas.items.find((i) => i.id === itemId);
             if (!item) {
               console.warn(
-                `Item ${itemId} not found in canvas ${canvasId}, skipping`
+                `Item ${itemId} not found in canvas ${canvasId}, skipping`,
               );
               return null;
             }
@@ -1941,13 +1994,15 @@ export class GridBuilder {
         });
 
         // Trigger reactivity (single state update for all changes)
-        this.stateManager!.state.canvases = { ...this.stateManager!.state.canvases };
+        this.stateManager!.state.canvases = {
+          ...this.stateManager!.state.canvases,
+        };
 
         // Create instance-aware undo/redo command using ChangeZIndexCommand
         const command = new ChangeZIndexCommand(
           changesWithOldValues,
           this.eventManagerInstance!,
-          this.stateManager!.state
+          this.stateManager!.state,
         );
 
         this.undoRedoManager?.push(command);
@@ -2104,21 +2159,30 @@ export class GridBuilder {
    */
   private setupScreenReaderAnnouncements = () => {
     // Component added
-    this.eventManagerInstance?.on("componentAdded", (data: ComponentAddedEvent) => {
-      const definition = this.componentRegistry.get(data.item.type);
-      const componentName = definition?.name || data.item.type;
-      this.announce(`${componentName} component added to canvas`);
-    });
+    this.eventManagerInstance?.on(
+      "componentAdded",
+      (data: ComponentAddedEvent) => {
+        const definition = this.componentRegistry.get(data.item.type);
+        const componentName = definition?.name || data.item.type;
+        this.announce(`${componentName} component added to canvas`);
+      },
+    );
 
     // Component deleted
-    this.eventManagerInstance?.on("componentDeleted", (_data: ComponentDeletedEvent) => {
-      this.announce(`Component deleted`);
-    });
+    this.eventManagerInstance?.on(
+      "componentDeleted",
+      (_data: ComponentDeletedEvent) => {
+        this.announce(`Component deleted`);
+      },
+    );
 
     // Component moved (cross-canvas)
-    this.eventManagerInstance?.on("componentMoved", (_data: ComponentMovedEvent) => {
-      this.announce(`Component moved to new canvas`);
-    });
+    this.eventManagerInstance?.on(
+      "componentMoved",
+      (_data: ComponentMovedEvent) => {
+        this.announce(`Component moved to new canvas`);
+      },
+    );
 
     // Undo/Redo with focus management
     this.eventManagerInstance?.on("undoExecuted", () => {
@@ -2136,11 +2200,14 @@ export class GridBuilder {
     });
 
     // Canvas activated
-    this.eventManagerInstance?.on("canvasActivated", (data: CanvasActivatedEvent) => {
-      const metadata = this.canvasMetadata?.[data.canvasId];
-      const canvasTitle = metadata?.title || data.canvasId;
-      this.announce(`${canvasTitle} canvas activated`);
-    });
+    this.eventManagerInstance?.on(
+      "canvasActivated",
+      (data: CanvasActivatedEvent) => {
+        const metadata = this.canvasMetadata?.[data.canvasId];
+        const canvasTitle = metadata?.title || data.canvasId;
+        this.announce(`${canvasTitle} canvas activated`);
+      },
+    );
   };
 
   /**
@@ -2667,7 +2734,8 @@ export class GridBuilder {
             {/* Canvases */}
             <div class="canvases-container">
               {canvasIds.map((canvasId) => {
-                const isActive = this.stateManager!.state.activeCanvasId === canvasId;
+                const isActive =
+                  this.stateManager!.state.activeCanvasId === canvasId;
                 const metadata = this.canvasMetadata?.[canvasId] || {};
 
                 // Render custom canvas header if provided
@@ -2708,7 +2776,9 @@ export class GridBuilder {
                       eventManagerInstance={this.eventManagerInstance}
                       undoRedoManagerInstance={this.undoRedoManager}
                       stateInstance={this.stateManager!.state}
-                      onStateChange={(key: string, callback: Function) => this.stateManager!.onChange(key, callback)}
+                      onStateChange={(key: string, callback: Function) =>
+                        this.stateManager!.onChange(key, callback)
+                      }
                       domCacheInstance={this.domCacheInstance}
                       theme={this.theme}
                     />
