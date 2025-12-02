@@ -47,8 +47,8 @@ import { GridItem } from "../../services/state-manager";
 import { setGridSizeCache, gridToPixelsY } from "../../utils/grid-calculations";
 import { calculateCanvasHeightFromItems } from "../../utils/canvas-height-calculator";
 import { GridConfig } from "../../types/grid-config";
-import { ComponentDefinition } from "../../types/component-definition";
 import { VirtualRendererService } from "../../services/virtual-renderer";
+import { ComponentRegistry } from "../../services/component-registry";
 
 /**
  * CanvasSectionViewer Component
@@ -106,10 +106,10 @@ export class CanvasSectionViewer {
    * Component registry (from parent grid-viewer)
    *
    * **Source**: grid-viewer component
-   * **Structure**: Map<type, ComponentDefinition>
+   * **Structure**: ComponentRegistry service instance
    * **Purpose**: Pass to grid-item-wrapper for dynamic rendering
    */
-  @Prop() componentRegistry?: Map<string, ComponentDefinition>;
+  @Prop() componentRegistry?: ComponentRegistry;
 
   /**
    * Background color for this canvas

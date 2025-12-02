@@ -38,8 +38,8 @@ import { ResizeHandler } from "../../utils/resize-handler";
 import { DOMCache } from "../../utils/dom-cache";
 import { gridToPixelsX, gridToPixelsY } from "../../utils/grid-calculations";
 import { GridConfig } from "../../types/grid-config";
-import { ComponentDefinition } from "../../types/component-definition";
 import { createDebugLogger } from "../../utils/debug";
+import { ComponentRegistry } from "../../services/component-registry";
 
 const debug = createDebugLogger("grid-item-wrapper");
 
@@ -88,14 +88,14 @@ export class GridItemWrapper {
    * Component registry (from parent grid-builder)
    *
    * **Source**: grid-builder component (built from components prop)
-   * **Structure**: Map<type, ComponentDefinition>
+   * **Structure**: ComponentRegistry service instance
    * **Purpose**: Look up component definitions for dynamic rendering
    *
-   * **Note**: This is passed as a workaround since StencilJS doesn't have
-   * good support for context/provide-inject patterns. In a production app,
-   * consider using a global registry or context provider.
+   * **Instance-based architecture**: Each grid-builder instance has its own
+   * registry, supporting multiple grids with different component sets on the
+   * same page. Prop drilling (3 levels) is the correct pattern for this use case.
    */
-  @Prop() componentRegistry?: Map<string, ComponentDefinition>;
+  @Prop() componentRegistry?: ComponentRegistry;
 
   /**
    * Deletion hook (from parent grid-builder)

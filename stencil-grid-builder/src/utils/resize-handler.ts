@@ -636,7 +636,7 @@ export class ResizeHandler {
    * }
    * ```
    */
-  private handleResizeStart(event: InteractResizeEvent): void {
+  public handleResizeStart(event: InteractResizeEvent): void {
     // Start performance tracking
     if (window.perfMonitor) {
       window.perfMonitor.startOperation("resize");

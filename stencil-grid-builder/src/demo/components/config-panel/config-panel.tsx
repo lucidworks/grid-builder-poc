@@ -32,6 +32,7 @@ import {
   ConfigField,
 } from "../../../types/component-definition";
 import { GridBuilderAPI } from "../../../services/grid-builder-api";
+import { ComponentRegistry } from "../../../services/component-registry";
 
 /**
  * ConfigPanel Component
@@ -63,7 +64,7 @@ export class ConfigPanel {
    * **Source**: grid-builder component
    * **Purpose**: Look up component definitions for config forms
    */
-  @Prop() componentRegistry?: Map<string, ComponentDefinition>;
+  @Prop() componentRegistry?: ComponentRegistry;
 
   /**
    * Panel open state

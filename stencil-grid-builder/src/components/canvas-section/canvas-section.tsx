@@ -77,12 +77,12 @@ import {
 } from "../../utils/grid-calculations";
 import { calculateCanvasHeight } from "../../utils/canvas-height-calculator";
 import { GridConfig } from "../../types/grid-config";
-import { ComponentDefinition } from "../../types/component-definition";
 import { DeletionHook } from "../../types/deletion-hook";
 import { VirtualRendererService } from "../../services/virtual-renderer";
 import { EventManager } from "../../services/event-manager";
 import { UndoRedoManager } from "../../services/undo-redo";
 import { DOMCache } from "../../utils/dom-cache";
+import { ComponentRegistry } from "../../services/component-registry";
 
 /**
  * CanvasSection Component
@@ -122,10 +122,10 @@ export class CanvasSection {
    * Component registry (from parent grid-builder)
    *
    * **Source**: grid-builder component (built from components prop)
-   * **Structure**: Map<type, ComponentDefinition>
+   * **Structure**: ComponentRegistry service instance
    * **Purpose**: Pass to grid-item-wrapper for dynamic rendering
    */
-  @Prop() componentRegistry?: Map<string, ComponentDefinition>;
+  @Prop() componentRegistry?: ComponentRegistry;
 
   /**
    * Background color for this canvas

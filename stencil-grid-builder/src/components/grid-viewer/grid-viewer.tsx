@@ -57,6 +57,7 @@ import { Component, Element, h, Host, Prop, State, Watch } from "@stencil/core";
 import { ComponentDefinition } from "../../types/component-definition";
 import { GridConfig } from "../../types/grid-config";
 import { GridBuilderTheme } from "../../types/theme";
+import { ComponentRegistry } from "../../services/component-registry";
 import { GridExport } from "../../types/grid-export";
 
 // Service imports - only rendering-related, no editing
@@ -177,8 +178,8 @@ export class GridViewer {
    * **Purpose**: Map component type → definition for lookup
    * **Built from**: components prop
    */
-  @State() private componentRegistry: Map<string, ComponentDefinition> =
-    new Map();
+  @State() private componentRegistry: ComponentRegistry =
+    new ComponentRegistry();
 
   /**
    * Local viewer state store
@@ -222,12 +223,10 @@ export class GridViewer {
     }
 
     // Build component registry
-    this.componentRegistry = new Map(
-      this.components.map((comp) => [comp.type, comp]),
-    );
+    this.componentRegistry = new ComponentRegistry(this.components);
 
     // Validate unique component types
-    if (this.componentRegistry.size !== this.components.length) {
+    if (this.componentRegistry.size() !== this.components.length) {
       debug.warn("GridViewer: Duplicate component types detected");
     }
 
@@ -301,9 +300,7 @@ export class GridViewer {
    */
   @Watch("components")
   handleComponentsChange(newComponents: ComponentDefinition[]) {
-    this.componentRegistry = new Map(
-      newComponents.map((comp) => [comp.type, comp]),
-    );
+    this.componentRegistry = new ComponentRegistry(newComponents);
   }
 
   /**
