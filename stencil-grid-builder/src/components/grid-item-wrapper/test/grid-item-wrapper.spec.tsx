@@ -15,6 +15,7 @@ import { GridItemWrapper } from "../grid-item-wrapper";
 import { reset } from "../../../services/state-manager";
 import { DOMCache } from "../../../utils/dom-cache";
 import { mockDragClone } from "../../../utils/test-helpers";
+import { ComponentRegistry } from "../../../services/component-registry";
 
 // Create mock instances for instance-based architecture
 const domCacheInstance = new DOMCache();
@@ -66,18 +67,15 @@ describe("grid-item-wrapper - Active Canvas", () => {
     zIndex: 1,
   };
 
-  const mockComponentRegistry = new Map([
-    [
-      "header",
-      {
-        type: "header",
-        name: "Header",
-        icon: "📄",
-        defaultSize: { width: 10, height: 6 },
-        renderDragClone: mockDragClone,
-        render: (_item: any) => <div>Header Component</div>,
-      },
-    ],
+  const mockComponentRegistry = new ComponentRegistry([
+    {
+      type: "header",
+      name: "Header",
+      icon: "📄",
+      defaultSize: { width: 10, height: 6 },
+      renderDragClone: mockDragClone,
+      render: (_item: any) => <div>Header Component</div>,
+    },
   ]);
 
   let mockStateInstance: any;
@@ -966,25 +964,22 @@ describe("grid-item-wrapper - Active Canvas", () => {
 
     it("should render description for custom wrapper components", async () => {
       // Create a mock component with custom wrapper
-      const customWrapperRegistry = new Map([
-        [
-          "header",
-          {
-            type: "header",
-            name: "Header",
-            icon: "📄",
-            defaultSize: { width: 20, height: 6 },
-            minSize: { width: 10, height: 3 },
-            render: () => <div>Header Component</div>,
-            renderDragClone: () => <div>Header</div>,
-            // @ts-expect-error - itemId intentionally unused in test mock
-            renderItemWrapper: ({ contentSlotId, itemId }) => (
-              <div class="custom-wrapper">
-                <div id={contentSlotId}>Content Slot</div>
-              </div>
-            ),
-          },
-        ],
+      const customWrapperRegistry = new ComponentRegistry([
+        {
+          type: "header",
+          name: "Header",
+          icon: "📄",
+          defaultSize: { width: 20, height: 6 },
+          minSize: { width: 10, height: 3 },
+          render: () => <div>Header Component</div>,
+          renderDragClone: () => <div>Header</div>,
+          // @ts-expect-error - itemId intentionally unused in test mock
+          renderItemWrapper: ({ contentSlotId, itemId }) => (
+            <div class="custom-wrapper">
+              <div id={contentSlotId}>Content Slot</div>
+            </div>
+          ),
+        },
       ]);
 
       const page = await newSpecPage({

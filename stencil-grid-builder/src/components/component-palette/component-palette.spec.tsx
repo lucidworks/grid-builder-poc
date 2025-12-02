@@ -754,4 +754,214 @@ describe("ComponentPalette", () => {
       );
     });
   });
+
+  describe("Observable pattern (componentRegistry)", () => {
+    it("should render with componentRegistry prop", async () => {
+      const { ComponentRegistry } = await import(
+        "../../services/component-registry"
+      );
+      const registry = new ComponentRegistry(mockComponents);
+
+      const page = await newSpecPage({
+        components: [ComponentPalette],
+        html: `<component-palette></component-palette>`,
+      });
+
+      page.root.componentRegistry = registry;
+      await page.waitForChanges();
+
+      const paletteItems = page.root.querySelectorAll(".palette-item");
+      expect(paletteItems.length).toBe(3);
+    });
+
+    it("should update when componentRegistry adds a component", async () => {
+      const { ComponentRegistry } = await import(
+        "../../services/component-registry"
+      );
+      const registry = new ComponentRegistry([mockComponents[0]]); // Start with just Header
+
+      const page = await newSpecPage({
+        components: [ComponentPalette],
+        html: `<component-palette></component-palette>`,
+      });
+
+      page.root.componentRegistry = registry;
+      await page.waitForChanges();
+
+      // Initially should have 1 component
+      let paletteItems = page.root.querySelectorAll(".palette-item");
+      expect(paletteItems.length).toBe(1);
+      expect(paletteItems[0].textContent).toContain("Header");
+
+      // Register a new component
+      registry.register(mockComponents[1]); // Add Text Block
+      await page.waitForChanges();
+
+      // Should now have 2 components
+      paletteItems = page.root.querySelectorAll(".palette-item");
+      expect(paletteItems.length).toBe(2);
+      expect(paletteItems[0].textContent).toContain("Header");
+      expect(paletteItems[1].textContent).toContain("Text Block");
+    });
+
+    it("should subscribe to registry onChange on mount", async () => {
+      const { ComponentRegistry } = await import(
+        "../../services/component-registry"
+      );
+      const registry = new ComponentRegistry(mockComponents);
+
+      // Spy on registry.onChange
+      let onChangeCallback: Function | null = null;
+      const originalOnChange = registry.onChange.bind(registry);
+      jest.spyOn(registry, "onChange").mockImplementation((cb) => {
+        onChangeCallback = cb;
+        return originalOnChange(cb);
+      });
+
+      const page = await newSpecPage({
+        components: [ComponentPalette],
+        html: `<component-palette></component-palette>`,
+      });
+
+      page.root.componentRegistry = registry;
+      await page.waitForChanges();
+
+      // Verify onChange was called during componentWillLoad
+      expect(registry.onChange).toHaveBeenCalled();
+      expect(onChangeCallback).not.toBeNull();
+    });
+
+    it("should unsubscribe from registry onChange on unmount", async () => {
+      const { ComponentRegistry } = await import(
+        "../../services/component-registry"
+      );
+      const registry = new ComponentRegistry(mockComponents);
+
+      const page = await newSpecPage({
+        components: [ComponentPalette],
+        html: `<component-palette></component-palette>`,
+      });
+
+      page.root.componentRegistry = registry;
+      await page.waitForChanges();
+
+      // Verify subscription exists
+      expect(page.rootInstance.unsubscribeFromRegistry).toBeDefined();
+
+      // Spy on unsubscribe function
+      const unsubscribeSpy = jest.fn();
+      page.rootInstance.unsubscribeFromRegistry = unsubscribeSpy;
+
+      // Trigger disconnectedCallback
+      page.root.disconnectedCallback();
+
+      // Verify unsubscribe was called
+      expect(unsubscribeSpy).toHaveBeenCalled();
+    });
+
+    it("should prioritize componentRegistry over components prop", async () => {
+      const { ComponentRegistry } = await import(
+        "../../services/component-registry"
+      );
+      const registry = new ComponentRegistry([mockComponents[0]]); // Just Header
+
+      const page = await newSpecPage({
+        components: [ComponentPalette],
+        html: `<component-palette></component-palette>`,
+      });
+
+      // Set both props (registry should take precedence)
+      page.root.components = mockComponents; // All 3 components
+      page.root.componentRegistry = registry; // Just 1 component
+      await page.waitForChanges();
+
+      // Should render from registry (1 component), not components prop (3)
+      const paletteItems = page.root.querySelectorAll(".palette-item");
+      expect(paletteItems.length).toBe(1);
+      expect(paletteItems[0].textContent).toContain("Header");
+    });
+
+    it("should reinitialize drag handlers when registry changes", async () => {
+      const { ComponentRegistry } = await import(
+        "../../services/component-registry"
+      );
+      const registry = new ComponentRegistry([mockComponents[0]]);
+
+      const page = await newSpecPage({
+        components: [ComponentPalette],
+        html: `<component-palette></component-palette>`,
+      });
+
+      page.root.componentRegistry = registry;
+      await page.waitForChanges();
+
+      // Spy on initializePaletteItems
+      const initializeSpy = jest.spyOn(
+        page.rootInstance as any,
+        "initializePaletteItems",
+      );
+
+      // Register a new component (triggers onChange)
+      registry.register(mockComponents[1]);
+      await page.waitForChanges();
+
+      // Wait for requestAnimationFrame
+      await new Promise((resolve) => requestAnimationFrame(resolve));
+
+      // Verify drag handlers were reinitialized
+      expect(initializeSpy).toHaveBeenCalled();
+    });
+
+    it("should handle empty registry gracefully", async () => {
+      const { ComponentRegistry } = await import(
+        "../../services/component-registry"
+      );
+      const registry = new ComponentRegistry([]);
+
+      const page = await newSpecPage({
+        components: [ComponentPalette],
+        html: `<component-palette></component-palette>`,
+      });
+
+      page.root.componentRegistry = registry;
+      await page.waitForChanges();
+
+      // Should show empty state
+      const emptyMessage = page.root.querySelector(".palette-empty");
+      expect(emptyMessage).not.toBeNull();
+      expect(emptyMessage.textContent).toContain("No components available");
+    });
+
+    it("should update from empty to populated when component is registered", async () => {
+      const { ComponentRegistry } = await import(
+        "../../services/component-registry"
+      );
+      const registry = new ComponentRegistry([]);
+
+      const page = await newSpecPage({
+        components: [ComponentPalette],
+        html: `<component-palette></component-palette>`,
+      });
+
+      page.root.componentRegistry = registry;
+      await page.waitForChanges();
+
+      // Should show empty state initially
+      let emptyMessage = page.root.querySelector(".palette-empty");
+      expect(emptyMessage).not.toBeNull();
+
+      // Register a component
+      registry.register(mockComponents[0]);
+      await page.waitForChanges();
+
+      // Should now show the component
+      const paletteItems = page.root.querySelectorAll(".palette-item");
+      expect(paletteItems.length).toBe(1);
+      expect(paletteItems[0].textContent).toContain("Header");
+
+      // Empty message should be gone
+      emptyMessage = page.root.querySelector(".palette-empty");
+      expect(emptyMessage).toBeNull();
+    });
+  });
 });
