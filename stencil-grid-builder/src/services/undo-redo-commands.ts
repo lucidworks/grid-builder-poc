@@ -189,29 +189,33 @@ const debug = createDebugLogger("undo-redo-commands");
  *
  * **Selection clearing**:
  * Prevents dangling references and UI errors when selected item deleted.
+ *
+ * **Instance-based architecture**:
+ * - Requires state parameter for multi-instance support
  * @param canvasId - Canvas containing the item
  * @param itemId - Item to remove
+ * @param state - GridState instance
  * @example
  * ```typescript
  * // Used internally by commands
  * undo() {
- *   removeItemFromCanvas(this.canvasId, this.item.id);
+ *   removeItemFromCanvas(this.canvasId, this.item.id, this.stateInstance);
  * }
  * ```
  */
-function removeItemFromCanvas(canvasId: string, itemId: string): void {
-  const canvas = gridState.canvases[canvasId];
+function removeItemFromCanvas(canvasId: string, itemId: string, state: any): void {
+  const canvas = state.canvases[canvasId];
   if (!canvas) {
     return;
   }
 
   canvas.items = canvas.items.filter((i) => i.id !== itemId);
-  gridState.canvases = { ...gridState.canvases };
+  state.canvases = { ...state.canvases };
 
   // Clear selection if this item was selected
-  if (gridState.selectedItemId === itemId) {
-    gridState.selectedItemId = null;
-    gridState.selectedCanvasId = null;
+  if (state.selectedItemId === itemId) {
+    state.selectedItemId = null;
+    state.selectedCanvasId = null;
   }
 }
 
@@ -301,19 +305,27 @@ export class AddItemCommand implements Command {
   /** Canvas ID where item was added */
   private canvasId: string;
 
+  /** GridState instance for multi-instance support */
+  private stateInstance: any;
+
   /**
    * Capture item addition operation
    *
    * **Important**: Call AFTER item added to canvas (not before)
    *
    * **Deep clones item**: Prevents future mutations from affecting snapshot
+   *
+   * **Instance-based architecture**:
+   * - Requires stateInstance parameter for multi-instance support
    * @param canvasId - Canvas where item was added
    * @param item - Item that was added (will be deep cloned)
+   * @param stateInstance - GridState instance
    */
-  constructor(canvasId: string, item: GridItem) {
+  constructor(canvasId: string, item: GridItem, stateInstance: any) {
     this.canvasId = canvasId;
     // Deep clone the item to capture its state at time of creation
     this.item = JSON.parse(JSON.stringify(item));
+    this.stateInstance = stateInstance;
   }
 
   /**
@@ -328,7 +340,7 @@ export class AddItemCommand implements Command {
    */
   undo(): void {
     // Remove the item from the canvas
-    removeItemFromCanvas(this.canvasId, this.item.id);
+    removeItemFromCanvas(this.canvasId, this.item.id, this.stateInstance);
   }
 
   /**
@@ -346,7 +358,7 @@ export class AddItemCommand implements Command {
    */
   redo(): void {
     // Re-add the item to the canvas
-    const canvas = gridState.canvases[this.canvasId];
+    const canvas = this.stateInstance.canvases[this.canvasId];
     if (!canvas) {
       return;
     }
@@ -354,7 +366,7 @@ export class AddItemCommand implements Command {
     // Use the cloned item state
     const itemCopy = JSON.parse(JSON.stringify(this.item));
     canvas.items.push(itemCopy);
-    gridState.canvases = { ...gridState.canvases };
+    this.stateInstance.canvases = { ...this.stateInstance.canvases };
   }
 }
 
@@ -490,6 +502,9 @@ export class DeleteItemCommand implements Command {
   /** Original array index for position restoration */
   private itemIndex: number;
 
+  /** GridState instance for multi-instance support */
+  private stateInstance: any;
+
   /**
    * Capture item deletion operation
    *
@@ -498,15 +513,20 @@ export class DeleteItemCommand implements Command {
    * **Deep clones item**: Preserves state before deletion
    *
    * **Captures index**: Critical for restoring at original position
+   *
+   * **Instance-based architecture**:
+   * - Requires stateInstance parameter for multi-instance support
    * @param canvasId - Canvas containing the item
    * @param item - Item being deleted (will be deep cloned)
    * @param itemIndex - Original array index (call indexOf before deletion!)
+   * @param stateInstance - GridState instance
    */
-  constructor(canvasId: string, item: GridItem, itemIndex: number) {
+  constructor(canvasId: string, item: GridItem, itemIndex: number, stateInstance: any) {
     this.canvasId = canvasId;
     // Deep clone the item to capture its state before deletion
     this.item = JSON.parse(JSON.stringify(item));
     this.itemIndex = itemIndex;
+    this.stateInstance = stateInstance;
   }
 
   /**
@@ -528,7 +548,7 @@ export class DeleteItemCommand implements Command {
    */
   undo(): void {
     // Re-add the item to its original position
-    const canvas = gridState.canvases[this.canvasId];
+    const canvas = this.stateInstance.canvases[this.canvasId];
     if (!canvas) {
       return;
     }
@@ -540,7 +560,7 @@ export class DeleteItemCommand implements Command {
     } else {
       canvas.items.push(itemCopy);
     }
-    gridState.canvases = { ...gridState.canvases };
+    this.stateInstance.canvases = { ...this.stateInstance.canvases };
   }
 
   /**
@@ -559,7 +579,7 @@ export class DeleteItemCommand implements Command {
    */
   redo(): void {
     // Remove the item again
-    removeItemFromCanvas(this.canvasId, this.item.id);
+    removeItemFromCanvas(this.canvasId, this.item.id, this.stateInstance);
   }
 }
 
@@ -778,7 +798,7 @@ export class MoveItemCommand implements Command {
   /** Original array index in source canvas (for undo restoration) */
   private sourceIndex: number;
 
-  /** GridState instance (or null for singleton) for multi-instance support */
+  /** GridState instance for multi-instance support */
   private stateInstance: any;
 
   /**
@@ -797,8 +817,7 @@ export class MoveItemCommand implements Command {
    * - Cross-canvas: targetZIndex assigned from targetCanvas.zIndexCounter++
    *
    * **Instance-based architecture**:
-   * - Accepts optional stateInstance parameter for multi-instance support
-   * - Falls back to singleton gridState if not provided (backward compatibility)
+   * - Requires stateInstance parameter for multi-instance support
    * @param itemId - ID of moved item
    * @param sourceCanvasId - Canvas where item started
    * @param targetCanvasId - Canvas where item ended
@@ -809,7 +828,7 @@ export class MoveItemCommand implements Command {
    * @param targetZIndex - Z-index in target canvas (assigned during move)
    * @param sourceSize - Optional: Size before operation (for resize tracking)
    * @param targetSize - Optional: Size after operation (for resize tracking)
-   * @param stateInstance - Optional: GridState instance for multi-instance support
+   * @param stateInstance - GridState instance
    */
   constructor(
     itemId: string,
@@ -820,9 +839,9 @@ export class MoveItemCommand implements Command {
     sourceIndex: number,
     sourceZIndex: number,
     targetZIndex: number,
-    sourceSize?: { width: number; height: number },
-    targetSize?: { width: number; height: number },
-    stateInstance?: any,
+    sourceSize: { width: number; height: number } | undefined,
+    targetSize: { width: number; height: number } | undefined,
+    stateInstance: any,
   ) {
     this.itemId = itemId;
     this.sourceCanvasId = sourceCanvasId;
@@ -834,7 +853,7 @@ export class MoveItemCommand implements Command {
     this.targetZIndex = targetZIndex;
     this.sourceSize = sourceSize ? { ...sourceSize } : undefined;
     this.targetSize = targetSize ? { ...targetSize } : undefined;
-    this.stateInstance = stateInstance || null;
+    this.stateInstance = stateInstance;
   }
 
   /**
@@ -868,18 +887,15 @@ export class MoveItemCommand implements Command {
       targetPosition: this.targetPosition,
     });
 
-    // Get the state to operate on (instance or singleton)
-    const state = this.stateInstance || gridState;
-
     // Find the item in target canvas first
-    let targetCanvas = state.canvases[this.targetCanvasId];
+    let targetCanvas = this.stateInstance.canvases[this.targetCanvasId];
     let item = targetCanvas?.items.find((i) => i.id === this.itemId);
 
     // If target canvas doesn't exist or item not found there, search all canvases
     // This handles the case where the target canvas was deleted
     if (!item) {
-      for (const canvasId in state.canvases) {
-        const canvas = state.canvases[canvasId];
+      for (const canvasId in this.stateInstance.canvases) {
+        const canvas = this.stateInstance.canvases[canvasId];
         item = canvas.items.find((i) => i.id === this.itemId);
         if (item) {
           targetCanvas = canvas;
@@ -920,7 +936,7 @@ export class MoveItemCommand implements Command {
     }
 
     // Add back to source canvas at original index
-    const sourceCanvas = state.canvases[this.sourceCanvasId];
+    const sourceCanvas = this.stateInstance.canvases[this.sourceCanvasId];
     if (!sourceCanvas) {
       console.warn("  ❌ Source canvas not found, aborting undo");
       return;
@@ -935,8 +951,8 @@ export class MoveItemCommand implements Command {
       sourceCanvas.items.push(item);
     }
 
-    // Trigger state update on the correct state instance
-    state.canvases = { ...state.canvases };
+    // Trigger state update
+    this.stateInstance.canvases = { ...this.stateInstance.canvases };
 
     // Clear any inline transform style that might be persisting from drag handler
     // This ensures the component re-renders with the correct position from state
@@ -979,11 +995,8 @@ export class MoveItemCommand implements Command {
       targetPosition: this.targetPosition,
     });
 
-    // Get the state to operate on (instance or singleton)
-    const state = this.stateInstance || gridState;
-
     // Find the item in source canvas
-    const sourceCanvas = state.canvases[this.sourceCanvasId];
+    const sourceCanvas = this.stateInstance.canvases[this.sourceCanvasId];
     const item = sourceCanvas?.items.find((i) => i.id === this.itemId);
     if (!item) {
       console.warn("  ❌ Item not found, aborting redo");
@@ -1017,7 +1030,7 @@ export class MoveItemCommand implements Command {
     }
 
     // Add to target canvas
-    const targetCanvas = state.canvases[this.targetCanvasId];
+    const targetCanvas = this.stateInstance.canvases[this.targetCanvasId];
     if (!targetCanvas) {
       console.warn("  ❌ Target canvas not found, aborting redo");
       return;
@@ -1025,8 +1038,8 @@ export class MoveItemCommand implements Command {
 
     targetCanvas.items.push(item);
 
-    // Trigger state update on the correct state instance
-    state.canvases = { ...state.canvases };
+    // Trigger state update
+    this.stateInstance.canvases = { ...this.stateInstance.canvases };
 
     // Clear any inline transform style that might be persisting from drag handler
     // This ensures the component re-renders with the correct position from state
@@ -1044,21 +1057,39 @@ export class MoveItemCommand implements Command {
  * UpdateItemCommand - Update item properties
  *
  * Records old item state and applies updates
+ *
+ * **Instance-based architecture**:
+ * - Requires stateInstance parameter for multi-instance support
  */
 export class UpdateItemCommand implements Command {
+  private stateInstance: any;
+
   constructor(
     private canvasId: string,
     private itemId: string,
     private oldItem: GridItem,
     private updates: Partial<GridItem>,
-  ) {}
+    stateInstance: any,
+  ) {
+    this.stateInstance = stateInstance;
+  }
 
   undo(): void {
-    updateItemInState(this.canvasId, this.itemId, this.oldItem);
+    const canvas = this.stateInstance.canvases[this.canvasId];
+    const item = canvas?.items.find((i) => i.id === this.itemId);
+    if (item) {
+      Object.assign(item, this.oldItem);
+      this.stateInstance.canvases = { ...this.stateInstance.canvases };
+    }
   }
 
   redo(): void {
-    updateItemInState(this.canvasId, this.itemId, this.updates);
+    const canvas = this.stateInstance.canvases[this.canvasId];
+    const item = canvas?.items.find((i) => i.id === this.itemId);
+    if (item) {
+      Object.assign(item, this.updates);
+      this.stateInstance.canvases = { ...this.stateInstance.canvases };
+    }
   }
 }
 
@@ -1066,19 +1097,31 @@ export class UpdateItemCommand implements Command {
  * RemoveItemCommand - Remove item from canvas
  *
  * Stores removed item for restoration
+ *
+ * **Instance-based architecture**:
+ * - Requires stateInstance parameter for multi-instance support
  */
 export class RemoveItemCommand implements Command {
+  private stateInstance: any;
+
   constructor(
     private canvasId: string,
     private item: GridItem,
-  ) {}
+    stateInstance: any,
+  ) {
+    this.stateInstance = stateInstance;
+  }
 
   undo(): void {
-    addItemToCanvas(this.canvasId, this.item);
+    const canvas = this.stateInstance.canvases[this.canvasId];
+    if (canvas) {
+      canvas.items.push(this.item);
+      this.stateInstance.canvases = { ...this.stateInstance.canvases };
+    }
   }
 
   redo(): void {
-    removeItemFromCanvas(this.canvasId, this.item.id);
+    removeItemFromCanvas(this.canvasId, this.item.id, this.stateInstance);
   }
 }
 
@@ -1086,19 +1129,27 @@ export class RemoveItemCommand implements Command {
  * SetViewportCommand - Change current viewport
  *
  * Stores old and new viewport states
+ *
+ * **Instance-based architecture**:
+ * - Requires stateInstance parameter for multi-instance support
  */
 export class SetViewportCommand implements Command {
+  private stateInstance: any;
+
   constructor(
     private oldViewport: "desktop" | "mobile",
     private newViewport: "desktop" | "mobile",
-  ) {}
+    stateInstance: any,
+  ) {
+    this.stateInstance = stateInstance;
+  }
 
   undo(): void {
-    gridState.currentViewport = this.oldViewport;
+    this.stateInstance.currentViewport = this.oldViewport;
   }
 
   redo(): void {
-    gridState.currentViewport = this.newViewport;
+    this.stateInstance.currentViewport = this.newViewport;
   }
 }
 
@@ -1106,19 +1157,27 @@ export class SetViewportCommand implements Command {
  * ToggleGridCommand - Toggle grid visibility
  *
  * Stores old and new visibility states
+ *
+ * **Instance-based architecture**:
+ * - Requires stateInstance parameter for multi-instance support
  */
 export class ToggleGridCommand implements Command {
+  private stateInstance: any;
+
   constructor(
     private oldValue: boolean,
     private newValue: boolean,
-  ) {}
+    stateInstance: any,
+  ) {
+    this.stateInstance = stateInstance;
+  }
 
   undo(): void {
-    gridState.showGrid = this.oldValue;
+    this.stateInstance.showGrid = this.oldValue;
   }
 
   redo(): void {
-    gridState.showGrid = this.newValue;
+    this.stateInstance.showGrid = this.newValue;
   }
 }
 
@@ -1145,12 +1204,14 @@ export class ToggleGridCommand implements Command {
  */
 export class BatchAddCommand implements Command {
   private itemsData: GridItem[];
+  private stateInstance: any;
 
-  constructor(itemIds: string[]) {
+  constructor(itemIds: string[], stateInstance: any) {
+    this.stateInstance = stateInstance;
     // Store full item data for redo (deep clone to prevent mutations)
     this.itemsData = itemIds
       .map((id) => {
-        const item = Object.values(gridState.canvases)
+        const item = Object.values(this.stateInstance.canvases)
           .flatMap((canvas) => canvas.items)
           .find((i) => i.id === id);
         return item ? JSON.parse(JSON.stringify(item)) : null;
@@ -1161,12 +1222,19 @@ export class BatchAddCommand implements Command {
   undo(): void {
     // Delete all items in one batch
     const itemIds = this.itemsData.map((item) => item.id);
-    deleteItemsBatch(itemIds);
+
+    // Manual delete logic for instance-based state
+    const updatedCanvases = { ...this.stateInstance.canvases };
+    for (const canvasId in updatedCanvases) {
+      const canvas = updatedCanvases[canvasId];
+      canvas.items = canvas.items.filter((item) => !itemIds.includes(item.id));
+    }
+    this.stateInstance.canvases = updatedCanvases;
   }
 
   redo(): void {
     // Re-add all items (addItemsBatch will generate new IDs, so we need custom logic)
-    const updatedCanvases = { ...gridState.canvases };
+    const updatedCanvases = { ...this.stateInstance.canvases };
 
     for (const itemData of this.itemsData) {
       const canvas = updatedCanvases[itemData.canvasId];
@@ -1179,7 +1247,7 @@ export class BatchAddCommand implements Command {
       }
     }
 
-    gridState.canvases = updatedCanvases;
+    this.stateInstance.canvases = updatedCanvases;
   }
 }
 

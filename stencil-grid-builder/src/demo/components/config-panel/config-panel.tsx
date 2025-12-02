@@ -27,7 +27,6 @@
 import { Component, h, Listen, Prop, State, Watch } from "@stencil/core";
 
 // Internal imports
-import { gridState } from "../../../services/state-manager";
 import {
   ComponentDefinition,
   ConfigField,
@@ -464,14 +463,15 @@ export class ConfigPanel {
   }
 
   /**
-   * Get selected item from state
+   * Get selected item from state (instance-based)
    */
   private getSelectedItem() {
-    if (!this.selectedItemId || !this.selectedCanvasId) {
+    if (!this.selectedItemId || !this.selectedCanvasId || !this.api) {
       return null;
     }
 
-    const canvas = gridState.canvases[this.selectedCanvasId];
+    const state = this.api.getState();
+    const canvas = state.canvases[this.selectedCanvasId];
     return canvas?.items.find((i) => i.id === this.selectedItemId);
   }
 
@@ -503,8 +503,11 @@ export class ConfigPanel {
     this.componentConfig = { ...this.originalState.config };
 
     // Update selection in state
-    gridState.selectedItemId = itemId;
-    gridState.selectedCanvasId = canvasId;
+    if (this.api) {
+      const state = this.api.getState();
+      state.selectedItemId = itemId;
+      state.selectedCanvasId = canvasId;
+    }
 
     // Open panel
     this.isOpen = true;
@@ -515,8 +518,9 @@ export class ConfigPanel {
    */
   private closePanel = () => {
     // Revert changes on cancel
-    if (this.selectedItemId && this.selectedCanvasId && this.originalState) {
-      const canvas = gridState.canvases[this.selectedCanvasId];
+    if (this.selectedItemId && this.selectedCanvasId && this.originalState && this.api) {
+      const state = this.api.getState();
+      const canvas = state.canvases[this.selectedCanvasId];
       const itemIndex = canvas?.items.findIndex(
         (i) => i.id === this.selectedItemId,
       );
@@ -527,7 +531,7 @@ export class ConfigPanel {
           zIndex: this.originalState.zIndex,
           config: this.originalState.config,
         };
-        gridState.canvases = { ...gridState.canvases };
+        state.canvases = { ...state.canvases };
       }
     }
 
@@ -560,8 +564,9 @@ export class ConfigPanel {
     this.componentName = target.value;
 
     // Apply changes immediately (live preview)
-    if (this.selectedItemId && this.selectedCanvasId) {
-      const canvas = gridState.canvases[this.selectedCanvasId];
+    if (this.selectedItemId && this.selectedCanvasId && this.api) {
+      const state = this.api.getState();
+      const canvas = state.canvases[this.selectedCanvasId];
       const itemIndex = canvas?.items.findIndex(
         (i) => i.id === this.selectedItemId,
       );
@@ -570,7 +575,7 @@ export class ConfigPanel {
           ...canvas.items[itemIndex],
           name: this.componentName,
         };
-        gridState.canvases = { ...gridState.canvases };
+        state.canvases = { ...state.canvases };
       }
     }
   };
@@ -583,8 +588,9 @@ export class ConfigPanel {
     this.componentConfig = { ...this.componentConfig, [fieldName]: value };
 
     // Apply changes immediately (live preview)
-    if (this.selectedItemId && this.selectedCanvasId) {
-      const canvas = gridState.canvases[this.selectedCanvasId];
+    if (this.selectedItemId && this.selectedCanvasId && this.api) {
+      const state = this.api.getState();
+      const canvas = state.canvases[this.selectedCanvasId];
       const itemIndex = canvas?.items.findIndex(
         (i) => i.id === this.selectedItemId,
       );
@@ -593,7 +599,7 @@ export class ConfigPanel {
           ...canvas.items[itemIndex],
           config: this.componentConfig,
         };
-        gridState.canvases = { ...gridState.canvases };
+        state.canvases = { ...state.canvases };
       }
     }
   };
@@ -602,8 +608,9 @@ export class ConfigPanel {
    * Z-index control methods
    */
   private bringToFront = () => {
-    if (!this.selectedItemId || !this.selectedCanvasId) return;
-    const canvas = gridState.canvases[this.selectedCanvasId];
+    if (!this.selectedItemId || !this.selectedCanvasId || !this.api) return;
+    const state = this.api.getState();
+    const canvas = state.canvases[this.selectedCanvasId];
     const itemIndex = canvas?.items.findIndex(
       (i) => i.id === this.selectedItemId,
     );
@@ -611,12 +618,13 @@ export class ConfigPanel {
 
     const newZIndex = ++canvas.zIndexCounter;
     canvas.items[itemIndex] = { ...canvas.items[itemIndex], zIndex: newZIndex };
-    gridState.canvases = { ...gridState.canvases };
+    state.canvases = { ...state.canvases };
   };
 
   private bringForward = () => {
-    if (!this.selectedItemId || !this.selectedCanvasId) return;
-    const canvas = gridState.canvases[this.selectedCanvasId];
+    if (!this.selectedItemId || !this.selectedCanvasId || !this.api) return;
+    const state = this.api.getState();
+    const canvas = state.canvases[this.selectedCanvasId];
     const itemIndex = canvas?.items.findIndex(
       (i) => i.id === this.selectedItemId,
     );
@@ -636,14 +644,15 @@ export class ConfigPanel {
           ...canvas.items[itemAboveIndex],
           zIndex: temp,
         };
-        gridState.canvases = { ...gridState.canvases };
+        state.canvases = { ...state.canvases };
       }
     }
   };
 
   private sendBackward = () => {
-    if (!this.selectedItemId || !this.selectedCanvasId) return;
-    const canvas = gridState.canvases[this.selectedCanvasId];
+    if (!this.selectedItemId || !this.selectedCanvasId || !this.api) return;
+    const state = this.api.getState();
+    const canvas = state.canvases[this.selectedCanvasId];
     const itemIndex = canvas?.items.findIndex(
       (i) => i.id === this.selectedItemId,
     );
@@ -663,14 +672,15 @@ export class ConfigPanel {
           ...canvas.items[itemBelowIndex],
           zIndex: temp,
         };
-        gridState.canvases = { ...gridState.canvases };
+        state.canvases = { ...state.canvases };
       }
     }
   };
 
   private sendToBack = () => {
-    if (!this.selectedItemId || !this.selectedCanvasId) return;
-    const canvas = gridState.canvases[this.selectedCanvasId];
+    if (!this.selectedItemId || !this.selectedCanvasId || !this.api) return;
+    const state = this.api.getState();
+    const canvas = state.canvases[this.selectedCanvasId];
     const itemIndex = canvas?.items.findIndex(
       (i) => i.id === this.selectedItemId,
     );
@@ -692,6 +702,6 @@ export class ConfigPanel {
       };
     }
 
-    gridState.canvases = { ...gridState.canvases };
+    state.canvases = { ...state.canvases };
   };
 }
