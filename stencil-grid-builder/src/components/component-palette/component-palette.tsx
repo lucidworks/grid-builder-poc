@@ -102,6 +102,7 @@ import interact from "interactjs";
 // Type imports
 import { ComponentDefinition } from "../../types/component-definition";
 import { GridConfig } from "../../types/grid-config";
+import { ComponentRegistry } from "../../services/component-registry";
 
 // Utility imports
 import { gridToPixelsX, gridToPixelsY } from "../../utils/grid-calculations";
@@ -187,8 +188,9 @@ export class ComponentPalette {
   /**
    * Component definitions to render in palette
    *
-   * **Required prop**: Array of ComponentDefinition objects
-   * **Source**: Passed from grid-builder component
+   * **Deprecated**: Use componentRegistry prop for reactive updates
+   * **Backward compatibility**: Still supported for static component lists
+   * **Source**: Passed from grid-builder component or consumer code
    *
    * **Each definition provides**:
    * - type: Unique identifier for component
@@ -209,7 +211,37 @@ export class ComponentPalette {
    * ];
    * ```
    */
-  @Prop() components!: ComponentDefinition[];
+  @Prop() components?: ComponentDefinition[];
+
+  /**
+   * Component registry for reactive updates (Observer Pattern)
+   *
+   * **Recommended**: Use this instead of components prop for dynamic registration
+   * **Optional prop**: ComponentRegistry instance from grid-builder
+   * **Source**: Passed from grid-builder component
+   *
+   * **Benefits over components prop**:
+   * - Automatic palette updates when components are registered
+   * - No manual synchronization needed
+   * - Framework-driven reactive pattern
+   *
+   * **Use case - Dynamic component registration**:
+   * ```typescript
+   * // In grid-builder story or consumer code
+   * const builderEl = document.querySelector('grid-builder');
+   * const paletteEl = document.querySelector('component-palette');
+   *
+   * // Share the registry (automatic sync!)
+   * paletteEl.componentRegistry = builderEl.componentRegistry;
+   *
+   * // Register new component - palette updates automatically!
+   * const api = window.gridBuilderAPI;
+   * api.registerComponent(newComponentDef);
+   * ```
+   *
+   * **Priority**: If both components and componentRegistry are provided, componentRegistry takes precedence
+   */
+  @Prop() componentRegistry?: ComponentRegistry;
 
   /**
    * Grid configuration options
@@ -334,6 +366,22 @@ export class ComponentPalette {
   @State() draggingItemType: string | null = null;
 
   /**
+   * Cached component definitions (Internal State)
+   *
+   * **Purpose**: Store components for rendering, populated from either:
+   * - componentRegistry.getAll() if componentRegistry is provided (reactive)
+   * - components prop if provided (static)
+   *
+   * **Updated by**:
+   * - componentWillLoad(): Initial population
+   * - Registry onChange listener: When componentRegistry changes (reactive)
+   * - @Watch('components'): When components prop changes (static fallback)
+   *
+   * **Reactive pattern**: This @State triggers re-renders when updated
+   */
+  @State() private cachedComponents: ComponentDefinition[] = [];
+
+  /**
    * Unique ID for this palette instance
    *
    * **Internal state**: Ensures unique ARIA IDs when multiple palettes exist
@@ -364,6 +412,18 @@ export class ComponentPalette {
     `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
   /**
+   * Registry change listener unsubscribe function
+   *
+   * **Purpose**: Track subscription for cleanup in disconnectedCallback
+   * **Pattern**: Observer pattern cleanup to prevent memory leaks
+   *
+   * **Value**:
+   * - undefined: No subscription active
+   * - Function: Call to unsubscribe from registry changes
+   */
+  private unsubscribeFromRegistry?: () => void;
+
+  /**
    * Watch for components prop changes
    *
    * **When triggered**: Parent passes updated component definitions
@@ -382,8 +442,16 @@ export class ComponentPalette {
     // Skip if components reference hasn't changed
     if (newComponents === oldComponents) return;
 
-    // Skip if not yet mounted (componentDidLoad will handle initialization)
-    if (!oldComponents) return;
+    // Skip if not yet mounted AND no new value (both undefined)
+    // Allow update if new value provided (even if old value was undefined)
+    if (!oldComponents && !newComponents) return;
+
+    // Update cached components (only if not using registry)
+    if (!this.componentRegistry && newComponents) {
+      this.cachedComponents = newComponents;
+    } else if (!this.componentRegistry && !newComponents) {
+      this.cachedComponents = [];
+    }
 
     // Reinitialize palette items with new component list
     // Use requestAnimationFrame to ensure DOM has updated
@@ -410,6 +478,105 @@ export class ComponentPalette {
     // No immediate action needed - next drag will use new config
     // If we want to be explicit, could reinitialize handlers:
     // requestAnimationFrame(() => this.initializePaletteItems());
+  }
+
+  /**
+   * Watch for componentRegistry prop changes
+   *
+   * **When triggered**: Parent passes updated ComponentRegistry instance
+   * **Actions**: Subscribe to new registry, update cached components
+   *
+   * **Use case**: Important for testing and dynamic registry swapping
+   * - Tests can set componentRegistry prop after mounting
+   * - Stories can share registry references between components
+   * - Allows late-binding of registry from grid-builder events
+   *
+   * **Implementation**:
+   * 1. Unsubscribe from old registry (if any)
+   * 2. Subscribe to new registry's onChange
+   * 3. Update cachedComponents with new registry's components
+   * 4. Re-initialize drag handlers for new component list
+   */
+  @Watch("componentRegistry")
+  handleComponentRegistryChange(
+    newRegistry: ComponentRegistry,
+    oldRegistry: ComponentRegistry,
+  ) {
+    // Skip if registry reference hasn't changed
+    if (newRegistry === oldRegistry) return;
+
+    // Skip if not yet mounted (componentWillLoad will handle initialization)
+    if (!oldRegistry && !newRegistry) return;
+
+    // Unsubscribe from old registry
+    if (this.unsubscribeFromRegistry) {
+      this.unsubscribeFromRegistry();
+      this.unsubscribeFromRegistry = undefined;
+    }
+
+    // Subscribe to new registry (if provided)
+    if (newRegistry) {
+      // Update cached components
+      this.cachedComponents = newRegistry.getAll();
+
+      // Subscribe to registry changes
+      this.unsubscribeFromRegistry = newRegistry.onChange(() => {
+        // Update cached components when registry changes
+        this.cachedComponents = newRegistry.getAll();
+
+        // Reinitialize drag handlers for new components
+        requestAnimationFrame(() => {
+          this.initializePaletteItems();
+        });
+      });
+
+      // Reinitialize drag handlers for current component list
+      requestAnimationFrame(() => {
+        this.initializePaletteItems();
+      });
+    } else {
+      // No registry - clear components
+      this.cachedComponents = [];
+    }
+  }
+
+  /**
+   * Component will load lifecycle hook
+   *
+   * **Called**: Before first render
+   * **Purpose**: Initialize component definitions and subscribe to registry changes
+   *
+   * **Responsibilities**:
+   * 1. Populate cachedComponents from componentRegistry or components prop
+   * 2. Subscribe to registry onChange for reactive updates (if registry provided)
+   * 3. Set up observer pattern for automatic palette sync
+   *
+   * **Pattern**: Observer pattern - palette observes registry for changes
+   */
+  componentWillLoad() {
+    // Determine component source (registry takes precedence)
+    if (this.componentRegistry) {
+      // Use registry (reactive pattern)
+      this.cachedComponents = this.componentRegistry.getAll();
+
+      // Subscribe to registry changes for automatic updates
+      this.unsubscribeFromRegistry = this.componentRegistry.onChange(() => {
+        // Update cached components when registry changes
+        this.cachedComponents = this.componentRegistry!.getAll();
+
+        // Reinitialize drag handlers for new components
+        // Use requestAnimationFrame to ensure DOM has updated
+        requestAnimationFrame(() => {
+          this.initializePaletteItems();
+        });
+      });
+    } else if (this.components) {
+      // Fallback to components prop (static pattern)
+      this.cachedComponents = this.components;
+    } else {
+      // No components provided
+      this.cachedComponents = [];
+    }
   }
 
   /**
@@ -450,17 +617,21 @@ export class ComponentPalette {
   /**
    * Render component template
    *
-   * **Reactive**: Re-runs when components prop changes
+   * **Reactive**: Re-runs when cachedComponents state changes
    * **Pure**: No side effects, only returns JSX
    *
    * **Component rendering**:
-   * - Maps over components prop
+   * - Maps over cachedComponents state (populated from componentRegistry or components prop)
    * - Renders each as draggable palette item
    * - Uses icon and name from definition
    *
    * **Data attributes**:
    * - `data-component-type`: Used by drag handlers to identify component
    * - `key`: React-style key for list rendering
+   *
+   * **Reactivity**:
+   * - cachedComponents updates trigger re-render
+   * - Updated by componentRegistry.onChange() or @Watch('components')
    */
   render() {
     const paletteClasses = {
@@ -471,7 +642,7 @@ export class ComponentPalette {
     // Generate unique ID for this palette instance's help text
     const helpTextId = `palette-help-${this.paletteId}`;
 
-    if (!this.components || this.components.length === 0) {
+    if (!this.cachedComponents || this.cachedComponents.length === 0) {
       return (
         <div class={paletteClasses}>
           {this.showHeader && <h2>Components</h2>}
@@ -498,7 +669,7 @@ export class ComponentPalette {
 
         {this.showHeader && <h2 id="palette-heading">Components</h2>}
 
-        {this.components.map((component) => {
+        {this.cachedComponents.map((component) => {
           // Class binding with reactive state
           const itemClasses = {
             "palette-item": true,
@@ -682,7 +853,7 @@ export class ComponentPalette {
               top: paletteRect.top,
             };
             (paletteItem as any)._dropWasValid = false; // Flag to track if drop occurred
-            const definition = this.components.find(
+            const definition = this.cachedComponents.find(
               (c) => c.type === componentType,
             );
 
@@ -1035,6 +1206,12 @@ export class ComponentPalette {
    * - grid-item-wrapper.tsx: Cleans up drag/resize handlers
    */
   disconnectedCallback() {
+    // Cleanup registry subscription (Observer pattern)
+    if (this.unsubscribeFromRegistry) {
+      this.unsubscribeFromRegistry();
+      this.unsubscribeFromRegistry = undefined;
+    }
+
     // Cleanup interact.js on all palette items (scoped to this instance)
     const paletteItems = this.hostElement.querySelectorAll(".palette-item");
     paletteItems.forEach((element: HTMLElement) => {
