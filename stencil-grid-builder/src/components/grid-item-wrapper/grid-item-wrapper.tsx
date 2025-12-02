@@ -28,14 +28,10 @@
 import { Component, h, Listen, Prop, State, Watch } from "@stencil/core";
 
 // Internal imports
-import {
-  GridItem,
-} from "../../services/state-manager";
+import { GridItem } from "../../services/state-manager";
 import { UndoRedoManager } from "../../services/undo-redo";
 import { MoveItemCommand } from "../../services/undo-redo-commands";
-import {
-  VirtualRendererService,
-} from "../../services/virtual-renderer";
+import { VirtualRendererService } from "../../services/virtual-renderer";
 import { EventManager } from "../../services/event-manager";
 import { DragHandler } from "../../utils/drag-handler";
 import { ResizeHandler } from "../../utils/resize-handler";
@@ -337,11 +333,18 @@ export class GridItemWrapper {
     // which would cause a state change and trigger Stencil warning about extra re-renders.
     // Using requestAnimationFrame defers setup until after lifecycle completes.
     requestAnimationFrame(() => {
-      if (this.config?.enableVirtualRendering !== false && this.virtualRendererInstance) {
+      if (
+        this.config?.enableVirtualRendering !== false &&
+        this.virtualRendererInstance
+      ) {
         // Virtual rendering enabled (default behavior)
-        this.virtualRendererInstance.observe(this.itemRef, this.item.id, (isVisible) => {
-          this.isVisible = isVisible;
-        });
+        this.virtualRendererInstance.observe(
+          this.itemRef,
+          this.item.id,
+          (isVisible) => {
+            this.isVisible = isVisible;
+          },
+        );
       } else {
         // Virtual rendering disabled or no instance (viewer mode) - render immediately
         this.isVisible = true;
@@ -636,12 +639,12 @@ export class GridItemWrapper {
     if (!canvas) return;
 
     const maxZ = Math.max(...canvas.items.map((i) => i.zIndex));
-    const newItems = canvas.items.map(item =>
-      item.id === this.item.id ? { ...item, zIndex: maxZ + 1 } : item
+    const newItems = canvas.items.map((item) =>
+      item.id === this.item.id ? { ...item, zIndex: maxZ + 1 } : item,
     );
     this.stateInstance.canvases = {
       ...this.stateInstance.canvases,
-      [this.item.canvasId]: { ...canvas, items: newItems }
+      [this.item.canvasId]: { ...canvas, items: newItems },
     };
   }
 
@@ -659,12 +662,12 @@ export class GridItemWrapper {
     if (!canvas) return;
 
     const minZ = Math.min(...canvas.items.map((i) => i.zIndex));
-    const newItems = canvas.items.map(item =>
-      item.id === this.item.id ? { ...item, zIndex: minZ - 1 } : item
+    const newItems = canvas.items.map((item) =>
+      item.id === this.item.id ? { ...item, zIndex: minZ - 1 } : item,
     );
     this.stateInstance.canvases = {
       ...this.stateInstance.canvases,
-      [this.item.canvasId]: { ...canvas, items: newItems }
+      [this.item.canvasId]: { ...canvas, items: newItems },
     };
   }
 
@@ -851,8 +854,7 @@ export class GridItemWrapper {
 
     // Compute selection directly from state (only in editing mode)
     const selectedItemId = this.stateInstance.selectedItemId;
-    const isSelected =
-      !this.viewerMode && selectedItemId === this.item.id;
+    const isSelected = !this.viewerMode && selectedItemId === this.item.id;
 
     const itemClasses = {
       "grid-item": true,
@@ -883,9 +885,7 @@ export class GridItemWrapper {
     // 2. Theme default (theme.selectionColor)
     // 3. Hardcoded fallback (amber/gold)
     const selectionColor =
-      definition?.selectionColor ||
-      this.theme?.selectionColor ||
-      "#f59e0b";
+      definition?.selectionColor || this.theme?.selectionColor || "#f59e0b";
 
     // Get backgroundColor from config, or fall back to configSchema default
     const backgroundColorField = definition?.configSchema?.find(
@@ -1109,7 +1109,6 @@ export class GridItemWrapper {
    * Handle item update (called by drag/resize handlers)
    */
   private handleItemUpdate = (updatedItem: GridItem) => {
-
     // Check if position or canvas changed (for undo/redo)
     let isDrag = false;
     let isResize = false;
@@ -1181,6 +1180,7 @@ export class GridItemWrapper {
                     height: updatedItem.layouts.desktop.height,
                   }
                 : undefined,
+              this.stateInstance,
             ),
           );
         }
@@ -1194,7 +1194,7 @@ export class GridItemWrapper {
     if (itemIndex !== -1) {
       // Create new items array (immutable update)
       const newItems = canvas.items.map((item, i) =>
-        i === itemIndex ? updatedItem : item
+        i === itemIndex ? updatedItem : item,
       );
 
       // Create new canvas with new items array
