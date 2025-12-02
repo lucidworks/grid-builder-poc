@@ -6,13 +6,14 @@
  */
 import { HTMLStencilElement, JSXBase } from "@stencil/core/internal";
 import { GridConfig } from "./types/grid-config";
-import { ComponentDefinition } from "./types/component-definition";
+import { ComponentRegistry } from "./services/component-registry";
 import { DeletionHook } from "./types/deletion-hook";
 import { VirtualRendererService } from "./services/virtual-renderer";
 import { UndoRedoManager } from "./services/undo-redo";
 import { EventManager } from "./services/event-manager";
 import { DOMCache } from "./utils/dom-cache";
 import { GridItem, GridState, ViewerState } from "./services/state-manager";
+import { ComponentDefinition } from "./types/component-definition";
 import { GridBuilderAPI } from "./services/grid-builder-api";
 import { ConfirmationModalData } from "./demo/types/confirmation-modal-data";
 import { GridBuilderAPI as GridBuilderAPI1 } from "./types/api";
@@ -22,13 +23,14 @@ import { UIComponentOverrides } from "./types/ui-overrides";
 import { GridExport } from "./types/grid-export";
 import { SectionEditorData } from "./demo/types/section-editor-data";
 export { GridConfig } from "./types/grid-config";
-export { ComponentDefinition } from "./types/component-definition";
+export { ComponentRegistry } from "./services/component-registry";
 export { DeletionHook } from "./types/deletion-hook";
 export { VirtualRendererService } from "./services/virtual-renderer";
 export { UndoRedoManager } from "./services/undo-redo";
 export { EventManager } from "./services/event-manager";
 export { DOMCache } from "./utils/dom-cache";
 export { GridItem, GridState, ViewerState } from "./services/state-manager";
+export { ComponentDefinition } from "./types/component-definition";
 export { GridBuilderAPI } from "./services/grid-builder-api";
 export { ConfirmationModalData } from "./demo/types/confirmation-modal-data";
 export { GridBuilderAPI as GridBuilderAPI1 } from "./types/api";
@@ -156,9 +158,9 @@ export namespace Components {
          */
         "canvasTitle"?: string;
         /**
-          * Component registry (from parent grid-builder)  **Source**: grid-builder component (built from components prop) **Structure**: Map<type, ComponentDefinition> **Purpose**: Pass to grid-item-wrapper for dynamic rendering
+          * Component registry (from parent grid-builder)  **Source**: grid-builder component (built from components prop) **Structure**: ComponentRegistry service instance **Purpose**: Pass to grid-item-wrapper for dynamic rendering
          */
-        "componentRegistry"?: Map<string, ComponentDefinition>;
+        "componentRegistry"?: ComponentRegistry;
         /**
           * Grid configuration options  **Optional**: Customizes grid system behavior **Passed from**: grid-builder component **Used for**: Grid size calculations, constraints
          */
@@ -220,9 +222,9 @@ export namespace Components {
          */
         "canvasId": string;
         /**
-          * Component registry (from parent grid-viewer)  **Source**: grid-viewer component **Structure**: Map<type, ComponentDefinition> **Purpose**: Pass to grid-item-wrapper for dynamic rendering
+          * Component registry (from parent grid-viewer)  **Source**: grid-viewer component **Structure**: ComponentRegistry service instance **Purpose**: Pass to grid-item-wrapper for dynamic rendering
          */
-        "componentRegistry"?: Map<string, ComponentDefinition>;
+        "componentRegistry"?: ComponentRegistry;
         /**
           * Grid configuration options  **Optional**: Customizes grid system behavior **Passed from**: grid-viewer component
          */
@@ -302,9 +304,13 @@ export namespace Components {
      */
     interface ComponentPalette {
         /**
-          * Component definitions to render in palette  **Required prop**: Array of ComponentDefinition objects **Source**: Passed from grid-builder component  **Each definition provides**: - type: Unique identifier for component - name: Display name in palette - icon: Visual identifier (emoji recommended) - defaultSize: Size when dropped (for drag clone sizing)  **Example**: ```typescript const components = [   {     type: 'header',     name: 'Header',     icon: '📄',     defaultSize: { width: 20, height: 8 },     render: ({ itemId, config }) => <my-header itemId={itemId} config={config} />   } ]; ```
+          * Component registry for reactive updates (Observer Pattern)  **Recommended**: Use this instead of components prop for dynamic registration **Optional prop**: ComponentRegistry instance from grid-builder **Source**: Passed from grid-builder component  **Benefits over components prop**: - Automatic palette updates when components are registered - No manual synchronization needed - Framework-driven reactive pattern  **Use case - Dynamic component registration**: ```typescript // In grid-builder story or consumer code const builderEl = document.querySelector('grid-builder'); const paletteEl = document.querySelector('component-palette');  // Share the registry (automatic sync!) paletteEl.componentRegistry = builderEl.componentRegistry;  // Register new component - palette updates automatically! const api = window.gridBuilderAPI; api.registerComponent(newComponentDef); ```  **Priority**: If both components and componentRegistry are provided, componentRegistry takes precedence
          */
-        "components": ComponentDefinition[];
+        "componentRegistry"?: ComponentRegistry;
+        /**
+          * Component definitions to render in palette  **Deprecated**: Use componentRegistry prop for reactive updates **Backward compatibility**: Still supported for static component lists **Source**: Passed from grid-builder component or consumer code  **Each definition provides**: - type: Unique identifier for component - name: Display name in palette - icon: Visual identifier (emoji recommended) - defaultSize: Size when dropped (for drag clone sizing)  **Example**: ```typescript const components = [   {     type: 'header',     name: 'Header',     icon: '📄',     defaultSize: { width: 20, height: 8 },     render: ({ itemId, config }) => <my-header itemId={itemId} config={config} />   } ]; ```
+         */
+        "components"?: ComponentDefinition[];
         /**
           * Grid configuration options  **Optional prop**: Customizes grid system behavior **Passed from**: grid-builder component **Used for**: Drag clone sizing (gridToPixelsX/Y calculations)
          */
@@ -340,7 +346,7 @@ export namespace Components {
         /**
           * Component registry (from parent grid-builder)  **Source**: grid-builder component **Purpose**: Look up component definitions for config forms
          */
-        "componentRegistry"?: Map<string, ComponentDefinition>;
+        "componentRegistry"?: ComponentRegistry;
     }
     /**
      * Confirmation Modal Component
@@ -610,9 +616,9 @@ export namespace Components {
          */
         "canvasItems"?: GridItem[];
         /**
-          * Component registry (from parent grid-builder)  **Source**: grid-builder component (built from components prop) **Structure**: Map<type, ComponentDefinition> **Purpose**: Look up component definitions for dynamic rendering  **Note**: This is passed as a workaround since StencilJS doesn't have good support for context/provide-inject patterns. In a production app, consider using a global registry or context provider.
+          * Component registry (from parent grid-builder)  **Source**: grid-builder component (built from components prop) **Structure**: ComponentRegistry service instance **Purpose**: Look up component definitions for dynamic rendering  **Instance-based architecture**: Each grid-builder instance has its own registry, supporting multiple grids with different component sets on the same page. Prop drilling (3 levels) is the correct pattern for this use case.
          */
-        "componentRegistry"?: Map<string, ComponentDefinition>;
+        "componentRegistry"?: ComponentRegistry;
         /**
           * Grid configuration options  **Optional**: Customizes grid system behavior **Passed from**: grid-builder → canvas-section → grid-item-wrapper **Used for**: Grid size calculations with constraints
          */
@@ -868,6 +874,10 @@ export interface CanvasHeaderCustomEvent<T> extends CustomEvent<T> {
 export interface ConfirmationModalCustomEvent<T> extends CustomEvent<T> {
     detail: T;
     target: HTMLConfirmationModalElement;
+}
+export interface GridBuilderCustomEvent<T> extends CustomEvent<T> {
+    detail: T;
+    target: HTMLGridBuilderElement;
 }
 export interface LayerPanelFolderHeaderCustomEvent<T> extends CustomEvent<T> {
     detail: T;
@@ -1191,6 +1201,9 @@ declare global {
         prototype: HTMLDashboardWidgetDragCloneElement;
         new (): HTMLDashboardWidgetDragCloneElement;
     };
+    interface HTMLGridBuilderElementEventMap {
+        "registryReady": { registry: ComponentRegistry };
+    }
     /**
      * GridBuilder Component
      * ======================
@@ -1200,6 +1213,14 @@ declare global {
      * **Reactivity**: Listens to gridState changes via StencilJS store
      */
     interface HTMLGridBuilderElement extends Components.GridBuilder, HTMLStencilElement {
+        addEventListener<K extends keyof HTMLGridBuilderElementEventMap>(type: K, listener: (this: HTMLGridBuilderElement, ev: GridBuilderCustomEvent<HTMLGridBuilderElementEventMap[K]>) => any, options?: boolean | AddEventListenerOptions): void;
+        addEventListener<K extends keyof DocumentEventMap>(type: K, listener: (this: Document, ev: DocumentEventMap[K]) => any, options?: boolean | AddEventListenerOptions): void;
+        addEventListener<K extends keyof HTMLElementEventMap>(type: K, listener: (this: HTMLElement, ev: HTMLElementEventMap[K]) => any, options?: boolean | AddEventListenerOptions): void;
+        addEventListener(type: string, listener: EventListenerOrEventListenerObject, options?: boolean | AddEventListenerOptions): void;
+        removeEventListener<K extends keyof HTMLGridBuilderElementEventMap>(type: K, listener: (this: HTMLGridBuilderElement, ev: GridBuilderCustomEvent<HTMLGridBuilderElementEventMap[K]>) => any, options?: boolean | EventListenerOptions): void;
+        removeEventListener<K extends keyof DocumentEventMap>(type: K, listener: (this: Document, ev: DocumentEventMap[K]) => any, options?: boolean | EventListenerOptions): void;
+        removeEventListener<K extends keyof HTMLElementEventMap>(type: K, listener: (this: HTMLElement, ev: HTMLElementEventMap[K]) => any, options?: boolean | EventListenerOptions): void;
+        removeEventListener(type: string, listener: EventListenerOrEventListenerObject, options?: boolean | EventListenerOptions): void;
     }
     var HTMLGridBuilderElement: {
         prototype: HTMLGridBuilderElement;
@@ -1538,9 +1559,9 @@ declare namespace LocalJSX {
          */
         "canvasTitle"?: string;
         /**
-          * Component registry (from parent grid-builder)  **Source**: grid-builder component (built from components prop) **Structure**: Map<type, ComponentDefinition> **Purpose**: Pass to grid-item-wrapper for dynamic rendering
+          * Component registry (from parent grid-builder)  **Source**: grid-builder component (built from components prop) **Structure**: ComponentRegistry service instance **Purpose**: Pass to grid-item-wrapper for dynamic rendering
          */
-        "componentRegistry"?: Map<string, ComponentDefinition>;
+        "componentRegistry"?: ComponentRegistry;
         /**
           * Grid configuration options  **Optional**: Customizes grid system behavior **Passed from**: grid-builder component **Used for**: Grid size calculations, constraints
          */
@@ -1602,9 +1623,9 @@ declare namespace LocalJSX {
          */
         "canvasId": string;
         /**
-          * Component registry (from parent grid-viewer)  **Source**: grid-viewer component **Structure**: Map<type, ComponentDefinition> **Purpose**: Pass to grid-item-wrapper for dynamic rendering
+          * Component registry (from parent grid-viewer)  **Source**: grid-viewer component **Structure**: ComponentRegistry service instance **Purpose**: Pass to grid-item-wrapper for dynamic rendering
          */
-        "componentRegistry"?: Map<string, ComponentDefinition>;
+        "componentRegistry"?: ComponentRegistry;
         /**
           * Grid configuration options  **Optional**: Customizes grid system behavior **Passed from**: grid-viewer component
          */
@@ -1684,9 +1705,13 @@ declare namespace LocalJSX {
      */
     interface ComponentPalette {
         /**
-          * Component definitions to render in palette  **Required prop**: Array of ComponentDefinition objects **Source**: Passed from grid-builder component  **Each definition provides**: - type: Unique identifier for component - name: Display name in palette - icon: Visual identifier (emoji recommended) - defaultSize: Size when dropped (for drag clone sizing)  **Example**: ```typescript const components = [   {     type: 'header',     name: 'Header',     icon: '📄',     defaultSize: { width: 20, height: 8 },     render: ({ itemId, config }) => <my-header itemId={itemId} config={config} />   } ]; ```
+          * Component registry for reactive updates (Observer Pattern)  **Recommended**: Use this instead of components prop for dynamic registration **Optional prop**: ComponentRegistry instance from grid-builder **Source**: Passed from grid-builder component  **Benefits over components prop**: - Automatic palette updates when components are registered - No manual synchronization needed - Framework-driven reactive pattern  **Use case - Dynamic component registration**: ```typescript // In grid-builder story or consumer code const builderEl = document.querySelector('grid-builder'); const paletteEl = document.querySelector('component-palette');  // Share the registry (automatic sync!) paletteEl.componentRegistry = builderEl.componentRegistry;  // Register new component - palette updates automatically! const api = window.gridBuilderAPI; api.registerComponent(newComponentDef); ```  **Priority**: If both components and componentRegistry are provided, componentRegistry takes precedence
          */
-        "components": ComponentDefinition[];
+        "componentRegistry"?: ComponentRegistry;
+        /**
+          * Component definitions to render in palette  **Deprecated**: Use componentRegistry prop for reactive updates **Backward compatibility**: Still supported for static component lists **Source**: Passed from grid-builder component or consumer code  **Each definition provides**: - type: Unique identifier for component - name: Display name in palette - icon: Visual identifier (emoji recommended) - defaultSize: Size when dropped (for drag clone sizing)  **Example**: ```typescript const components = [   {     type: 'header',     name: 'Header',     icon: '📄',     defaultSize: { width: 20, height: 8 },     render: ({ itemId, config }) => <my-header itemId={itemId} config={config} />   } ]; ```
+         */
+        "components"?: ComponentDefinition[];
         /**
           * Grid configuration options  **Optional prop**: Customizes grid system behavior **Passed from**: grid-builder component **Used for**: Drag clone sizing (gridToPixelsX/Y calculations)
          */
@@ -1722,7 +1747,7 @@ declare namespace LocalJSX {
         /**
           * Component registry (from parent grid-builder)  **Source**: grid-builder component **Purpose**: Look up component definitions for config forms
          */
-        "componentRegistry"?: Map<string, ComponentDefinition>;
+        "componentRegistry"?: ComponentRegistry;
     }
     /**
      * Confirmation Modal Component
@@ -1897,6 +1922,10 @@ declare namespace LocalJSX {
          */
         "onBeforeDelete"?: DeletionHook;
         /**
+          * Component registry ready event  **Purpose**: Notifies external code when componentRegistry has been initialized **Fired**: After componentWillLoad creates the registry with component definitions **Use case**: Allows Storybook stories and other consumers to know when registry is ready for sharing  **Event detail**: { registry: ComponentRegistry } - Reference to the initialized registry  **Example usage**: ```typescript builderEl.addEventListener('registryReady', (event) => {   const { registry } = event.detail;   paletteEl.componentRegistry = registry; }); ```
+         */
+        "onRegistryReady"?: (event: GridBuilderCustomEvent<{ registry: ComponentRegistry }>) => void;
+        /**
           * Plugin instances for extending functionality  **Optional prop**: Array of GridBuilderPlugin instances **Purpose**: Add custom features, analytics, integrations  **Plugin lifecycle**: 1. Library calls plugin.init(api) on componentDidLoad 2. Plugin subscribes to events, adds UI, etc. 3. Library calls plugin.destroy() on disconnectedCallback  **Example**: ```typescript class AnalyticsPlugin implements GridBuilderPlugin {   name = 'analytics';    init(api: GridBuilderAPI) {     api.on('componentAdded', (e) => {       analytics.track('Component Added', { type: e.item.type });     });   }    destroy() {     // Cleanup   } }  const plugins = [new AnalyticsPlugin()]; ```
          */
         "plugins"?: GridBuilderPlugin[];
@@ -1923,9 +1952,9 @@ declare namespace LocalJSX {
          */
         "canvasItems"?: GridItem[];
         /**
-          * Component registry (from parent grid-builder)  **Source**: grid-builder component (built from components prop) **Structure**: Map<type, ComponentDefinition> **Purpose**: Look up component definitions for dynamic rendering  **Note**: This is passed as a workaround since StencilJS doesn't have good support for context/provide-inject patterns. In a production app, consider using a global registry or context provider.
+          * Component registry (from parent grid-builder)  **Source**: grid-builder component (built from components prop) **Structure**: ComponentRegistry service instance **Purpose**: Look up component definitions for dynamic rendering  **Instance-based architecture**: Each grid-builder instance has its own registry, supporting multiple grids with different component sets on the same page. Prop drilling (3 levels) is the correct pattern for this use case.
          */
-        "componentRegistry"?: Map<string, ComponentDefinition>;
+        "componentRegistry"?: ComponentRegistry;
         /**
           * Grid configuration options  **Optional**: Customizes grid system behavior **Passed from**: grid-builder → canvas-section → grid-item-wrapper **Used for**: Grid size calculations with constraints
          */
