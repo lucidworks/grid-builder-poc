@@ -53,7 +53,7 @@ describe("undo-redo-commands", () => {
       gridState.canvases.canvas1.items = [];
 
       const item = createTestItem("item-1", "canvas1");
-      const command = new AddItemCommand("canvas1", item);
+      const command = new AddItemCommand("canvas1", item, gridState);
 
       // Add item to canvas
       gridState.canvases.canvas1.items.push(item);
@@ -69,7 +69,7 @@ describe("undo-redo-commands", () => {
       gridState.canvases.canvas1.items = [];
 
       const item = createTestItem("item-1", "canvas1");
-      const command = new AddItemCommand("canvas1", item);
+      const command = new AddItemCommand("canvas1", item, gridState);
 
       // Redo should add the item
       command.redo();
@@ -79,7 +79,7 @@ describe("undo-redo-commands", () => {
 
     it("should clear selection when undoing if item was selected", () => {
       const item = createTestItem("item-1", "canvas1");
-      const command = new AddItemCommand("canvas1", item);
+      const command = new AddItemCommand("canvas1", item, gridState);
 
       // Add item and select it
       gridState.canvases.canvas1.items.push(item);
@@ -95,7 +95,7 @@ describe("undo-redo-commands", () => {
     it("should not clear selection when undoing if different item was selected", () => {
       const item1 = createTestItem("item-1", "canvas1");
       const item2 = createTestItem("item-2", "canvas1");
-      const command = new AddItemCommand("canvas1", item1);
+      const command = new AddItemCommand("canvas1", item1, gridState);
 
       // Add both items and select item2
       gridState.canvases.canvas1.items.push(item1, item2);
@@ -110,7 +110,7 @@ describe("undo-redo-commands", () => {
 
     it("should handle undo/redo for non-existent canvas gracefully", () => {
       const item = createTestItem("item-1", "canvas99");
-      const command = new AddItemCommand("canvas99", item);
+      const command = new AddItemCommand("canvas99", item, gridState);
 
       // Should not throw error
       command.undo();
@@ -122,7 +122,7 @@ describe("undo-redo-commands", () => {
       gridState.canvases.canvas1.items = [];
 
       const item = createTestItem("item-1", "canvas1", 5, 10);
-      const command = new AddItemCommand("canvas1", item);
+      const command = new AddItemCommand("canvas1", item, gridState);
 
       command.redo();
       expect(gridState.canvases.canvas1.items[0].layouts.desktop.x).toBe(5);
@@ -141,7 +141,7 @@ describe("undo-redo-commands", () => {
       gridState.canvases.canvas1.items = [];
 
       const item = createTestItem("item-1", "canvas1");
-      const command = new DeleteItemCommand("canvas1", item, 0);
+      const command = new DeleteItemCommand("canvas1", item, 0, gridState);
 
       // Undo should re-add the item
       command.undo();
@@ -154,7 +154,7 @@ describe("undo-redo-commands", () => {
       gridState.canvases.canvas1.items = [];
 
       const item = createTestItem("item-1", "canvas1");
-      const command = new DeleteItemCommand("canvas1", item, 0);
+      const command = new DeleteItemCommand("canvas1", item, 0, gridState);
 
       // First undo to add the item
       command.undo();
@@ -175,7 +175,7 @@ describe("undo-redo-commands", () => {
 
       // Set up canvas with items 1 and 3, simulating item 2 was at index 1
       gridState.canvases.canvas1.items = [item1, item3];
-      const command = new DeleteItemCommand("canvas1", item2, 1);
+      const command = new DeleteItemCommand("canvas1", item2, 1, gridState);
 
       // Undo should restore item2 at index 1
       command.undo();
@@ -193,7 +193,7 @@ describe("undo-redo-commands", () => {
       const item2 = createTestItem("item-2", "canvas1");
 
       gridState.canvases.canvas1.items = [item1];
-      const command = new DeleteItemCommand("canvas1", item2, -1);
+      const command = new DeleteItemCommand("canvas1", item2, -1, gridState);
 
       // Undo with invalid index should append to end
       command.undo();
@@ -206,7 +206,7 @@ describe("undo-redo-commands", () => {
       gridState.canvases.canvas1.items = [];
 
       const item = createTestItem("item-1", "canvas1");
-      const command = new DeleteItemCommand("canvas1", item, 0);
+      const command = new DeleteItemCommand("canvas1", item, 0, gridState);
 
       // Undo to add item, then select it
       command.undo();
@@ -221,7 +221,7 @@ describe("undo-redo-commands", () => {
 
     it("should handle undo/redo for non-existent canvas gracefully", () => {
       const item = createTestItem("item-1", "canvas99");
-      const command = new DeleteItemCommand("canvas99", item, 0);
+      const command = new DeleteItemCommand("canvas99", item, 0, gridState);
 
       // Should not throw error
       command.undo();
@@ -233,7 +233,7 @@ describe("undo-redo-commands", () => {
       gridState.canvases.canvas1.items = [];
 
       const item = createTestItem("item-1", "canvas1", 15, 20);
-      const command = new DeleteItemCommand("canvas1", item, 0);
+      const command = new DeleteItemCommand("canvas1", item, 0, gridState);
 
       command.undo();
       expect(gridState.canvases.canvas1.items[0].layouts.desktop.x).toBe(15);
@@ -264,6 +264,9 @@ describe("undo-redo-commands", () => {
         0,
         1, // sourceZIndex
         1, // targetZIndex
+        undefined, // sourceSize
+        undefined, // targetSize
+        gridState,
       );
 
       // Undo should move item back to canvas1
@@ -291,6 +294,9 @@ describe("undo-redo-commands", () => {
         0,
         1, // sourceZIndex
         1, // targetZIndex
+        undefined, // sourceSize
+        undefined, // targetSize
+        gridState,
       );
 
       // Redo should move item to canvas2
@@ -317,6 +323,9 @@ describe("undo-redo-commands", () => {
         0,
         1, // sourceZIndex
         1, // targetZIndex
+        undefined, // sourceSize
+        undefined, // targetSize
+        gridState,
       );
 
       // Redo should update position
@@ -353,6 +362,9 @@ describe("undo-redo-commands", () => {
         1, // Original index in canvas1
         1, // sourceZIndex
         1, // targetZIndex
+        undefined, // sourceSize
+        undefined, // targetSize
+        gridState,
       );
 
       // Undo should restore item2 to index 1 in canvas1
@@ -380,6 +392,9 @@ describe("undo-redo-commands", () => {
         -1, // Invalid index
         1, // sourceZIndex
         1, // targetZIndex
+        undefined, // sourceSize
+        undefined, // targetSize
+        gridState,
       );
 
       // Undo with invalid index should append to end
@@ -397,6 +412,9 @@ describe("undo-redo-commands", () => {
         0,
         1, // sourceZIndex
         1, // targetZIndex
+        undefined, // sourceSize
+        undefined, // targetSize
+        gridState,
       );
 
       // Should not throw error
@@ -420,6 +438,9 @@ describe("undo-redo-commands", () => {
         0,
         1, // sourceZIndex
         1, // targetZIndex
+        undefined, // sourceSize
+        undefined, // targetSize
+        gridState,
       );
 
       // Should not throw error
@@ -444,6 +465,9 @@ describe("undo-redo-commands", () => {
         0,
         1, // sourceZIndex
         1, // targetZIndex
+        undefined, // sourceSize
+        undefined, // targetSize
+        gridState,
       );
 
       // After redo, item should have canvas2 as canvasId
@@ -475,6 +499,9 @@ describe("undo-redo-commands", () => {
         0,
         99, // sourceZIndex (preserve original)
         99, // targetZIndex (preserve during cross-canvas move)
+        undefined, // sourceSize
+        undefined, // targetSize
+        gridState,
       );
 
       command.redo();
@@ -506,6 +533,7 @@ describe("undo-redo-commands", () => {
 
         { width: 20, height: 15 }, // source size
         { width: 30, height: 25 }, // target size
+        gridState,
       );
 
       // Undo should restore original size
@@ -542,6 +570,7 @@ describe("undo-redo-commands", () => {
 
         { width: 20, height: 15 }, // source size
         { width: 30, height: 25 }, // target size
+        gridState,
       );
 
       // Redo should apply new size
@@ -580,6 +609,7 @@ describe("undo-redo-commands", () => {
 
         { width: 20, height: 15 }, // source size
         { width: 25, height: 20 }, // target size
+        gridState,
       );
 
       // Redo should apply both position and size changes
@@ -626,6 +656,7 @@ describe("undo-redo-commands", () => {
 
         { width: 10, height: 6 },
         { width: 20, height: 12 },
+        gridState,
       );
 
       // Multiple cycles should maintain consistency
@@ -667,7 +698,9 @@ describe("undo-redo-commands", () => {
         0,
         1, // sourceZIndex
         1, // targetZIndex
-        // No size parameters
+        undefined, // sourceSize
+        undefined, // targetSize
+        gridState,
       );
 
       // Redo should update position only, size unchanged
@@ -702,7 +735,7 @@ describe("undo-redo-commands", () => {
 
       // Add item1 to canvas1
       const item1 = createTestItem("item-1", "canvas1", 0, 0);
-      const addCmd = new AddItemCommand("canvas1", item1);
+      const addCmd = new AddItemCommand("canvas1", item1, gridState);
       addCmd.redo();
       expect(gridState.canvases.canvas1.items).toHaveLength(1);
 
@@ -716,13 +749,16 @@ describe("undo-redo-commands", () => {
         0,
         1, // sourceZIndex
         1, // targetZIndex
+        undefined, // sourceSize
+        undefined, // targetSize
+        gridState,
       );
       moveCmd.redo();
       expect(gridState.canvases.canvas1.items).toHaveLength(0);
       expect(gridState.canvases.canvas2.items).toHaveLength(1);
 
       // Delete item1 from canvas2
-      const deleteCmd = new DeleteItemCommand("canvas2", item1, 0);
+      const deleteCmd = new DeleteItemCommand("canvas2", item1, 0, gridState);
       deleteCmd.redo();
       expect(gridState.canvases.canvas2.items).toHaveLength(0);
 
@@ -745,7 +781,7 @@ describe("undo-redo-commands", () => {
       gridState.canvases.canvas1.items = [];
 
       const item = createTestItem("item-1", "canvas1");
-      const command = new AddItemCommand("canvas1", item);
+      const command = new AddItemCommand("canvas1", item, gridState);
 
       // Multiple redo/undo cycles
       for (let i = 0; i < 3; i++) {
@@ -764,8 +800,8 @@ describe("undo-redo-commands", () => {
       const item1 = createTestItem("item-1", "canvas1", 0, 0);
       const item2 = createTestItem("item-2", "canvas1", 5, 5);
 
-      const add1 = new AddItemCommand("canvas1", item1);
-      const add2 = new AddItemCommand("canvas1", item2);
+      const add1 = new AddItemCommand("canvas1", item1, gridState);
+      const add2 = new AddItemCommand("canvas1", item2, gridState);
 
       add1.redo();
       add2.redo();
@@ -801,7 +837,7 @@ describe("undo-redo-commands", () => {
           { canvasId: "canvas1", type: "text", name: "Text" },
         ];
         const itemIds = addItemsBatch(items);
-        const command = new BatchAddCommand(itemIds);
+        const command = new BatchAddCommand(itemIds, gridState);
 
         expect(gridState.canvases.canvas1.items).toHaveLength(2);
 
@@ -822,7 +858,7 @@ describe("undo-redo-commands", () => {
           },
         ];
         const itemIds = addItemsBatch(items);
-        const command = new BatchAddCommand(itemIds);
+        const command = new BatchAddCommand(itemIds, gridState);
 
         command.undo();
         command.redo();
@@ -839,7 +875,7 @@ describe("undo-redo-commands", () => {
           { canvasId: "canvas2", type: "text", name: "Text 2" },
         ];
         const itemIds = addItemsBatch(items);
-        const command = new BatchAddCommand(itemIds);
+        const command = new BatchAddCommand(itemIds, gridState);
 
         expect(gridState.canvases.canvas1.items).toHaveLength(1);
         expect(gridState.canvases.canvas2.items).toHaveLength(1);
@@ -861,7 +897,7 @@ describe("undo-redo-commands", () => {
           { canvasId: "canvas1", type: "text", name: "Text" },
         ];
         const itemIds = addItemsBatch(items);
-        const command = new BatchDeleteCommand(itemIds);
+        const command = new BatchDeleteCommand(itemIds, gridState);
 
         expect(gridState.canvases.canvas1.items).toHaveLength(2);
 
@@ -882,7 +918,7 @@ describe("undo-redo-commands", () => {
           },
         ];
         const itemIds = addItemsBatch(items);
-        const command = new BatchDeleteCommand(itemIds);
+        const command = new BatchDeleteCommand(itemIds, gridState);
 
         command.redo();
         command.undo();
@@ -899,7 +935,7 @@ describe("undo-redo-commands", () => {
           { canvasId: "canvas2", type: "text", name: "Text 2" },
         ];
         const itemIds = addItemsBatch(items);
-        const command = new BatchDeleteCommand(itemIds);
+        const command = new BatchDeleteCommand(itemIds, gridState);
 
         command.redo();
         expect(gridState.canvases.canvas1.items).toHaveLength(0);
@@ -930,7 +966,7 @@ describe("undo-redo-commands", () => {
             updates: { config: { text: "New Header", color: "red" } },
           },
         ];
-        const command = new BatchUpdateConfigCommand(updates);
+        const command = new BatchUpdateConfigCommand(updates, gridState);
 
         command.redo();
         const item1 = gridState.canvases.canvas1.items[0];
@@ -972,7 +1008,7 @@ describe("undo-redo-commands", () => {
             updates: { config: { content: "New 2" } },
           },
         ];
-        const command = new BatchUpdateConfigCommand(updates);
+        const command = new BatchUpdateConfigCommand(updates, gridState);
 
         command.redo();
         expect(gridState.canvases.canvas1.items[0].config.text).toBe("New 1");
@@ -1016,7 +1052,7 @@ describe("undo-redo-commands", () => {
             updates: { config: { text: "Updated 2" } },
           },
         ];
-        const command = new BatchUpdateConfigCommand(updates);
+        const command = new BatchUpdateConfigCommand(updates, gridState);
 
         command.redo();
         expect(gridState.canvases.canvas1.items[0].config.text).toBe(
