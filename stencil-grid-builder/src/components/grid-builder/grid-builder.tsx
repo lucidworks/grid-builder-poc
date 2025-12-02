@@ -1011,7 +1011,7 @@ export class GridBuilder {
         this.stateManager!.state.selectedCanvasId = targetCanvasId;
       }
 
-      // 11. Create undo/redo command with z-index tracking
+      // 11. Create undo/redo command with z-index tracking (with instance state)
       const command = new MoveItemCommand(
         itemId,
         sourceCanvasId,
@@ -1021,6 +1021,9 @@ export class GridBuilder {
         itemIndex,
         sourceZIndex,
         targetZIndex,
+        undefined, // sourceSize (not tracked for drag operations)
+        undefined, // targetSize (not tracked for drag operations)
+        this.stateManager!.state // Pass instance state
       );
       this.undoRedoManager?.push(command);
 
@@ -1222,6 +1225,9 @@ export class GridBuilder {
         canvas.items.findIndex((i) => i.id === item.id),
         item.zIndex, // sourceZIndex
         item.zIndex, // targetZIndex (same canvas = no change)
+        undefined, // sourceSize (not tracked for nudge operations)
+        undefined, // targetSize (not tracked for nudge operations)
+        this.stateManager!.state // Pass instance state
       );
       this.undoRedoManager?.push(nudgeCommand);
 
@@ -1816,7 +1822,7 @@ export class GridBuilder {
           }
         }
 
-        // Create and execute command
+        // Create and execute command (with instance state)
         const command = new MoveItemCommand(
           itemId,
           fromCanvasId,
@@ -1825,7 +1831,10 @@ export class GridBuilder {
           targetPosition,
           sourceIndex,
           sourceZIndex,
-          targetZIndex
+          targetZIndex,
+          undefined, // sourceSize (not tracked for simple moves)
+          undefined, // targetSize (not tracked for simple moves)
+          this.stateManager!.state // Pass instance state
         );
         command.redo();
         this.undoRedoManager?.push(command);

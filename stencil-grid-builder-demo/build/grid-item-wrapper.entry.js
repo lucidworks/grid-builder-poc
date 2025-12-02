@@ -1,5 +1,5 @@
 import { r as registerInstance, h } from './index-CoCbyscT.js';
-import { c as constrainPositionToCanvas, C as CANVAS_WIDTH_UNITS, M as MoveItemCommand } from './boundary-constraints-C3wJWX8q.js';
+import { c as constrainPositionToCanvas, C as CANVAS_WIDTH_UNITS, M as MoveItemCommand } from './boundary-constraints-CMTmX7kv.js';
 import { s as setActiveCanvas, f as selectItem } from './state-manager-6NvKjybS.js';
 import { e as getGridSizeHorizontal, g as getGridSizeVertical, p as pixelsToGridX, d as pixelsToGridY, a as gridToPixelsX, b as gridToPixelsY } from './grid-calculations-C87xQzOc.js';
 import { c as createDebugLogger } from './debug-BAq8PPFJ.js';

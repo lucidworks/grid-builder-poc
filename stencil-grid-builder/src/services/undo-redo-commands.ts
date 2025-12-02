@@ -778,6 +778,9 @@ export class MoveItemCommand implements Command {
   /** Original array index in source canvas (for undo restoration) */
   private sourceIndex: number;
 
+  /** GridState instance (or null for singleton) for multi-instance support */
+  private stateInstance: any;
+
   /**
    * Capture item move operation
    *
@@ -792,6 +795,10 @@ export class MoveItemCommand implements Command {
    * **Z-index handling**:
    * - Same canvas: sourceZIndex === targetZIndex (no change)
    * - Cross-canvas: targetZIndex assigned from targetCanvas.zIndexCounter++
+   *
+   * **Instance-based architecture**:
+   * - Accepts optional stateInstance parameter for multi-instance support
+   * - Falls back to singleton gridState if not provided (backward compatibility)
    * @param itemId - ID of moved item
    * @param sourceCanvasId - Canvas where item started
    * @param targetCanvasId - Canvas where item ended
@@ -802,6 +809,7 @@ export class MoveItemCommand implements Command {
    * @param targetZIndex - Z-index in target canvas (assigned during move)
    * @param sourceSize - Optional: Size before operation (for resize tracking)
    * @param targetSize - Optional: Size after operation (for resize tracking)
+   * @param stateInstance - Optional: GridState instance for multi-instance support
    */
   constructor(
     itemId: string,
@@ -814,6 +822,7 @@ export class MoveItemCommand implements Command {
     targetZIndex: number,
     sourceSize?: { width: number; height: number },
     targetSize?: { width: number; height: number },
+    stateInstance?: any,
   ) {
     this.itemId = itemId;
     this.sourceCanvasId = sourceCanvasId;
@@ -825,6 +834,7 @@ export class MoveItemCommand implements Command {
     this.targetZIndex = targetZIndex;
     this.sourceSize = sourceSize ? { ...sourceSize } : undefined;
     this.targetSize = targetSize ? { ...targetSize } : undefined;
+    this.stateInstance = stateInstance || null;
   }
 
   /**
@@ -858,15 +868,18 @@ export class MoveItemCommand implements Command {
       targetPosition: this.targetPosition,
     });
 
+    // Get the state to operate on (instance or singleton)
+    const state = this.stateInstance || gridState;
+
     // Find the item in target canvas first
-    let targetCanvas = gridState.canvases[this.targetCanvasId];
+    let targetCanvas = state.canvases[this.targetCanvasId];
     let item = targetCanvas?.items.find((i) => i.id === this.itemId);
 
     // If target canvas doesn't exist or item not found there, search all canvases
     // This handles the case where the target canvas was deleted
     if (!item) {
-      for (const canvasId in gridState.canvases) {
-        const canvas = gridState.canvases[canvasId];
+      for (const canvasId in state.canvases) {
+        const canvas = state.canvases[canvasId];
         item = canvas.items.find((i) => i.id === this.itemId);
         if (item) {
           targetCanvas = canvas;
@@ -907,7 +920,7 @@ export class MoveItemCommand implements Command {
     }
 
     // Add back to source canvas at original index
-    const sourceCanvas = gridState.canvases[this.sourceCanvasId];
+    const sourceCanvas = state.canvases[this.sourceCanvasId];
     if (!sourceCanvas) {
       console.warn("  ❌ Source canvas not found, aborting undo");
       return;
@@ -922,8 +935,8 @@ export class MoveItemCommand implements Command {
       sourceCanvas.items.push(item);
     }
 
-    // Trigger state update
-    gridState.canvases = { ...gridState.canvases };
+    // Trigger state update on the correct state instance
+    state.canvases = { ...state.canvases };
 
     // Clear any inline transform style that might be persisting from drag handler
     // This ensures the component re-renders with the correct position from state
@@ -966,8 +979,11 @@ export class MoveItemCommand implements Command {
       targetPosition: this.targetPosition,
     });
 
+    // Get the state to operate on (instance or singleton)
+    const state = this.stateInstance || gridState;
+
     // Find the item in source canvas
-    const sourceCanvas = gridState.canvases[this.sourceCanvasId];
+    const sourceCanvas = state.canvases[this.sourceCanvasId];
     const item = sourceCanvas?.items.find((i) => i.id === this.itemId);
     if (!item) {
       console.warn("  ❌ Item not found, aborting redo");
@@ -1001,7 +1017,7 @@ export class MoveItemCommand implements Command {
     }
 
     // Add to target canvas
-    const targetCanvas = gridState.canvases[this.targetCanvasId];
+    const targetCanvas = state.canvases[this.targetCanvasId];
     if (!targetCanvas) {
       console.warn("  ❌ Target canvas not found, aborting redo");
       return;
@@ -1009,8 +1025,8 @@ export class MoveItemCommand implements Command {
 
     targetCanvas.items.push(item);
 
-    // Trigger state update
-    gridState.canvases = { ...gridState.canvases };
+    // Trigger state update on the correct state instance
+    state.canvases = { ...state.canvases };
 
     // Clear any inline transform style that might be persisting from drag handler
     // This ensures the component re-renders with the correct position from state

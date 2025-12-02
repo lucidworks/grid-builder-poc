@@ -2,7 +2,7 @@ import { r as registerInstance, h, e as Host, d as getElement } from './index-Co
 import { i as interact } from './interact.min-DWbYNq4G.js';
 import { S as StateManager, u as updateItemsBatch, d as deleteItemsBatch, a as addItemsBatch, b as generateItemId } from './state-manager-6NvKjybS.js';
 import { V as VirtualRendererService } from './virtual-renderer-CMNhlZbw.js';
-import { a as applyBoundaryConstraints, c as constrainPositionToCanvas, C as CANVAS_WIDTH_UNITS, M as MoveItemCommand, b as ChangeZIndexCommand, R as RemoveCanvasCommand, A as AddCanvasCommand, B as BatchUpdateConfigCommand, d as BatchDeleteCommand, e as BatchAddCommand } from './boundary-constraints-C3wJWX8q.js';
+import { a as applyBoundaryConstraints, c as constrainPositionToCanvas, C as CANVAS_WIDTH_UNITS, M as MoveItemCommand, b as ChangeZIndexCommand, R as RemoveCanvasCommand, A as AddCanvasCommand, B as BatchUpdateConfigCommand, d as BatchDeleteCommand, e as BatchAddCommand } from './boundary-constraints-CMTmX7kv.js';
 import { c as createDebugLogger, a as createStore } from './debug-BAq8PPFJ.js';
 import { D as DOMCache, c as clearGridSizeCache, p as pixelsToGridX, d as pixelsToGridY } from './grid-calculations-C87xQzOc.js';
 
@@ -1671,8 +1671,11 @@ const GridBuilder = class {
             if (this.stateManager.state.selectedItemId === itemId) {
                 this.stateManager.state.selectedCanvasId = targetCanvasId;
             }
-            // 11. Create undo/redo command with z-index tracking
-            const command = new MoveItemCommand(itemId, sourceCanvasId, targetCanvasId, sourcePosition, targetPosition, itemIndex, sourceZIndex, targetZIndex);
+            // 11. Create undo/redo command with z-index tracking (with instance state)
+            const command = new MoveItemCommand(itemId, sourceCanvasId, targetCanvasId, sourcePosition, targetPosition, itemIndex, sourceZIndex, targetZIndex, undefined, // sourceSize (not tracked for drag operations)
+            undefined, // targetSize (not tracked for drag operations)
+            this.stateManager.state // Pass instance state
+            );
             (_b = this.undoRedoManager) === null || _b === void 0 ? void 0 : _b.push(command);
             // 11. Emit events for plugins
             (_c = this.eventManagerInstance) === null || _c === void 0 ? void 0 : _c.emit("componentMoved", {
@@ -1826,7 +1829,11 @@ const GridBuilder = class {
             layout.y = constrainedY;
             // Create undo command for nudge (same canvas = z-index unchanged)
             const nudgeCommand = new MoveItemCommand(item.id, this.stateManager.state.selectedCanvasId, this.stateManager.state.selectedCanvasId, { x: oldX, y: oldY }, { x: constrainedX, y: constrainedY }, canvas.items.findIndex((i) => i.id === item.id), item.zIndex, // sourceZIndex
-            item.zIndex);
+            item.zIndex, // targetZIndex (same canvas = no change)
+            undefined, // sourceSize (not tracked for nudge operations)
+            undefined, // targetSize (not tracked for nudge operations)
+            this.stateManager.state // Pass instance state
+            );
             (_d = this.undoRedoManager) === null || _d === void 0 ? void 0 : _d.push(nudgeCommand);
             // Trigger state update
             this.stateManager.state.canvases = Object.assign({}, this.stateManager.state.canvases);
@@ -2307,8 +2314,11 @@ const GridBuilder = class {
                         targetZIndex = ++targetCanvas.zIndexCounter;
                     }
                 }
-                // Create and execute command
-                const command = new MoveItemCommand(itemId, fromCanvasId, toCanvasId, sourcePosition, targetPosition, sourceIndex, sourceZIndex, targetZIndex);
+                // Create and execute command (with instance state)
+                const command = new MoveItemCommand(itemId, fromCanvasId, toCanvasId, sourcePosition, targetPosition, sourceIndex, sourceZIndex, targetZIndex, undefined, // sourceSize (not tracked for simple moves)
+                undefined, // targetSize (not tracked for simple moves)
+                this.stateManager.state // Pass instance state
+                );
                 command.redo();
                 (_a = this.undoRedoManager) === null || _a === void 0 ? void 0 : _a.push(command);
                 // Emit event
@@ -2731,7 +2741,7 @@ const GridBuilder = class {
         // Merge instanceId into config for child components (avoids mutating prop)
         const configWithInstance = this.config
             ? Object.assign(Object.assign({}, this.config), { instanceId: this.instanceId }) : { instanceId: this.instanceId };
-        return (h(Host, { key: '7f1009fc57ec21540dbc853ac422845fd453cb59', ref: (el) => (this.el = el) }, h("div", { key: 'd4869204ced842b0b0b11cc1922567dde26d6fbf', class: "sr-only", role: "status", "aria-live": "polite", "aria-atomic": "true" }, this.announcement), h("div", { key: '03a194a07e65a7608b8516cd3d5eb465038f86dd', class: "grid-builder-container", role: "application", "aria-label": "Grid builder" }, h("div", { key: 'c2100b03c5dd6ecddfb8ce7335b55a8c7a4081c1', class: "canvas-area" }, h("div", { key: '5225ec7486ecd5b0a3942797b837a98fd4de7a00', class: "canvases-container" }, canvasIds.map((canvasId) => {
+        return (h(Host, { key: '66c0bc23870ad24fc3a8f28aab01e457b6ae127f', ref: (el) => (this.el = el) }, h("div", { key: '177a92afbb95b919b7a616c5ff9d111ea1053d40', class: "sr-only", role: "status", "aria-live": "polite", "aria-atomic": "true" }, this.announcement), h("div", { key: 'e189abb27b06753a6dc4c2cf5371cc7bb7d04ec1', class: "grid-builder-container", role: "application", "aria-label": "Grid builder" }, h("div", { key: 'bdc1d7b3a888ecc98865a02b5db38951b80d8ce7', class: "canvas-area" }, h("div", { key: '2bf04cf4f556de560db35e242d50d2ee51029135', class: "canvases-container" }, canvasIds.map((canvasId) => {
             var _a, _b, _c;
             const isActive = this.stateManager.state.activeCanvasId === canvasId;
             const metadata = ((_a = this.canvasMetadata) === null || _a === void 0 ? void 0 : _a[canvasId]) || {};
