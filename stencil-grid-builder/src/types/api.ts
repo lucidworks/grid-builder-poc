@@ -904,4 +904,109 @@ export interface GridBuilderAPI {
    * ```
    */
   pushCommand(command: any): void;
+
+  // ======================
+  // Component Registry Management
+  // ======================
+
+  /**
+   * Register component at runtime
+   *
+   * **Use cases**:
+   * - Add components after initial render
+   * - Dynamic component libraries
+   * - Plugin-based component systems
+   * - Lazy-load components on demand
+   *
+   * **What it does**:
+   * - Registers new ComponentDefinition to registry
+   * - Component appears in palette immediately
+   * - Component can be dragged from palette to canvas
+   * - renderDragClone shows during drag operation
+   *
+   * **Requirements**:
+   * - Must provide valid ComponentDefinition with type, name, icon
+   * - Must include render() function for component content
+   * - Must include renderDragClone() for drag preview
+   * - Must include defaultSize for initial dimensions
+   *
+   * **Events triggered**: 'componentRegistered'
+   * @param definition - Component definition to register
+   * @example
+   * ```typescript
+   * // Register Image component at runtime
+   * const imageComponent = {
+   *   type: "image",
+   *   name: "Image",
+   *   icon: "🖼️",
+   *   defaultSize: { width: 20, height: 15 },
+   *   render: ({ config }) => {
+   *     const div = document.createElement("div");
+   *     div.style.cssText = "padding: 8px; background: #fff;";
+   *     const img = document.createElement("img");
+   *     img.src = config?.src || "placeholder.jpg";
+   *     div.appendChild(img);
+   *     return div;
+   *   },
+   *   renderDragClone: () => {
+   *     const div = document.createElement("div");
+   *     div.style.cssText = "border: 2px dashed #667eea;";
+   *     div.textContent = "🖼️ Image";
+   *     return div;
+   *   },
+   * };
+   *
+   * api.registerComponent(imageComponent);
+   * // Image now appears in palette and can be dragged to canvas
+   * ```
+   */
+  registerComponent(definition: any): void;
+
+  /**
+   * Get all registered components
+   *
+   * **Use cases**:
+   * - List available components
+   * - Check which components are registered
+   * - Build custom component selectors
+   * - Debugging and introspection
+   *
+   * **Returns**: Array of all ComponentDefinition objects currently registered
+   * **Source**: Retrieved from ComponentRegistry.getAll()
+   *
+   * **What it provides**:
+   * - Complete list of registered components
+   * - Component metadata (type, name, icon)
+   * - Default sizes for each component
+   * - Render functions (for advanced use cases)
+   *
+   * **Developer Experience**:
+   * - Discoverable from API (no need to access palette element)
+   * - Type-safe return value
+   * - Consistent with other API methods like getItems(), getItem()
+   * - No coupling to UI components
+   * @returns Array of ComponentDefinition objects
+   * @example
+   * ```typescript
+   * // List all registered components
+   * const components = api.getComponents();
+   * console.log(`${components.length} components registered`);
+   * components.forEach(c => {
+   *   console.log(`- ${c.icon} ${c.name} (${c.type})`);
+   * });
+   *
+   * // Check if specific component type is registered
+   * const components = api.getComponents();
+   * const hasImage = components.some(c => c.type === 'image');
+   * if (!hasImage) {
+   *   api.registerComponent(imageComponentDefinition);
+   * }
+   *
+   * // Build custom component selector
+   * const components = api.getComponents();
+   * const componentNames = components.map(c => c.name).join(", ");
+   * alert(`Available: ${componentNames}`);
+   * ```
+   */
+  getComponents(): any[];
 }

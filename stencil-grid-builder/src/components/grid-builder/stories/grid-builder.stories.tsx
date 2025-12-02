@@ -20,8 +20,7 @@ const simpleComponents = [
     defaultSize: { width: 30, height: 4 },
     minSize: { width: 15, height: 3 },
     // Render function using document.createElement() - returns real DOM elements
-    // @ts-expect-error - itemId unused in simple demo component
-    render: ({ itemId, config }) => {
+    render: ({ itemId: _itemId, config }) => {
       const div = document.createElement("div");
       div.style.cssText =
         "padding: 12px; background: #f0f0f0; border-radius: 4px; width: 100%; height: 100%; box-sizing: border-box;";
@@ -50,8 +49,7 @@ const simpleComponents = [
     defaultSize: { width: 20, height: 6 },
     minSize: { width: 10, height: 4 },
     // document.createElement() returns actual DOM elements
-    // @ts-expect-error - itemId unused in simple demo component
-    render: ({ itemId, config }) => {
+    render: ({ itemId: _itemId, config }) => {
       const div = document.createElement("div");
       div.style.cssText =
         "padding: 10px; background: #fff; border: 1px solid #ddd; border-radius: 4px; width: 100%; height: 100%; box-sizing: border-box;";
@@ -80,8 +78,7 @@ const simpleComponents = [
     defaultSize: { width: 12, height: 4 },
     minSize: { width: 8, height: 3 },
     // document.createElement() works for any HTML element
-    // @ts-expect-error - itemId unused in simple demo component
-    render: ({ itemId, config }) => {
+    render: ({ itemId: _itemId, config }) => {
       const button = document.createElement("button");
       button.style.cssText =
         "padding: 8px 16px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; width: 100%; height: 100%; box-sizing: border-box;";
@@ -6130,7 +6127,7 @@ const productionConfig = {
 \`\`\`typescript
 const devConfig = {
   renderUnknownComponent: ({ type, itemId }) => {
-    const availableTypes = Array.from(componentRegistry.keys());
+    const availableTypes = componentRegistry.getTypes();
 
     return (
       <div style={{ background: '#f8d7da', padding: '20px', color: '#721c24' }}>
@@ -6253,6 +6250,433 @@ builder.config = {
 \`\`\`
 
 **Pro tip**: Use \`hideUnknownComponents\` in production for the cleanest user experience. During development, use the default error display or a custom renderer with detailed debug information to help identify missing component types. For A/B testing scenarios, combine \`hideUnknownComponents\` with feature flags to selectively show/hide components based on user segments.
+      `.trim(),
+    },
+  },
+};
+
+/**
+ * Dynamic Component Registration
+ * ===============================
+ *
+ * Demonstrates adding components at runtime using ComponentRegistry.register().
+ * Shows renderDragClone in action for newly registered components.
+ *
+ * **Use Cases**:
+ * - Apps with permission-based component access
+ * - Plugin systems that load components on demand
+ * - A/B testing with feature-gated components
+ * - Progressive disclosure of advanced features
+ *
+ * **Features Demonstrated**:
+ * - ComponentRegistry.register() for runtime registration
+ * - renderDragClone displaying custom drag preview
+ * - Palette automatically updating when components registered
+ * - Full drag/drop/resize functionality for dynamic components
+ */
+export const DynamicComponentRegistration = () => {
+  const apiKey = getUniqueApiKey();
+
+  // Start with minimal component set
+  const initialComponents = [
+    {
+      type: "header",
+      name: "Header",
+      icon: "📄",
+      defaultSize: { width: 30, height: 4 },
+      minSize: { width: 15, height: 3 },
+      render: ({ itemId: _itemId, config }) => {
+        const div = document.createElement("div");
+        div.style.cssText =
+          "padding: 12px; background: #f0f0f0; border-radius: 4px; width: 100%; height: 100%; box-sizing: border-box;";
+        const h3 = document.createElement("h3");
+        h3.style.cssText = "margin: 0; font-size: 16px;";
+        h3.textContent = config?.title || "Header";
+        div.appendChild(h3);
+        return div;
+      },
+      renderDragClone: () => {
+        const div = document.createElement("div");
+        div.style.cssText =
+          "padding: 12px; background: #f0f0f0; border-radius: 4px; width: 100%; height: 100%; box-sizing: border-box; opacity: 0.8;";
+        const h3 = document.createElement("h3");
+        h3.style.cssText = "margin: 0; font-size: 16px;";
+        h3.textContent = "📄 Header";
+        div.appendChild(h3);
+        return div;
+      },
+    },
+  ];
+
+  // Create grid builder first (so we can access its componentRegistry)
+  const builderEl = document.createElement("grid-builder");
+  builderEl.components = initialComponents;
+  builderEl.apiRef = { key: apiKey }; // Isolated instance for this story
+
+  // Create component palette (we'll share the registry after grid-builder initializes)
+  const paletteEl = document.createElement("component-palette");
+  paletteEl.targetGridBuilderId = apiKey; // Target this story's grid-builder instance
+
+  // Create empty canvas for drag-and-drop
+  builderEl.initialState = {
+    canvases: {
+      "canvas-1": {
+        items: [],
+        zIndexCounter: 0,
+      },
+    },
+  };
+
+  builderEl.config = {
+    canvasMinHeight: 15,
+  };
+
+  builderEl.theme = {
+    primaryColor: "#667eea",
+    selectionColor: "#667eea",
+    gridLineColor: "rgba(0, 0, 0, 0.08)",
+  };
+
+  // Share componentRegistry with palette when it's ready
+  // Listen for the registryReady event that fires after componentWillLoad
+  builderEl.addEventListener("registryReady", (event: CustomEvent) => {
+    const { registry } = event.detail;
+    paletteEl.componentRegistry = registry;
+    console.log(
+      "✅ Shared componentRegistry with palette (Observable pattern)",
+    );
+    console.log("  - Registry has components:", registry.getAll().length);
+    console.log("  - Palette will auto-update when components are registered");
+  });
+
+  return html`
+    <div
+      style="display: flex; flex-direction: column; gap: 8px; height: 100vh;"
+    >
+      <!-- Control Panel -->
+      <div
+        style="padding: 16px; background: #f8f9fa; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);"
+      >
+        <h3 style="margin: 0 0 12px 0; font-size: 16px; color: #333;">
+          🎛️ Dynamic Component Controls
+        </h3>
+        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+          <button
+            @click=${() => {
+              const api = window[apiKey];
+
+              // Define a new component with custom drag clone
+              const imageComponent = {
+                type: "image",
+                name: "Image",
+                icon: "🖼️",
+                defaultSize: { width: 20, height: 15 },
+                minSize: { width: 10, height: 8 },
+                render: ({ itemId: _itemId, config }) => {
+                  const div = document.createElement("div");
+                  div.style.cssText =
+                    "padding: 8px; background: #fff; border: 2px solid #e0e0e0; border-radius: 4px; width: 100%; height: 100%; box-sizing: border-box; display: flex; align-items: center; justify-content: center;";
+                  const img = document.createElement("div");
+                  img.style.cssText =
+                    "width: 100%; height: 100%; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 4px; display: flex; align-items: center; justify-content: center; color: white; font-size: 24px;";
+                  img.textContent = config?.emoji || "🖼️";
+                  div.appendChild(img);
+                  return div;
+                },
+                renderDragClone: () => {
+                  const div = document.createElement("div");
+                  div.style.cssText =
+                    "padding: 8px; background: #fff; border: 2px dashed #667eea; border-radius: 4px; width: 100%; height: 100%; box-sizing: border-box; opacity: 0.9; display: flex; align-items: center; justify-content: center;";
+                  const span = document.createElement("span");
+                  span.style.cssText = "font-size: 18px;";
+                  span.textContent = "🖼️ Image";
+                  div.appendChild(span);
+                  return div;
+                },
+              };
+
+              // Register the new component
+              // Palette will automatically update via Observable pattern
+              console.log("📝 Registering Image component...");
+              console.log(
+                "  - paletteEl.componentRegistry:",
+                paletteEl.componentRegistry,
+              );
+
+              api.registerComponent(imageComponent);
+              console.log(
+                "✅ Registered Image component - palette updates automatically!",
+              );
+            }}
+            style="padding: 8px 16px; background: #667eea; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; font-weight: 500;"
+          >
+            ➕ Add Image Component
+          </button>
+
+          <button
+            @click=${() => {
+              const api = window[apiKey];
+
+              // Define chart component with distinctive drag clone
+              const chartComponent = {
+                type: "chart",
+                name: "Chart",
+                icon: "📊",
+                defaultSize: { width: 25, height: 18 },
+                minSize: { width: 15, height: 12 },
+                render: ({ itemId: _itemId, config }) => {
+                  const div = document.createElement("div");
+                  div.style.cssText =
+                    "padding: 12px; background: #fff; border: 1px solid #ddd; border-radius: 4px; width: 100%; height: 100%; box-sizing: border-box;";
+                  const title = document.createElement("h4");
+                  title.style.cssText =
+                    "margin: 0 0 8px 0; font-size: 14px; color: #333;";
+                  title.textContent = config?.title || "Sales Chart";
+                  div.appendChild(title);
+
+                  // Simple bar chart visualization
+                  const chart = document.createElement("div");
+                  chart.style.cssText =
+                    "display: flex; align-items: flex-end; gap: 4px; height: calc(100% - 30px);";
+                  const bars = [60, 80, 45, 90, 70];
+                  bars.forEach((height) => {
+                    const bar = document.createElement("div");
+                    bar.style.cssText = `flex: 1; height: ${height}%; background: linear-gradient(to top, #4CAF50, #8BC34A); border-radius: 2px;`;
+                    chart.appendChild(bar);
+                  });
+                  div.appendChild(chart);
+                  return div;
+                },
+                renderDragClone: () => {
+                  const div = document.createElement("div");
+                  div.style.cssText =
+                    "padding: 12px; background: #fff; border: 2px dashed #4CAF50; border-radius: 4px; width: 100%; height: 100%; box-sizing: border-box; opacity: 0.9; display: flex; align-items: center; justify-content: center;";
+                  const span = document.createElement("span");
+                  span.style.cssText =
+                    "font-size: 18px; display: flex; align-items: center; gap: 8px;";
+                  span.innerHTML = "📊 Chart";
+                  div.appendChild(span);
+                  return div;
+                },
+              };
+
+              // Register the new component
+              // Palette will automatically update via Observable pattern
+              api.registerComponent(chartComponent);
+              console.log(
+                "✅ Registered Chart component - palette updates automatically!",
+              );
+            }}
+            style="padding: 8px 16px; background: #4CAF50; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; font-weight: 500;"
+          >
+            ➕ Add Chart Component
+          </button>
+
+          <button
+            @click=${() => {
+              const api = window[apiKey];
+
+              // Define video component with animated drag clone
+              const videoComponent = {
+                type: "video",
+                name: "Video",
+                icon: "🎥",
+                defaultSize: { width: 30, height: 20 },
+                minSize: { width: 20, height: 15 },
+                render: ({ itemId: _itemId, config }) => {
+                  const div = document.createElement("div");
+                  div.style.cssText =
+                    "padding: 0; background: #000; border-radius: 4px; width: 100%; height: 100%; box-sizing: border-box; display: flex; align-items: center; justify-content: center; overflow: hidden;";
+                  const placeholder = document.createElement("div");
+                  placeholder.style.cssText =
+                    "width: 100%; height: 100%; background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); display: flex; flex-direction: column; align-items: center; justify-content: center; color: white;";
+                  const icon = document.createElement("div");
+                  icon.style.cssText = "font-size: 48px; margin-bottom: 8px;";
+                  icon.textContent = "▶️";
+                  const text = document.createElement("div");
+                  text.style.cssText = "font-size: 14px; opacity: 0.9;";
+                  text.textContent = config?.title || "Video Player";
+                  placeholder.appendChild(icon);
+                  placeholder.appendChild(text);
+                  div.appendChild(placeholder);
+                  return div;
+                },
+                renderDragClone: () => {
+                  const div = document.createElement("div");
+                  div.style.cssText =
+                    "padding: 12px; background: linear-gradient(135deg, #1e3c72 0%, #2a5298 50%, #1e3c72 100%); border: 2px dashed #fff; border-radius: 4px; width: 100%; height: 100%; box-sizing: border-box; opacity: 0.95; display: flex; align-items: center; justify-content: center; color: white;";
+                  const span = document.createElement("span");
+                  span.style.cssText =
+                    "font-size: 18px; font-weight: 600; text-shadow: 0 2px 4px rgba(0,0,0,0.3);";
+                  span.textContent = "🎥 Video";
+                  div.appendChild(span);
+                  return div;
+                },
+              };
+
+              // Register the new component
+              // Palette will automatically update via Observable pattern
+              api.registerComponent(videoComponent);
+              console.log(
+                "✅ Registered Video component - palette updates automatically!",
+              );
+            }}
+            style="padding: 8px 16px; background: #2a5298; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; font-weight: 500;"
+          >
+            ➕ Add Video Component
+          </button>
+
+          <button
+            @click=${() => {
+              // Use clean API method to get components
+              const api = window[apiKey];
+              const components = api.getComponents();
+              const componentNames = components.map((c) => c.name).join(", ");
+              console.log("Current components:", components);
+              alert(
+                `Registered components (${components.length}): ${componentNames}`,
+              );
+            }}
+            style="padding: 8px 16px; background: #6c757d; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; font-weight: 500;"
+          >
+            📋 List Components
+          </button>
+        </div>
+
+        <div
+          style="margin-top: 12px; padding: 12px; background: #e3f2fd; border-left: 4px solid #2196F3; border-radius: 4px;"
+        >
+          <p
+            style="margin: 0; font-size: 13px; color: #1565c0; line-height: 1.5;"
+          >
+            <strong>💡 Try this:</strong> Click buttons above to register new
+            component types. Watch the palette update automatically. Drag the
+            newly added components to see their custom drag clones in action!
+          </p>
+        </div>
+      </div>
+
+      <!-- Grid Builder with Palette -->
+      <div style="flex: 1; display: flex; overflow: hidden;">
+        <div
+          style="width: 250px; flex-shrink: 0; border-right: 1px solid #ddd; background: #f5f5f5; overflow-y: auto;"
+        >
+          ${paletteEl}
+        </div>
+        <div style="flex: 1; overflow: hidden;">${builderEl}</div>
+      </div>
+    </div>
+  `;
+};
+
+DynamicComponentRegistration.parameters = {
+  docs: {
+    description: {
+      story: `
+## Dynamic Component Registration
+
+This story demonstrates the power of ComponentRegistry for runtime component registration.
+
+### Features
+
+1. **Runtime Registration**: Add components after grid-builder initialization
+2. **Custom Drag Clones**: Each component defines its own drag preview
+3. **Automatic Palette Update**: Uses Observable pattern - palette subscribes to ComponentRegistry changes
+4. **Full Functionality**: Dynamically added components work like built-in ones
+5. **No Manual Sync Required**: Call api.registerComponent and palette updates automatically via reactive observer pattern
+
+### Component Registration API
+
+\`\`\`typescript
+// Get API reference
+const api = window.gridBuilderAPI;
+
+// Define new component with renderDragClone
+const newComponent = {
+  type: 'image',
+  name: 'Image',
+  icon: '🖼️',
+  defaultSize: { width: 20, height: 15 },
+
+  // Component render function
+  render: ({ itemId: _itemId, config }) => {
+    const div = document.createElement('div');
+    // ... create component UI
+    return div;
+  },
+
+  // Drag clone shows during palette drag
+  renderDragClone: () => {
+    const div = document.createElement('div');
+    div.style.cssText = 'border: 2px dashed #667eea; opacity: 0.9;';
+    div.textContent = '🖼️ Image';
+    return div;
+  }
+};
+
+// Register at runtime
+api.registerComponent(newComponent);
+\`\`\`
+
+### renderDragClone Best Practices
+
+**Purpose**: Show lightweight preview during drag operation
+
+**Design Tips**:
+- Keep it simple (icon + text, no complex layouts)
+- Use dashed borders to indicate "in-flight" state
+- Lower opacity (0.8-0.9) to show it's temporary
+- Match component's visual identity (colors, icon)
+
+**Performance**: renderDragClone only renders during drag, not after drop. This keeps drag operations smooth even with complex components.
+
+### Use Cases
+
+**Permission-Based Components**:
+\`\`\`typescript
+// Show advanced components only to power users
+if (user.isPowerUser) {
+  api.registerComponent(advancedChartComponent);
+  api.registerComponent(customCodeComponent);
+}
+\`\`\`
+
+**Plugin Systems**:
+\`\`\`typescript
+// Load plugins and register their components
+async function loadPlugin(pluginUrl) {
+  const plugin = await import(pluginUrl);
+  plugin.components.forEach(comp => {
+    api.registerComponent(comp);
+  });
+}
+\`\`\`
+
+**A/B Testing**:
+\`\`\`typescript
+// Feature-gate experimental components
+if (featureFlags.experimentalCharts) {
+  api.registerComponent(newChartComponent);
+}
+\`\`\`
+
+### Architecture Notes
+
+**Instance-Based**: Each grid-builder has its own ComponentRegistry, so multiple grids on the same page can have different component sets.
+
+**Type Safety**: TypeScript validates component definitions at compile time, preventing runtime errors.
+
+**No Re-renders**: Adding components doesn't re-render existing items, only updates the palette.
+
+### Try It
+
+1. Click "Add Image Component" - **palette updates automatically** via Observable pattern
+2. Drag from palette - see the custom drag clone (dashed border)
+3. Drop on canvas - component renders with full functionality
+4. Add more components - **no manual sync needed**, palette subscribes to registry changes
+5. Click "List Components" - see all registered types
+
+**Observable Pattern in Action**: The component-palette subscribes to ComponentRegistry via onChange. When api.registerComponent is called, the registry notifies all subscribers, triggering automatic palette re-render with the new component.
       `.trim(),
     },
   },
