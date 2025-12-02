@@ -154,15 +154,7 @@
  * @module undo-redo-commands
  */
 
-import {
-  addItemToCanvas,
-  GridItem,
-  gridState,
-  setItemZIndex,
-  updateItem as updateItemInState,
-  deleteItemsBatch,
-  updateItemsBatch,
-} from "./state-manager";
+import { GridItem } from "./state-manager";
 import { Command } from "./undo-redo";
 import { EventManager } from "./event-manager";
 import { createDebugLogger } from "../utils/debug";
@@ -203,7 +195,11 @@ const debug = createDebugLogger("undo-redo-commands");
  * }
  * ```
  */
-function removeItemFromCanvas(canvasId: string, itemId: string, state: any): void {
+function removeItemFromCanvas(
+  canvasId: string,
+  itemId: string,
+  state: any,
+): void {
   const canvas = state.canvases[canvasId];
   if (!canvas) {
     return;
@@ -521,7 +517,12 @@ export class DeleteItemCommand implements Command {
    * @param itemIndex - Original array index (call indexOf before deletion!)
    * @param stateInstance - GridState instance
    */
-  constructor(canvasId: string, item: GridItem, itemIndex: number, stateInstance: any) {
+  constructor(
+    canvasId: string,
+    item: GridItem,
+    itemIndex: number,
+    stateInstance: any,
+  ) {
     this.canvasId = canvasId;
     // Deep clone the item to capture its state before deletion
     this.item = JSON.parse(JSON.stringify(item));
@@ -1212,8 +1213,8 @@ export class BatchAddCommand implements Command {
     this.itemsData = itemIds
       .map((id) => {
         const item = Object.values(this.stateInstance.canvases)
-          .flatMap((canvas) => canvas.items)
-          .find((i) => i.id === id);
+          .flatMap((canvas: any) => canvas.items)
+          .find((i: any) => i.id === id);
         return item ? JSON.parse(JSON.stringify(item)) : null;
       })
       .filter(Boolean) as GridItem[];
@@ -1273,14 +1274,16 @@ export class BatchAddCommand implements Command {
  */
 export class BatchDeleteCommand implements Command {
   private itemsData: GridItem[];
+  private stateInstance: any;
 
-  constructor(itemIds: string[]) {
+  constructor(itemIds: string[], stateInstance: any) {
+    this.stateInstance = stateInstance;
     // Store full item data for undo (deep clone to prevent mutations)
     this.itemsData = itemIds
       .map((id) => {
-        const item = Object.values(gridState.canvases)
-          .flatMap((canvas) => canvas.items)
-          .find((i) => i.id === id);
+        const item = Object.values(this.stateInstance.canvases)
+          .flatMap((canvas: any) => canvas.items)
+          .find((i: any) => i.id === id);
         return item ? JSON.parse(JSON.stringify(item)) : null;
       })
       .filter(Boolean) as GridItem[];
@@ -1288,7 +1291,7 @@ export class BatchDeleteCommand implements Command {
 
   undo(): void {
     // Re-add all items (same logic as BatchAddCommand.redo)
-    const updatedCanvases = { ...gridState.canvases };
+    const updatedCanvases = { ...this.stateInstance.canvases };
 
     for (const itemData of this.itemsData) {
       const canvas = updatedCanvases[itemData.canvasId];
@@ -1301,13 +1304,20 @@ export class BatchDeleteCommand implements Command {
       }
     }
 
-    gridState.canvases = updatedCanvases;
+    this.stateInstance.canvases = updatedCanvases;
   }
 
   redo(): void {
     // Delete all items in one batch
     const itemIds = this.itemsData.map((item) => item.id);
-    deleteItemsBatch(itemIds);
+
+    // Manual delete logic for instance-based state
+    const updatedCanvases = { ...this.stateInstance.canvases };
+    for (const canvasId in updatedCanvases) {
+      const canvas = updatedCanvases[canvasId];
+      canvas.items = canvas.items.filter((item) => !itemIds.includes(item.id));
+    }
+    this.stateInstance.canvases = updatedCanvases;
   }
 }
 
@@ -1337,6 +1347,7 @@ export class BatchUpdateConfigCommand implements Command {
     oldItem: GridItem;
     newItem: GridItem;
   }[];
+  private stateInstance: any;
 
   constructor(
     updates: {
@@ -1344,11 +1355,13 @@ export class BatchUpdateConfigCommand implements Command {
       canvasId: string;
       updates: Partial<GridItem>;
     }[],
+    stateInstance: any,
   ) {
+    this.stateInstance = stateInstance;
     // Store old and new state for each item (deep clone to prevent mutations)
     this.updates = updates
       .map(({ itemId, canvasId, updates: itemUpdates }) => {
-        const canvas = gridState.canvases[canvasId];
+        const canvas = this.stateInstance.canvases[canvasId];
         const item = canvas?.items.find((i) => i.id === itemId);
 
         if (!item) {
@@ -1372,22 +1385,28 @@ export class BatchUpdateConfigCommand implements Command {
 
   undo(): void {
     // Restore old configs
-    const batchUpdates = this.updates.map(({ itemId, canvasId, oldItem }) => ({
-      itemId,
-      canvasId,
-      updates: oldItem,
-    }));
-    updateItemsBatch(batchUpdates);
+    const updatedCanvases = { ...this.stateInstance.canvases };
+    this.updates.forEach(({ itemId, canvasId, oldItem }) => {
+      const canvas = updatedCanvases[canvasId];
+      const item = canvas?.items.find((i) => i.id === itemId);
+      if (item) {
+        Object.assign(item, oldItem);
+      }
+    });
+    this.stateInstance.canvases = updatedCanvases;
   }
 
   redo(): void {
     // Apply new configs
-    const batchUpdates = this.updates.map(({ itemId, canvasId, newItem }) => ({
-      itemId,
-      canvasId,
-      updates: newItem,
-    }));
-    updateItemsBatch(batchUpdates);
+    const updatedCanvases = { ...this.stateInstance.canvases };
+    this.updates.forEach(({ itemId, canvasId, newItem }) => {
+      const canvas = updatedCanvases[canvasId];
+      const item = canvas?.items.find((i) => i.id === itemId);
+      if (item) {
+        Object.assign(item, newItem);
+      }
+    });
+    this.stateInstance.canvases = updatedCanvases;
   }
 }
 
@@ -1455,7 +1474,9 @@ export class AddCanvasCommand implements Command {
 
     // Emit event so host app can sync its metadata
     debug.log("  📢 Emitting canvasRemoved event for:", this.canvasId);
-    this.eventManagerInstance.emit("canvasRemoved", { canvasId: this.canvasId });
+    this.eventManagerInstance.emit("canvasRemoved", {
+      canvasId: this.canvasId,
+    });
   }
 
   redo(): void {
@@ -1550,7 +1571,9 @@ export class RemoveCanvasCommand implements Command {
       this.stateInstance.canvases = { ...this.stateInstance.canvases };
 
       // Emit event so host app can sync its metadata
-      this.eventManagerInstance.emit("canvasAdded", { canvasId: this.canvasId });
+      this.eventManagerInstance.emit("canvasAdded", {
+        canvasId: this.canvasId,
+      });
     }
   }
 
@@ -1562,7 +1585,9 @@ export class RemoveCanvasCommand implements Command {
     this.stateInstance.canvases = { ...this.stateInstance.canvases };
 
     // Emit event so host app can sync its metadata
-    this.eventManagerInstance.emit("canvasRemoved", { canvasId: this.canvasId });
+    this.eventManagerInstance.emit("canvasRemoved", {
+      canvasId: this.canvasId,
+    });
   }
 }
 
@@ -1595,9 +1620,8 @@ export class RemoveCanvasCommand implements Command {
  * - Emits events for layer panel to update
  *
  * **Instance-based architecture**:
- * - Accepts optional stateInstance parameter for multi-instance support
- * - Falls back to singleton gridState if not provided (backward compatibility)
- * - Operates on instance state instead of global singleton
+ * - Requires stateInstance parameter for multi-instance support
+ * - Operates on instance state
  *
  * **Example usage**:
  * ```typescript
@@ -1607,9 +1631,6 @@ export class RemoveCanvasCommand implements Command {
  *   eventManager,
  *   stateInstance
  * );
- *
- * // Singleton-based (backward compatibility)
- * const cmd = new ChangeZIndexCommand(changes, eventManager);
  * ```
  *
  * **Edge case handling**:
@@ -1627,7 +1648,7 @@ export class ChangeZIndexCommand implements Command {
     newZIndex: number;
   }[];
   private eventManager: EventManager;
-  private stateInstance: any; // GridState instance (or null for singleton)
+  private stateInstance: any; // GridState instance
 
   constructor(
     changes: {
@@ -1637,11 +1658,11 @@ export class ChangeZIndexCommand implements Command {
       newZIndex: number;
     }[],
     eventManager: EventManager,
-    stateInstance?: any,
+    stateInstance: any,
   ) {
     this.changes = changes;
     this.eventManager = eventManager;
-    this.stateInstance = stateInstance || null;
+    this.stateInstance = stateInstance;
 
     // Descriptive message for command history
     if (changes.length === 1) {
@@ -1653,12 +1674,9 @@ export class ChangeZIndexCommand implements Command {
   }
 
   undo(): void {
-    // Get the state to operate on (instance or singleton)
-    const state = this.stateInstance || gridState;
-
     // Restore old z-index for all affected items
     this.changes.forEach((change) => {
-      const canvas = state.canvases[change.canvasId];
+      const canvas = this.stateInstance.canvases[change.canvasId];
       const item = canvas?.items.find((i) => i.id === change.itemId);
       if (item) {
         item.zIndex = change.oldZIndex;
@@ -1669,7 +1687,7 @@ export class ChangeZIndexCommand implements Command {
     });
 
     // Trigger reactivity
-    state.canvases = { ...state.canvases };
+    this.stateInstance.canvases = { ...this.stateInstance.canvases };
 
     // Emit single event (batch or individual based on change count)
     if (this.changes.length === 1) {
@@ -1694,12 +1712,9 @@ export class ChangeZIndexCommand implements Command {
   }
 
   redo(): void {
-    // Get the state to operate on (instance or singleton)
-    const state = this.stateInstance || gridState;
-
     // Reapply new z-index for all affected items
     this.changes.forEach((change) => {
-      const canvas = state.canvases[change.canvasId];
+      const canvas = this.stateInstance.canvases[change.canvasId];
       const item = canvas?.items.find((i) => i.id === change.itemId);
       if (item) {
         item.zIndex = change.newZIndex;
@@ -1710,7 +1725,7 @@ export class ChangeZIndexCommand implements Command {
     });
 
     // Trigger reactivity
-    state.canvases = { ...state.canvases };
+    this.stateInstance.canvases = { ...this.stateInstance.canvases };
 
     // Emit single event (batch or individual based on change count)
     if (this.changes.length === 1) {
