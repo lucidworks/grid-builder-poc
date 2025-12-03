@@ -25,6 +25,7 @@ Rendering-only canvas component for grid-viewer.
 | `componentRegistry`            | --                 | Component registry (from parent grid-viewer)  **Source**: grid-viewer component **Structure**: ComponentRegistry service instance **Purpose**: Pass to grid-item-wrapper for dynamic rendering                                                                                                                           | `ComponentRegistry`      | `undefined` |
 | `config`                       | --                 | Grid configuration options  **Optional**: Customizes grid system behavior **Passed from**: grid-viewer component                                                                                                                                                                                                         | `GridConfig`             | `undefined` |
 | `currentViewport` _(required)_ | `current-viewport` | Current viewport mode  **Required**: 'desktop' \| 'mobile' **Source**: Passed from grid-viewer component  **Purpose**: Determines which layout to render for each item                                                                                                                                                   | `"desktop" \| "mobile"`  | `undefined` |
+| `errorAdapterInstance`         | --                 | Error adapter service instance (passed from grid-viewer)  **Optional**: Provided by grid-viewer if error handling needed **Purpose**: Support error boundary integration for item render errors **Viewer mode**: May be undefined (simplified error handling without event emission)                                     | `GridErrorAdapter`       | `undefined` |
 | `items` _(required)_           | --                 | Items to render in this canvas  **Required**: Array of GridItem objects **Source**: Passed from grid-viewer component  **Unlike canvas-section**: Items passed via props, not from global state                                                                                                                          | `GridItem[]`             | `undefined` |
 | `stateInstance`                | `state-instance`   | State instance (viewer state with editing fields set to null)  **Optional**: Provided by grid-viewer to eliminate defensive guards in grid-item-wrapper **Purpose**: Provide minimal state object matching StateManager structure **Value**: ViewerState with selectedItemId/selectedCanvasId/activeCanvasId always null | `any`                    | `undefined` |
 | `virtualRendererInstance`      | --                 | Virtual renderer service instance (passed from grid-builder)  **Optional**: Provided by grid-viewer if virtual rendering enabled **Purpose**: Lazy loading of grid items for better performance                                                                                                                          | `VirtualRendererService` | `undefined` |
@@ -38,12 +39,15 @@ Rendering-only canvas component for grid-viewer.
 
 ### Depends on
 
+- [error-boundary](../error-boundary)
 - [grid-item-wrapper](../grid-item-wrapper)
 
 ### Graph
 ```mermaid
 graph TD;
+  canvas-section-viewer --> error-boundary
   canvas-section-viewer --> grid-item-wrapper
+  grid-item-wrapper --> error-boundary
   grid-viewer --> canvas-section-viewer
   style canvas-section-viewer fill:#f9f,stroke:#333,stroke-width:4px
 ```

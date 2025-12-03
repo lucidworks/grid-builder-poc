@@ -47,7 +47,9 @@ Rendering-only grid component for displaying layouts created in grid-builder.
 ```mermaid
 graph TD;
   grid-viewer --> canvas-section-viewer
+  canvas-section-viewer --> error-boundary
   canvas-section-viewer --> grid-item-wrapper
+  grid-item-wrapper --> error-boundary
   blog-app --> grid-viewer
   style grid-viewer fill:#f9f,stroke:#333,stroke-width:4px
 ```

@@ -49,6 +49,7 @@ import { calculateCanvasHeightFromItems } from "../../utils/canvas-height-calcul
 import { GridConfig } from "../../types/grid-config";
 import { VirtualRendererService } from "../../services/virtual-renderer";
 import { ComponentRegistry } from "../../services/component-registry";
+import { GridErrorAdapter } from "../../services/grid-error-adapter";
 
 /**
  * CanvasSectionViewer Component
@@ -135,6 +136,15 @@ export class CanvasSectionViewer {
    * **Value**: ViewerState with selectedItemId/selectedCanvasId/activeCanvasId always null
    */
   @Prop() stateInstance?: any;
+
+  /**
+   * Error adapter service instance (passed from grid-viewer)
+   *
+   * **Optional**: Provided by grid-viewer if error handling needed
+   * **Purpose**: Support error boundary integration for item render errors
+   * **Viewer mode**: May be undefined (simplified error handling without event emission)
+   */
+  @Prop() errorAdapterInstance?: GridErrorAdapter;
 
   /**
    * Render version counter (forces re-renders)
@@ -337,21 +347,50 @@ export class CanvasSectionViewer {
           }}
           ref={(el) => (this.gridContainerRef = el)}
         >
-          {/* Grid items rendered by grid-item-wrapper components */}
-          {this.items?.map((item: GridItem) => (
-            <grid-item-wrapper
-              key={item.id}
-              item={item}
-              renderVersion={this.renderVersion}
-              config={this.config}
-              componentRegistry={this.componentRegistry}
-              viewerMode
-              currentViewport={this.currentViewport}
-              canvasItems={this.items}
-              virtualRendererInstance={this.virtualRendererInstance}
-              stateInstance={this.stateInstance}
-            />
-          ))}
+          {/* Error boundary wraps canvas content for canvas-level error isolation */}
+          {this.errorAdapterInstance ? (
+            <error-boundary
+              {...this.errorAdapterInstance.createErrorBoundaryConfig(
+                "canvas-section",
+                {
+                  canvasId: this.canvasId,
+                },
+              )}
+            >
+              {/* Grid items rendered by grid-item-wrapper components */}
+              {this.items?.map((item: GridItem) => (
+                <grid-item-wrapper
+                  key={item.id}
+                  item={item}
+                  renderVersion={this.renderVersion}
+                  config={this.config}
+                  componentRegistry={this.componentRegistry}
+                  viewerMode
+                  currentViewport={this.currentViewport}
+                  canvasItems={this.items}
+                  virtualRendererInstance={this.virtualRendererInstance}
+                  stateInstance={this.stateInstance}
+                  errorAdapterInstance={this.errorAdapterInstance}
+                />
+              ))}
+            </error-boundary>
+          ) : (
+            /* Canvas content without error boundary (optional for viewer mode) */
+            this.items?.map((item: GridItem) => (
+              <grid-item-wrapper
+                key={item.id}
+                item={item}
+                renderVersion={this.renderVersion}
+                config={this.config}
+                componentRegistry={this.componentRegistry}
+                viewerMode
+                currentViewport={this.currentViewport}
+                canvasItems={this.items}
+                virtualRendererInstance={this.virtualRendererInstance}
+                stateInstance={this.stateInstance}
+              />
+            ))
+          )}
         </div>
       </div>
     );
