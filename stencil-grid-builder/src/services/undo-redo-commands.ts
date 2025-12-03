@@ -367,13 +367,12 @@ export class AddItemCommand implements Command {
 
   /**
    * Get description of this command
-   *
    * @returns Object with action type, position, and item details
    */
   getDescription() {
     const { x, y, width, height } = this.item.layouts.desktop;
     return {
-      action: 'add',
+      action: "add",
       type: this.item.type,
       position: { x, y },
       size: { width, height },
@@ -600,13 +599,12 @@ export class DeleteItemCommand implements Command {
 
   /**
    * Get description of this command
-   *
    * @returns Object with action type, position, and item details
    */
   getDescription() {
     const { x, y, width, height } = this.item.layouts.desktop;
     return {
-      action: 'delete',
+      action: "delete",
       type: this.item.type,
       position: { x, y },
       size: { width, height },
@@ -850,6 +848,9 @@ export class MoveItemCommand implements Command {
   /** GridState instance for multi-instance support */
   private stateInstance: any;
 
+  /** Active viewport during operation ('desktop' | 'mobile') - determines which layout to restore on undo/redo */
+  private activeViewport: "desktop" | "mobile";
+
   /**
    * Capture item move operation
    *
@@ -867,6 +868,10 @@ export class MoveItemCommand implements Command {
    *
    * **Instance-based architecture**:
    * - Requires stateInstance parameter for multi-instance support
+   *
+   * **Viewport isolation**:
+   * - activeViewport parameter determines which layout (desktop/mobile) to restore on undo/redo
+   * - Only the specified viewport's layout is modified, the other viewport remains untouched
    * @param itemId - ID of moved item
    * @param sourceCanvasId - Canvas where item started
    * @param targetCanvasId - Canvas where item ended
@@ -878,6 +883,9 @@ export class MoveItemCommand implements Command {
    * @param sourceSize - Optional: Size before operation (for resize tracking)
    * @param targetSize - Optional: Size after operation (for resize tracking)
    * @param stateInstance - GridState instance
+   * @param activeViewport - Which viewport was active during operation ('desktop' | 'mobile')
+   * @param sourceMobileLayout - Optional: Mobile layout before operation (for complete state tracking)
+   * @param targetMobileLayout - Optional: Mobile layout after operation (for complete state tracking)
    */
   constructor(
     itemId: string,
@@ -891,6 +899,7 @@ export class MoveItemCommand implements Command {
     sourceSize: { width: number; height: number } | undefined,
     targetSize: { width: number; height: number } | undefined,
     stateInstance: any,
+    activeViewport: "desktop" | "mobile",
     sourceMobileLayout?: {
       x: number | null;
       y: number | null;
@@ -916,13 +925,14 @@ export class MoveItemCommand implements Command {
     this.targetZIndex = targetZIndex;
     this.sourceSize = sourceSize ? { ...sourceSize } : undefined;
     this.targetSize = targetSize ? { ...targetSize } : undefined;
+    this.stateInstance = stateInstance;
+    this.activeViewport = activeViewport;
     this.sourceMobileLayout = sourceMobileLayout
       ? { ...sourceMobileLayout }
       : undefined;
     this.targetMobileLayout = targetMobileLayout
       ? { ...targetMobileLayout }
       : undefined;
-    this.stateInstance = stateInstance;
   }
 
   /**
@@ -979,33 +989,38 @@ export class MoveItemCommand implements Command {
     }
 
     debug.log("  📍 Found item, current position:", {
-      x: item.layouts.desktop.x,
-      y: item.layouts.desktop.y,
+      viewport: this.activeViewport,
+      x: item.layouts[this.activeViewport].x,
+      y: item.layouts[this.activeViewport].y,
     });
 
     // Remove from current canvas (wherever it is)
     targetCanvas.items = targetCanvas.items.filter((i) => i.id !== this.itemId);
 
-    // Update item's position, z-index, and canvasId back to source
+    // Update item's canvasId and z-index back to source
     item.canvasId = this.sourceCanvasId;
-    item.layouts.desktop.x = this.sourcePosition.x;
-    item.layouts.desktop.y = this.sourcePosition.y;
     item.zIndex = this.sourceZIndex;
 
+    // Restore position for the active viewport only (viewport isolation)
+    item.layouts[this.activeViewport].x = this.sourcePosition.x;
+    item.layouts[this.activeViewport].y = this.sourcePosition.y;
+
     debug.log("  ✅ Updated item position and z-index to:", {
-      x: item.layouts.desktop.x,
-      y: item.layouts.desktop.y,
+      viewport: this.activeViewport,
+      x: item.layouts[this.activeViewport].x,
+      y: item.layouts[this.activeViewport].y,
       zIndex: item.zIndex,
     });
 
-    // Restore size if it was tracked (for resize operations)
+    // Restore size for the active viewport only (for resize operations)
     if (this.sourceSize) {
-      item.layouts.desktop.width = this.sourceSize.width;
-      item.layouts.desktop.height = this.sourceSize.height;
+      item.layouts[this.activeViewport].width = this.sourceSize.width;
+      item.layouts[this.activeViewport].height = this.sourceSize.height;
     }
 
-    // Restore mobile layout if it was tracked
-    if (this.sourceMobileLayout) {
+    // Restore full mobile layout ONLY if we're undoing a desktop operation
+    // (Mobile operations already restored mobile via activeViewport logic above)
+    if (this.activeViewport === "desktop" && this.sourceMobileLayout) {
       item.layouts.mobile = { ...this.sourceMobileLayout };
     }
 
@@ -1078,33 +1093,38 @@ export class MoveItemCommand implements Command {
     }
 
     debug.log("  📍 Found item, current position:", {
-      x: item.layouts.desktop.x,
-      y: item.layouts.desktop.y,
+      viewport: this.activeViewport,
+      x: item.layouts[this.activeViewport].x,
+      y: item.layouts[this.activeViewport].y,
     });
 
     // Remove from source canvas
     sourceCanvas.items = sourceCanvas.items.filter((i) => i.id !== this.itemId);
 
-    // Update item's position, z-index, and canvasId to target
+    // Update item's canvasId and z-index to target
     item.canvasId = this.targetCanvasId;
-    item.layouts.desktop.x = this.targetPosition.x;
-    item.layouts.desktop.y = this.targetPosition.y;
     item.zIndex = this.targetZIndex;
 
+    // Restore position for the active viewport only (viewport isolation)
+    item.layouts[this.activeViewport].x = this.targetPosition.x;
+    item.layouts[this.activeViewport].y = this.targetPosition.y;
+
     debug.log("  ✅ Updated item position and z-index to:", {
-      x: item.layouts.desktop.x,
-      y: item.layouts.desktop.y,
+      viewport: this.activeViewport,
+      x: item.layouts[this.activeViewport].x,
+      y: item.layouts[this.activeViewport].y,
       zIndex: item.zIndex,
     });
 
-    // Restore size if it was tracked (for resize operations)
+    // Restore size for the active viewport only (for resize operations)
     if (this.targetSize) {
-      item.layouts.desktop.width = this.targetSize.width;
-      item.layouts.desktop.height = this.targetSize.height;
+      item.layouts[this.activeViewport].width = this.targetSize.width;
+      item.layouts[this.activeViewport].height = this.targetSize.height;
     }
 
-    // Restore mobile layout if it was tracked
-    if (this.targetMobileLayout) {
+    // Restore full mobile layout ONLY if we're redoing a desktop operation
+    // (Mobile operations already restored mobile via activeViewport logic above)
+    if (this.activeViewport === "desktop" && this.targetMobileLayout) {
       item.layouts.mobile = { ...this.targetMobileLayout };
     }
 
@@ -1135,7 +1155,6 @@ export class MoveItemCommand implements Command {
    * Get description of this command
    *
    * **Detects resize vs move**: Returns different action based on whether size changed
-   *
    * @returns Object with action type, source/target positions and sizes
    */
   getDescription() {
@@ -1147,7 +1166,7 @@ export class MoveItemCommand implements Command {
         this.sourceSize.height !== this.targetSize.height);
 
     return {
-      action: isResize ? 'resize' : 'move',
+      action: isResize ? "resize" : "move",
       source: {
         position: this.sourcePosition,
         size: this.sourceSize,
@@ -1201,7 +1220,7 @@ export class UpdateItemCommand implements Command {
 
   getDescription() {
     return {
-      action: 'update',
+      action: "update",
       itemId: this.itemId,
       updates: this.updates,
     };
@@ -1242,7 +1261,7 @@ export class RemoveItemCommand implements Command {
   getDescription() {
     const { x, y, width, height } = this.item.layouts.desktop;
     return {
-      action: 'remove',
+      action: "remove",
       type: this.item.type,
       position: { x, y },
       size: { width, height },
@@ -1279,7 +1298,7 @@ export class SetViewportCommand implements Command {
 
   getDescription() {
     return {
-      action: 'setViewport',
+      action: "setViewport",
       oldViewport: this.oldViewport,
       newViewport: this.newViewport,
     };
@@ -1315,7 +1334,7 @@ export class ToggleGridCommand implements Command {
 
   getDescription() {
     return {
-      action: 'toggleGrid',
+      action: "toggleGrid",
       oldValue: this.oldValue,
       newValue: this.newValue,
     };
@@ -1393,7 +1412,7 @@ export class BatchAddCommand implements Command {
 
   getDescription() {
     return {
-      action: 'batchAdd',
+      action: "batchAdd",
       itemCount: this.itemsData.length,
       items: this.itemsData.map((item) => ({
         id: item.id,
@@ -1478,7 +1497,7 @@ export class BatchDeleteCommand implements Command {
 
   getDescription() {
     return {
-      action: 'batchDelete',
+      action: "batchDelete",
       itemCount: this.itemsData.length,
       items: this.itemsData.map((item) => ({
         id: item.id,
@@ -1583,7 +1602,7 @@ export class BatchUpdateConfigCommand implements Command {
 
   getDescription() {
     return {
-      action: 'batchUpdateConfig',
+      action: "batchUpdateConfig",
       updateCount: this.updates.length,
       updates: this.updates.map(({ itemId, canvasId, oldItem, newItem }) => ({
         itemId,
@@ -1680,7 +1699,7 @@ export class AddCanvasCommand implements Command {
 
   getDescription() {
     return {
-      action: 'addCanvas',
+      action: "addCanvas",
       canvasId: this.canvasId,
     };
   }
@@ -1784,7 +1803,7 @@ export class RemoveCanvasCommand implements Command {
 
   getDescription() {
     return {
-      action: 'removeCanvas',
+      action: "removeCanvas",
       canvasId: this.canvasId,
       itemCount: this.canvasSnapshot?.items.length || 0,
     };
@@ -1951,7 +1970,7 @@ export class ChangeZIndexCommand implements Command {
 
   getDescription() {
     return {
-      action: 'changeZIndex',
+      action: "changeZIndex",
       changeCount: this.changes.length,
       changes: this.changes.map((change) => ({
         itemId: change.itemId,

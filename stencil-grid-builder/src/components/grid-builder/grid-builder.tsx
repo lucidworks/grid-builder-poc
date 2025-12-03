@@ -1064,6 +1064,7 @@ export class GridBuilder {
         undefined, // sourceSize (not tracked for drag operations)
         undefined, // targetSize (not tracked for drag operations)
         this.stateManager!.state, // Pass instance state
+        this.stateManager!.state.currentViewport, // Pass active viewport for viewport-specific undo/redo
         sourceMobileLayout, // Mobile layout (unchanged during cross-canvas move)
         sourceMobileLayout, // Mobile layout (unchanged during cross-canvas move)
       );
@@ -1304,6 +1305,7 @@ export class GridBuilder {
         undefined, // sourceSize (not tracked for nudge operations)
         undefined, // targetSize (not tracked for nudge operations)
         this.stateManager!.state, // Pass instance state
+        viewport, // Pass active viewport for viewport-specific undo/redo
         mobileLayout, // Mobile layout (unchanged during keyboard nudge)
         mobileLayout, // Mobile layout (unchanged during keyboard nudge)
       );
@@ -1821,12 +1823,13 @@ export class GridBuilder {
         const description = this.undoRedoManager?.undo();
         // Emit event with structured description (coordinates and dimensions)
         if (description) {
-          const actionType = typeof description === 'object' && 'action' in description
-            ? (description as any).action
-            : 'undo';
+          const actionType =
+            typeof description === "object" && "action" in description
+              ? (description as any).action
+              : "undo";
           this.eventManagerInstance?.emit("undoExecuted", {
             description,
-            actionType
+            actionType,
           });
         }
       },
@@ -1835,12 +1838,13 @@ export class GridBuilder {
         const description = this.undoRedoManager?.redo();
         // Emit event with structured description (coordinates and dimensions)
         if (description) {
-          const actionType = typeof description === 'object' && 'action' in description
-            ? (description as any).action
-            : 'redo';
+          const actionType =
+            typeof description === "object" && "action" in description
+              ? (description as any).action
+              : "redo";
           this.eventManagerInstance?.emit("redoExecuted", {
             description,
-            actionType
+            actionType,
           });
         }
       },
@@ -1935,13 +1939,18 @@ export class GridBuilder {
           (i) => i.id === itemId,
         );
         const sourceZIndex = item.zIndex;
+
+        // Get current viewport to use viewport-specific positions
+        const currentViewport = this.stateManager!.state.currentViewport;
+        const currentLayout = item.layouts[currentViewport];
+
         const sourcePosition = {
-          x: item.layouts.desktop.x,
-          y: item.layouts.desktop.y,
+          x: currentLayout.x,
+          y: currentLayout.y,
         };
         const targetPosition = {
-          x: item.layouts.desktop.x,
-          y: item.layouts.desktop.y,
+          x: currentLayout.x,
+          y: currentLayout.y,
         };
         const mobileLayout = {
           x: item.layouts.mobile.x,
@@ -1973,6 +1982,7 @@ export class GridBuilder {
           undefined, // sourceSize (not tracked for simple moves)
           undefined, // targetSize (not tracked for simple moves)
           this.stateManager!.state, // Pass instance state
+          currentViewport, // Pass active viewport for viewport-specific undo/redo
           mobileLayout, // Mobile layout (unchanged during API move)
           mobileLayout, // Mobile layout (unchanged during API move)
         );

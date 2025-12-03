@@ -34,7 +34,7 @@ class MockCommand implements Command {
   }
 
   getDescription(): string {
-    return 'Mock command for testing';
+    return "Mock command for testing";
   }
 }
 

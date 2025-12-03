@@ -267,6 +267,7 @@ describe("undo-redo-commands", () => {
         undefined, // sourceSize
         undefined, // targetSize
         gridState,
+        "desktop",
       );
 
       // Undo should move item back to canvas1
@@ -297,6 +298,7 @@ describe("undo-redo-commands", () => {
         undefined, // sourceSize
         undefined, // targetSize
         gridState,
+        "desktop",
       );
 
       // Redo should move item to canvas2
@@ -326,6 +328,7 @@ describe("undo-redo-commands", () => {
         undefined, // sourceSize
         undefined, // targetSize
         gridState,
+        "desktop",
       );
 
       // Redo should update position
@@ -365,6 +368,7 @@ describe("undo-redo-commands", () => {
         undefined, // sourceSize
         undefined, // targetSize
         gridState,
+        "desktop",
       );
 
       // Undo should restore item2 to index 1 in canvas1
@@ -395,6 +399,7 @@ describe("undo-redo-commands", () => {
         undefined, // sourceSize
         undefined, // targetSize
         gridState,
+        "desktop",
       );
 
       // Undo with invalid index should append to end
@@ -415,6 +420,7 @@ describe("undo-redo-commands", () => {
         undefined, // sourceSize
         undefined, // targetSize
         gridState,
+        "desktop",
       );
 
       // Should not throw error
@@ -441,6 +447,7 @@ describe("undo-redo-commands", () => {
         undefined, // sourceSize
         undefined, // targetSize
         gridState,
+        "desktop",
       );
 
       // Should not throw error
@@ -468,6 +475,7 @@ describe("undo-redo-commands", () => {
         undefined, // sourceSize
         undefined, // targetSize
         gridState,
+        "desktop",
       );
 
       // After redo, item should have canvas2 as canvasId
@@ -502,6 +510,7 @@ describe("undo-redo-commands", () => {
         undefined, // sourceSize
         undefined, // targetSize
         gridState,
+        "desktop",
       );
 
       command.redo();
@@ -534,6 +543,7 @@ describe("undo-redo-commands", () => {
         { width: 20, height: 15 }, // source size
         { width: 30, height: 25 }, // target size
         gridState,
+        "desktop",
       );
 
       // Undo should restore original size
@@ -571,6 +581,7 @@ describe("undo-redo-commands", () => {
         { width: 20, height: 15 }, // source size
         { width: 30, height: 25 }, // target size
         gridState,
+        "desktop",
       );
 
       // Redo should apply new size
@@ -610,6 +621,7 @@ describe("undo-redo-commands", () => {
         { width: 20, height: 15 }, // source size
         { width: 25, height: 20 }, // target size
         gridState,
+        "desktop",
       );
 
       // Redo should apply both position and size changes
@@ -657,6 +669,7 @@ describe("undo-redo-commands", () => {
         { width: 10, height: 6 },
         { width: 20, height: 12 },
         gridState,
+        "desktop",
       );
 
       // Multiple cycles should maintain consistency
@@ -701,6 +714,7 @@ describe("undo-redo-commands", () => {
         undefined, // sourceSize
         undefined, // targetSize
         gridState,
+        "desktop",
       );
 
       // Redo should update position only, size unchanged
@@ -752,6 +766,7 @@ describe("undo-redo-commands", () => {
         undefined, // sourceSize
         undefined, // targetSize
         gridState,
+        "desktop",
       );
       moveCmd.redo();
       expect(gridState.canvases.canvas1.items).toHaveLength(0);

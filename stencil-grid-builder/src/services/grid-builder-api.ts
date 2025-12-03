@@ -518,13 +518,18 @@ export class GridBuilderAPI {
 
     const sourceIndex = sourceCanvas.items.findIndex((i) => i.id === itemId);
     const sourceZIndex = item.zIndex;
+
+    // Get current viewport to use viewport-specific positions
+    const currentViewport = this.stateInstance.currentViewport || "desktop";
+    const currentLayout = item.layouts[currentViewport];
+
     const sourcePosition = {
-      x: item.layouts.desktop.x,
-      y: item.layouts.desktop.y,
+      x: currentLayout.x,
+      y: currentLayout.y,
     };
     const targetPosition = {
-      x: item.layouts.desktop.x,
-      y: item.layouts.desktop.y,
+      x: currentLayout.x,
+      y: currentLayout.y,
     };
 
     // Capture mobile layout for undo/redo
@@ -557,6 +562,7 @@ export class GridBuilderAPI {
       undefined, // sourceSize (not tracked for basic moves)
       undefined, // targetSize (not tracked for basic moves)
       this.stateInstance,
+      currentViewport, // Pass active viewport for viewport-specific undo/redo
       mobileLayout, // sourceMobileLayout (unchanged during API move)
       mobileLayout, // targetMobileLayout (unchanged during API move)
     );
@@ -1444,13 +1450,14 @@ export class GridBuilderAPI {
     const description = undoInternal();
     if (description) {
       // Extract action type from description object or use 'undo' as default
-      const actionType = typeof description === 'object' && 'action' in description
-        ? (description as any).action
-        : 'undo';
+      const actionType =
+        typeof description === "object" && "action" in description
+          ? (description as any).action
+          : "undo";
 
       this.eventEmitter.emit("undoExecuted", {
         description,
-        actionType
+        actionType,
       });
     }
     this.eventEmitter.emit("stateChanged", {} as StateChangedEvent);
@@ -1465,13 +1472,14 @@ export class GridBuilderAPI {
     const description = redoInternal();
     if (description) {
       // Extract action type from description object or use 'redo' as default
-      const actionType = typeof description === 'object' && 'action' in description
-        ? (description as any).action
-        : 'redo';
+      const actionType =
+        typeof description === "object" && "action" in description
+          ? (description as any).action
+          : "redo";
 
       this.eventEmitter.emit("redoExecuted", {
         description,
-        actionType
+        actionType,
       });
     }
     this.eventEmitter.emit("stateChanged", {} as StateChangedEvent);

@@ -283,7 +283,7 @@ class SectionMetadataCommand implements Command {
 
   getDescription() {
     return {
-      action: 'updateSectionMetadata',
+      action: "updateSectionMetadata",
       canvasId: this.canvasId,
       before: this.beforeState,
       after: this.afterState,
