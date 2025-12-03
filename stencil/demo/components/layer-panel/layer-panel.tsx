@@ -33,9 +33,16 @@
  * @module layer-panel
  */
 
-import { Component, h, State, Listen, Element, Prop, Watch } from "@stencil/core";
+import {
+  Component,
+  h,
+  State,
+  Listen,
+  Element,
+  Prop,
+  Watch,
+} from "@stencil/core";
 import { type GridItem } from "../../../services/state-manager";
-import { eventManager } from "../../../services/event-manager";
 
 /**
  * Extended grid item with canvas information for display
@@ -71,19 +78,14 @@ export class LayerPanel {
   @Element() hostElement: HTMLElement;
 
   /**
-   * Grid Builder API instance (Phase 4: Instance-based architecture)
+   * Grid Builder API instance (instance-based architecture)
    *
    * **Required**: Must be provided or component won't display items
    * **Source**: Host app (blog-app) passes this via prop
-   * **Purpose**: Access instance-based state instead of singleton
+   * **Purpose**: Access instance-based state for multi-instance support
    *
-   * **Why needed**: With Phase 4 instance-based architecture, grid-builder
-   * uses its own state instance. The layer panel must access that same
-   * instance, not the singleton, to display items correctly.
-   *
-   * **Migration from singleton**:
-   * - Before: `import { gridState } from '../../services/state-manager'`
-   * - After: `this.api.getState().canvases`
+   * **Why needed**: Grid-builder uses its own state instance. The layer panel
+   * must access that same instance to display items correctly.
    */
   @Prop() api?: any;
 
@@ -291,7 +293,7 @@ export class LayerPanel {
 
     // Initialize virtual scrolling
     this.initializeVirtualScrolling();
-  }
+  };
 
   /**
    * Initialize folder expanded state
@@ -352,15 +354,17 @@ export class LayerPanel {
     const items: LayerItem[] = [];
 
     // Collect all items from all canvases
-    Object.entries(state.canvases).forEach(([canvasId, canvas]: [string, any]) => {
-      console.log(`  Canvas ${canvasId}: ${canvas.items?.length || 0} items`);
-      canvas.items.forEach((item) => {
-        items.push({
-          ...item,
-          canvasId,
+    Object.entries(state.canvases).forEach(
+      ([canvasId, canvas]: [string, any]) => {
+        console.log(`  Canvas ${canvasId}: ${canvas.items?.length || 0} items`);
+        canvas.items.forEach((item) => {
+          items.push({
+            ...item,
+            canvasId,
+          });
         });
-      });
-    });
+      },
+    );
 
     console.log(`  Total items collected: ${items.length}`);
 
@@ -672,6 +676,8 @@ export class LayerPanel {
    *
    * Calculates new z-index and handles cross-canvas movement.
    * Supports Photoshop-like behavior: drop above/below target item.
+   *
+   * Uses GridBuilderAPI methods for proper event emission and undo/redo support.
    */
   @Listen("layer-item-dropped")
   handleLayerItemDropped(
@@ -682,7 +688,16 @@ export class LayerPanel {
       dropAbove: boolean;
     }>,
   ) {
-    if (!this.draggedItem || !this.api) return;
+    console.log("🎯 Layer item dropped", {
+      event: event.detail,
+      draggedItem: this.draggedItem,
+      hasApi: !!this.api,
+    });
+
+    if (!this.draggedItem || !this.api) {
+      console.warn("  ⚠️ No draggedItem or API, aborting");
+      return;
+    }
 
     const state = this.api.getState();
     const { targetItemId, targetCanvasId, targetZIndex, dropAbove } =
@@ -695,31 +710,41 @@ export class LayerPanel {
 
     // Don't drop on self
     if (draggedItemId === targetItemId && draggedCanvasId === targetCanvasId) {
+      console.log("  ℹ️ Dropped on self, ignoring");
       this.draggedItem = null;
       return;
     }
 
+    console.log("  📦 Processing drop:", {
+      draggedItemId,
+      draggedCanvasId,
+      draggedZIndex,
+      targetItemId,
+      targetCanvasId,
+      targetZIndex,
+      dropAbove,
+    });
+
+    // Collect all z-index changes to apply in batch
+    const zIndexChanges: {
+      itemId: string;
+      canvasId: string;
+      newZIndex: number;
+    }[] = [];
+
     // Handle cross-canvas movement
     if (draggedCanvasId !== targetCanvasId) {
-      // Move item to new canvas - direct state manipulation
       const sourceCanvas = state.canvases[draggedCanvasId];
       const targetCanvas = state.canvases[targetCanvasId];
 
       if (!sourceCanvas || !targetCanvas) return;
 
-      const itemIndex = sourceCanvas.items.findIndex(i => i.id === draggedItemId);
-      if (itemIndex === -1) return;
+      // Move item to target canvas using API
+      this.api.moveItem(draggedCanvasId, targetCanvasId, draggedItemId);
 
-      const item = sourceCanvas.items[itemIndex];
-
-      // Remove from source canvas
-      sourceCanvas.items = sourceCanvas.items.filter(i => i.id !== draggedItemId);
-
-      // Add to target canvas
-      targetCanvas.items = [...targetCanvas.items, { ...item, canvasId: targetCanvasId }];
-
-      // Get all items in target canvas sorted by z-index
-      const sortedItems = [...targetCanvas.items].sort(
+      // Get updated state after move
+      const updatedTargetCanvas = this.api.getState().canvases[targetCanvasId];
+      const sortedItems = [...updatedTargetCanvas.items].sort(
         (a, b) => a.zIndex - b.zIndex,
       );
 
@@ -731,10 +756,14 @@ export class LayerPanel {
       if (dropAbove) {
         // Drop above target: use target's z-index
         newZIndex = targetZIndex;
-        // Increment all items at or above this z-index
+        // Collect z-index changes for items that need to shift up
         sortedItems.forEach((item) => {
           if (item.id !== draggedItemId && item.zIndex >= newZIndex) {
-            item.zIndex++;
+            zIndexChanges.push({
+              itemId: item.id,
+              canvasId: targetCanvasId,
+              newZIndex: item.zIndex + 1,
+            });
           }
         });
       } else {
@@ -742,10 +771,14 @@ export class LayerPanel {
         if (targetIndex < sortedItems.length - 1) {
           const nextItem = sortedItems[targetIndex + 1];
           newZIndex = nextItem.zIndex;
-          // Increment all items at or above this z-index
+          // Collect z-index changes for items that need to shift up
           sortedItems.forEach((item) => {
             if (item.id !== draggedItemId && item.zIndex >= newZIndex) {
-              item.zIndex++;
+              zIndexChanges.push({
+                itemId: item.id,
+                canvasId: targetCanvasId,
+                newZIndex: item.zIndex + 1,
+              });
             }
           });
         } else {
@@ -754,14 +787,12 @@ export class LayerPanel {
         }
       }
 
-      // Set new z-index for dragged item - direct state manipulation
-      const draggedItem = targetCanvas.items.find(i => i.id === draggedItemId);
-      if (draggedItem) {
-        draggedItem.zIndex = newZIndex;
-      }
-
-      // Trigger reactivity
-      state.canvases = { ...state.canvases };
+      // Add dragged item's new z-index
+      zIndexChanges.push({
+        itemId: draggedItemId,
+        canvasId: targetCanvasId,
+        newZIndex,
+      });
     } else {
       // Same canvas reordering
       const canvas = state.canvases[draggedCanvasId];
@@ -776,18 +807,26 @@ export class LayerPanel {
       if (dropAbove) {
         // Drop above target
         newZIndex = targetZIndex;
-        // Shift z-indices for items between old and new position
+        // Collect z-index changes for items between old and new position
         sortedItems.forEach((item) => {
           if (item.id !== draggedItemId) {
             if (draggedIndex < targetIndex) {
               // Moving down: decrement items between
               if (item.zIndex > draggedZIndex && item.zIndex <= targetZIndex) {
-                item.zIndex--;
+                zIndexChanges.push({
+                  itemId: item.id,
+                  canvasId: draggedCanvasId,
+                  newZIndex: item.zIndex - 1,
+                });
               }
             } else {
               // Moving up: increment items between
               if (item.zIndex >= targetZIndex && item.zIndex < draggedZIndex) {
-                item.zIndex++;
+                zIndexChanges.push({
+                  itemId: item.id,
+                  canvasId: draggedCanvasId,
+                  newZIndex: item.zIndex + 1,
+                });
               }
             }
           }
@@ -796,18 +835,26 @@ export class LayerPanel {
         // Drop below target
         if (targetIndex < sortedItems.length - 1) {
           newZIndex = targetZIndex + 1;
-          // Shift z-indices
+          // Collect z-index changes
           sortedItems.forEach((item) => {
             if (item.id !== draggedItemId) {
               if (draggedIndex < targetIndex) {
                 // Moving down
                 if (item.zIndex > draggedZIndex && item.zIndex <= newZIndex) {
-                  item.zIndex--;
+                  zIndexChanges.push({
+                    itemId: item.id,
+                    canvasId: draggedCanvasId,
+                    newZIndex: item.zIndex - 1,
+                  });
                 }
               } else {
                 // Moving up
                 if (item.zIndex >= newZIndex && item.zIndex < draggedZIndex) {
-                  item.zIndex++;
+                  zIndexChanges.push({
+                    itemId: item.id,
+                    canvasId: draggedCanvasId,
+                    newZIndex: item.zIndex + 1,
+                  });
                 }
               }
             }
@@ -818,31 +865,21 @@ export class LayerPanel {
         }
       }
 
-      // Set new z-index - direct state manipulation
-      const draggedItem = canvas.items.find(i => i.id === draggedItemId);
-      if (draggedItem) {
-        draggedItem.zIndex = newZIndex;
-      }
-
-      // Trigger reactivity
-      state.canvases = { ...state.canvases };
+      // Add dragged item's new z-index
+      zIndexChanges.push({
+        itemId: draggedItemId,
+        canvasId: draggedCanvasId,
+        newZIndex,
+      });
     }
 
-    // Trigger re-render
-    this.refreshItems();
+    // Apply all z-index changes in one batch operation
+    if (zIndexChanges.length > 0) {
+      this.api.setItemsZIndexBatch(zIndexChanges);
+    }
 
-    // Clear drag state
+    // Clear drag state (refreshItems() is no longer needed as API events will trigger re-render)
     this.draggedItem = null;
-
-    // Fire z-index changed event for undo/redo
-    eventManager.emit("zIndexChanged", {
-      canvasId: targetCanvasId,
-      itemId: draggedItemId,
-      oldZIndex: draggedZIndex,
-      newZIndex: state.canvases[targetCanvasId]?.items.find(
-        (i) => i.id === draggedItemId,
-      )?.zIndex,
-    });
   }
 
   render() {

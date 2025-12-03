@@ -20,10 +20,11 @@
 
 ## Events
 
-| Event            | Description                                                   | Type                                 |
-| ---------------- | ------------------------------------------------------------- | ------------------------------------ |
-| `activateCanvas` | Emitted when user clicks the folder header to activate canvas | `CustomEvent<{ canvasId: string; }>` |
-| `toggleFolder`   | Emitted when user clicks the expand/collapse toggle           | `CustomEvent<{ canvasId: string; }>` |
+| Event            | Description                                                                  | Type                                 |
+| ---------------- | ---------------------------------------------------------------------------- | ------------------------------------ |
+| `activateCanvas` | Emitted when user clicks the folder header to activate canvas                | `CustomEvent<{ canvasId: string; }>` |
+| `scrollToCanvas` | Emitted when user double-clicks the folder header to scroll canvas into view | `CustomEvent<{ canvasId: string; }>` |
+| `toggleFolder`   | Emitted when user clicks the expand/collapse toggle                          | `CustomEvent<{ canvasId: string; }>` |
 
 
 ## Dependencies

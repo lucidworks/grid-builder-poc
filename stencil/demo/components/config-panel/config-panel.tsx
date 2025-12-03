@@ -24,15 +24,15 @@
  * @module config-panel
  */
 
-import { Component, h, Listen, Prop, State } from "@stencil/core";
+import { Component, h, Listen, Prop, State, Watch } from "@stencil/core";
 
 // Internal imports
-import { eventManager } from "../../../services/event-manager";
-import { gridState } from "../../../services/state-manager";
 import {
   ComponentDefinition,
   ConfigField,
 } from "../../../types/component-definition";
+import { GridBuilderAPI } from "../../../services/grid-builder-api";
+import { ComponentRegistry } from "../../../services/component-registry";
 
 /**
  * ConfigPanel Component
@@ -50,12 +50,21 @@ import {
 })
 export class ConfigPanel {
   /**
+   * Grid Builder API instance
+   *
+   * **Source**: Parent component (e.g., blog-app)
+   * **Purpose**: Access grid state and subscribe to events
+   * **Required**: Component won't work without valid API reference
+   */
+  @Prop() api?: GridBuilderAPI;
+
+  /**
    * Component registry (from parent grid-builder)
    *
    * **Source**: grid-builder component
    * **Purpose**: Look up component definitions for config forms
    */
-  @Prop() componentRegistry?: Map<string, ComponentDefinition>;
+  @Prop() componentRegistry?: ComponentRegistry;
 
   /**
    * Panel open state
@@ -92,13 +101,15 @@ export class ConfigPanel {
   } | null = null;
 
   /**
-   * Callback for componentDeleted event (stored for unsubscribe)
+   * Flag to track if we've subscribed to events
    */
-  private handleComponentDeleted = (event: {
-    itemId: string;
-    canvasId: string;
-  }) => {
-    console.log("🔔 config-panel received componentDeleted event", {
+  private eventsSubscribed: boolean = false;
+
+  /**
+   * Callback for itemRemoved event (stored for unsubscribe)
+   */
+  private handleItemRemoved = (event: { itemId: string; canvasId: string }) => {
+    console.log("🔔 config-panel received itemRemoved event", {
       eventItemId: event.itemId,
       selectedItemId: this.selectedItemId,
       isOpen: this.isOpen,
@@ -124,6 +135,35 @@ export class ConfigPanel {
   };
 
   /**
+   * Ensure event subscription is set up (lazy initialization)
+   */
+  private ensureEventSubscription() {
+    if (this.eventsSubscribed || !this.api) {
+      return;
+    }
+
+    // Subscribe to itemRemoved events via API
+    this.api.on("itemRemoved", this.handleItemRemoved);
+    this.eventsSubscribed = true;
+    console.log("  ✅ Config panel: Subscribed to itemRemoved event");
+  }
+
+  /**
+   * Watch for API prop changes
+   */
+  @Watch("api")
+  handleApiChange(newApi: GridBuilderAPI) {
+    console.log("📋 config-panel API prop changed", {
+      hasNewApi: !!newApi,
+    });
+
+    // When API becomes available, ensure event subscription
+    if (newApi && !this.eventsSubscribed) {
+      this.ensureEventSubscription();
+    }
+  }
+
+  /**
    * Listen for item-click events to open panel
    */
   @Listen("item-click", { target: "document" })
@@ -133,22 +173,24 @@ export class ConfigPanel {
   }
 
   /**
-   * Component lifecycle: Subscribe to componentDeleted event
+   * Component lifecycle: Subscribe to itemRemoved event
    */
   componentDidLoad() {
     console.log(
-      "📋 config-panel componentDidLoad - subscribing to componentDeleted event",
+      "📋 config-panel componentDidLoad - subscribing to itemRemoved event",
     );
-    // Subscribe to componentDeleted events to auto-close panel when selected item is deleted
-    eventManager.on("componentDeleted", this.handleComponentDeleted);
-    console.log("  ✅ Subscribed to componentDeleted event");
+    // Try to subscribe to events (will retry on first item click if API not ready)
+    this.ensureEventSubscription();
   }
 
   /**
    * Component lifecycle: Cleanup event subscriptions
    */
   disconnectedCallback() {
-    eventManager.off("componentDeleted", this.handleComponentDeleted);
+    if (this.api && this.eventsSubscribed) {
+      this.api.off("itemRemoved", this.handleItemRemoved);
+      this.eventsSubscribed = false;
+    }
   }
 
   /**
@@ -419,14 +461,15 @@ export class ConfigPanel {
   }
 
   /**
-   * Get selected item from state
+   * Get selected item from state (instance-based)
    */
   private getSelectedItem() {
-    if (!this.selectedItemId || !this.selectedCanvasId) {
+    if (!this.selectedItemId || !this.selectedCanvasId || !this.api) {
       return null;
     }
 
-    const canvas = gridState.canvases[this.selectedCanvasId];
+    const state = this.api.getState();
+    const canvas = state.canvases[this.selectedCanvasId];
     return canvas?.items.find((i) => i.id === this.selectedItemId);
   }
 
@@ -458,8 +501,11 @@ export class ConfigPanel {
     this.componentConfig = { ...this.originalState.config };
 
     // Update selection in state
-    gridState.selectedItemId = itemId;
-    gridState.selectedCanvasId = canvasId;
+    if (this.api) {
+      const state = this.api.getState();
+      state.selectedItemId = itemId;
+      state.selectedCanvasId = canvasId;
+    }
 
     // Open panel
     this.isOpen = true;
@@ -470,8 +516,14 @@ export class ConfigPanel {
    */
   private closePanel = () => {
     // Revert changes on cancel
-    if (this.selectedItemId && this.selectedCanvasId && this.originalState) {
-      const canvas = gridState.canvases[this.selectedCanvasId];
+    if (
+      this.selectedItemId &&
+      this.selectedCanvasId &&
+      this.originalState &&
+      this.api
+    ) {
+      const state = this.api.getState();
+      const canvas = state.canvases[this.selectedCanvasId];
       const itemIndex = canvas?.items.findIndex(
         (i) => i.id === this.selectedItemId,
       );
@@ -482,7 +534,7 @@ export class ConfigPanel {
           zIndex: this.originalState.zIndex,
           config: this.originalState.config,
         };
-        gridState.canvases = { ...gridState.canvases };
+        state.canvases = { ...state.canvases };
       }
     }
 
@@ -515,8 +567,9 @@ export class ConfigPanel {
     this.componentName = target.value;
 
     // Apply changes immediately (live preview)
-    if (this.selectedItemId && this.selectedCanvasId) {
-      const canvas = gridState.canvases[this.selectedCanvasId];
+    if (this.selectedItemId && this.selectedCanvasId && this.api) {
+      const state = this.api.getState();
+      const canvas = state.canvases[this.selectedCanvasId];
       const itemIndex = canvas?.items.findIndex(
         (i) => i.id === this.selectedItemId,
       );
@@ -525,7 +578,7 @@ export class ConfigPanel {
           ...canvas.items[itemIndex],
           name: this.componentName,
         };
-        gridState.canvases = { ...gridState.canvases };
+        state.canvases = { ...state.canvases };
       }
     }
   };
@@ -538,8 +591,9 @@ export class ConfigPanel {
     this.componentConfig = { ...this.componentConfig, [fieldName]: value };
 
     // Apply changes immediately (live preview)
-    if (this.selectedItemId && this.selectedCanvasId) {
-      const canvas = gridState.canvases[this.selectedCanvasId];
+    if (this.selectedItemId && this.selectedCanvasId && this.api) {
+      const state = this.api.getState();
+      const canvas = state.canvases[this.selectedCanvasId];
       const itemIndex = canvas?.items.findIndex(
         (i) => i.id === this.selectedItemId,
       );
@@ -548,7 +602,7 @@ export class ConfigPanel {
           ...canvas.items[itemIndex],
           config: this.componentConfig,
         };
-        gridState.canvases = { ...gridState.canvases };
+        state.canvases = { ...state.canvases };
       }
     }
   };
@@ -557,8 +611,9 @@ export class ConfigPanel {
    * Z-index control methods
    */
   private bringToFront = () => {
-    if (!this.selectedItemId || !this.selectedCanvasId) return;
-    const canvas = gridState.canvases[this.selectedCanvasId];
+    if (!this.selectedItemId || !this.selectedCanvasId || !this.api) return;
+    const state = this.api.getState();
+    const canvas = state.canvases[this.selectedCanvasId];
     const itemIndex = canvas?.items.findIndex(
       (i) => i.id === this.selectedItemId,
     );
@@ -566,12 +621,13 @@ export class ConfigPanel {
 
     const newZIndex = ++canvas.zIndexCounter;
     canvas.items[itemIndex] = { ...canvas.items[itemIndex], zIndex: newZIndex };
-    gridState.canvases = { ...gridState.canvases };
+    state.canvases = { ...state.canvases };
   };
 
   private bringForward = () => {
-    if (!this.selectedItemId || !this.selectedCanvasId) return;
-    const canvas = gridState.canvases[this.selectedCanvasId];
+    if (!this.selectedItemId || !this.selectedCanvasId || !this.api) return;
+    const state = this.api.getState();
+    const canvas = state.canvases[this.selectedCanvasId];
     const itemIndex = canvas?.items.findIndex(
       (i) => i.id === this.selectedItemId,
     );
@@ -591,14 +647,15 @@ export class ConfigPanel {
           ...canvas.items[itemAboveIndex],
           zIndex: temp,
         };
-        gridState.canvases = { ...gridState.canvases };
+        state.canvases = { ...state.canvases };
       }
     }
   };
 
   private sendBackward = () => {
-    if (!this.selectedItemId || !this.selectedCanvasId) return;
-    const canvas = gridState.canvases[this.selectedCanvasId];
+    if (!this.selectedItemId || !this.selectedCanvasId || !this.api) return;
+    const state = this.api.getState();
+    const canvas = state.canvases[this.selectedCanvasId];
     const itemIndex = canvas?.items.findIndex(
       (i) => i.id === this.selectedItemId,
     );
@@ -618,14 +675,15 @@ export class ConfigPanel {
           ...canvas.items[itemBelowIndex],
           zIndex: temp,
         };
-        gridState.canvases = { ...gridState.canvases };
+        state.canvases = { ...state.canvases };
       }
     }
   };
 
   private sendToBack = () => {
-    if (!this.selectedItemId || !this.selectedCanvasId) return;
-    const canvas = gridState.canvases[this.selectedCanvasId];
+    if (!this.selectedItemId || !this.selectedCanvasId || !this.api) return;
+    const state = this.api.getState();
+    const canvas = state.canvases[this.selectedCanvasId];
     const itemIndex = canvas?.items.findIndex(
       (i) => i.id === this.selectedItemId,
     );
@@ -647,6 +705,6 @@ export class ConfigPanel {
       };
     }
 
-    gridState.canvases = { ...gridState.canvases };
+    state.canvases = { ...state.canvases };
   };
 }
