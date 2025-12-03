@@ -31,6 +31,7 @@
 
 import { html } from 'lit-html';
 import { unsafeHTML } from 'lit-html/directives/unsafe-html.js';
+import { action } from '@storybook/addon-actions';
 
 export default {
   title: 'Components/Error Boundary',
@@ -66,8 +67,9 @@ Error boundaries catch JavaScript errors in child components, preventing entire 
 /**
  * Helper component that throws an error after a delay
  * This allows the component to render initially, then error during lifecycle
+ * (Exported for potential use in future error boundary demonstrations)
  */
-const ThrowingComponent = ({ delay = 0, message = 'Component error' }) => {
+export const ThrowingComponent = ({ delay = 0, message = 'Component error' }) => {
   const div = document.createElement('div');
   div.textContent = 'Loading...';
 
@@ -82,8 +84,9 @@ const ThrowingComponent = ({ delay = 0, message = 'Component error' }) => {
 /**
  * Helper component that throws on user interaction
  * Demonstrates error boundaries catching event handler errors
+ * (Exported for potential use in future error boundary demonstrations)
  */
-const InteractiveThrowingComponent = () => {
+export const InteractiveThrowingComponent = () => {
   const div = document.createElement('div');
   div.style.cssText = 'padding: 20px; background: #f0f0f0; border-radius: 4px;';
 
@@ -519,6 +522,7 @@ export const CustomFallback = () => {
  * - Event payload structure (error, errorInfo, severity, recoverable)
  * - Integration with external logging systems (console, Sentry, etc.)
  * - Real-time error notifications
+ * - Storybook Actions integration
  */
 export const Events = () => {
   const container = document.createElement('div');
@@ -529,31 +533,38 @@ export const Events = () => {
   container.appendChild(header);
 
   const description = document.createElement('p');
-  description.textContent = 'Error boundaries emit events for integration with logging systems. Check the console for logged errors.';
+  description.innerHTML = `
+    Error boundaries emit events for integration with logging systems like Sentry, LogRocket, or Datadog.<br><br>
+    <strong>📊 Open the "Actions" tab at the bottom of this page</strong> to see detailed error event logs with full context.<br>
+    Each error event includes: error message, severity, recoverable status, error boundary identifier, timestamp, and stack trace.
+  `;
   description.style.cssText = 'color: #666; margin-bottom: 16px;';
   container.appendChild(description);
 
-  // Event log display
-  const eventLog = document.createElement('div');
-  eventLog.id = 'event-log';
-  eventLog.style.cssText = `
+  // Instructions callout
+  const callout = document.createElement('div');
+  callout.style.cssText = `
     padding: 16px;
-    background: #1e1e1e;
-    color: #d4d4d4;
+    background: #e3f2fd;
+    border-left: 4px solid #2196f3;
     border-radius: 4px;
-    font-family: 'Courier New', monospace;
-    font-size: 12px;
-    max-height: 200px;
-    overflow-y: auto;
     margin-bottom: 16px;
   `;
-  eventLog.innerHTML = '<div style="color: #6a9955;">// Waiting for errors...</div>';
-  container.appendChild(eventLog);
+  callout.innerHTML = `
+    <div style="font-weight: bold; color: #1976d2; margin-bottom: 8px;">💡 How to view error events:</div>
+    <ol style="margin: 0; padding-left: 20px; color: #424242;">
+      <li>Click "Trigger Error" button below</li>
+      <li>Open the <strong>Actions</strong> tab at the bottom of this page</li>
+      <li>Check the browser <strong>console</strong> for grouped error logs</li>
+    </ol>
+  `;
+  container.appendChild(callout);
 
   const errorBoundaryHTML = `
     <error-boundary
       error-boundary="events-demo"
-      show-error-ui="true"
+      show-error-ui="false"
+      recovery-strategy="ignore"
       id="events-error-boundary">
       <div id="error-component-3" style="padding: 20px; background: #fff3cd; border: 1px solid #ffc107; border-radius: 4px;">
         <p>Trigger an error to see event logging...</p>
@@ -570,38 +581,38 @@ export const Events = () => {
 
   // Setup event listener after mount
   setTimeout(() => {
-    const errorBoundary = errorWrapper.querySelector('#events-error-boundary');
-    const triggerBtn = errorWrapper.querySelector('#trigger-error-btn');
-    const logDisplay = container.querySelector('#event-log');
+    const errorBoundary = document.querySelector('error-boundary#events-error-boundary');
+    const triggerBtn = document.querySelector('#trigger-error-btn');
 
-    if (errorBoundary && triggerBtn && logDisplay) {
+    if (errorBoundary && triggerBtn) {
+      let errorCount = 0; // Counter for unique error IDs
+
       // Listen for error events
       errorBoundary.addEventListener('error', ((event: CustomEvent) => {
         const { error, errorInfo, severity, recoverable } = event.detail;
+        errorCount++; // Increment for each error
 
-        // Log to console
+        // Create unique action for each error (prevents Storybook deduplication)
+        const logErrorEvent = action(`error #${errorCount}`);
+
+        // Log to Storybook Actions panel (best place to view error details)
+        logErrorEvent({
+          message: error.message,
+          severity,
+          recoverable,
+          errorBoundary: errorInfo.errorBoundary,
+          timestamp: new Date().toISOString(),
+          stack: error.stack,
+          errorInfo,
+        });
+
+        // Log to console (for developers debugging)
         console.group('🔴 Error Boundary Event');
         console.error('Error:', error);
         console.log('Error Info:', errorInfo);
         console.log('Severity:', severity);
         console.log('Recoverable:', recoverable);
         console.groupEnd();
-
-        // Update UI log
-        const timestamp = new Date().toLocaleTimeString();
-        const logEntry = `
-          <div style="border-left: 3px solid #dc3545; padding-left: 12px; margin-bottom: 12px;">
-            <div style="color: #858585;">[${timestamp}]</div>
-            <div style="color: #ce9178;">"${error.message}"</div>
-            <div style="color: #4ec9b0;">
-              severity: <span style="color: #ce9178;">"${severity}"</span>,
-              recoverable: <span style="color: ${recoverable ? '#4fc1ff' : '#d16969'}">${recoverable}</span>
-            </div>
-            <div style="color: #858585;">errorBoundary: "${errorInfo.errorBoundary}"</div>
-          </div>
-        `;
-
-        logDisplay.innerHTML = logEntry + logDisplay.innerHTML;
       }) as EventListener);
 
       // Trigger button handler
@@ -610,6 +621,7 @@ export const Events = () => {
         (triggerBtn as HTMLButtonElement).textContent = 'Triggering Error...';
         (triggerBtn as HTMLButtonElement).style.background = '#ffc107';
         (triggerBtn as HTMLButtonElement).style.color = '#000';
+        (triggerBtn as HTMLButtonElement).disabled = true;
 
         setTimeout(async () => {
           if (errorBoundary) {
@@ -620,20 +632,28 @@ export const Events = () => {
               );
 
               // Update button to show it was triggered
-              (triggerBtn as HTMLButtonElement).textContent = 'Error Triggered! (Check log above)';
+              (triggerBtn as HTMLButtonElement).textContent = 'Error Logged! ✓';
               (triggerBtn as HTMLButtonElement).style.background = '#28a745';
               (triggerBtn as HTMLButtonElement).style.color = '#fff';
-              (triggerBtn as HTMLButtonElement).disabled = true;
+
+              // Reset button after 1 second so user can trigger more errors
+              setTimeout(() => {
+                (triggerBtn as HTMLButtonElement).textContent = 'Trigger Error';
+                (triggerBtn as HTMLButtonElement).style.background = '#dc3545';
+                (triggerBtn as HTMLButtonElement).style.color = 'white';
+                (triggerBtn as HTMLButtonElement).disabled = false;
+              }, 1000);
             } catch (e) {
               console.error('Error triggering error boundary:', e);
               (triggerBtn as HTMLButtonElement).textContent = 'Failed to Trigger';
               (triggerBtn as HTMLButtonElement).style.background = '#dc3545';
+              (triggerBtn as HTMLButtonElement).disabled = false;
             }
           }
         }, 300);
       });
     }
-  }, 100);
+  }, 500);
 
   return html`${unsafeHTML(container.outerHTML)}`;
 };
@@ -1040,7 +1060,7 @@ export const DevVsProd = () => {
   container.appendChild(grid);
 
   // Simulate development/production environments after mount
-  setTimeout(() => {
+  setTimeout(async () => {
     // Development boundary - enable detailed errors
     const devBoundary = container.querySelector('#dev-error-boundary');
     if (devBoundary) {

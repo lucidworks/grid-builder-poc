@@ -34,6 +34,34 @@ Generic error boundary for catching component render errors.
 | `error` | Error event emitter  **Purpose**: Notify parent components of errors **Event name**: 'error' **Detail type**: BaseErrorEventDetail  **Event structure**: ```typescript {   error: Error,              // The caught error   errorInfo: {     errorBoundary: string,   // Which boundary caught it     timestamp: number,     userAgent: string,     componentStack?: string,     ...context               // Additional context   },   severity: 'critical' \| 'error' \| 'warning' \| 'info',   recoverable: boolean } ```  **Example**: ```typescript <error-boundary onError={(e) => {   console.error('Error caught:', e.detail.error);   logToSentry(e.detail); }}>   ... </error-boundary> ``` | `CustomEvent<BaseErrorEventDetail>` |
 
 
+## Methods
+
+### `simulateError(error: Error | string) => Promise<void>`
+
+Simulate Error (Public API for demos/testing)
+
+**Purpose**: Manually trigger error boundary for demonstration or testing
+**Use case**: Storybook stories, E2E tests, demo scenarios
+
+**Example**:
+```typescript
+const errorBoundary = document.querySelector('error-boundary');
+await errorBoundary.simulateError(new Error('Test error'));
+```
+
+#### Parameters
+
+| Name    | Type              | Description                             |
+| ------- | ----------------- | --------------------------------------- |
+| `error` | `string \| Error` | - Error to simulate (or string message) |
+
+#### Returns
+
+Type: `Promise<void>`
+
+Promise<void>
+
+
 ## Dependencies
 
 ### Used by

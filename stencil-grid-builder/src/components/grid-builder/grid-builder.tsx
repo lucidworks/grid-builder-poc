@@ -2574,8 +2574,29 @@ export class GridBuilder {
    */
   @Method()
   async importState(state: Partial<GridState> | GridExport) {
-    // Import grid state
-    Object.assign(this.stateManager!.state, state);
+    // Import grid state with deep clone to trigger reactivity
+    // Object.assign does shallow merge - doesn't trigger reactivity for nested objects
+    // We need to create new object references for @stencil/store to detect changes
+
+    if (state.canvases) {
+      // Deep clone canvases to ensure all nested objects get new references
+      this.stateManager!.state.canvases = JSON.parse(JSON.stringify(state.canvases));
+    }
+
+    // Update other top-level properties if provided (GridState only, not GridExport)
+    const gridState = state as Partial<GridState>;
+    if (gridState.currentViewport !== undefined) {
+      this.stateManager!.state.currentViewport = gridState.currentViewport;
+    }
+    if (gridState.selectedItemId !== undefined) {
+      this.stateManager!.state.selectedItemId = gridState.selectedItemId;
+    }
+    if (gridState.selectedCanvasId !== undefined) {
+      this.stateManager!.state.selectedCanvasId = gridState.selectedCanvasId;
+    }
+    if (gridState.activeCanvasId !== undefined) {
+      this.stateManager!.state.activeCanvasId = gridState.activeCanvasId;
+    }
   }
 
   /**

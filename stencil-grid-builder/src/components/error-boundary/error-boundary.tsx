@@ -305,6 +305,8 @@ export class ErrorBoundary {
     } else if (strategy === 'ignore') {
       // Swallow error, log to console
       console.warn('ErrorBoundary: Ignoring error (recovery strategy: ignore)', error);
+      // Reset flag immediately for ignore strategy (no state change = no re-render)
+      this.renderErrorCaught = false;
     }
   }
 
@@ -356,19 +358,15 @@ export class ErrorBoundary {
    * 1. Try to render slot content
    * 2. If error thrown, catch and handle
    * 3. Return null to prevent error propagation
+   *
+   * **Performance**: Wraps slot in div with class for fast CSS selector matching (vs :not())
    */
   private renderContent() {
     try {
-      // Get slot content
-      const slotContent = this.el.querySelector(':not([slot])');
-
-      // If no content, return empty
-      if (!slotContent) {
-        return null;
-      }
-
-      // Return slot wrapper
-      return <slot></slot>;
+      // Wrap slot in div with class for performance
+      // This allows CSS to use simple class selector (.error-boundary-content)
+      // instead of complex :not() selectors (much faster with 1000+ items)
+      return <div class="error-boundary-content"><slot></slot></div>;
     } catch (error) {
       // Catch render errors
       const actualError = error instanceof Error ? error : new Error(String(error));
@@ -483,6 +481,20 @@ export class ErrorBoundary {
   }
 
   /**
+   * Get BEM modifier class based on error boundary type
+   *
+   * **Purpose**: Performance optimization for CSS selector matching
+   * **Why**: Class selectors are faster than attribute selectors (important with 1000+ items)
+   *
+   * @returns BEM modifier class (e.g., 'error-boundary-wrapper--canvas-section')
+   */
+  private getBoundaryModifierClass(): string {
+    // Sanitize errorBoundary prop for use as class name (replace invalid chars)
+    const sanitized = this.errorBoundary.replace(/[^a-zA-Z0-9-]/g, '-');
+    return `error-boundary-wrapper--${sanitized}`;
+  }
+
+  /**
    * Render error boundary component
    *
    * **Purpose**: Wrap children with error catching and recovery
@@ -498,10 +510,13 @@ export class ErrorBoundary {
    * 3. Nothing (if showErrorUI=false)
    */
   render() {
+    // Get BEM modifier class for performance (class selectors faster than attribute selectors)
+    const modifierClass = this.getBoundaryModifierClass();
+
     // No error - render children normally
     if (!this.caughtError) {
       return (
-        <div class="error-boundary-wrapper" data-error-boundary={this.errorBoundary}>
+        <div class={`error-boundary-wrapper ${modifierClass}`} data-error-boundary={this.errorBoundary}>
           {this.renderContent()}
         </div>
       );
@@ -516,7 +531,7 @@ export class ErrorBoundary {
       // Error UI disabled - render nothing (event already emitted)
       return (
         <div
-          class="error-boundary-wrapper error-boundary-hidden"
+          class={`error-boundary-wrapper error-boundary-hidden ${modifierClass}`}
           data-error-boundary={this.errorBoundary}
         />
       );
@@ -526,7 +541,7 @@ export class ErrorBoundary {
     const customFallback = this.renderCustomFallback();
 
     return (
-      <div class="error-boundary-wrapper error-boundary-error" data-error-boundary={this.errorBoundary}>
+      <div class={`error-boundary-wrapper error-boundary-error ${modifierClass}`} data-error-boundary={this.errorBoundary}>
         {customFallback || this.renderDefaultFallback()}
       </div>
     );

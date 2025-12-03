@@ -519,6 +519,12 @@ export namespace Components {
           * Whether to show error UI  **Purpose**: Control error UI visibility **Default**: `process.env.NODE_ENV !== 'production'` (show in dev, hide in prod)  **Override behavior**: - `true`: Always show error UI - `false`: Never show error UI (emit event only) - `undefined`: Environment-based (dev: show, prod: hide)  **Example**: ```typescript <error-boundary show-error-ui={true}>...</error-boundary> ```
          */
         "showErrorUI"?: boolean;
+        /**
+          * Simulate Error (Public API for demos/testing)  **Purpose**: Manually trigger error boundary for demonstration or testing **Use case**: Storybook stories, E2E tests, demo scenarios  **Example**: ```typescript const errorBoundary = document.querySelector('error-boundary'); await errorBoundary.simulateError(new Error('Test error')); ```
+          * @param error - Error to simulate (or string message)
+          * @returns Promise<void>
+         */
+        "simulateError": (error: Error | string) => Promise<void>;
     }
     /**
      * GridBuilder Component

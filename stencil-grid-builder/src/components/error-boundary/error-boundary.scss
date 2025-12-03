@@ -45,7 +45,49 @@
   // Error state variant (when error caught)
   &.error-boundary-error {
     min-height: 100px;
+    height: auto; // Auto-size to error UI content
   }
+
+  // Canvas-section boundary wraps multiple absolutely positioned items
+  // The wrapper should NOT have height: 100%, let items position themselves
+  // PERFORMANCE: Using class selector for O(1) matching (vs attribute selector)
+  &--canvas-section {
+    height: auto;
+    min-height: 0;
+
+    // Canvas items are absolutely positioned, don't force height on them
+    // PERFORMANCE: Simple class selector (vs double :not() pseudo-class)
+    .error-boundary-content {
+      height: auto;
+    }
+  }
+
+  // Grid-item-wrapper boundary wraps a single item's content
+  // The wrapper SHOULD fill the grid item container (which is already sized)
+  // PERFORMANCE: Using class selector for O(1) matching (vs attribute selector)
+  &--grid-item-wrapper {
+    height: 100%;
+
+    // Item content should fill the wrapper
+    // PERFORMANCE: Simple class selector (vs double :not() pseudo-class)
+    .error-boundary-content {
+      height: 100%;
+      box-sizing: border-box;
+    }
+  }
+}
+
+/**
+ * Error boundary content wrapper
+ *
+ * **Purpose**: Wrapper around slot content for performance
+ * **Why**: Allows simple class selector instead of complex :not() (faster with 1000+ items)
+ *
+ * Default behavior: Fill available height (overridden by boundary type modifiers above)
+ */
+.error-boundary-content {
+  height: 100%;
+  box-sizing: border-box;
 }
 
 /**

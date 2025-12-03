@@ -4776,6 +4776,12 @@ builder.config = {
 export const ExportImportWorkflow = () => {
   // Generate unique API key for this story instance
   const apiKey = getUniqueApiKey();
+
+  // Create component palette
+  const paletteEl = document.createElement("component-palette");
+  paletteEl.components = simpleComponents;
+  paletteEl.targetGridBuilderId = apiKey;
+
   const builderEl = document.createElement("grid-builder");
   builderEl.components = simpleComponents;
   builderEl.apiRef = { key: apiKey }; // Isolated instance for this story
@@ -4800,7 +4806,7 @@ export const ExportImportWorkflow = () => {
               },
             },
             zIndex: 1,
-            config: { title: "Sample Layout" },
+            config: { title: "Hero Section" },
           },
           {
             id: "sample-2",
@@ -4808,7 +4814,7 @@ export const ExportImportWorkflow = () => {
             type: "text",
             name: "Text",
             layouts: {
-              desktop: { x: 0, y: 5, width: 20, height: 6 },
+              desktop: { x: 0, y: 5, width: 25, height: 6 },
               mobile: {
                 x: null,
                 y: null,
@@ -4818,7 +4824,48 @@ export const ExportImportWorkflow = () => {
               },
             },
             zIndex: 2,
-            config: { text: "Export this layout to JSON and reload it later!" },
+            config: { text: "Export this multi-canvas layout to JSON and reload it later!" },
+          },
+        ],
+        zIndexCounter: 3,
+      },
+      "canvas-2": {
+        items: [
+          {
+            id: "sample-3",
+            canvasId: "canvas-2",
+            type: "button",
+            name: "Button",
+            layouts: {
+              desktop: { x: 2, y: 2, width: 15, height: 4 },
+              mobile: {
+                x: null,
+                y: null,
+                width: null,
+                height: null,
+                customized: false,
+              },
+            },
+            zIndex: 1,
+            config: { label: "Get Started" },
+          },
+          {
+            id: "sample-4",
+            canvasId: "canvas-2",
+            type: "text",
+            name: "Text",
+            layouts: {
+              desktop: { x: 20, y: 2, width: 20, height: 5 },
+              mobile: {
+                x: null,
+                y: null,
+                width: null,
+                height: null,
+                customized: false,
+              },
+            },
+            zIndex: 2,
+            config: { text: "All canvases and their components are exported together!" },
           },
         ],
         zIndexCounter: 3,
@@ -5014,11 +5061,11 @@ export const ExportImportWorkflow = () => {
         Demonstrates persisting and restoring layouts. Build a layout, export it
         as JSON, then re-import it later.
         <br />
-        <strong>Try it:</strong> Add/modify components, export, save to file,
+        <strong>Try it:</strong> Drag different component types (📄 Header, 📝 Text, 🔘 Button) from the palette, export, save to file,
         load from file, or re-import!
         <br />
-        <strong>File support:</strong> Save layouts as .json files and load them
-        back for testing persistence.
+        <strong>🔑 Key insight:</strong> The <code style="background: #ffe; padding: 2px 4px; border-radius: 2px;">"type"</code> field
+        in each item tells the grid which component to render on import.
       </p>
 
       ${statusDiv}
@@ -5029,10 +5076,15 @@ export const ExportImportWorkflow = () => {
 
       <div style="margin: 10px 0;">${saveFileBtn} ${loadFileBtn}</div>
 
-      <div
-        style="width: 100%; height: 400px; border: 2px solid #28a745; border-radius: 8px; overflow: hidden; margin: 20px 0;"
-      >
-        ${builderEl}
+      <div style="display: grid; grid-template-columns: 280px 1fr; gap: 16px; margin: 20px 0;">
+        <div style="border: 1px solid #ddd; border-radius: 4px; padding: 12px; background: #f8f9fa;">
+          ${paletteEl}
+        </div>
+        <div
+          style="height: 400px; border: 2px solid #28a745; border-radius: 8px; overflow: hidden;"
+        >
+          ${builderEl}
+        </div>
       </div>
 
       <div style="margin-top: 10px;">
@@ -5040,6 +5092,27 @@ export const ExportImportWorkflow = () => {
           >Exported JSON:</strong
         >
         ${exportDiv}
+      </div>
+
+      <div
+        style="margin-top: 20px; padding: 20px; background: #e7f3ff; border-radius: 8px; border-left: 4px solid #007bff;"
+      >
+        <h4 style="margin-top: 0; color: #004085;">🔍 How Component Types Work</h4>
+        <p style="margin: 0 0 12px 0; line-height: 1.6;">
+          Each exported item has a <code style="background: #fff; padding: 2px 6px; border-radius: 3px; font-weight: 600;">"type"</code> field
+          that identifies which component to render:
+        </p>
+        <ol style="margin: 0 0 12px 0; padding-left: 24px; line-height: 1.8;">
+          <li><strong>Export:</strong> Item includes <code style="background: #fff; padding: 2px 4px;">"type": "header"</code> in JSON</li>
+          <li><strong>Import:</strong> Grid builder parses the JSON and restores items</li>
+          <li><strong>Lookup:</strong> For each item, grid-item-wrapper calls <code style="background: #fff; padding: 2px 4px;">componentRegistry.get(item.type)</code></li>
+          <li><strong>Render:</strong> Calls the component's <code style="background: #fff; padding: 2px 4px;">render()</code> function to display it</li>
+        </ol>
+        <p style="margin: 0; padding: 12px; background: #fff; border-radius: 4px; font-size: 13px; line-height: 1.6;">
+          <strong>Example:</strong> If you drag a Button (🔘) into the grid and export, you'll see
+          <code style="background: #f0f0f0; padding: 2px 4px;">"type": "button"</code> in the JSON.
+          When you re-import, the grid looks up the "button" component definition and renders a button!
+        </p>
       </div>
 
       <div

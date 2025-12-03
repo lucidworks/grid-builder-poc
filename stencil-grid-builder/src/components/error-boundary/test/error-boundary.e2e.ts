@@ -38,7 +38,6 @@ describe('error-boundary E2E', () => {
 
       // Trigger an error by evaluating JavaScript that throws
       await page.evaluate(() => {
-        const boundary = document.querySelector('error-boundary');
         const button = document.querySelector('#trigger-error');
 
         if (button) {
