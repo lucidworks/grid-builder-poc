@@ -527,6 +527,15 @@ export class GridBuilderAPI {
       y: item.layouts.desktop.y,
     };
 
+    // Capture mobile layout for undo/redo
+    const mobileLayout = {
+      x: item.layouts.mobile.x,
+      y: item.layouts.mobile.y,
+      width: item.layouts.mobile.width,
+      height: item.layouts.mobile.height,
+      customized: item.layouts.mobile.customized,
+    };
+
     // Calculate target z-index (new z-index for cross-canvas moves)
     let targetZIndex = sourceZIndex; // Same canvas = same z-index
     if (fromCanvasId !== toCanvasId) {
@@ -548,6 +557,8 @@ export class GridBuilderAPI {
       undefined, // sourceSize (not tracked for basic moves)
       undefined, // targetSize (not tracked for basic moves)
       this.stateInstance,
+      mobileLayout, // sourceMobileLayout (unchanged during API move)
+      mobileLayout, // targetMobileLayout (unchanged during API move)
     );
     command.redo(); // Execute command first (applies targetZIndex)
     pushCommand(command); // Then add to history
@@ -1426,19 +1437,43 @@ export class GridBuilderAPI {
 
   /**
    * Undo the last action
+   * @fires undoExecuted - With command description showing coordinates and dimensions
    * @fires stateChanged
    */
   undo(): void {
-    undoInternal();
+    const description = undoInternal();
+    if (description) {
+      // Extract action type from description object or use 'undo' as default
+      const actionType = typeof description === 'object' && 'action' in description
+        ? (description as any).action
+        : 'undo';
+
+      this.eventEmitter.emit("undoExecuted", {
+        description,
+        actionType
+      });
+    }
     this.eventEmitter.emit("stateChanged", {} as StateChangedEvent);
   }
 
   /**
    * Redo the last undone action
+   * @fires redoExecuted - With command description showing coordinates and dimensions
    * @fires stateChanged
    */
   redo(): void {
-    redoInternal();
+    const description = redoInternal();
+    if (description) {
+      // Extract action type from description object or use 'redo' as default
+      const actionType = typeof description === 'object' && 'action' in description
+        ? (description as any).action
+        : 'redo';
+
+      this.eventEmitter.emit("redoExecuted", {
+        description,
+        actionType
+      });
+    }
     this.eventEmitter.emit("stateChanged", {} as StateChangedEvent);
   }
 

@@ -280,6 +280,15 @@ class SectionMetadataCommand implements Command {
   redo(): void {
     this.updateCallback(this.canvasId, this.afterState);
   }
+
+  getDescription() {
+    return {
+      action: 'updateSectionMetadata',
+      canvasId: this.canvasId,
+      before: this.beforeState,
+      after: this.afterState,
+    };
+  }
 }
 
 @Component({

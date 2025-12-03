@@ -277,6 +277,12 @@ export class DragHandler {
   /** Optional callback when drag movement occurs */
   private onDragMove?: () => void;
 
+  /** Optional callback when drag operation starts */
+  private onOperationStart?: () => void;
+
+  /** Optional callback when drag operation ends */
+  private onOperationEnd?: () => void;
+
   /** Track if any drag movement occurred */
   private hasMoved: boolean = false;
 
@@ -331,6 +337,8 @@ export class DragHandler {
     config?: GridConfig,
     dragHandleElement?: HTMLElement,
     onDragMove?: () => void,
+    onOperationStart?: () => void,
+    onOperationEnd?: () => void,
   ) {
     this.element = element;
     this.item = item;
@@ -340,6 +348,8 @@ export class DragHandler {
     this.config = config;
     this.dragHandleElement = dragHandleElement;
     this.onDragMove = onDragMove;
+    this.onOperationStart = onOperationStart;
+    this.onOperationEnd = onOperationEnd;
 
     this.initialize();
   }
@@ -515,6 +525,9 @@ export class DragHandler {
    * ```
    */
   private handleDragStart(event: InteractDragEvent): void {
+    // Notify parent that drag operation is starting (prevents snapshot corruption)
+    this.onOperationStart?.();
+
     // Start performance tracking
     if (window.perfMonitor) {
       window.perfMonitor.startOperation("drag");
@@ -847,6 +860,9 @@ export class DragHandler {
       if (window.perfMonitor) {
         window.perfMonitor.endOperation("drag");
       }
+
+      // Notify parent that drag operation has ended (re-enable snapshot capture)
+      this.onOperationEnd?.();
       return;
     }
 
@@ -855,6 +871,9 @@ export class DragHandler {
     if (!targetContainer) {
       // Invalid drop - no canvas found, snap back to original position
       this.snapBackToOriginalPosition(event);
+
+      // Notify parent that drag operation has ended (re-enable snapshot capture)
+      this.onOperationEnd?.();
       return;
     }
 
@@ -958,6 +977,9 @@ export class DragHandler {
 
       // Trigger StencilJS update (single re-render at end)
       this.onUpdate(itemToUpdate);
+
+      // Notify parent that drag operation has ended (re-enable snapshot capture)
+      this.onOperationEnd?.();
     });
   }
 

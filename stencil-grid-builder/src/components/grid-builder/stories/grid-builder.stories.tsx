@@ -110,6 +110,16 @@ export const BasicBuilder = (args) => {
   builderEl.components = simpleComponents;
   builderEl.apiRef = { key: apiKey }; // Isolated instance for this story
 
+  // Initialize with one empty canvas (required - default state has no canvases)
+  builderEl.initialState = {
+    canvases: {
+      "canvas-1": {
+        items: [],
+        zIndexCounter: 1,
+      },
+    },
+  };
+
   // Apply config from controls
   if (
     args.gridSizePercent ||
@@ -479,6 +489,16 @@ export const WithCustomGridConfig = (args) => {
     snapToGrid: args.snapToGrid,
     showGridLines: args.showGridLines,
     enableVirtualRendering: false, // Disable for Storybook iframe compatibility
+  };
+
+  // ADDED: Initialize with one empty canvas (required - default state has no canvases)
+  builderEl.initialState = {
+    canvases: {
+      "canvas-1": {
+        items: [],
+        zIndexCounter: 1,
+      },
+    },
   };
 
   return html` <div style="width: 100%; height: 600px;">${builderEl}</div> `;
@@ -2468,7 +2488,48 @@ export const UndoRedoDemo = () => {
               },
             },
             zIndex: 1,
-            config: { title: "Start Here" },
+            config: { title: "Canvas 1 - Drag me to Canvas 2" },
+          },
+          {
+            id: "starter-text",
+            canvasId: "canvas-1",
+            type: "text",
+            name: "Text Block",
+            layouts: {
+              desktop: { x: 0, y: 5, width: 20, height: 6 },
+              mobile: {
+                x: null,
+                y: null,
+                width: null,
+                height: null,
+                customized: false,
+              },
+            },
+            zIndex: 2,
+            config: { text: "Try undo/redo with position and resize" },
+          },
+        ],
+        zIndexCounter: 3,
+      },
+      "canvas-2": {
+        items: [
+          {
+            id: "canvas2-item",
+            canvasId: "canvas-2",
+            type: "header",
+            name: "Canvas 2 Header",
+            layouts: {
+              desktop: { x: 0, y: 0, width: 25, height: 4 },
+              mobile: {
+                x: null,
+                y: null,
+                width: null,
+                height: null,
+                customized: false,
+              },
+            },
+            zIndex: 1,
+            config: { title: "Canvas 2 - Test cross-canvas moves" },
           },
         ],
         zIndexCounter: 2,

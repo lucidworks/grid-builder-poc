@@ -967,6 +967,84 @@ export interface StateChangedEvent {
 }
 
 /**
+ * Undo Executed Event
+ * =====================
+ *
+ * Fired when an undo operation completes (emitted by GridBuilderAPI).
+ *
+ * **Triggers**:
+ * - User presses Ctrl+Z / Cmd+Z
+ * - Undo button clicked
+ * - Programmatic undo via API.undo()
+ *
+ * **Event structure**:
+ * - `description`: Command description (string or object with coordinates/dimensions)
+ * - `actionType`: Action type extracted from description.action (e.g., 'add', 'delete', 'move', 'resize')
+ *
+ * **Use cases**:
+ * - Display undo action in UI statusbar
+ * - Log undo operations for analytics
+ * - Show undo toast notifications with details
+ * - Track user behavior patterns
+ * @example
+ * ```typescript
+ * api.on('undoExecuted', (event) => {
+ *   if (typeof event.description === 'object') {
+ *     console.log(`Undid ${event.actionType}:`, event.description);
+ *   } else {
+ *     console.log(`Undid: ${event.description}`);
+ *   }
+ * });
+ * ```
+ */
+export interface UndoExecutedEvent {
+  /** Command description (string or structured object with coordinates/dimensions) */
+  description: string | object;
+
+  /** Action type ('add', 'delete', 'move', 'resize', etc.) */
+  actionType: string;
+}
+
+/**
+ * Redo Executed Event
+ * =====================
+ *
+ * Fired when a redo operation completes (emitted by GridBuilderAPI).
+ *
+ * **Triggers**:
+ * - User presses Ctrl+Y / Cmd+Y or Ctrl+Shift+Z / Cmd+Shift+Z
+ * - Redo button clicked
+ * - Programmatic redo via API.redo()
+ *
+ * **Event structure**:
+ * - `description`: Command description (string or object with coordinates/dimensions)
+ * - `actionType`: Action type extracted from description.action (e.g., 'add', 'delete', 'move', 'resize')
+ *
+ * **Use cases**:
+ * - Display redo action in UI statusbar
+ * - Log redo operations for analytics
+ * - Show redo toast notifications with details
+ * - Track user behavior patterns
+ * @example
+ * ```typescript
+ * api.on('redoExecuted', (event) => {
+ *   if (typeof event.description === 'object') {
+ *     console.log(`Redid ${event.actionType}:`, event.description);
+ *   } else {
+ *     console.log(`Redid: ${event.description}`);
+ *   }
+ * });
+ * ```
+ */
+export interface RedoExecutedEvent {
+  /** Command description (string or structured object with coordinates/dimensions) */
+  description: string | object;
+
+  /** Action type ('add', 'delete', 'move', 'resize', etc.) */
+  actionType: string;
+}
+
+/**
  * GridBuilderAPI Event Map
  * ==========================
  *
@@ -1053,6 +1131,10 @@ export interface GridBuilderEventMap {
   // Display events
   viewportChanged: ViewportChangedEvent;
   gridVisibilityChanged: GridVisibilityChangedEvent;
+
+  // Undo/Redo events
+  undoExecuted: UndoExecutedEvent;
+  redoExecuted: RedoExecutedEvent;
 
   // State events
   stateChanged: StateChangedEvent;

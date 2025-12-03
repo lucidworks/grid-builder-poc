@@ -298,6 +298,17 @@ export interface Command {
    * **Error handling**: Should not throw (use try/catch internally)
    */
   redo(): void;
+
+  /**
+   * Get a description of this command (string or structured object)
+   *
+   * **Purpose**: Display in undo/redo UI, debugging, logging
+   * **Format**: Can be a string or object with action details (coordinates, dimensions, etc.)
+   * **Examples**:
+   * - String: "Move item to x=5, y=3"
+   * - Object: { action: 'move', position: { x: 5, y: 3 }, size: { width: 10, height: 6 } }
+   */
+  getDescription(): string | object;
 }
 
 /**
@@ -609,20 +620,22 @@ export class UndoRedoManager {
    * **Safety**: No-op if historyPosition < 0 (nothing to undo)
    *
    * **Multiple undo**: Can be called repeatedly to undo multiple commands
+   * @returns Command description object or string, or undefined if nothing to undo
    * @example
    * ```typescript
    * // Keyboard shortcut handler
    * window.addEventListener('keydown', (e) => {
    *   if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
-   *     undo();
+   *     const description = undo();
+   *     console.log('Undid:', description);
    *     e.preventDefault();
    *   }
    * });
    * ```
    */
-  undo(): void {
+  undo(): string | object | undefined {
     if (this.historyPosition < 0) {
-      return;
+      return undefined;
     }
 
     const command = this.commandHistory[this.historyPosition];
@@ -633,11 +646,13 @@ export class UndoRedoManager {
       command,
     );
     debug.log("  Command description:", (command as any).description);
+    const description = command.getDescription();
     command.undo();
     this.historyPosition--;
     debug.log("  New position after undo:", this.historyPosition);
 
     this.updateButtonStates();
+    return description;
   }
 
   /**
@@ -677,27 +692,31 @@ export class UndoRedoManager {
    *
    * **Redo after new action**: Redo becomes unavailable after new command
    * pushed (future history discarded)
+   * @returns Command description object or string, or undefined if nothing to redo
    * @example
    * ```typescript
    * // Keyboard shortcut handler
    * window.addEventListener('keydown', (e) => {
    *   if ((e.ctrlKey || e.metaKey) && e.key === 'y') {
-   *     redo();
+   *     const description = redo();
+   *     console.log('Redid:', description);
    *     e.preventDefault();
    *   }
    * });
    * ```
    */
-  redo(): void {
+  redo(): string | object | undefined {
     if (this.historyPosition >= this.commandHistory.length - 1) {
-      return;
+      return undefined;
     }
 
     this.historyPosition++;
     const command = this.commandHistory[this.historyPosition];
+    const description = command.getDescription();
     command.redo();
 
     this.updateButtonStates();
+    return description;
   }
 
   /**
@@ -821,8 +840,8 @@ export const undoRedoState = defaultManager.state;
 
 // Export singleton instance methods as standalone functions (backward compatible)
 export const pushCommand = (command: Command) => defaultManager.push(command);
-export const undo = () => defaultManager.undo();
-export const redo = () => defaultManager.redo();
+export const undo = (): string | object | undefined => defaultManager.undo();
+export const redo = (): string | object | undefined => defaultManager.redo();
 export const canUndo = () => defaultManager.canUndo();
 export const canRedo = () => defaultManager.canRedo();
 export const clearHistory = () => defaultManager.clearHistory();

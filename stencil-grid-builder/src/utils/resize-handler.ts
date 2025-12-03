@@ -354,6 +354,12 @@ export class ResizeHandler {
   private maxWidth: number = Infinity;
   private maxHeight: number = Infinity;
 
+  /** Optional callback when resize operation starts */
+  private onOperationStart?: () => void;
+
+  /** Optional callback when resize operation ends */
+  private onOperationEnd?: () => void;
+
   /**
    * Create resize handler and initialize interact.js
    *
@@ -399,6 +405,8 @@ export class ResizeHandler {
     domCacheInstance: DOMCache,
     componentDefinition?: ComponentDefinition,
     config?: GridConfig,
+    onOperationStart?: () => void,
+    onOperationEnd?: () => void,
   ) {
     this.element = element;
     this.item = item;
@@ -407,6 +415,8 @@ export class ResizeHandler {
     this.domCacheInstance = domCacheInstance;
     this.componentDefinition = componentDefinition;
     this.config = config;
+    this.onOperationStart = onOperationStart;
+    this.onOperationEnd = onOperationEnd;
 
     // Ensure element has width/height before initializing interact.js
     // StencilJS might not have applied styles yet
@@ -637,6 +647,9 @@ export class ResizeHandler {
    * ```
    */
   public handleResizeStart(event: InteractResizeEvent): void {
+    // Notify parent that resize operation is starting (prevents snapshot corruption)
+    this.onOperationStart?.();
+
     // Start performance tracking
     if (window.perfMonitor) {
       window.perfMonitor.startOperation("resize");
@@ -787,6 +800,21 @@ export class ResizeHandler {
     // Apply min/max size constraints first
     newWidth = Math.max(this.minWidth, Math.min(this.maxWidth, newWidth));
     newHeight = Math.max(this.minHeight, Math.min(this.maxHeight, newHeight));
+
+    // CRITICAL: Preserve fixed edge during resize (prevents bottom/right edge drift)
+    // When resizing from top/left, the opposite edge should stay fixed
+    // This provides real-time visual feedback, not snap-back on release
+    if (event.edges.top) {
+      // Top edge is moving, bottom edge should stay fixed
+      const bottomEdge = this.startRect.y + this.startRect.height;
+      newY = bottomEdge - newHeight; // Adjust Y to preserve bottom edge
+    }
+
+    if (event.edges.left) {
+      // Left edge is moving, right edge should stay fixed
+      const rightEdge = this.startRect.x + this.startRect.width;
+      newX = rightEdge - newWidth; // Adjust X to preserve right edge
+    }
 
     // CRITICAL: Enforce canvas boundaries during resize
     // Check all four edges independently to prevent overflow
@@ -968,6 +996,8 @@ export class ResizeHandler {
     // Get the container to calculate relative position
     const container = this.domCacheInstance.getCanvas(this.item.canvasId);
     if (!container) {
+      // Notify parent that resize operation has ended (re-enable snapshot capture)
+      this.onOperationEnd?.();
       return;
     }
 
@@ -1069,7 +1099,37 @@ export class ResizeHandler {
 
     debug.log("  afterDirectionalSnap:", { newX, newY, newWidth, newHeight });
 
-    // Apply min/max size constraints AFTER grid snapping
+    // CRITICAL FIX: When resizing from top/left edges, preserve the opposite edge position
+    // The directional snapping above snaps BOTH position AND size independently, causing drift
+    // Solution: Keep the snapped size (user expectation), adjust position to preserve fixed edge
+
+    if (event.edges.top) {
+      // Top edge is moving, bottom edge should stay fixed
+      // Height was already snapped above (user dragged it, so snap what they requested)
+      // Now adjust Y to preserve the bottom edge: Y = bottom - height
+      const bottomEdge = this.startRect.y + this.startRect.height; // Fixed bottom position in pixels
+      newY = bottomEdge - newHeight; // Adjust Y to preserve bottom edge
+      debug.log("  ✅ TOP EDGE RESIZE: Preserving bottom edge", {
+        bottomEdge,
+        snappedHeight: newHeight,
+        adjustedY: newY
+      });
+    }
+
+    if (event.edges.left) {
+      // Left edge is moving, right edge should stay fixed
+      // Width was already snapped above (user dragged it, so snap what they requested)
+      // Now adjust X to preserve the right edge: X = right - width
+      const rightEdge = this.startRect.x + this.startRect.width; // Fixed right position in pixels
+      newX = rightEdge - newWidth; // Adjust X to preserve right edge
+      debug.log("  ✅ LEFT EDGE RESIZE: Preserving right edge", {
+        rightEdge,
+        snappedWidth: newWidth,
+        adjustedX: newX
+      });
+    }
+
+    // Apply min/max size constraints AFTER preserving fixed edges
     // This ensures the final size respects component constraints
     // IMPORTANT: When clamping, adjust position if resizing from top/left edges
     const originalWidth = newWidth;
@@ -1101,6 +1161,7 @@ export class ResizeHandler {
     const canvasHeight = container.clientHeight;
 
     debug.log("  canvasBounds:", { canvasWidth, canvasHeight });
+    debug.log("  event.edges:", event.edges); // ✅ DEBUG: Check if edges object exists
 
     // 1. HORIZONTAL BOUNDS CHECK
     // ---------------------------
@@ -1271,5 +1332,8 @@ export class ResizeHandler {
 
     // Trigger StencilJS update (single re-render at end)
     this.onUpdate(itemToUpdate);
+
+    // Notify parent that resize operation has ended (re-enable snapshot capture)
+    this.onOperationEnd?.();
   }
 }

@@ -32,6 +32,10 @@ class MockCommand implements Command {
     this.undoCount = 0;
     this.redoCount = 0;
   }
+
+  getDescription(): string {
+    return 'Mock command for testing';
+  }
 }
 
 describe("undo-redo", () => {

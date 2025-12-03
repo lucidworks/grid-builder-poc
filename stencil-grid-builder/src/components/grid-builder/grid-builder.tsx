@@ -79,9 +79,6 @@ import {
   GridState,
   GridItem,
   generateItemId,
-  deleteItemsBatch,
-  addItemsBatch,
-  updateItemsBatch,
 } from "../../services/state-manager";
 import { VirtualRendererService } from "../../services/virtual-renderer";
 import { EventManager } from "../../services/event-manager";
@@ -995,6 +992,13 @@ export class GridBuilder {
         x: item.layouts.desktop.x,
         y: item.layouts.desktop.y,
       };
+      const sourceMobileLayout = {
+        x: item.layouts.mobile.x,
+        y: item.layouts.mobile.y,
+        width: item.layouts.mobile.width,
+        height: item.layouts.mobile.height,
+        customized: item.layouts.mobile.customized,
+      };
 
       // 3. Convert drop position (pixels) to grid units for target canvas
       let gridX = pixelsToGridX(x, targetCanvasId, this.config);
@@ -1060,6 +1064,8 @@ export class GridBuilder {
         undefined, // sourceSize (not tracked for drag operations)
         undefined, // targetSize (not tracked for drag operations)
         this.stateManager!.state, // Pass instance state
+        sourceMobileLayout, // Mobile layout (unchanged during cross-canvas move)
+        sourceMobileLayout, // Mobile layout (unchanged during cross-canvas move)
       );
       this.undoRedoManager?.push(command);
 
@@ -1279,6 +1285,13 @@ export class GridBuilder {
       layout.y = constrainedY;
 
       // Create undo command for nudge (same canvas = z-index unchanged)
+      const mobileLayout = {
+        x: item.layouts.mobile.x,
+        y: item.layouts.mobile.y,
+        width: item.layouts.mobile.width,
+        height: item.layouts.mobile.height,
+        customized: item.layouts.mobile.customized,
+      };
       const nudgeCommand = new MoveItemCommand(
         item.id,
         this.stateManager!.state.selectedCanvasId,
@@ -1291,6 +1304,8 @@ export class GridBuilder {
         undefined, // sourceSize (not tracked for nudge operations)
         undefined, // targetSize (not tracked for nudge operations)
         this.stateManager!.state, // Pass instance state
+        mobileLayout, // Mobile layout (unchanged during keyboard nudge)
+        mobileLayout, // Mobile layout (unchanged during keyboard nudge)
       );
       this.undoRedoManager?.push(nudgeCommand);
 
@@ -1692,8 +1707,8 @@ export class GridBuilder {
           },
         );
 
-        // Use state-manager batch operation (single state update)
-        const itemIds = addItemsBatch(partialItems);
+        // Use state-manager instance method (not global function)
+        const itemIds = this.stateManager!.addItemsBatch(partialItems);
 
         // Add to undo/redo history
         this.undoRedoManager?.push(
@@ -1728,8 +1743,8 @@ export class GridBuilder {
           new BatchDeleteCommand(itemIds, this.stateManager!.state),
         );
 
-        // Use state-manager batch operation (single state update)
-        deleteItemsBatch(itemIds);
+        // Use state-manager instance method (not global function)
+        this.stateManager!.deleteItemsBatch(itemIds);
 
         // Clear selection if any deleted item was selected
         if (
@@ -1774,8 +1789,8 @@ export class GridBuilder {
           new BatchUpdateConfigCommand(batchUpdates, this.stateManager!.state),
         );
 
-        // Use state-manager batch operation (single state update)
-        updateItemsBatch(batchUpdates);
+        // Use state-manager instance method (not global function)
+        this.stateManager!.updateItemsBatch(batchUpdates);
 
         // Emit batch event
         const updatedItems = batchUpdates.map(
@@ -1803,15 +1818,31 @@ export class GridBuilder {
       // ======================
 
       undo: () => {
-        this.undoRedoManager?.undo();
-        // Emit event after undo
-        this.eventManagerInstance?.emit("undoExecuted", {});
+        const description = this.undoRedoManager?.undo();
+        // Emit event with structured description (coordinates and dimensions)
+        if (description) {
+          const actionType = typeof description === 'object' && 'action' in description
+            ? (description as any).action
+            : 'undo';
+          this.eventManagerInstance?.emit("undoExecuted", {
+            description,
+            actionType
+          });
+        }
       },
 
       redo: () => {
-        this.undoRedoManager?.redo();
-        // Emit event after redo
-        this.eventManagerInstance?.emit("redoExecuted", {});
+        const description = this.undoRedoManager?.redo();
+        // Emit event with structured description (coordinates and dimensions)
+        if (description) {
+          const actionType = typeof description === 'object' && 'action' in description
+            ? (description as any).action
+            : 'redo';
+          this.eventManagerInstance?.emit("redoExecuted", {
+            description,
+            actionType
+          });
+        }
       },
 
       canUndo: () => {
@@ -1912,6 +1943,13 @@ export class GridBuilder {
           x: item.layouts.desktop.x,
           y: item.layouts.desktop.y,
         };
+        const mobileLayout = {
+          x: item.layouts.mobile.x,
+          y: item.layouts.mobile.y,
+          width: item.layouts.mobile.width,
+          height: item.layouts.mobile.height,
+          customized: item.layouts.mobile.customized,
+        };
 
         // Calculate target z-index
         let targetZIndex = sourceZIndex;
@@ -1935,6 +1973,8 @@ export class GridBuilder {
           undefined, // sourceSize (not tracked for simple moves)
           undefined, // targetSize (not tracked for simple moves)
           this.stateManager!.state, // Pass instance state
+          mobileLayout, // Mobile layout (unchanged during API move)
+          mobileLayout, // Mobile layout (unchanged during API move)
         );
         command.redo();
         this.undoRedoManager?.push(command);

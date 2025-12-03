@@ -364,6 +364,21 @@ export class AddItemCommand implements Command {
     canvas.items.push(itemCopy);
     this.stateInstance.canvases = { ...this.stateInstance.canvases };
   }
+
+  /**
+   * Get description of this command
+   *
+   * @returns Object with action type, position, and item details
+   */
+  getDescription() {
+    const { x, y, width, height } = this.item.layouts.desktop;
+    return {
+      action: 'add',
+      type: this.item.type,
+      position: { x, y },
+      size: { width, height },
+    };
+  }
 }
 
 /**
@@ -582,6 +597,21 @@ export class DeleteItemCommand implements Command {
     // Remove the item again
     removeItemFromCanvas(this.canvasId, this.item.id, this.stateInstance);
   }
+
+  /**
+   * Get description of this command
+   *
+   * @returns Object with action type, position, and item details
+   */
+  getDescription() {
+    const { x, y, width, height } = this.item.layouts.desktop;
+    return {
+      action: 'delete',
+      type: this.item.type,
+      position: { x, y },
+      size: { width, height },
+    };
+  }
 }
 
 /**
@@ -779,6 +809,24 @@ export class MoveItemCommand implements Command {
   /** Size after operation (grid units) - optional for resize tracking */
   private targetSize?: { width: number; height: number };
 
+  /** Mobile layout before operation - captures full mobile state including customized flag */
+  private sourceMobileLayout?: {
+    x: number | null;
+    y: number | null;
+    width: number | null;
+    height: number | null;
+    customized: boolean;
+  };
+
+  /** Mobile layout after operation - captures full mobile state including customized flag */
+  private targetMobileLayout?: {
+    x: number | null;
+    y: number | null;
+    width: number | null;
+    height: number | null;
+    customized: boolean;
+  };
+
   /** Z-index in source canvas (for undo restoration) */
   private sourceZIndex: number;
 
@@ -843,6 +891,20 @@ export class MoveItemCommand implements Command {
     sourceSize: { width: number; height: number } | undefined,
     targetSize: { width: number; height: number } | undefined,
     stateInstance: any,
+    sourceMobileLayout?: {
+      x: number | null;
+      y: number | null;
+      width: number | null;
+      height: number | null;
+      customized: boolean;
+    },
+    targetMobileLayout?: {
+      x: number | null;
+      y: number | null;
+      width: number | null;
+      height: number | null;
+      customized: boolean;
+    },
   ) {
     this.itemId = itemId;
     this.sourceCanvasId = sourceCanvasId;
@@ -854,6 +916,12 @@ export class MoveItemCommand implements Command {
     this.targetZIndex = targetZIndex;
     this.sourceSize = sourceSize ? { ...sourceSize } : undefined;
     this.targetSize = targetSize ? { ...targetSize } : undefined;
+    this.sourceMobileLayout = sourceMobileLayout
+      ? { ...sourceMobileLayout }
+      : undefined;
+    this.targetMobileLayout = targetMobileLayout
+      ? { ...targetMobileLayout }
+      : undefined;
     this.stateInstance = stateInstance;
   }
 
@@ -934,6 +1002,11 @@ export class MoveItemCommand implements Command {
     if (this.sourceSize) {
       item.layouts.desktop.width = this.sourceSize.width;
       item.layouts.desktop.height = this.sourceSize.height;
+    }
+
+    // Restore mobile layout if it was tracked
+    if (this.sourceMobileLayout) {
+      item.layouts.mobile = { ...this.sourceMobileLayout };
     }
 
     // Add back to source canvas at original index
@@ -1030,6 +1103,11 @@ export class MoveItemCommand implements Command {
       item.layouts.desktop.height = this.targetSize.height;
     }
 
+    // Restore mobile layout if it was tracked
+    if (this.targetMobileLayout) {
+      item.layouts.mobile = { ...this.targetMobileLayout };
+    }
+
     // Add to target canvas
     const targetCanvas = this.stateInstance.canvases[this.targetCanvasId];
     if (!targetCanvas) {
@@ -1051,6 +1129,34 @@ export class MoveItemCommand implements Command {
     }
 
     debug.log("  ✅ Redo complete");
+  }
+
+  /**
+   * Get description of this command
+   *
+   * **Detects resize vs move**: Returns different action based on whether size changed
+   *
+   * @returns Object with action type, source/target positions and sizes
+   */
+  getDescription() {
+    // Check if this is a resize operation (size changed)
+    const isResize =
+      this.sourceSize &&
+      this.targetSize &&
+      (this.sourceSize.width !== this.targetSize.width ||
+        this.sourceSize.height !== this.targetSize.height);
+
+    return {
+      action: isResize ? 'resize' : 'move',
+      source: {
+        position: this.sourcePosition,
+        size: this.sourceSize,
+      },
+      target: {
+        position: this.targetPosition,
+        size: this.targetSize,
+      },
+    };
   }
 }
 
@@ -1092,6 +1198,14 @@ export class UpdateItemCommand implements Command {
       this.stateInstance.canvases = { ...this.stateInstance.canvases };
     }
   }
+
+  getDescription() {
+    return {
+      action: 'update',
+      itemId: this.itemId,
+      updates: this.updates,
+    };
+  }
 }
 
 /**
@@ -1124,6 +1238,16 @@ export class RemoveItemCommand implements Command {
   redo(): void {
     removeItemFromCanvas(this.canvasId, this.item.id, this.stateInstance);
   }
+
+  getDescription() {
+    const { x, y, width, height } = this.item.layouts.desktop;
+    return {
+      action: 'remove',
+      type: this.item.type,
+      position: { x, y },
+      size: { width, height },
+    };
+  }
 }
 
 /**
@@ -1152,6 +1276,14 @@ export class SetViewportCommand implements Command {
   redo(): void {
     this.stateInstance.currentViewport = this.newViewport;
   }
+
+  getDescription() {
+    return {
+      action: 'setViewport',
+      oldViewport: this.oldViewport,
+      newViewport: this.newViewport,
+    };
+  }
 }
 
 /**
@@ -1179,6 +1311,14 @@ export class ToggleGridCommand implements Command {
 
   redo(): void {
     this.stateInstance.showGrid = this.newValue;
+  }
+
+  getDescription() {
+    return {
+      action: 'toggleGrid',
+      oldValue: this.oldValue,
+      newValue: this.newValue,
+    };
   }
 }
 
@@ -1250,6 +1390,22 @@ export class BatchAddCommand implements Command {
 
     this.stateInstance.canvases = updatedCanvases;
   }
+
+  getDescription() {
+    return {
+      action: 'batchAdd',
+      itemCount: this.itemsData.length,
+      items: this.itemsData.map((item) => ({
+        id: item.id,
+        type: item.type,
+        position: { x: item.layouts.desktop.x, y: item.layouts.desktop.y },
+        size: {
+          width: item.layouts.desktop.width,
+          height: item.layouts.desktop.height,
+        },
+      })),
+    };
+  }
 }
 
 /**
@@ -1318,6 +1474,22 @@ export class BatchDeleteCommand implements Command {
       canvas.items = canvas.items.filter((item) => !itemIds.includes(item.id));
     }
     this.stateInstance.canvases = updatedCanvases;
+  }
+
+  getDescription() {
+    return {
+      action: 'batchDelete',
+      itemCount: this.itemsData.length,
+      items: this.itemsData.map((item) => ({
+        id: item.id,
+        type: item.type,
+        position: { x: item.layouts.desktop.x, y: item.layouts.desktop.y },
+        size: {
+          width: item.layouts.desktop.width,
+          height: item.layouts.desktop.height,
+        },
+      })),
+    };
   }
 }
 
@@ -1408,6 +1580,19 @@ export class BatchUpdateConfigCommand implements Command {
     });
     this.stateInstance.canvases = updatedCanvases;
   }
+
+  getDescription() {
+    return {
+      action: 'batchUpdateConfig',
+      updateCount: this.updates.length,
+      updates: this.updates.map(({ itemId, canvasId, oldItem, newItem }) => ({
+        itemId,
+        canvasId,
+        oldConfig: oldItem.config,
+        newConfig: newItem.config,
+      })),
+    };
+  }
 }
 
 /**
@@ -1491,6 +1676,13 @@ export class AddCanvasCommand implements Command {
 
     // Emit event so host app can sync its metadata
     this.eventManagerInstance.emit("canvasAdded", { canvasId: this.canvasId });
+  }
+
+  getDescription() {
+    return {
+      action: 'addCanvas',
+      canvasId: this.canvasId,
+    };
   }
 }
 
@@ -1588,6 +1780,14 @@ export class RemoveCanvasCommand implements Command {
     this.eventManagerInstance.emit("canvasRemoved", {
       canvasId: this.canvasId,
     });
+  }
+
+  getDescription() {
+    return {
+      action: 'removeCanvas',
+      canvasId: this.canvasId,
+      itemCount: this.canvasSnapshot?.items.length || 0,
+    };
   }
 }
 
@@ -1747,5 +1947,18 @@ export class ChangeZIndexCommand implements Command {
         })),
       });
     }
+  }
+
+  getDescription() {
+    return {
+      action: 'changeZIndex',
+      changeCount: this.changes.length,
+      changes: this.changes.map((change) => ({
+        itemId: change.itemId,
+        canvasId: change.canvasId,
+        oldZIndex: change.oldZIndex,
+        newZIndex: change.newZIndex,
+      })),
+    };
   }
 }
