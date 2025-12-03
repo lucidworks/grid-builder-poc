@@ -340,6 +340,11 @@ export class GridItemWrapper {
    * Component did load lifecycle hook
    */
   componentDidLoad() {
+    // Skip if component was hidden (renderComponent returned null)
+    if (!this.itemRef) {
+      return;
+    }
+
     // Set up virtual rendering observer (both builder and viewer modes)
     // Virtual rendering improves performance for long pages with many components
     // Can be disabled via config for Storybook or testing scenarios
@@ -424,6 +429,11 @@ export class GridItemWrapper {
    * Component did update lifecycle hook
    */
   componentDidUpdate() {
+    // Skip if component was hidden (renderComponent returned null)
+    if (!this.itemRef) {
+      return;
+    }
+
     // Re-inject component content if custom wrapper re-rendered
     this.injectComponentContent();
   }
