@@ -693,6 +693,471 @@ export interface GridConfig {
   renderUnknownComponent?: (context: { type: string; itemId: string }) => any;
 
   /**
+   * Show error UI for component errors
+   *
+   * **What it does**: Controls whether error boundaries show visual error fallback UI
+   * **Why**: Development vs production error visibility control
+   *
+   * **Default**: Environment-based (dev: true, prod: false)
+   *
+   * **Behavior**:
+   * - **When true**: Error boundaries render visual error UI with retry button
+   * - **When false**: Errors are logged and emitted to EventManager, but no UI shown
+   * - **When undefined**: Auto-detects (show in development, hide in production)
+   *
+   * **Error UI shows**:
+   * - Error severity icon (🔴 critical, ❌ error, ⚠️ warning)
+   * - User-friendly error message (production) or technical details (development)
+   * - Retry button (for recoverable errors)
+   * - Stack trace (development mode only)
+   * - Component stack (development mode only)
+   *
+   * **Error levels**:
+   * - **grid-builder**: Critical errors (whole grid fails) - always show UI
+   * - **canvas-section**: Canvas errors (section fails) - show UI by default
+   * - **grid-item-wrapper**: Item errors (single component fails) - configurable
+   *
+   * **Use cases**:
+   * - **Development**: Always show error UI for debugging (true)
+   * - **Production**: Hide error UI for cleaner UX (false), emit to monitoring
+   * - **Staging**: Show error UI for QA testing (true)
+   * - **Demo mode**: Hide error UI to avoid alarming users (false)
+   *
+   * **Best practices**:
+   * - **Leave undefined** for automatic environment detection ✅ Recommended
+   * - **Combine with logErrors: true** to ensure errors are captured
+   * - **Use custom errorFallback** for branded error messages
+   * - **Subscribe to error events** for custom handling
+   *
+   * **Example - Always show errors**:
+   * ```typescript
+   * const debugConfig: GridConfig = {
+   *   showErrorUI: true,     // Force error UI in all environments
+   *   logErrors: true        // Also log to console
+   * };
+   * ```
+   *
+   * **Example - Production (hide UI, report to Sentry)**:
+   * ```typescript
+   * const prodConfig: GridConfig = {
+   *   showErrorUI: false,      // Hide error UI
+   *   reportToSentry: true,    // Send to Sentry
+   *   logErrors: false         // Don't spam console
+   * };
+   * ```
+   *
+   * **Example - Custom error UI**:
+   * ```typescript
+   * const customConfig: GridConfig = {
+   *   showErrorUI: true,
+   *   errorFallback: (error, errorInfo, retry) => (
+   *     <div class="my-custom-error">
+   *       <h3>Oops! Something went wrong</h3>
+   *       <p>{error.message}</p>
+   *       {retry && <button onClick={retry}>Try Again</button>}
+   *     </div>
+   *   )
+   * };
+   * ```
+   * @default Environment-based (dev: true, prod: false)
+   */
+  showErrorUI?: boolean;
+
+  /**
+   * Log errors to console
+   *
+   * **What it does**: Controls whether errors are logged to browser console
+   * **Why**: Debugging and development visibility
+   *
+   * **Default**: true (enabled for debugging)
+   *
+   * **Log format**:
+   * - **critical**: console.error() with 🔴 icon, includes stack trace
+   * - **error**: console.error() with ❌ icon
+   * - **warning**: console.warn() with ⚠️ icon
+   * - **info**: console.info() with ℹ️ icon
+   *
+   * **Logged information**:
+   * - Error message (user-friendly or technical based on NODE_ENV)
+   * - Grid instance ID
+   * - Error boundary level (grid-builder, canvas-section, grid-item-wrapper)
+   * - Item ID (if applicable)
+   * - Canvas ID (if applicable)
+   * - Component type (if applicable)
+   * - Severity level
+   * - Recoverability status
+   * - Timestamp (ISO 8601 format)
+   * - Stack trace (critical errors only)
+   *
+   * **Use cases**:
+   * - **Development**: Keep enabled for debugging (true) ✅ Recommended
+   * - **Production**: Disable to reduce console noise (false)
+   * - **Staging**: Enable for QA testing (true)
+   * - **Performance testing**: Disable to avoid console overhead (false)
+   *
+   * **Performance impact**:
+   * - Minimal (~0.1ms per error log)
+   * - No impact when no errors occur
+   * - Console.error() is asynchronous, doesn't block rendering
+   *
+   * **Best practices**:
+   * - **Development**: logErrors: true, showErrorUI: true
+   * - **Production**: logErrors: false, reportToSentry: true
+   * - **Combine with browser DevTools** for filtering by severity
+   *
+   * **Example - Development logging**:
+   * ```typescript
+   * const devConfig: GridConfig = {
+   *   logErrors: true,         // Log to console
+   *   showErrorUI: true        // Show visual errors
+   * };
+   * ```
+   *
+   * **Example - Production (silent)**:
+   * ```typescript
+   * const prodConfig: GridConfig = {
+   *   logErrors: false,        // Silent console
+   *   reportToSentry: true     // Report to monitoring
+   * };
+   * ```
+   * @default true
+   */
+  logErrors?: boolean;
+
+  /**
+   * Report errors to external service (Sentry, etc.)
+   *
+   * **What it does**: Automatically sends errors to Sentry or other monitoring service
+   * **Why**: Production error tracking and monitoring
+   *
+   * **Default**: false (disabled)
+   *
+   * **Requirements**:
+   * - Sentry must be initialized in host application
+   * - `window.Sentry` object must be available
+   * - Sentry SDK must be installed (@sentry/browser)
+   *
+   * **What gets reported**:
+   * - Error object with full stack trace
+   * - Grid instance ID (as Sentry tag)
+   * - Error boundary level (as Sentry tag)
+   * - Severity level (mapped to Sentry level)
+   * - Grid-specific context (itemId, canvasId, componentType)
+   * - Component stack (if available)
+   *
+   * **Sentry level mapping**:
+   * - critical → fatal
+   * - error → error
+   * - warning → warning
+   * - info → info
+   *
+   * **Host application setup**:
+   * ```typescript
+   * // In your host app (before loading grid-builder)
+   * import * as Sentry from '@sentry/browser';
+   *
+   * Sentry.init({
+   *   dsn: 'YOUR_SENTRY_DSN',
+   *   environment: process.env.NODE_ENV,
+   *   release: 'my-app@1.0.0'
+   * });
+   *
+   * // Grid builder will automatically report errors
+   * ```
+   *
+   * **Sentry tags added**:
+   * - `grid-id`: Grid instance identifier
+   * - `error-boundary`: Boundary level (grid-builder, canvas-section, grid-item-wrapper)
+   * - `severity`: Error severity level
+   *
+   * **Sentry context added**:
+   * - `grid-error`: Grid-specific context (itemId, canvasId, componentType, recoverable)
+   * - `component-stack`: Component hierarchy if available
+   *
+   * **Use cases**:
+   * - **Production**: Enable for error monitoring (true)
+   * - **Staging**: Enable for pre-release testing (true)
+   * - **Development**: Disable to avoid Sentry quota usage (false)
+   * - **A/B testing**: Conditional reporting based on feature flags
+   *
+   * **Best practices**:
+   * - **Only enable in production/staging** to avoid dev noise
+   * - **Set Sentry environment** to distinguish prod/staging errors
+   * - **Filter sensitive data** using Sentry beforeSend hook
+   * - **Set sample rate** to control error volume
+   *
+   * **Example - Production error reporting**:
+   * ```typescript
+   * const prodConfig: GridConfig = {
+   *   reportToSentry: true,    // Enable Sentry reporting
+   *   logErrors: false,        // Reduce console noise
+   *   showErrorUI: false       // Clean UX
+   * };
+   * ```
+   *
+   * **Example - Conditional reporting**:
+   * ```typescript
+   * const config: GridConfig = {
+   *   reportToSentry: process.env.NODE_ENV === 'production',
+   *   logErrors: process.env.NODE_ENV !== 'production'
+   * };
+   * ```
+   *
+   * **Warning**: If Sentry is not configured, enabling this will log a warning to console:
+   * ```
+   * GridErrorAdapter: Sentry is not configured, skipping error report
+   * ```
+   * @default false
+   */
+  reportToSentry?: boolean;
+
+  /**
+   * Custom error fallback renderer
+   *
+   * **What it does**: Provides custom JSX/HTML for error UI instead of default
+   * **Why**: Brand consistency and custom error handling logic
+   *
+   * **Default**: undefined (uses built-in error UI)
+   *
+   * **Function signature**:
+   * ```typescript
+   * (error: Error, errorInfo: BaseErrorInfo, retry?: () => void) => any
+   * ```
+   *
+   * **Parameters**:
+   * - `error`: The caught error object
+   * - `errorInfo`: Error context (errorBoundary, timestamp, itemId, canvasId, etc.)
+   * - `retry`: Optional retry function (undefined for non-recoverable errors)
+   *
+   * **Return value**: JSX element or HTMLElement to render
+   *
+   * **Built-in default** (when not provided):
+   * ```tsx
+   * <div class="error-boundary-fallback">
+   *   <div class="error-boundary-header">
+   *     <span class="error-boundary-icon">🔴</span>
+   *     <span class="error-boundary-title">Critical Error</span>
+   *   </div>
+   *   <div class="error-boundary-message">
+   *     Unable to load component. Please try again.
+   *   </div>
+   *   {recoverable && (
+   *     <button class="error-boundary-retry" onClick={retry}>
+   *       Try Again
+   *     </button>
+   *   )}
+   * </div>
+   * ```
+   *
+   * **Use cases**:
+   * - **Brand consistency**: Match your app's design system
+   * - **Custom actions**: Add report button, contact support, etc.
+   * - **Localization**: Translate error messages to user's language
+   * - **Conditional UI**: Different fallbacks based on error type
+   * - **Analytics**: Track user interactions with error UI
+   *
+   * **Example - Branded error UI**:
+   * ```typescript
+   * const config: GridConfig = {
+   *   errorFallback: (error, errorInfo, retry) => {
+   *     const { errorBoundary, itemId, componentType } = errorInfo;
+   *
+   *     return (
+   *       <div style={{
+   *         padding: '20px',
+   *         background: '#fff3cd',
+   *         border: '2px solid #ffc107',
+   *         borderRadius: '8px'
+   *       }}>
+   *         <h3 style={{ margin: '0 0 10px 0' }}>
+   *           ⚠️ Component Error
+   *         </h3>
+   *         <p>
+   *           We're having trouble loading the {componentType || 'component'}.
+   *         </p>
+   *         {retry && (
+   *           <button
+   *             onClick={retry}
+   *             style={{
+   *               padding: '8px 16px',
+   *               background: '#007bff',
+   *               color: 'white',
+   *               border: 'none',
+   *               borderRadius: '4px',
+   *               cursor: 'pointer'
+   *             }}
+   *           >
+   *             Try Again
+   *           </button>
+   *         )}
+   *         <button
+   *           onClick={() => window.location.reload()}
+   *           style={{
+   *             marginLeft: '10px',
+   *             padding: '8px 16px',
+   *             background: '#6c757d',
+   *             color: 'white',
+   *             border: 'none',
+   *             borderRadius: '4px',
+   *             cursor: 'pointer'
+   *           }}
+   *         >
+   *           Reload Page
+   *         </button>
+   *       </div>
+   *     );
+   *   }
+   * };
+   * ```
+   *
+   * **Example - Localized error messages**:
+   * ```typescript
+   * const config: GridConfig = {
+   *   errorFallback: (error, errorInfo, retry) => {
+   *     const locale = getUserLocale();
+   *     const messages = {
+   *       en: 'Unable to load component. Please try again.',
+   *       es: 'No se puede cargar el componente. Inténtalo de nuevo.',
+   *       fr: 'Impossible de charger le composant. Veuillez réessayer.'
+   *     };
+   *
+   *     return (
+   *       <div class="error-fallback">
+   *         <p>{messages[locale] || messages.en}</p>
+   *         {retry && <button onClick={retry}>Retry</button>}
+   *       </div>
+   *     );
+   *   }
+   * };
+   * ```
+   *
+   * **Example - Severity-based fallbacks**:
+   * ```typescript
+   * const config: GridConfig = {
+   *   errorFallback: (error, errorInfo, retry) => {
+   *     const severity = getGridErrorSeverity(errorInfo.errorBoundary, error);
+   *
+   *     if (severity === 'critical') {
+   *       return (
+   *         <div class="critical-error">
+   *           <h2>Critical Error</h2>
+   *           <p>The page needs to be reloaded.</p>
+   *           <button onClick={() => window.location.reload()}>
+   *             Reload Page
+   *           </button>
+   *         </div>
+   *       );
+   *     }
+   *
+   *     return (
+   *       <div class="minor-error">
+   *         <p>Minor error occurred. You can continue working.</p>
+   *         {retry && <button onClick={retry}>Retry</button>}
+   *       </div>
+   *     );
+   *   }
+   * };
+   * ```
+   *
+   * **Interaction with showErrorUI**:
+   * - If `showErrorUI: false`, errorFallback is never called
+   * - If `showErrorUI: true`, errorFallback is called instead of default UI
+   * - If `showErrorUI: undefined`, follows environment-based behavior
+   * @default undefined
+   */
+  errorFallback?: (error: Error, errorInfo: any, retry?: () => void) => any;
+
+  /**
+   * Error recovery strategy
+   *
+   * **What it does**: Controls how grid recovers from errors
+   * **Why**: Different error types require different handling strategies
+   *
+   * **Default**: undefined (auto-determined per error)
+   *
+   * **Available strategies**:
+   * - **graceful**: Show fallback UI, emit event, continue operation ✅ Recommended
+   * - **strict**: Re-throw error, propagate to parent (may crash whole app)
+   * - **retry**: Attempt automatic retry with exponential backoff
+   * - **ignore**: Swallow error silently, log to console only
+   *
+   * **Auto-determination** (when undefined):
+   * - Network errors → retry
+   * - Timeout errors → retry
+   * - Validation errors → graceful
+   * - Permission errors → strict
+   * - Render errors → graceful
+   * - Low severity (info/warning) → ignore
+   *
+   * **Strategy details**:
+   *
+   * **1. Graceful** (default for most errors):
+   * - Shows error fallback UI
+   * - Emits error event to EventManager
+   * - Allows rest of grid to continue functioning
+   * - User can retry via retry button
+   * - Recommended for item-level errors
+   *
+   * **2. Strict**:
+   * - Re-throws error to parent
+   * - May crash entire grid or app
+   * - Use for unrecoverable errors only
+   * - Recommended for critical initialization errors
+   *
+   * **3. Retry**:
+   * - Automatically retries operation with exponential backoff
+   * - Default: 3 attempts with 1s, 2s, 4s delays
+   * - Jitter added to prevent thundering herd
+   * - Recommended for network/API calls
+   *
+   * **4. Ignore**:
+   * - Logs to console (if logErrors: true)
+   * - Emits to EventManager
+   * - No UI shown
+   * - Recommended for non-critical warnings
+   *
+   * **Use cases**:
+   * - **graceful**: Component render errors, validation errors (user can retry)
+   * - **strict**: Critical initialization errors (must crash to prevent data corruption)
+   * - **retry**: Network errors, timeout errors (transient failures)
+   * - **ignore**: Low-severity warnings, analytics failures
+   *
+   * **Best practices**:
+   * - **Leave undefined** to use smart auto-detection ✅ Recommended
+   * - **Use graceful** for user-facing errors that can be recovered
+   * - **Use strict** sparingly, only for critical errors
+   * - **Combine retry with circuit breaker** to prevent cascading failures
+   *
+   * **Example - Graceful degradation**:
+   * ```typescript
+   * const config: GridConfig = {
+   *   recoveryStrategy: 'graceful',  // Always show fallback UI
+   *   showErrorUI: true              // Show error to user
+   * };
+   * ```
+   *
+   * **Example - Strict mode (crash on error)**:
+   * ```typescript
+   * const config: GridConfig = {
+   *   recoveryStrategy: 'strict'  // Crash on any error (for debugging)
+   * };
+   * ```
+   *
+   * **Example - Auto-retry network errors**:
+   * ```typescript
+   * const config: GridConfig = {
+   *   recoveryStrategy: 'retry'  // Auto-retry all errors (use with caution!)
+   * };
+   * ```
+   *
+   * **Warning**: Setting global `recoveryStrategy` overrides auto-detection.
+   * This may cause inappropriate handling (e.g., retrying validation errors).
+   * Prefer leaving undefined to use smart per-error strategies.
+   * @default undefined
+   */
+  recoveryStrategy?: 'graceful' | 'strict' | 'retry' | 'ignore';
+
+  /**
    * Instance identifier (internal use)
    *
    * **What it does**: Uniquely identifies this grid-builder instance for cache isolation
