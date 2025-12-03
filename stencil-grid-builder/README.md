@@ -25,6 +25,7 @@ Render grid layouts without any editing functionality for production display.
 - 📱 **Responsive**: Desktop and mobile viewport support with independent layouts
 - 🎨 **Customizable**: Configurable grid sizing, colors, and component rendering
 - ⚡ **Performance**: Virtual rendering with IntersectionObserver for large grids
+- 🛡️ **Error Boundaries**: 3-level error isolation with graceful degradation
 - 📦 **TypeScript**: Full type definitions included
 
 ### grid-builder Exclusive Features
@@ -893,6 +894,248 @@ gridBuilder.uiOverrides = {
 **Available overrides**:
 - `CanvasHeader` - Header rendered above each canvas section
   - Props: `{ canvasId: string, metadata: any, isActive: boolean }`
+
+### Error Boundaries
+
+The grid builder includes a comprehensive 3-level error boundary system for graceful error handling and isolation. Errors are caught at the appropriate level to minimize impact on the rest of the application.
+
+#### Error Boundary Hierarchy
+
+```
+grid-builder (Level 1 - Critical)
+├── canvas-section (Level 2 - Error)
+│   ├── grid-item-wrapper (Level 3 - Warning)
+│   ├── grid-item-wrapper (Level 3 - Warning)
+│   └── ...
+├── canvas-section (Level 2 - Error)
+└── ...
+```
+
+**Level 1 (grid-builder)**: Critical errors that prevent the entire grid from functioning
+- Plugin initialization failures
+- API creation errors
+- Global state corruption
+
+**Level 2 (canvas-section)**: Errors affecting a single canvas section
+- Canvas rendering failures
+- Dropzone initialization errors
+- Canvas-level state issues
+
+**Level 3 (grid-item-wrapper)**: Isolated component errors
+- Component render failures
+- Component lifecycle errors
+- Custom component errors
+
+#### Configuration
+
+Enable and configure error boundaries via the `config` prop:
+
+```typescript
+gridBuilder.config = {
+  // Error boundary configuration
+  showErrorUI: true,                    // Show error UI in development (default: process.env.NODE_ENV === 'development')
+  logErrors: true,                      // Log errors to console (default: true)
+  reportToSentry: false,                // Report to Sentry (default: false)
+  recoveryStrategy: 'graceful',         // 'graceful' | 'ignore' | 'strict' (default: 'graceful')
+
+  // Custom error fallback UI (optional)
+  errorFallback: (error, errorInfo, retry) => {
+    return (
+      <div class="custom-error-ui">
+        <h3>{error.message}</h3>
+        <button onClick={retry}>Try Again</button>
+      </div>
+    );
+  },
+
+  // ... other grid config
+};
+```
+
+#### Recovery Strategies
+
+**Graceful (default)**: Show fallback UI, allow retry, continue operating
+```typescript
+config.recoveryStrategy = 'graceful';
+```
+
+**Ignore**: Suppress error, continue silently (log only)
+```typescript
+config.recoveryStrategy = 'ignore';
+```
+
+**Strict**: Propagate error to parent boundary
+```typescript
+config.recoveryStrategy = 'strict';
+```
+
+#### Error Events
+
+Listen for error events to integrate with external logging systems (Sentry, Datadog, etc.):
+
+```typescript
+const api = window.gridBuilderAPI;
+
+// Listen for all error events
+api.on('error', (event) => {
+  const { error, errorInfo, severity, recoverable } = event;
+
+  // Log to external service
+  Sentry.captureException(error, {
+    level: severity,
+    tags: {
+      errorBoundary: errorInfo.errorBoundary,
+      canvasId: errorInfo.canvasId,
+      itemId: errorInfo.itemId,
+      componentType: errorInfo.componentType,
+      recoverable: recoverable
+    }
+  });
+
+  // Update UI
+  if (severity === 'critical') {
+    showIncidentBanner('Critical error occurred');
+  }
+});
+```
+
+**Event payload structure**:
+```typescript
+interface GridErrorEventDetail {
+  error: Error;                    // The caught error
+  errorInfo: GridErrorInfo;        // Grid-specific context
+  severity: 'warning' | 'error' | 'critical';
+  recoverable: boolean;            // Can the grid continue operating?
+}
+
+interface GridErrorInfo {
+  errorBoundary: 'grid-builder' | 'canvas-section' | 'grid-item-wrapper';
+  timestamp: number;
+  itemId?: string;                 // Present for item-level errors
+  canvasId?: string;               // Present for canvas/item errors
+  componentType?: string;          // Present for item render errors
+}
+```
+
+#### Custom Fallback UI
+
+Provide custom error UI instead of the default red error box:
+
+```typescript
+const customErrorFallback = (error, errorInfo, retry) => {
+  const fallbackDiv = document.createElement('div');
+  fallbackDiv.style.cssText = `
+    padding: 24px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 8px;
+  `;
+
+  fallbackDiv.innerHTML = `
+    <h3>🛠️ Oops! Something went wrong</h3>
+    <p>${error.message || 'An unexpected error occurred'}</p>
+    <button id="retry-btn" style="padding: 8px 16px; background: white; color: #667eea; border: none; border-radius: 4px; cursor: pointer;">
+      Try Again
+    </button>
+  `;
+
+  // Add retry handler
+  const retryBtn = fallbackDiv.querySelector('#retry-btn');
+  if (retryBtn) {
+    retryBtn.addEventListener('click', retry);
+  }
+
+  return fallbackDiv;
+};
+
+gridBuilder.config = {
+  errorFallback: customErrorFallback,
+  showErrorUI: true
+};
+```
+
+#### Development vs Production
+
+Error UI behavior adapts based on environment:
+
+**Development mode** (`NODE_ENV=development`):
+- Shows detailed error stack traces
+- Displays technical error information
+- Includes error boundary metadata
+- Defaults to `showErrorUI: true`
+
+**Production mode** (`NODE_ENV=production`):
+- Shows user-friendly messages
+- Hides technical details and stack traces
+- Logs errors silently to external services
+- Defaults to `showErrorUI: false`
+
+#### Error Severity Levels
+
+Errors are automatically classified by severity based on the boundary that caught them:
+
+| Severity | Boundary | Impact | Example |
+|----------|----------|--------|---------|
+| **Warning** | grid-item-wrapper | Single component fails, others OK | Component render error |
+| **Error** | canvas-section | Entire canvas section fails | Canvas initialization error |
+| **Critical** | grid-builder | Entire grid fails | Plugin initialization error |
+
+#### Best Practices
+
+**1. Use custom fallback UI for production**:
+```typescript
+config.errorFallback = (error, errorInfo, retry) => {
+  return <your-branded-error-component error={error} onRetry={retry} />;
+};
+```
+
+**2. Integrate with external logging**:
+```typescript
+api.on('error', (event) => {
+  if (event.severity === 'critical') {
+    Sentry.captureException(event.error, {
+      level: 'error',
+      tags: event.errorInfo
+    });
+  }
+});
+```
+
+**3. Handle component errors gracefully**:
+```typescript
+// In your component render function
+render: ({ itemId, config }) => {
+  try {
+    return <your-component config={config} />;
+  } catch (error) {
+    // Error will be caught by grid-item-wrapper error boundary
+    throw error;
+  }
+}
+```
+
+**4. Test error boundaries in development**:
+```typescript
+// Use Storybook stories to test error scenarios
+// See: src/components/error-boundary/stories/error-boundary.stories.tsx
+```
+
+**5. Monitor error rates**:
+```typescript
+let errorCount = 0;
+
+api.on('error', (event) => {
+  errorCount++;
+
+  if (errorCount > 10) {
+    // Too many errors - alert developers
+    console.error('High error rate detected');
+  }
+});
+```
+
+For complete examples and demonstrations, see the error boundary Storybook stories at:
+`src/components/error-boundary/stories/error-boundary.stories.tsx`
 
 ## Styling & Theming
 
