@@ -2908,6 +2908,13 @@ The system supports platform-specific conventions:
 export const PluginSystemDemo = () => {
   // Generate unique API key for this story instance
   const apiKey = getUniqueApiKey();
+
+  // Create component palette
+  const paletteEl = document.createElement("component-palette");
+  paletteEl.components = simpleComponents;
+  paletteEl.targetGridBuilderId = apiKey; // Target this story's grid-builder instance
+
+  // Create grid builder
   const builderEl = document.createElement("grid-builder");
   builderEl.components = simpleComponents;
   builderEl.apiRef = { key: apiKey }; // Isolated instance for this story
@@ -3026,9 +3033,14 @@ export const PluginSystemDemo = () => {
       ${logDiv}
 
       <div
-        style="width: 100%; height: 500px; border: 2px solid #17a2b8; border-radius: 8px; overflow: hidden;"
+        style="display: flex; width: 100%; height: 500px; border: 2px solid #17a2b8; border-radius: 8px; overflow: hidden;"
       >
-        ${builderEl}
+        <div
+          style="width: 250px; flex-shrink: 0; border-right: 1px solid #ddd; background: #f5f5f5; overflow-y: auto;"
+        >
+          ${paletteEl}
+        </div>
+        <div style="flex: 1; overflow: auto;">${builderEl}</div>
       </div>
 
       <div
