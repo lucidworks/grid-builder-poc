@@ -1112,7 +1112,7 @@ export class ResizeHandler {
       debug.log("  ✅ TOP EDGE RESIZE: Preserving bottom edge", {
         bottomEdge,
         snappedHeight: newHeight,
-        adjustedY: newY
+        adjustedY: newY,
       });
     }
 
@@ -1125,7 +1125,7 @@ export class ResizeHandler {
       debug.log("  ✅ LEFT EDGE RESIZE: Preserving right edge", {
         rightEdge,
         snappedWidth: newWidth,
-        adjustedX: newX
+        adjustedX: newX,
       });
     }
 
@@ -1309,8 +1309,17 @@ export class ResizeHandler {
 
     layout.width = pixelsToGridX(newWidth, itemToUpdate.canvasId, this.config);
     layout.height = pixelsToGridY(newHeight, this.config);
-    layout.x = pixelsToGridX(newX, itemToUpdate.canvasId, this.config);
-    layout.y = pixelsToGridY(newY, this.config);
+
+    // CRITICAL FIX: Only update position when resizing from edges that affect position
+    // - Right/bottom/bottom-right resizes: position stays the same (only size changes)
+    // - Left edge resize: x changes (right edge stays fixed)
+    // - Top edge resize: y changes (bottom edge stays fixed)
+    if (event.edges && event.edges.left) {
+      layout.x = pixelsToGridX(newX, itemToUpdate.canvasId, this.config);
+    }
+    if (event.edges && event.edges.top) {
+      layout.y = pixelsToGridY(newY, this.config);
+    }
 
     debug.log("  finalGridUnits:", {
       x: layout.x,
