@@ -1147,49 +1147,12 @@ export class GridItemWrapper {
    */
   private captureItemSnapshot = () => {
     this.itemSnapshot = JSON.parse(JSON.stringify(this.item));
-
-    // DEBUG: Log snapshot capture for resize bug investigation
-    const viewport = this.stateInstance.currentViewport || "desktop";
-    console.log(
-      "📸 Snapshot captured - itemId:",
-      this.item.id,
-      "viewport:",
-      viewport,
-    );
-    console.log(
-      "  Desktop: x=" +
-        this.itemSnapshot.layouts.desktop.x +
-        ", y=" +
-        this.itemSnapshot.layouts.desktop.y,
-    );
-    console.log(
-      "  Mobile: x=" +
-        this.itemSnapshot.layouts.mobile.x +
-        ", y=" +
-        this.itemSnapshot.layouts.mobile.y +
-        ", customized=" +
-        this.itemSnapshot.layouts.mobile.customized,
-    );
   };
 
   /**
    * Handle item update (called by drag/resize handlers)
    */
   private handleItemUpdate = (updatedItem: GridItem) => {
-    console.log("🔄 handleItemUpdate called", {
-      itemId: updatedItem.id,
-      hasSnapshot: !!this.itemSnapshot,
-      hasUndoRedoManager: !!this.undoRedoManagerInstance,
-      position: {
-        x: updatedItem.layouts.desktop.x,
-        y: updatedItem.layouts.desktop.y,
-      },
-      size: {
-        width: updatedItem.layouts.desktop.width,
-        height: updatedItem.layouts.desktop.height,
-      },
-    });
-
     // Check if position or canvas changed (for undo/redo)
     let isDrag = false;
     let isResize = false;
@@ -1247,49 +1210,6 @@ export class GridItemWrapper {
           const currentLayout = snapshot.layouts[currentViewport];
           const updatedLayout = updatedItem.layouts[currentViewport];
 
-          // DEBUG: Enhanced logging for resize bug investigation
-          console.log(
-            "  ✅ Pushing undo/redo command - isDrag:",
-            isDrag,
-            "isResize:",
-            isResize,
-            "viewport:",
-            currentViewport,
-          );
-          console.log(
-            "    Snapshot desktop: x=" +
-              snapshot.layouts.desktop.x +
-              ", y=" +
-              snapshot.layouts.desktop.y,
-          );
-          console.log(
-            "    Snapshot mobile: x=" +
-              snapshot.layouts.mobile.x +
-              ", y=" +
-              snapshot.layouts.mobile.y +
-              ", customized=" +
-              snapshot.layouts.mobile.customized,
-          );
-          console.log(
-            "    Current layout (source): x=" +
-              currentLayout.x +
-              ", y=" +
-              currentLayout.y +
-              ", w=" +
-              currentLayout.width +
-              ", h=" +
-              currentLayout.height,
-          );
-          console.log(
-            "    Updated layout (target): x=" +
-              updatedLayout.x +
-              ", y=" +
-              updatedLayout.y +
-              ", w=" +
-              updatedLayout.width +
-              ", h=" +
-              updatedLayout.height,
-          );
           this.undoRedoManagerInstance.push(
             new MoveItemCommand(
               updatedItem.id,
