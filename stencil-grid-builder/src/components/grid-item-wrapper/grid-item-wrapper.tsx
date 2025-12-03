@@ -40,6 +40,7 @@ import { gridToPixelsX, gridToPixelsY } from "../../utils/grid-calculations";
 import { GridConfig } from "../../types/grid-config";
 import { createDebugLogger } from "../../utils/debug";
 import { ComponentRegistry } from "../../services/component-registry";
+import { GridErrorAdapter } from "../../services/grid-error-adapter";
 
 const debug = createDebugLogger("grid-item-wrapper");
 
@@ -218,6 +219,24 @@ export class GridItemWrapper {
    * **Used by**: DragHandler, ResizeHandler for fast canvas element lookups
    */
   @Prop() domCacheInstance?: DOMCache;
+
+  /**
+   * Error adapter service instance (passed from grid-builder)
+   *
+   * **Required for editing mode** (grid-builder provides this)
+   * **Optional for viewer mode** (grid-viewer doesn't need it)
+   *
+   * **Source**: grid-builder → canvas-section → grid-item-wrapper
+   * **Purpose**: Support multiple grid-builder instances with isolated error handling
+   * **Used by**: Error boundary for handling component render errors
+   *
+   * **Error isolation strategy**:
+   * - Item-level errors (component render failures) are caught by error boundary
+   * - Error adapter converts to GridErrorEventDetail and emits to EventManager
+   * - Other grid items continue functioning (isolation achieved)
+   * - Fallback UI shown for failed item (graceful degradation)
+   */
+  @Prop() errorAdapterInstance?: GridErrorAdapter;
 
   /**
    * All items in the canvas (for viewer mode auto-layout)
@@ -1014,8 +1033,22 @@ export class GridItemWrapper {
             </div>
           )}
 
-          {/* Custom wrapper JSX - renders securely */}
-          {customWrapper}
+          {/* Error boundary wraps custom wrapper for item-level error isolation */}
+          {this.errorAdapterInstance ? (
+            <error-boundary
+              {...this.errorAdapterInstance.createErrorBoundaryConfig("grid-item-wrapper", {
+                itemId: this.item.id,
+                canvasId: this.item.canvasId,
+                componentType: this.item.type,
+              })}
+            >
+              {/* Custom wrapper JSX - renders securely */}
+              {customWrapper}
+            </error-boundary>
+          ) : (
+            /* Custom wrapper JSX - renders securely */
+            customWrapper
+          )}
 
           {/* Render component content into the content slot */}
           {/* Note: The custom wrapper must include a div with id={contentSlotId} */}
@@ -1093,13 +1126,32 @@ export class GridItemWrapper {
         ]}
 
         {/* Item Content (always rendered) */}
-        <div
-          class="grid-item-content"
-          id={contentSlotId}
-          data-component-type={this.item.type}
-        >
-          {componentContent}
-        </div>
+        {/* Error boundary wraps component content for item-level error isolation */}
+        {this.errorAdapterInstance ? (
+          <error-boundary
+            {...this.errorAdapterInstance.createErrorBoundaryConfig("grid-item-wrapper", {
+              itemId: this.item.id,
+              canvasId: this.item.canvasId,
+              componentType: this.item.type,
+            })}
+          >
+            <div
+              class="grid-item-content"
+              id={contentSlotId}
+              data-component-type={this.item.type}
+            >
+              {componentContent}
+            </div>
+          </error-boundary>
+        ) : (
+          <div
+            class="grid-item-content"
+            id={contentSlotId}
+            data-component-type={this.item.type}
+          >
+            {componentContent}
+          </div>
+        )}
 
         {/* Resize Handles (hidden in viewer mode) */}
         {!this.viewerMode && [
