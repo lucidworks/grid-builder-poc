@@ -94,6 +94,7 @@ import {
 } from "../../services/undo-redo-commands";
 import { UndoRedoManager, undoRedoState } from "../../services/undo-redo";
 import { DOMCache } from "../../utils/dom-cache";
+import { GridErrorAdapter } from "../../services/grid-error-adapter";
 
 // Utility imports
 import {
@@ -488,6 +489,7 @@ export class GridBuilder {
   private eventManagerInstance?: EventManager;
   private virtualRendererInstance?: VirtualRendererService;
   private domCacheInstance?: DOMCache;
+  private errorAdapter?: GridErrorAdapter;
 
   /**
    * Instance-specific ID for cache isolation
@@ -785,19 +787,31 @@ export class GridBuilder {
     this.virtualRendererInstance = new VirtualRendererService();
     this.domCacheInstance = new DOMCache();
 
+    // Set instanceId for cache isolation (needed for error adapter)
+    // This prevents cache collisions when multiple instances share canvasIds
+    this.instanceId = this.apiRef?.key || "gridBuilderAPI";
+
+    // Phase 3: Create error adapter instance
+    // Bridges generic error-boundary component to grid-builder domain
+    this.errorAdapter = new GridErrorAdapter(
+      this.eventManagerInstance,
+      this.instanceId,
+      {
+        showErrorUI: this.config?.showErrorUI,
+        logErrors: this.config?.logErrors,
+        reportToSentry: this.config?.reportToSentry,
+        errorFallback: this.config?.errorFallback,
+        recoveryStrategy: this.config?.recoveryStrategy,
+      },
+    );
+
     debug.log("GridBuilder: Service instances created", {
       stateManager: !!this.stateManager,
       undoRedoManager: !!this.undoRedoManager,
       eventManagerInstance: !!this.eventManagerInstance,
       virtualRendererInstance: !!this.virtualRendererInstance,
       domCacheInstance: !!this.domCacheInstance,
-    });
-
-    // Set instanceId for cache isolation (stored as private property to avoid mutating config prop)
-    // This prevents cache collisions when multiple instances share canvasIds
-    this.instanceId = this.apiRef?.key || "gridBuilderAPI";
-
-    debug.log("GridBuilder: Instance ID set", {
+      errorAdapter: !!this.errorAdapter,
       instanceId: this.instanceId,
       hasCustomConfig: !!this.config,
     });
@@ -2898,6 +2912,7 @@ export class GridBuilder {
                         this.stateManager!.onChange(key, callback)
                       }
                       domCacheInstance={this.domCacheInstance}
+                      errorAdapterInstance={this.errorAdapter}
                       theme={this.theme}
                     />
                   </div>

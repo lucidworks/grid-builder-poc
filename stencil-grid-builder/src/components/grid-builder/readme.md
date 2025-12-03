@@ -374,7 +374,9 @@ Promise<boolean> - True if updated successfully
 ```mermaid
 graph TD;
   grid-builder --> canvas-section
+  canvas-section --> error-boundary
   canvas-section --> grid-item-wrapper
+  grid-item-wrapper --> error-boundary
   blog-app --> grid-builder
   style grid-builder fill:#f9f,stroke:#333,stroke-width:4px
 ```
