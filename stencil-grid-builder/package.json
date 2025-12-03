@@ -21,6 +21,8 @@
     "test:watch": "jest --config jest.config.js --watch",
     "test.watch": "jest --config jest.config.js --watch",
     "test-unit": "jest --config jest.config.js",
+    "test:e2e": "stencil test --e2e",
+    "test:e2e:watch": "stencil test --e2e --watch",
     "generate": "stencil generate",
     "prettier-css-all": "prettier --parser scss --write 'src/**/*.scss'",
     "stylelint-all": "stylelint --fix 'src/**/*.scss'",
