@@ -62,8 +62,11 @@ graph TD;
   layer-panel --> layer-panel-folder-header
   layer-panel --> layer-panel-item
   grid-viewer --> canvas-section-viewer
+  canvas-section-viewer --> error-boundary
   canvas-section-viewer --> grid-item-wrapper
+  grid-item-wrapper --> error-boundary
   grid-builder --> canvas-section
+  canvas-section --> error-boundary
   canvas-section --> grid-item-wrapper
   custom-config-panel --> custom-palette-item
   custom-config-panel --> blog-header-drag-clone

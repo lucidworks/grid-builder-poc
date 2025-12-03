@@ -12,11 +12,13 @@ import { VirtualRendererService } from "./services/virtual-renderer";
 import { UndoRedoManager } from "./services/undo-redo";
 import { EventManager } from "./services/event-manager";
 import { DOMCache } from "./utils/dom-cache";
+import { GridErrorAdapter } from "./services/grid-error-adapter";
 import { GridItem, GridState, ViewerState } from "./services/state-manager";
 import { ComponentDefinition } from "./types/component-definition";
 import { GridBuilderAPI } from "./services/grid-builder-api";
 import { ConfirmationModalData } from "./demo/types/confirmation-modal-data";
 import { GridBuilderAPI as GridBuilderAPI1 } from "./types/api";
+import { BaseErrorEventDetail, ErrorFallbackRenderer, ErrorRecoveryStrategy } from "./types/error-types";
 import { GridBuilderTheme } from "./types/theme";
 import { GridBuilderPlugin } from "./types/plugin";
 import { UIComponentOverrides } from "./types/ui-overrides";
@@ -29,11 +31,13 @@ export { VirtualRendererService } from "./services/virtual-renderer";
 export { UndoRedoManager } from "./services/undo-redo";
 export { EventManager } from "./services/event-manager";
 export { DOMCache } from "./utils/dom-cache";
+export { GridErrorAdapter } from "./services/grid-error-adapter";
 export { GridItem, GridState, ViewerState } from "./services/state-manager";
 export { ComponentDefinition } from "./types/component-definition";
 export { GridBuilderAPI } from "./services/grid-builder-api";
 export { ConfirmationModalData } from "./demo/types/confirmation-modal-data";
 export { GridBuilderAPI as GridBuilderAPI1 } from "./types/api";
+export { BaseErrorEventDetail, ErrorFallbackRenderer, ErrorRecoveryStrategy } from "./types/error-types";
 export { GridBuilderTheme } from "./types/theme";
 export { GridBuilderPlugin } from "./types/plugin";
 export { UIComponentOverrides } from "./types/ui-overrides";
@@ -170,6 +174,10 @@ export namespace Components {
          */
         "domCacheInstance"?: DOMCache;
         /**
+          * Error adapter service instance (passed from grid-builder)  **Required for editing mode** (grid-builder provides this) **Optional for viewer mode** (grid-viewer doesn't need it)  **Source**: grid-builder → canvas-section → grid-item-wrapper **Purpose**: Support multiple grid-builder instances with isolated error handling **Used by**: Error boundary for handling canvas-level and item-level render errors  **Error isolation strategy**: - Canvas-level errors (dropzone failures, canvas rendering issues) caught here - Item-level errors caught by grid-item-wrapper error boundaries - Error adapter converts to GridErrorEventDetail and emits to EventManager
+         */
+        "errorAdapterInstance"?: GridErrorAdapter;
+        /**
           * Event manager service instance (passed from grid-builder)  **Required for editing mode** (grid-builder provides this)  **Source**: grid-builder → canvas-section → grid-item-wrapper **Purpose**: Support multiple grid-builder instances with isolated services
          */
         "eventManagerInstance"?: EventManager;
@@ -233,6 +241,10 @@ export namespace Components {
           * Current viewport mode  **Required**: 'desktop' | 'mobile' **Source**: Passed from grid-viewer component  **Purpose**: Determines which layout to render for each item
          */
         "currentViewport": "desktop" | "mobile";
+        /**
+          * Error adapter service instance (passed from grid-viewer)  **Optional**: Provided by grid-viewer if error handling needed **Purpose**: Support error boundary integration for item render errors **Viewer mode**: May be undefined (simplified error handling without event emission)
+         */
+        "errorAdapterInstance"?: GridErrorAdapter;
         /**
           * Items to render in this canvas  **Required**: Array of GridItem objects **Source**: Passed from grid-viewer component  **Unlike canvas-section**: Items passed via props, not from global state
          */
@@ -479,6 +491,36 @@ export namespace Components {
     interface DashboardWidgetDragClone {
     }
     /**
+     * ErrorBoundary Component
+     * ========================
+     * Generic error boundary for catching component render errors.
+     * **Tag**: `<error-boundary>`
+     * **Shadow DOM**: Disabled (allows slot content to access parent styles)
+     * **Reusable**: Zero dependencies, can be extracted to standalone package
+     */
+    interface ErrorBoundary {
+        /**
+          * Additional context for error info  **Purpose**: Add domain-specific context to error events **Default**: {}  **Example** (grid-builder specific): ```typescript <error-boundary context={{ itemId: 'item-123', canvasId: 'canvas1' }}>   ... </error-boundary> ```
+         */
+        "context"?: Record<string, any>;
+        /**
+          * Error boundary identifier  **Purpose**: Identifies which boundary caught the error **Required**: Yes **Example**: 'grid-builder', 'canvas-section', 'grid-item-wrapper'  **Used in error events**: Helps parent components know where error originated
+         */
+        "errorBoundary": string;
+        /**
+          * Custom error fallback renderer  **Purpose**: Render custom error UI **Default**: Uses default error UI (red box with message)  **Function signature**: ```typescript (error: Error, errorInfo: BaseErrorInfo, retry?: () => void) => any ```  **Example**: ```typescript errorBoundaryEl.errorFallback = (error, errorInfo, retry) => (   <div class="custom-error">     <h3>{error.message}</h3>     <button onClick={retry}>Try Again</button>   </div> ); ```
+         */
+        "errorFallback"?: ErrorFallbackRenderer;
+        /**
+          * Error recovery strategy  **Purpose**: Control how component recovers from errors **Default**: Auto-determined from error classification  **Strategies**: - `graceful`: Show fallback UI, emit event, continue operation - `strict`: Re-throw error, propagate to parent - `retry`: Attempt automatic retry (not implemented for render errors) - `ignore`: Swallow error, render nothing  **Example**: ```typescript <error-boundary recovery-strategy="graceful">...</error-boundary> ```
+         */
+        "recoveryStrategy"?: ErrorRecoveryStrategy;
+        /**
+          * Whether to show error UI  **Purpose**: Control error UI visibility **Default**: `process.env.NODE_ENV !== 'production'` (show in dev, hide in prod)  **Override behavior**: - `true`: Always show error UI - `false`: Never show error UI (emit event only) - `undefined`: Environment-based (dev: show, prod: hide)  **Example**: ```typescript <error-boundary show-error-ui={true}>...</error-boundary> ```
+         */
+        "showErrorUI"?: boolean;
+    }
+    /**
      * GridBuilder Component
      * ======================
      * Main library component providing complete grid builder functionality.
@@ -631,6 +673,10 @@ export namespace Components {
           * DOM cache service instance (passed from grid-builder)  **Required for editing mode** (grid-builder provides this) **Optional for viewer mode** (grid-viewer doesn't need it)  **Source**: grid-builder → canvas-section → grid-item-wrapper **Purpose**: Support multiple grid-builder instances with isolated DOM caches **Used by**: DragHandler, ResizeHandler for fast canvas element lookups
          */
         "domCacheInstance"?: DOMCache;
+        /**
+          * Error adapter service instance (passed from grid-builder)  **Required for editing mode** (grid-builder provides this) **Optional for viewer mode** (grid-viewer doesn't need it)  **Source**: grid-builder → canvas-section → grid-item-wrapper **Purpose**: Support multiple grid-builder instances with isolated error handling **Used by**: Error boundary for handling component render errors  **Error isolation strategy**: - Item-level errors (component render failures) are caught by error boundary - Error adapter converts to GridErrorEventDetail and emits to EventManager - Other grid items continue functioning (isolation achieved) - Fallback UI shown for failed item (graceful degradation)
+         */
+        "errorAdapterInstance"?: GridErrorAdapter;
         /**
           * Event manager service instance (passed from grid-builder)  **Required for editing mode** (grid-builder provides this) **Optional for viewer mode** (grid-viewer doesn't need it)  **Source**: grid-builder → canvas-section → grid-item-wrapper **Purpose**: Support multiple grid-builder instances with isolated services
          */
@@ -874,6 +920,10 @@ export interface CanvasHeaderCustomEvent<T> extends CustomEvent<T> {
 export interface ConfirmationModalCustomEvent<T> extends CustomEvent<T> {
     detail: T;
     target: HTMLConfirmationModalElement;
+}
+export interface ErrorBoundaryCustomEvent<T> extends CustomEvent<T> {
+    detail: T;
+    target: HTMLErrorBoundaryElement;
 }
 export interface GridBuilderCustomEvent<T> extends CustomEvent<T> {
     detail: T;
@@ -1201,6 +1251,31 @@ declare global {
         prototype: HTMLDashboardWidgetDragCloneElement;
         new (): HTMLDashboardWidgetDragCloneElement;
     };
+    interface HTMLErrorBoundaryElementEventMap {
+        "error": BaseErrorEventDetail;
+    }
+    /**
+     * ErrorBoundary Component
+     * ========================
+     * Generic error boundary for catching component render errors.
+     * **Tag**: `<error-boundary>`
+     * **Shadow DOM**: Disabled (allows slot content to access parent styles)
+     * **Reusable**: Zero dependencies, can be extracted to standalone package
+     */
+    interface HTMLErrorBoundaryElement extends Components.ErrorBoundary, HTMLStencilElement {
+        addEventListener<K extends keyof HTMLErrorBoundaryElementEventMap>(type: K, listener: (this: HTMLErrorBoundaryElement, ev: ErrorBoundaryCustomEvent<HTMLErrorBoundaryElementEventMap[K]>) => any, options?: boolean | AddEventListenerOptions): void;
+        addEventListener<K extends keyof DocumentEventMap>(type: K, listener: (this: Document, ev: DocumentEventMap[K]) => any, options?: boolean | AddEventListenerOptions): void;
+        addEventListener<K extends keyof HTMLElementEventMap>(type: K, listener: (this: HTMLElement, ev: HTMLElementEventMap[K]) => any, options?: boolean | AddEventListenerOptions): void;
+        addEventListener(type: string, listener: EventListenerOrEventListenerObject, options?: boolean | AddEventListenerOptions): void;
+        removeEventListener<K extends keyof HTMLErrorBoundaryElementEventMap>(type: K, listener: (this: HTMLErrorBoundaryElement, ev: ErrorBoundaryCustomEvent<HTMLErrorBoundaryElementEventMap[K]>) => any, options?: boolean | EventListenerOptions): void;
+        removeEventListener<K extends keyof DocumentEventMap>(type: K, listener: (this: Document, ev: DocumentEventMap[K]) => any, options?: boolean | EventListenerOptions): void;
+        removeEventListener<K extends keyof HTMLElementEventMap>(type: K, listener: (this: HTMLElement, ev: HTMLElementEventMap[K]) => any, options?: boolean | EventListenerOptions): void;
+        removeEventListener(type: string, listener: EventListenerOrEventListenerObject, options?: boolean | EventListenerOptions): void;
+    }
+    var HTMLErrorBoundaryElement: {
+        prototype: HTMLErrorBoundaryElement;
+        new (): HTMLErrorBoundaryElement;
+    };
     interface HTMLGridBuilderElementEventMap {
         "registryReady": { registry: ComponentRegistry };
     }
@@ -1418,6 +1493,7 @@ declare global {
         "custom-palette-item": HTMLCustomPaletteItemElement;
         "dashboard-widget": HTMLDashboardWidgetElement;
         "dashboard-widget-drag-clone": HTMLDashboardWidgetDragCloneElement;
+        "error-boundary": HTMLErrorBoundaryElement;
         "grid-builder": HTMLGridBuilderElement;
         "grid-item-wrapper": HTMLGridItemWrapperElement;
         "grid-viewer": HTMLGridViewerElement;
@@ -1571,6 +1647,10 @@ declare namespace LocalJSX {
          */
         "domCacheInstance"?: DOMCache;
         /**
+          * Error adapter service instance (passed from grid-builder)  **Required for editing mode** (grid-builder provides this) **Optional for viewer mode** (grid-viewer doesn't need it)  **Source**: grid-builder → canvas-section → grid-item-wrapper **Purpose**: Support multiple grid-builder instances with isolated error handling **Used by**: Error boundary for handling canvas-level and item-level render errors  **Error isolation strategy**: - Canvas-level errors (dropzone failures, canvas rendering issues) caught here - Item-level errors caught by grid-item-wrapper error boundaries - Error adapter converts to GridErrorEventDetail and emits to EventManager
+         */
+        "errorAdapterInstance"?: GridErrorAdapter;
+        /**
           * Event manager service instance (passed from grid-builder)  **Required for editing mode** (grid-builder provides this)  **Source**: grid-builder → canvas-section → grid-item-wrapper **Purpose**: Support multiple grid-builder instances with isolated services
          */
         "eventManagerInstance"?: EventManager;
@@ -1634,6 +1714,10 @@ declare namespace LocalJSX {
           * Current viewport mode  **Required**: 'desktop' | 'mobile' **Source**: Passed from grid-viewer component  **Purpose**: Determines which layout to render for each item
          */
         "currentViewport": "desktop" | "mobile";
+        /**
+          * Error adapter service instance (passed from grid-viewer)  **Optional**: Provided by grid-viewer if error handling needed **Purpose**: Support error boundary integration for item render errors **Viewer mode**: May be undefined (simplified error handling without event emission)
+         */
+        "errorAdapterInstance"?: GridErrorAdapter;
         /**
           * Items to render in this canvas  **Required**: Array of GridItem objects **Source**: Passed from grid-viewer component  **Unlike canvas-section**: Items passed via props, not from global state
          */
@@ -1888,6 +1972,40 @@ declare namespace LocalJSX {
     interface DashboardWidgetDragClone {
     }
     /**
+     * ErrorBoundary Component
+     * ========================
+     * Generic error boundary for catching component render errors.
+     * **Tag**: `<error-boundary>`
+     * **Shadow DOM**: Disabled (allows slot content to access parent styles)
+     * **Reusable**: Zero dependencies, can be extracted to standalone package
+     */
+    interface ErrorBoundary {
+        /**
+          * Additional context for error info  **Purpose**: Add domain-specific context to error events **Default**: {}  **Example** (grid-builder specific): ```typescript <error-boundary context={{ itemId: 'item-123', canvasId: 'canvas1' }}>   ... </error-boundary> ```
+         */
+        "context"?: Record<string, any>;
+        /**
+          * Error boundary identifier  **Purpose**: Identifies which boundary caught the error **Required**: Yes **Example**: 'grid-builder', 'canvas-section', 'grid-item-wrapper'  **Used in error events**: Helps parent components know where error originated
+         */
+        "errorBoundary": string;
+        /**
+          * Custom error fallback renderer  **Purpose**: Render custom error UI **Default**: Uses default error UI (red box with message)  **Function signature**: ```typescript (error: Error, errorInfo: BaseErrorInfo, retry?: () => void) => any ```  **Example**: ```typescript errorBoundaryEl.errorFallback = (error, errorInfo, retry) => (   <div class="custom-error">     <h3>{error.message}</h3>     <button onClick={retry}>Try Again</button>   </div> ); ```
+         */
+        "errorFallback"?: ErrorFallbackRenderer;
+        /**
+          * Error event emitter  **Purpose**: Notify parent components of errors **Event name**: 'error' **Detail type**: BaseErrorEventDetail  **Event structure**: ```typescript {   error: Error,              // The caught error   errorInfo: {     errorBoundary: string,   // Which boundary caught it     timestamp: number,     userAgent: string,     componentStack?: string,     ...context               // Additional context   },   severity: 'critical' | 'error' | 'warning' | 'info',   recoverable: boolean } ```  **Example**: ```typescript <error-boundary onError={(e) => {   console.error('Error caught:', e.detail.error);   logToSentry(e.detail); }}>   ... </error-boundary> ```
+         */
+        "onError"?: (event: ErrorBoundaryCustomEvent<BaseErrorEventDetail>) => void;
+        /**
+          * Error recovery strategy  **Purpose**: Control how component recovers from errors **Default**: Auto-determined from error classification  **Strategies**: - `graceful`: Show fallback UI, emit event, continue operation - `strict`: Re-throw error, propagate to parent - `retry`: Attempt automatic retry (not implemented for render errors) - `ignore`: Swallow error, render nothing  **Example**: ```typescript <error-boundary recovery-strategy="graceful">...</error-boundary> ```
+         */
+        "recoveryStrategy"?: ErrorRecoveryStrategy;
+        /**
+          * Whether to show error UI  **Purpose**: Control error UI visibility **Default**: `process.env.NODE_ENV !== 'production'` (show in dev, hide in prod)  **Override behavior**: - `true`: Always show error UI - `false`: Never show error UI (emit event only) - `undefined`: Environment-based (dev: show, prod: hide)  **Example**: ```typescript <error-boundary show-error-ui={true}>...</error-boundary> ```
+         */
+        "showErrorUI"?: boolean;
+    }
+    /**
      * GridBuilder Component
      * ======================
      * Main library component providing complete grid builder functionality.
@@ -1967,6 +2085,10 @@ declare namespace LocalJSX {
           * DOM cache service instance (passed from grid-builder)  **Required for editing mode** (grid-builder provides this) **Optional for viewer mode** (grid-viewer doesn't need it)  **Source**: grid-builder → canvas-section → grid-item-wrapper **Purpose**: Support multiple grid-builder instances with isolated DOM caches **Used by**: DragHandler, ResizeHandler for fast canvas element lookups
          */
         "domCacheInstance"?: DOMCache;
+        /**
+          * Error adapter service instance (passed from grid-builder)  **Required for editing mode** (grid-builder provides this) **Optional for viewer mode** (grid-viewer doesn't need it)  **Source**: grid-builder → canvas-section → grid-item-wrapper **Purpose**: Support multiple grid-builder instances with isolated error handling **Used by**: Error boundary for handling component render errors  **Error isolation strategy**: - Item-level errors (component render failures) are caught by error boundary - Error adapter converts to GridErrorEventDetail and emits to EventManager - Other grid items continue functioning (isolation achieved) - Fallback UI shown for failed item (graceful degradation)
+         */
+        "errorAdapterInstance"?: GridErrorAdapter;
         /**
           * Event manager service instance (passed from grid-builder)  **Required for editing mode** (grid-builder provides this) **Optional for viewer mode** (grid-viewer doesn't need it)  **Source**: grid-builder → canvas-section → grid-item-wrapper **Purpose**: Support multiple grid-builder instances with isolated services
          */
@@ -2282,6 +2404,7 @@ declare namespace LocalJSX {
         "custom-palette-item": CustomPaletteItem;
         "dashboard-widget": DashboardWidget;
         "dashboard-widget-drag-clone": DashboardWidgetDragClone;
+        "error-boundary": ErrorBoundary;
         "grid-builder": GridBuilder;
         "grid-item-wrapper": GridItemWrapper;
         "grid-viewer": GridViewer;
@@ -2473,6 +2596,15 @@ declare module "@stencil/core" {
             "custom-palette-item": LocalJSX.CustomPaletteItem & JSXBase.HTMLAttributes<HTMLCustomPaletteItemElement>;
             "dashboard-widget": LocalJSX.DashboardWidget & JSXBase.HTMLAttributes<HTMLDashboardWidgetElement>;
             "dashboard-widget-drag-clone": LocalJSX.DashboardWidgetDragClone & JSXBase.HTMLAttributes<HTMLDashboardWidgetDragCloneElement>;
+            /**
+             * ErrorBoundary Component
+             * ========================
+             * Generic error boundary for catching component render errors.
+             * **Tag**: `<error-boundary>`
+             * **Shadow DOM**: Disabled (allows slot content to access parent styles)
+             * **Reusable**: Zero dependencies, can be extracted to standalone package
+             */
+            "error-boundary": LocalJSX.ErrorBoundary & JSXBase.HTMLAttributes<HTMLErrorBoundaryElement>;
             /**
              * GridBuilder Component
              * ======================
