@@ -336,17 +336,15 @@ export const Basic = () => {
   container.appendChild(errorWrapper);
 
   // Trigger error after component mounts
-  setTimeout(() => {
-    const errorComponent = document.getElementById('error-component-1');
-    if (errorComponent) {
-      // Simulate a component error
-      const event = new ErrorEvent('error', {
-        error: new Error('Simulated render error'),
-        message: 'Simulated render error',
-      });
-      errorComponent.dispatchEvent(event);
+  setTimeout(async () => {
+    const errorBoundary = errorWrapper.querySelector('error-boundary[error-boundary="basic-demo"]');
+    if (errorBoundary) {
+      // Use the public simulateError method
+      await (errorBoundary as any).simulateError(
+        new Error('Failed to load image: Invalid URL format')
+      );
     }
-  }, 100);
+  }, 500);
 
   // Another working component (shows isolation)
   const workingWrapper2 = document.createElement('div');
@@ -460,22 +458,17 @@ export const CustomFallback = () => {
   container.appendChild(errorWrapper);
 
   // Apply custom fallback after mount
-  setTimeout(() => {
+  setTimeout(async () => {
     const errorBoundary = errorWrapper.querySelector('error-boundary');
     if (errorBoundary) {
       (errorBoundary as any).errorFallback = customFallback;
 
-      // Trigger error
-      const errorComponent = document.getElementById('error-component-2');
-      if (errorComponent) {
-        const event = new ErrorEvent('error', {
-          error: new Error('Custom fallback demonstration error'),
-          message: 'Custom fallback demonstration error',
-        });
-        errorComponent.dispatchEvent(event);
-      }
+      // Trigger error using public method
+      await (errorBoundary as any).simulateError(
+        new Error('WebSocket connection failed: ECONNREFUSED')
+      );
     }
-  }, 100);
+  }, 500);
 
   return html`${unsafeHTML(container.outerHTML)}`;
 };
@@ -612,16 +605,32 @@ export const Events = () => {
       }) as EventListener);
 
       // Trigger button handler
-      triggerBtn.addEventListener('click', () => {
-        const error = new Error('User-triggered error for event demonstration');
-        const event = new ErrorEvent('error', {
-          error,
-          message: error.message,
-        });
-        const errorComponent = document.getElementById('error-component-3');
-        if (errorComponent) {
-          errorComponent.dispatchEvent(event);
-        }
+      triggerBtn.addEventListener('click', async () => {
+        // Show button feedback
+        (triggerBtn as HTMLButtonElement).textContent = 'Triggering Error...';
+        (triggerBtn as HTMLButtonElement).style.background = '#ffc107';
+        (triggerBtn as HTMLButtonElement).style.color = '#000';
+
+        setTimeout(async () => {
+          if (errorBoundary) {
+            try {
+              // Use the public simulateError method
+              await (errorBoundary as any).simulateError(
+                new Error('User-triggered error for event demonstration')
+              );
+
+              // Update button to show it was triggered
+              (triggerBtn as HTMLButtonElement).textContent = 'Error Triggered! (Check log above)';
+              (triggerBtn as HTMLButtonElement).style.background = '#28a745';
+              (triggerBtn as HTMLButtonElement).style.color = '#fff';
+              (triggerBtn as HTMLButtonElement).disabled = true;
+            } catch (e) {
+              console.error('Error triggering error boundary:', e);
+              (triggerBtn as HTMLButtonElement).textContent = 'Failed to Trigger';
+              (triggerBtn as HTMLButtonElement).style.background = '#dc3545';
+            }
+          }
+        }, 300);
       });
     }
   }, 100);
@@ -740,18 +749,31 @@ export const Degradation = () => {
   container.appendChild(grid);
 
   // Trigger errors after mount
-  setTimeout(() => {
-    ['error-component-4a', 'error-component-4b', 'error-component-4c'].forEach((id) => {
-      const errorComponent = document.getElementById(id);
-      if (errorComponent) {
-        const event = new ErrorEvent('error', {
-          error: new Error(`${id} demonstration error`),
-          message: `${id} demonstration error`,
-        });
-        errorComponent.dispatchEvent(event);
-      }
-    });
-  }, 100);
+  setTimeout(async () => {
+    // Graceful strategy
+    const gracefulBoundary = container.querySelector('error-boundary[error-boundary="graceful-demo"]');
+    if (gracefulBoundary) {
+      await (gracefulBoundary as any).simulateError(
+        new Error('Failed to fetch tweets: Rate limit exceeded')
+      );
+    }
+
+    // Ignore strategy
+    const ignoreBoundary = container.querySelector('error-boundary[error-boundary="ignore-demo"]');
+    if (ignoreBoundary) {
+      await (ignoreBoundary as any).simulateError(
+        new Error('Analytics endpoint unreachable')
+      );
+    }
+
+    // Strict strategy (inner boundary)
+    const strictBoundary = container.querySelector('error-boundary[error-boundary="strict-inner"]');
+    if (strictBoundary) {
+      await (strictBoundary as any).simulateError(
+        new Error('Payment gateway connection failed')
+      );
+    }
+  }, 500);
 
   return html`${unsafeHTML(container.outerHTML)}`;
 };
@@ -873,18 +895,31 @@ export const Severity = () => {
   container.appendChild(grid);
 
   // Trigger errors after mount
-  setTimeout(() => {
-    ['error-component-5a', 'error-component-5b', 'error-component-5c'].forEach((id) => {
-      const errorComponent = document.getElementById(id);
-      if (errorComponent) {
-        const event = new ErrorEvent('error', {
-          error: new Error(`${id} severity demonstration`),
-          message: `${id} severity demonstration`,
-        });
-        errorComponent.dispatchEvent(event);
-      }
-    });
-  }, 100);
+  setTimeout(async () => {
+    // Grid item wrapper (Warning severity)
+    const itemBoundary = container.querySelector('error-boundary[error-boundary="grid-item-wrapper"]');
+    if (itemBoundary) {
+      await (itemBoundary as any).simulateError(
+        new Error('Failed to render image thumbnail')
+      );
+    }
+
+    // Canvas section (Error severity)
+    const canvasBoundary = container.querySelector('error-boundary[error-boundary="canvas-section"]');
+    if (canvasBoundary) {
+      await (canvasBoundary as any).simulateError(
+        new Error('Canvas dropzone initialization failed')
+      );
+    }
+
+    // Grid builder (Critical severity)
+    const builderBoundary = container.querySelector('error-boundary[error-boundary="grid-builder"]');
+    if (builderBoundary) {
+      await (builderBoundary as any).simulateError(
+        new Error('Grid state corrupted: Cannot deserialize layout data')
+      );
+    }
+  }, 500);
 
   return html`${unsafeHTML(container.outerHTML)}`;
 };
@@ -1021,16 +1056,19 @@ export const DevVsProd = () => {
     }
 
     // Trigger errors
-    ['error-component-6a', 'error-component-6b'].forEach((id) => {
-      const errorComponent = document.getElementById(id);
-      if (errorComponent) {
-        const event = new ErrorEvent('error', {
-          error: new Error(`${id} mode demonstration`),
-          message: `${id} mode demonstration`,
-        });
-        errorComponent.dispatchEvent(event);
-      }
-    });
+    const devBoundaryEl = container.querySelector('#dev-error-boundary');
+    if (devBoundaryEl) {
+      await (devBoundaryEl as any).simulateError(
+        new Error('TypeError: Cannot read property "data" of undefined at ComponentRenderer.tsx:42')
+      );
+    }
+
+    const prodBoundaryEl = container.querySelector('#prod-error-boundary');
+    if (prodBoundaryEl) {
+      await (prodBoundaryEl as any).simulateError(
+        new Error('TypeError: Cannot read property "data" of undefined')
+      );
+    }
   }, 100);
 
   return html`${unsafeHTML(container.outerHTML)}`;
