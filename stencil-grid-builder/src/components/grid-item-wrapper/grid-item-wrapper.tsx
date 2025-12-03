@@ -1147,18 +1147,47 @@ export class GridItemWrapper {
    */
   private captureItemSnapshot = () => {
     this.itemSnapshot = JSON.parse(JSON.stringify(this.item));
+
+    // DEBUG: Log snapshot capture for resize bug investigation
+    const viewport = this.stateInstance.currentViewport || "desktop";
+    console.log(
+      "📸 Snapshot captured - itemId:",
+      this.item.id,
+      "viewport:",
+      viewport,
+    );
+    console.log(
+      "  Desktop: x=" +
+        this.itemSnapshot.layouts.desktop.x +
+        ", y=" +
+        this.itemSnapshot.layouts.desktop.y,
+    );
+    console.log(
+      "  Mobile: x=" +
+        this.itemSnapshot.layouts.mobile.x +
+        ", y=" +
+        this.itemSnapshot.layouts.mobile.y +
+        ", customized=" +
+        this.itemSnapshot.layouts.mobile.customized,
+    );
   };
 
   /**
    * Handle item update (called by drag/resize handlers)
    */
   private handleItemUpdate = (updatedItem: GridItem) => {
-    debug.log("🔄 handleItemUpdate called", {
+    console.log("🔄 handleItemUpdate called", {
       itemId: updatedItem.id,
       hasSnapshot: !!this.itemSnapshot,
       hasUndoRedoManager: !!this.undoRedoManagerInstance,
-      position: { x: updatedItem.layouts.desktop.x, y: updatedItem.layouts.desktop.y },
-      size: { width: updatedItem.layouts.desktop.width, height: updatedItem.layouts.desktop.height },
+      position: {
+        x: updatedItem.layouts.desktop.x,
+        y: updatedItem.layouts.desktop.y,
+      },
+      size: {
+        width: updatedItem.layouts.desktop.width,
+        height: updatedItem.layouts.desktop.height,
+      },
     });
 
     // Check if position or canvas changed (for undo/redo)
@@ -1172,8 +1201,10 @@ export class GridItemWrapper {
       const snapshot = this.itemSnapshot;
 
       // Use current viewport's layout for comparison instead of hardcoded desktop
-      const snapshotLayout = snapshot.layouts[currentViewport as "desktop" | "mobile"];
-      const updatedLayout = updatedItem.layouts[currentViewport as "desktop" | "mobile"];
+      const snapshotLayout =
+        snapshot.layouts[currentViewport as "desktop" | "mobile"];
+      const updatedLayout =
+        updatedItem.layouts[currentViewport as "desktop" | "mobile"];
 
       const positionOnlyChanged =
         (snapshotLayout.x !== updatedLayout.x ||
@@ -1211,24 +1242,66 @@ export class GridItemWrapper {
         // Push undo command before updating state (only if manager exists)
         // Include size tracking for resize operations (also handles resize with position change)
         if (this.undoRedoManagerInstance) {
-          debug.log("  ✅ Pushing undo/redo command", {
+          // Get current viewport to ensure viewport-specific undo/redo
+          const currentViewport = this.stateInstance.currentViewport;
+          const currentLayout = snapshot.layouts[currentViewport];
+          const updatedLayout = updatedItem.layouts[currentViewport];
+
+          // DEBUG: Enhanced logging for resize bug investigation
+          console.log(
+            "  ✅ Pushing undo/redo command - isDrag:",
             isDrag,
+            "isResize:",
             isResize,
-            from: { x: snapshot.layouts.desktop.x, y: snapshot.layouts.desktop.y },
-            to: { x: updatedItem.layouts.desktop.x, y: updatedItem.layouts.desktop.y },
-          });
+            "viewport:",
+            currentViewport,
+          );
+          console.log(
+            "    Snapshot desktop: x=" +
+              snapshot.layouts.desktop.x +
+              ", y=" +
+              snapshot.layouts.desktop.y,
+          );
+          console.log(
+            "    Snapshot mobile: x=" +
+              snapshot.layouts.mobile.x +
+              ", y=" +
+              snapshot.layouts.mobile.y +
+              ", customized=" +
+              snapshot.layouts.mobile.customized,
+          );
+          console.log(
+            "    Current layout (source): x=" +
+              currentLayout.x +
+              ", y=" +
+              currentLayout.y +
+              ", w=" +
+              currentLayout.width +
+              ", h=" +
+              currentLayout.height,
+          );
+          console.log(
+            "    Updated layout (target): x=" +
+              updatedLayout.x +
+              ", y=" +
+              updatedLayout.y +
+              ", w=" +
+              updatedLayout.width +
+              ", h=" +
+              updatedLayout.height,
+          );
           this.undoRedoManagerInstance.push(
             new MoveItemCommand(
               updatedItem.id,
               snapshot.canvasId,
               updatedItem.canvasId,
               {
-                x: snapshot.layouts.desktop.x,
-                y: snapshot.layouts.desktop.y,
+                x: currentLayout.x,
+                y: currentLayout.y,
               },
               {
-                x: updatedItem.layouts.desktop.x,
-                y: updatedItem.layouts.desktop.y,
+                x: updatedLayout.x,
+                y: updatedLayout.y,
               },
               sourceIndex,
               sourceZIndex,
@@ -1236,18 +1309,19 @@ export class GridItemWrapper {
               // Include size for resize tracking (position and size can both change)
               isResize
                 ? {
-                    width: snapshot.layouts.desktop.width,
-                    height: snapshot.layouts.desktop.height,
+                    width: currentLayout.width,
+                    height: currentLayout.height,
                   }
                 : undefined,
               isResize
                 ? {
-                    width: updatedItem.layouts.desktop.width,
-                    height: updatedItem.layouts.desktop.height,
+                    width: updatedLayout.width,
+                    height: updatedLayout.height,
                   }
                 : undefined,
               this.stateInstance,
-              // Include mobile layouts for complete undo/redo support
+              currentViewport, // Pass active viewport for viewport-specific undo/redo
+              // Include mobile layouts for complete state tracking (only used for desktop operations)
               {
                 x: snapshot.layouts.mobile.x,
                 y: snapshot.layouts.mobile.y,
@@ -1291,7 +1365,8 @@ export class GridItemWrapper {
     // Emit events for plugins (only if manager exists)
     if (this.eventManagerInstance) {
       // Get current viewport's layout for event data
-      const currentLayout = updatedItem.layouts[currentViewport as "desktop" | "mobile"];
+      const currentLayout =
+        updatedItem.layouts[currentViewport as "desktop" | "mobile"];
 
       if (isDrag) {
         this.eventManagerInstance.emit("componentDragged", {
