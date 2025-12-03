@@ -119,14 +119,31 @@ grid-builder (Level 1 - Critical)
     - Supports optional error handling without bundle size increase
 
 #### Documentation & Examples
-15. **`src/components/error-boundary/stories/error-boundary.stories.tsx`** (657 lines)
-    - 6 comprehensive Storybook scenarios:
-      1. **Basic**: Default error UI, retry functionality
-      2. **Custom Fallback**: Branded error UI components
-      3. **Events**: Error event logging and external integration
-      4. **Degradation**: Recovery strategy comparison (graceful, ignore, strict)
-      5. **Severity**: Visual severity levels (warning, error, critical)
-      6. **Dev vs Prod**: Environment-based error UI differences
+15. **`src/components/error-boundary/stories/error-boundary.stories.tsx`** (1,031 lines)
+    - 7 comprehensive Storybook scenarios with real-world explanations:
+      1. **Comparison (NEW)**: Side-by-side WITH vs WITHOUT error boundaries
+         - Shows complete UI crash vs isolated error handling
+         - Interactive demonstration of error isolation
+      2. **Basic**: Image gallery with invalid URLs
+         - What breaks: "Failed to load image: Invalid URL format"
+         - Business impact: Without boundary = 30 minutes of work lost
+      3. **Custom Fallback**: Dashboard WebSocket connection failure
+         - Shows why custom UI matters (user-friendly vs technical jargon)
+         - Reduces support tickets, maintains brand experience
+      4. **Events**: Production monitoring and error tracking
+         - Integration examples with Sentry/LogRocket/Datadog
+         - Shows value of error events for debugging and prioritization
+      5. **Degradation**: Recovery strategy comparison
+         - Graceful: Social media feed (non-critical)
+         - Ignore: Analytics tracker (invisible to user)
+         - Strict: Payment processor (must escalate)
+      6. **Severity**: Error impact levels with business context
+         - Warning: 95% users unaffected, fix in next sprint
+         - Error: 20% users affected, fix within 24 hours
+         - Critical: All users blocked, fix immediately (P0)
+      7. **Dev vs Prod**: Environment-specific error UI
+         - Dev: Full stack traces for debugging
+         - Prod: User-friendly messages, silent Sentry logging
 
 16. **`README.md`** - Updated
     - Added "Error Boundaries" section (244 lines)
@@ -196,10 +213,17 @@ api.on('error', (event) => {
 **Note**: Error boundary functionality works correctly in real browser environments (demonstrated in Storybook stories). The testing limitation is specific to StencilJS's `newSpecPage` test environment.
 
 ### Storybook Stories
-- **6 comprehensive scenarios** demonstrating all features
+- **7 comprehensive scenarios** demonstrating all features with real-world context
+- Each story includes:
+  - Specific error message that would be thrown
+  - What happens WITHOUT error boundaries (crashes, lost work, blank screens)
+  - What happens WITH error boundaries (isolation, graceful degradation, retry)
+  - Business impact analysis (user experience, support tickets, data loss)
+  - Real-world scenarios (API failures, third-party widgets, network issues)
 - Real browser environment (error catching works correctly)
 - Interactive examples with visual feedback
-- Located at: `src/components/error-boundary/stories/error-boundary.stories.tsx`
+- Educational value: Developers understand WHY error boundaries matter
+- Located at: `src/components/error-boundary/stories/error-boundary.stories.tsx` (1,031 lines)
 
 ## Integration Points
 
@@ -377,8 +401,9 @@ The system provides robust error handling without impacting normal operation, wi
 ---
 
 **Implementation completed**: December 3, 2025
-**Total development time**: ~8 hours
+**Total development time**: ~9 hours
 **Files created/modified**: 16 files
-**Lines of code**: ~3,900 lines (including tests and documentation)
+**Lines of code**: ~4,300 lines (including tests and documentation)
 **Test coverage**: 21 tests (3 passing, 18 skipped due to StencilJS limitation)
-**Storybook stories**: 6 comprehensive scenarios
+**Storybook stories**: 7 comprehensive scenarios with real-world explanations
+**Documentation quality**: Educational with business impact analysis and specific error scenarios
