@@ -83,6 +83,7 @@ import { EventManager } from "../../services/event-manager";
 import { UndoRedoManager } from "../../services/undo-redo";
 import { DOMCache } from "../../utils/dom-cache";
 import { ComponentRegistry } from "../../services/component-registry";
+import { GridErrorAdapter } from "../../services/grid-error-adapter";
 
 /**
  * CanvasSection Component
@@ -276,6 +277,23 @@ export class CanvasSection {
    * **Purpose**: Pass theme.selectionColor to grid-item-wrapper for component selection styling
    */
   @Prop() theme?: any;
+
+  /**
+   * Error adapter service instance (passed from grid-builder)
+   *
+   * **Required for editing mode** (grid-builder provides this)
+   * **Optional for viewer mode** (grid-viewer doesn't need it)
+   *
+   * **Source**: grid-builder → canvas-section → grid-item-wrapper
+   * **Purpose**: Support multiple grid-builder instances with isolated error handling
+   * **Used by**: Error boundary for handling canvas-level and item-level render errors
+   *
+   * **Error isolation strategy**:
+   * - Canvas-level errors (dropzone failures, canvas rendering issues) caught here
+   * - Item-level errors caught by grid-item-wrapper error boundaries
+   * - Error adapter converts to GridErrorEventDetail and emits to EventManager
+   */
+  @Prop() errorAdapterInstance?: GridErrorAdapter;
 
   /**
    * Canvas state (reactive)
@@ -886,23 +904,54 @@ export class CanvasSection {
           }}
           ref={(el) => (this.gridContainerRef = el)}
         >
-          {/* Grid items rendered by grid-item-wrapper components */}
-          {this.canvas?.items.map((item: GridItem) => (
-            <grid-item-wrapper
-              key={item.id}
-              item={item}
-              renderVersion={this.renderVersion}
-              config={this.config}
-              componentRegistry={this.componentRegistry}
-              onBeforeDelete={this.onBeforeDelete}
-              virtualRendererInstance={this.virtualRendererInstance}
-              eventManagerInstance={this.eventManagerInstance}
-              undoRedoManagerInstance={this.undoRedoManagerInstance}
-              stateInstance={this.stateInstance}
-              domCacheInstance={this.domCacheInstance}
-              theme={this.theme}
-            />
-          ))}
+          {/* Error boundary wraps canvas content for canvas-level error isolation */}
+          {this.errorAdapterInstance ? (
+            <error-boundary
+              {...this.errorAdapterInstance.createErrorBoundaryConfig(
+                "canvas-section",
+                {
+                  canvasId: this.canvasId,
+                },
+              )}
+            >
+              {/* Grid items rendered by grid-item-wrapper components */}
+              {this.canvas?.items.map((item: GridItem) => (
+                <grid-item-wrapper
+                  key={item.id}
+                  item={item}
+                  renderVersion={this.renderVersion}
+                  config={this.config}
+                  componentRegistry={this.componentRegistry}
+                  onBeforeDelete={this.onBeforeDelete}
+                  virtualRendererInstance={this.virtualRendererInstance}
+                  eventManagerInstance={this.eventManagerInstance}
+                  undoRedoManagerInstance={this.undoRedoManagerInstance}
+                  stateInstance={this.stateInstance}
+                  domCacheInstance={this.domCacheInstance}
+                  errorAdapterInstance={this.errorAdapterInstance}
+                  theme={this.theme}
+                />
+              ))}
+            </error-boundary>
+          ) : (
+            /* Canvas content without error boundary (viewer mode or legacy) */
+            this.canvas?.items.map((item: GridItem) => (
+              <grid-item-wrapper
+                key={item.id}
+                item={item}
+                renderVersion={this.renderVersion}
+                config={this.config}
+                componentRegistry={this.componentRegistry}
+                onBeforeDelete={this.onBeforeDelete}
+                virtualRendererInstance={this.virtualRendererInstance}
+                eventManagerInstance={this.eventManagerInstance}
+                undoRedoManagerInstance={this.undoRedoManagerInstance}
+                stateInstance={this.stateInstance}
+                domCacheInstance={this.domCacheInstance}
+                theme={this.theme}
+              />
+            ))
+          )}
         </div>
       </div>
     );
