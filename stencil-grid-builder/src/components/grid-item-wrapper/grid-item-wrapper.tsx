@@ -851,8 +851,20 @@ export class GridItemWrapper {
    * - Describes available keyboard interactions
    * - Hidden visually with .sr-only class
    * - Only rendered in builder mode (not viewer mode)
+   *
+   * **Hidden component handling**:
+   * - If renderComponent() returns null (hideUnknownComponents mode), don't render wrapper
+   * - This makes hidden components completely invisible and non-interactive
    */
   render() {
+    // Check if component content should render
+    // If renderComponent() returns null (e.g., hideUnknownComponents mode),
+    // don't render the wrapper at all - component should be completely hidden
+    const componentContent = this.renderComponent();
+    if (componentContent === null) {
+      return null;
+    }
+
     // Capture item ID and canvas ID at render time for delete handler
     // This ensures the delete button always deletes the correct item,
     // even if this.item prop changes during async operations (e.g., confirm dialog)
@@ -1076,7 +1088,7 @@ export class GridItemWrapper {
           id={contentSlotId}
           data-component-type={this.item.type}
         >
-          {this.renderComponent()}
+          {componentContent}
         </div>
 
         {/* Resize Handles (hidden in viewer mode) */}
