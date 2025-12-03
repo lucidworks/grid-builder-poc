@@ -5788,7 +5788,7 @@ export const UnknownComponentHandling = () => {
           {
             x: 1,
             y: 1,
-            width: 10,
+            width: 8,
             height: 5,
           },
           {},
@@ -5801,7 +5801,7 @@ export const UnknownComponentHandling = () => {
           {
             x: 1,
             y: 7,
-            width: 10,
+            width: 8,
             height: 4,
           },
           { title: "Normal Header" },
