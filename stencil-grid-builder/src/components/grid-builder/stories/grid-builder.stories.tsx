@@ -5775,7 +5775,8 @@ export const UnknownComponentHandling = () => {
       const api = (window as any)[apiKey];
 
       if (api) {
-        const canvasId = `unknown-demo-${index}`;
+        // Use same canvas ID for all builders - apiRef provides isolation
+        const canvasId = "demo-canvas";
 
         // Add canvas
         api.addCanvas(canvasId);
