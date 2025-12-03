@@ -215,16 +215,23 @@
 }
 
 .component-error {
+  width: 100%; /* Constrain to parent width */
+  box-sizing: border-box; /* Include border and padding in width */
+  padding: 8px; /* Override shared padding for tighter fit in narrow layouts */
   color: #dc3545; // Bootstrap danger red
   background: #fff3f3; // Subtle pink background
   border: 1px dashed #dc3545;
   border-radius: 4px;
   font-weight: 500;
+  font-size: 11px; /* Slightly smaller for compact layouts */
+  word-wrap: break-word; /* Break long words to prevent overflow */
+  overflow-wrap: break-word; /* Modern alternative to word-wrap */
+  overflow: hidden; /* Prevent any content from escaping */
 
   // Provide helpful context for developers
   &::before {
     content: "⚠️";
-    font-size: 24px;
+    font-size: 20px; /* Slightly smaller icon for compact layouts */
     display: block;
   }
 }

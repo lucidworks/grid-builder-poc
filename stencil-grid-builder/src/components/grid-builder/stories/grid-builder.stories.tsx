@@ -5738,22 +5738,25 @@ export const UnknownComponentHandling = () => {
       // Return custom branded error message
       const div = document.createElement("div");
       div.style.cssText = `
-        padding: 20px;
+        width: 100%;
+        box-sizing: border-box;
+        padding: 8px;
         background: linear-gradient(135deg, #fff3cd 0%, #ffe69c 100%);
         border: 2px solid #ffc107;
-        border-radius: 8px;
+        border-radius: 4px;
         text-align: center;
         font-family: system-ui, -apple-system, sans-serif;
+        overflow: hidden;
       `;
       div.innerHTML = `
-        <div style="font-size: 32px; margin-bottom: 10px;">🔌</div>
-        <div style="font-size: 14px; font-weight: 600; color: #856404; margin-bottom: 8px;">
+        <div style="font-size: 24px; margin-bottom: 6px;">🔌</div>
+        <div style="font-size: 12px; font-weight: 600; color: #856404; margin-bottom: 4px;">
           Component Not Available
         </div>
-        <div style="font-size: 12px; color: #856404; margin-bottom: 8px;">
+        <div style="font-size: 10px; color: #856404; margin-bottom: 4px; word-wrap: break-word;">
           The "${type}" component is not included in this version.
         </div>
-        <div style="font-size: 10px; color: #997404; font-family: monospace;">
+        <div style="font-size: 9px; color: #997404; font-family: monospace; word-wrap: break-word;">
           Item ID: ${itemId}
         </div>
       `;
