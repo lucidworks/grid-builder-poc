@@ -5785,10 +5785,10 @@ export const UnknownComponentHandling = () => {
           canvasId,
           "mystery-component", // ← This type is NOT in the registry
           {
-            x: 2,
-            y: 2,
-            width: 20,
-            height: 8,
+            x: 1,
+            y: 1,
+            width: 12,
+            height: 5,
           },
           {},
         );
@@ -5798,10 +5798,10 @@ export const UnknownComponentHandling = () => {
           canvasId,
           "header",
           {
-            x: 25,
-            y: 2,
-            width: 20,
-            height: 6,
+            x: 1,
+            y: 7,
+            width: 12,
+            height: 4,
           },
           { title: "Normal Header" },
         );
@@ -5818,22 +5818,22 @@ export const UnknownComponentHandling = () => {
           sans-serif;
         background: #f0f2f5;
         min-height: 100vh;
-        padding: 20px;
+        padding: 10px;
       }
 
       .unknown-demo-header {
         background: white;
-        padding: 20px;
+        padding: 15px;
         border-radius: 8px;
-        margin-bottom: 20px;
+        margin-bottom: 10px;
         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
       }
 
       .unknown-demo-grid {
         display: grid;
         grid-template-columns: repeat(3, 1fr);
-        gap: 20px;
-        margin-bottom: 20px;
+        gap: 10px;
+        margin-bottom: 10px;
       }
 
       .unknown-demo-mode {
@@ -5844,13 +5844,13 @@ export const UnknownComponentHandling = () => {
       }
 
       .unknown-demo-mode-header {
-        padding: 15px;
+        padding: 10px 12px;
         font-weight: 600;
-        font-size: 14px;
+        font-size: 13px;
         border-bottom: 2px solid #e0e0e0;
         display: flex;
         align-items: center;
-        gap: 8px;
+        gap: 6px;
       }
 
       .unknown-demo-mode-header.default {
@@ -5872,7 +5872,7 @@ export const UnknownComponentHandling = () => {
       }
 
       .unknown-demo-mode-content {
-        height: 400px;
+        height: 250px;
         overflow: auto;
       }
 
