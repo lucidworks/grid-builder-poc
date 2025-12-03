@@ -64,7 +64,7 @@
  * @module error-boundary
  */
 
-import { Component, h, Prop, State, Event, EventEmitter, Element } from '@stencil/core';
+import { Component, h, Prop, State, Event, EventEmitter, Element, Method } from '@stencil/core';
 import {
   BaseErrorEventDetail,
   BaseErrorInfo,
@@ -324,6 +324,27 @@ export class ErrorBoundary {
     this.errorInfo = null;
     this.renderErrorCaught = false;
   };
+
+  /**
+   * Simulate Error (Public API for demos/testing)
+   *
+   * **Purpose**: Manually trigger error boundary for demonstration or testing
+   * **Use case**: Storybook stories, E2E tests, demo scenarios
+   *
+   * **Example**:
+   * ```typescript
+   * const errorBoundary = document.querySelector('error-boundary');
+   * await errorBoundary.simulateError(new Error('Test error'));
+   * ```
+   *
+   * @param error - Error to simulate (or string message)
+   * @returns Promise<void>
+   */
+  @Method()
+  async simulateError(error: Error | string): Promise<void> {
+    const errorObj = typeof error === 'string' ? new Error(error) : error;
+    this.handleError(errorObj);
+  }
 
   /**
    * Render child content with error boundary

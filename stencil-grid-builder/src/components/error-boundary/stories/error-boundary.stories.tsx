@@ -215,38 +215,63 @@ export const Comparison = () => {
     const triggerWithout = document.getElementById('trigger-error-without');
     if (triggerWithout) {
       triggerWithout.addEventListener('click', () => {
-        const container = document.getElementById('without-boundary-container');
-        if (container) {
-          // Simulate complete crash - replace with error message
-          container.innerHTML = `
-            <div style="padding: 24px; text-align: center; color: #721c24;">
-              <div style="font-size: 48px; margin-bottom: 16px;">💥</div>
-              <h3 style="margin: 0 0 8px 0; color: #721c24;">Application Crashed</h3>
-              <p style="margin: 0 0 16px 0; font-size: 14px; color: #666;">
-                This simulates what happens without error boundaries.<br>
-                In a real app, you'd see a blank screen or browser error page.
-              </p>
-              <p style="margin: 0; font-size: 12px; color: #999;">
-                All components gone. User must reload page.
-              </p>
-            </div>
-          `;
-        }
+        // Show button feedback
+        (triggerWithout as HTMLButtonElement).textContent = 'Error Triggered!';
+        (triggerWithout as HTMLButtonElement).disabled = true;
+
+        setTimeout(() => {
+          const container = document.getElementById('without-boundary-container');
+          if (container) {
+            // Simulate complete crash - replace with error message
+            container.innerHTML = `
+              <div style="padding: 24px; text-align: center; color: #721c24;">
+                <div style="font-size: 48px; margin-bottom: 16px;">💥</div>
+                <h3 style="margin: 0 0 8px 0; color: #721c24;">Application Crashed</h3>
+                <p style="margin: 0 0 16px 0; font-size: 14px; color: #666;">
+                  This simulates what happens without error boundaries.<br>
+                  In a real app, you'd see a blank screen or browser error page.
+                </p>
+                <p style="margin: 0; font-size: 12px; color: #999;">
+                  All components gone. User must reload page.
+                </p>
+              </div>
+            `;
+          }
+        }, 300);
       });
     }
 
     // With boundary - only Component B fails
     const triggerWith = document.getElementById('trigger-error-with');
     if (triggerWith) {
-      triggerWith.addEventListener('click', () => {
-        const errorComponent = document.getElementById('error-component-comparison-with');
-        if (errorComponent) {
-          const event = new ErrorEvent('error', {
-            error: new Error('Analytics widget: Cannot read property "metrics" of undefined'),
-            message: 'Analytics widget: Cannot read property "metrics" of undefined',
-          });
-          errorComponent.dispatchEvent(event);
-        }
+      triggerWith.addEventListener('click', async () => {
+        // Show button feedback
+        (triggerWith as HTMLButtonElement).textContent = 'Triggering Error...';
+        (triggerWith as HTMLButtonElement).style.background = '#ffc107';
+        (triggerWith as HTMLButtonElement).style.color = '#000';
+
+        setTimeout(async () => {
+          const errorBoundary = document.querySelector('error-boundary[error-boundary="comparison-demo"]');
+
+          if (errorBoundary) {
+            try {
+              // Use the public simulateError method
+              await (errorBoundary as any).simulateError(
+                new Error('Analytics widget: Cannot read property "metrics" of undefined')
+              );
+
+              // Update button to show it was triggered
+              (triggerWith as HTMLButtonElement).textContent = 'Error Triggered!';
+              (triggerWith as HTMLButtonElement).style.background = '#28a745';
+              (triggerWith as HTMLButtonElement).style.color = '#fff';
+              (triggerWith as HTMLButtonElement).disabled = true;
+            } catch (e) {
+              console.error('Error triggering error boundary:', e);
+              (triggerWith as HTMLButtonElement).textContent = 'Failed to Trigger';
+              (triggerWith as HTMLButtonElement).style.background = '#dc3545';
+            }
+          }
+        }, 300);
       });
     }
   }, 100);
