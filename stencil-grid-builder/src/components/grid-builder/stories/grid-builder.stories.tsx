@@ -1,5 +1,11 @@
 import { html } from "lit-html";
 import { action } from "@storybook/addon-actions";
+import {
+  create3BreakpointLayout,
+  create5BreakpointLayout,
+  BREAKPOINTS_3,
+  BREAKPOINTS_5,
+} from "../../../demo/sample-layouts";
 
 export default {
   title: "Components/Grid Builder",
@@ -20,13 +26,13 @@ const simpleComponents = [
     defaultSize: { width: 30, height: 4 },
     minSize: { width: 15, height: 3 },
     // Render function using document.createElement() - returns real DOM elements
-    render: ({ itemId: _itemId, config }) => {
+    render: ({ itemId: _itemId, config: _config }) => {
       const div = document.createElement("div");
       div.style.cssText =
         "padding: 12px; background: #f0f0f0; border-radius: 4px; width: 100%; height: 100%; box-sizing: border-box;";
       const h3 = document.createElement("h3");
       h3.style.cssText = "margin: 0; font-size: 16px;";
-      h3.textContent = config?.title || "Header";
+      h3.textContent = _config?.title || "Header";
       div.appendChild(h3);
       return div;
     },
@@ -49,13 +55,13 @@ const simpleComponents = [
     defaultSize: { width: 20, height: 6 },
     minSize: { width: 10, height: 4 },
     // document.createElement() returns actual DOM elements
-    render: ({ itemId: _itemId, config }) => {
+    render: ({ itemId: _itemId, config: _config }) => {
       const div = document.createElement("div");
       div.style.cssText =
         "padding: 10px; background: #fff; border: 1px solid #ddd; border-radius: 4px; width: 100%; height: 100%; box-sizing: border-box;";
       const p = document.createElement("p");
       p.style.cssText = "margin: 0; font-size: 13px; line-height: 1.4;";
-      p.textContent = config?.text || "Sample text content.";
+      p.textContent = _config?.text || "Sample text content.";
       div.appendChild(p);
       return div;
     },
@@ -78,11 +84,11 @@ const simpleComponents = [
     defaultSize: { width: 12, height: 4 },
     minSize: { width: 8, height: 3 },
     // document.createElement() works for any HTML element
-    render: ({ itemId: _itemId, config }) => {
+    render: ({ itemId: _itemId, config: _config }) => {
       const button = document.createElement("button");
       button.style.cssText =
         "padding: 8px 16px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; width: 100%; height: 100%; box-sizing: border-box;";
-      button.textContent = config?.label || "Click Me";
+      button.textContent = _config?.label || "Click Me";
       return button;
     },
     // Drag clone shows simplified preview during drag
@@ -92,6 +98,136 @@ const simpleComponents = [
         "padding: 8px 16px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; width: 100%; height: 100%; box-sizing: border-box; opacity: 0.8;";
       button.textContent = "🔘 Button";
       return button;
+    },
+  },
+  {
+    type: "text-block",
+    name: "Text Block",
+    icon: "📝",
+    defaultSize: { width: 20, height: 10 },
+    minSize: { width: 10, height: 6 },
+    render: ({ itemId: _itemId, config: _config }) => {
+      const div = document.createElement("div");
+      div.style.cssText =
+        "padding: 12px; background: #fff; border: 1px solid #ddd; border-radius: 4px; width: 100%; height: 100%; box-sizing: border-box; overflow-y: auto;";
+      const p = document.createElement("p");
+      p.style.cssText =
+        "margin: 0; font-size: 14px; line-height: 1.6; color: #333;";
+      p.textContent =
+        _config?.text ||
+        "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt.";
+      div.appendChild(p);
+      return div;
+    },
+    renderDragClone: () => {
+      const div = document.createElement("div");
+      div.style.cssText =
+        "padding: 12px; background: #fff; border: 1px solid #ddd; border-radius: 4px; width: 100%; height: 100%; box-sizing: border-box; opacity: 0.8;";
+      const p = document.createElement("p");
+      p.style.cssText = "margin: 0; font-size: 14px;";
+      p.textContent = "📝 Text Block";
+      div.appendChild(p);
+      return div;
+    },
+  },
+  {
+    type: "image",
+    name: "Image",
+    icon: "🖼️",
+    defaultSize: { width: 24, height: 12 },
+    minSize: { width: 12, height: 8 },
+    render: ({ itemId: _itemId, config: _config }) => {
+      const div = document.createElement("div");
+      div.style.cssText =
+        "background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 4px; width: 100%; height: 100%; box-sizing: border-box; display: flex; align-items: center; justify-content: center; color: white; font-size: 24px;";
+      div.textContent = _config?.icon || "🖼️";
+      return div;
+    },
+    renderDragClone: () => {
+      const div = document.createElement("div");
+      div.style.cssText =
+        "background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 4px; width: 100%; height: 100%; box-sizing: border-box; display: flex; align-items: center; justify-content: center; color: white; font-size: 24px; opacity: 0.8;";
+      div.textContent = "🖼️";
+      return div;
+    },
+  },
+  {
+    type: "gallery",
+    name: "Gallery",
+    icon: "🎨",
+    defaultSize: { width: 50, height: 16 },
+    minSize: { width: 20, height: 10 },
+    render: ({ itemId: _itemId, config: _config }) => {
+      const div = document.createElement("div");
+      div.style.cssText =
+        "background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 4px; padding: 12px; width: 100%; height: 100%; box-sizing: border-box; display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 8px;";
+      for (let i = 0; i < 6; i++) {
+        const item = document.createElement("div");
+        item.style.cssText =
+          "background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); border-radius: 4px; aspect-ratio: 1; display: flex; align-items: center; justify-content: center; color: white;";
+        item.textContent = String(i + 1);
+        div.appendChild(item);
+      }
+      return div;
+    },
+    renderDragClone: () => {
+      const div = document.createElement("div");
+      div.style.cssText =
+        "background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 4px; padding: 12px; width: 100%; height: 100%; box-sizing: border-box; display: flex; align-items: center; justify-content: center; opacity: 0.8;";
+      div.textContent = "🎨 Gallery";
+      return div;
+    },
+  },
+  {
+    type: "footer",
+    name: "Footer",
+    icon: "🔻",
+    defaultSize: { width: 50, height: 6 },
+    minSize: { width: 20, height: 4 },
+    render: ({ itemId: _itemId, config: _config }) => {
+      const div = document.createElement("div");
+      div.style.cssText =
+        "padding: 12px; background: #343a40; color: white; border-radius: 4px; width: 100%; height: 100%; box-sizing: border-box; display: flex; align-items: center; justify-content: center;";
+      const p = document.createElement("p");
+      p.style.cssText = "margin: 0; font-size: 14px;";
+      p.textContent = _config?.text || "© 2024 Your Company";
+      div.appendChild(p);
+      return div;
+    },
+    renderDragClone: () => {
+      const div = document.createElement("div");
+      div.style.cssText =
+        "padding: 12px; background: #343a40; color: white; border-radius: 4px; width: 100%; height: 100%; box-sizing: border-box; display: flex; align-items: center; justify-content: center; opacity: 0.8;";
+      div.textContent = "🔻 Footer";
+      return div;
+    },
+  },
+  {
+    type: "card",
+    name: "Card",
+    icon: "🃏",
+    defaultSize: { width: 15, height: 12 },
+    minSize: { width: 10, height: 8 },
+    render: ({ itemId: _itemId, config: _config }) => {
+      const div = document.createElement("div");
+      div.style.cssText =
+        "background: white; border: 1px solid #dee2e6; border-radius: 8px; padding: 16px; width: 100%; height: 100%; box-sizing: border-box; box-shadow: 0 2px 4px rgba(0,0,0,0.1);";
+      const title = document.createElement("h4");
+      title.style.cssText = "margin: 0 0 8px 0; font-size: 16px; color: #333;";
+      title.textContent = _config?.title || "Card Title";
+      const content = document.createElement("p");
+      content.style.cssText = "margin: 0; font-size: 13px; color: #666;";
+      content.textContent = _config?.content || "Card content goes here.";
+      div.appendChild(title);
+      div.appendChild(content);
+      return div;
+    },
+    renderDragClone: () => {
+      const div = document.createElement("div");
+      div.style.cssText =
+        "background: white; border: 1px solid #dee2e6; border-radius: 8px; padding: 16px; width: 100%; height: 100%; box-sizing: border-box; display: flex; align-items: center; justify-content: center; opacity: 0.8;";
+      div.textContent = "🃏 Card";
+      return div;
     },
   },
 ];
@@ -108,7 +244,7 @@ export const BasicBuilder = (args) => {
   // Create grid builder
   const builderEl = document.createElement("grid-builder");
   builderEl.components = simpleComponents;
-  builderEl.apiRef = { key: apiKey }; // Isolated instance for this story
+  builderEl.apiKey = apiKey; // Isolated instance for this story
 
   // Initialize with one empty canvas (required - default state has no canvases)
   builderEl.initialState = {
@@ -235,7 +371,7 @@ export const WithCustomTheme = (args) => {
 
   const builderEl = document.createElement("grid-builder");
   builderEl.components = simpleComponents;
-  builderEl.apiRef = { key: apiKey }; // Isolated instance for this story
+  builderEl.apiKey = apiKey; // Isolated instance for this story
 
   // Apply custom theme colors
   builderEl.theme = {
@@ -255,7 +391,7 @@ export const WithCustomTheme = (args) => {
             type: "header",
             name: "Header",
             layouts: {
-              desktop: { x: 0, y: 0, width: 25, height: 4 },
+              desktop: { x: 0, y: 0, width: 25, height: 4, customized: true },
               mobile: {
                 x: null,
                 y: null,
@@ -273,7 +409,7 @@ export const WithCustomTheme = (args) => {
             type: "text",
             name: "Text",
             layouts: {
-              desktop: { x: 0, y: 5, width: 20, height: 6 },
+              desktop: { x: 0, y: 5, width: 20, height: 6, customized: true },
               mobile: {
                 x: null,
                 y: null,
@@ -293,7 +429,7 @@ export const WithCustomTheme = (args) => {
             type: "button",
             name: "Button",
             layouts: {
-              desktop: { x: 21, y: 5, width: 12, height: 4 },
+              desktop: { x: 21, y: 5, width: 12, height: 4, customized: true },
               mobile: {
                 x: null,
                 y: null,
@@ -481,7 +617,7 @@ export const WithCustomGridConfig = (args) => {
 
   const builderEl = document.createElement("grid-builder");
   builderEl.components = simpleComponents;
-  builderEl.apiRef = { key: apiKey }; // Isolated instance for this story
+  builderEl.apiKey = apiKey; // Isolated instance for this story
   builderEl.config = {
     gridSizePercent: args.gridSizePercent,
     minGridSize: args.minGridSize,
@@ -614,7 +750,7 @@ export const WithInitialState = () => {
 
   const builderEl = document.createElement("grid-builder");
   builderEl.components = simpleComponents;
-  builderEl.apiRef = { key: apiKey }; // Isolated instance for this story
+  builderEl.apiKey = apiKey; // Isolated instance for this story
   builderEl.initialState = {
     canvases: {
       "canvas-1": {
@@ -625,7 +761,7 @@ export const WithInitialState = () => {
             name: "Header",
             canvasId: "canvas-1",
             layouts: {
-              desktop: { x: 0, y: 0, width: 30, height: 4 },
+              desktop: { x: 0, y: 0, width: 30, height: 4, customized: true },
               mobile: {
                 x: null,
                 y: null,
@@ -643,7 +779,7 @@ export const WithInitialState = () => {
             name: "Text Block",
             canvasId: "canvas-1",
             layouts: {
-              desktop: { x: 0, y: 5, width: 20, height: 6 },
+              desktop: { x: 0, y: 5, width: 20, height: 6, customized: true },
               mobile: {
                 x: null,
                 y: null,
@@ -661,7 +797,7 @@ export const WithInitialState = () => {
             name: "Button",
             canvasId: "canvas-1",
             layouts: {
-              desktop: { x: 21, y: 5, width: 12, height: 4 },
+              desktop: { x: 21, y: 5, width: 12, height: 4, customized: true },
               mobile: {
                 x: null,
                 y: null,
@@ -720,7 +856,7 @@ The initialState prop accepts a state object with this structure:
           name: 'Header',
           canvasId: 'canvas-1',
           layouts: {
-            desktop: { x: 0, y: 0, width: 30, height: 4 },
+            desktop: { x: 0, y: 0, width: 30, height: 4, customized: true },
             mobile: { x: null, y: null, width: null, height: null, customized: false }
           },
           config: { title: 'Welcome!' },
@@ -768,7 +904,7 @@ export const ResponsiveViewportDemo = () => {
 
     const builderEl = document.createElement("grid-builder");
     builderEl.components = simpleComponents;
-    builderEl.apiRef = { key: apiKey }; // Isolated instance for this story
+    builderEl.apiKey = apiKey; // Isolated instance for this story
     builderEl.initialState = {
       canvases: {
         "canvas-1": {
@@ -779,7 +915,7 @@ export const ResponsiveViewportDemo = () => {
               name: "Header",
               canvasId: "canvas-1",
               layouts: {
-                desktop: { x: 0, y: 0, width: 30, height: 4 },
+                desktop: { x: 0, y: 0, width: 30, height: 4, customized: true },
                 mobile: {
                   x: null,
                   y: null,
@@ -797,7 +933,7 @@ export const ResponsiveViewportDemo = () => {
               name: "Text Block",
               canvasId: "canvas-1",
               layouts: {
-                desktop: { x: 0, y: 5, width: 20, height: 6 },
+                desktop: { x: 0, y: 5, width: 20, height: 6, customized: true },
                 mobile: {
                   x: null,
                   y: null,
@@ -820,7 +956,13 @@ export const ResponsiveViewportDemo = () => {
               name: "Button",
               canvasId: "canvas-1",
               layouts: {
-                desktop: { x: 21, y: 5, width: 12, height: 4 },
+                desktop: {
+                  x: 21,
+                  y: 5,
+                  width: 12,
+                  height: 4,
+                  customized: true,
+                },
                 mobile: {
                   x: null,
                   y: null,
@@ -992,7 +1134,7 @@ export const WithCanvasMetadataAndCustomHeaders = () => {
   const apiKey = getUniqueApiKey();
   const builderEl = document.createElement("grid-builder");
   builderEl.components = simpleComponents;
-  builderEl.apiRef = { key: apiKey }; // Isolated instance for this story
+  builderEl.apiKey = apiKey; // Isolated instance for this story
 
   // Multiple canvas sections with metadata
   builderEl.initialState = {
@@ -1005,7 +1147,7 @@ export const WithCanvasMetadataAndCustomHeaders = () => {
             name: "Hero Header",
             canvasId: "hero-section",
             layouts: {
-              desktop: { x: 5, y: 2, width: 25, height: 4 },
+              desktop: { x: 5, y: 2, width: 25, height: 4, customized: true },
               mobile: {
                 x: null,
                 y: null,
@@ -1028,7 +1170,7 @@ export const WithCanvasMetadataAndCustomHeaders = () => {
             name: "Content Text",
             canvasId: "content-section",
             layouts: {
-              desktop: { x: 0, y: 0, width: 30, height: 6 },
+              desktop: { x: 0, y: 0, width: 30, height: 6, customized: true },
               mobile: {
                 x: null,
                 y: null,
@@ -1263,7 +1405,7 @@ export const WithDeletionHook = () => {
   // Create grid builder
   const builderEl = document.createElement("grid-builder");
   builderEl.components = simpleComponents;
-  builderEl.apiRef = { key: apiKey }; // Isolated instance for this story
+  builderEl.apiKey = apiKey; // Isolated instance for this story
 
   builderEl.initialState = {
     canvases: {
@@ -1275,7 +1417,7 @@ export const WithDeletionHook = () => {
             name: "Protected Header",
             canvasId: "canvas-1",
             layouts: {
-              desktop: { x: 0, y: 0, width: 30, height: 4 },
+              desktop: { x: 0, y: 0, width: 30, height: 4, customized: true },
               mobile: {
                 x: null,
                 y: null,
@@ -1293,7 +1435,7 @@ export const WithDeletionHook = () => {
             name: "Sample Text",
             canvasId: "canvas-1",
             layouts: {
-              desktop: { x: 0, y: 5, width: 20, height: 6 },
+              desktop: { x: 0, y: 5, width: 20, height: 6, customized: true },
               mobile: {
                 x: null,
                 y: null,
@@ -1504,7 +1646,7 @@ export const BatchOperationsPerformance = () => {
   const apiKey = getUniqueApiKey();
   const builderEl = document.createElement("grid-builder");
   builderEl.components = simpleComponents;
-  builderEl.apiRef = { key: apiKey }; // Isolated instance for this story
+  builderEl.apiKey = apiKey; // Isolated instance for this story
 
   builderEl.initialState = {
     canvases: {
@@ -1816,7 +1958,7 @@ export const MultipleSectionsBuilder = () => {
   // Create grid builder
   const builderEl = document.createElement("grid-builder");
   builderEl.components = simpleComponents;
-  builderEl.apiRef = { key: apiKey }; // Isolated instance for this story
+  builderEl.apiKey = apiKey; // Isolated instance for this story
 
   // Multi-section layout
   builderEl.initialState = {
@@ -1829,7 +1971,7 @@ export const MultipleSectionsBuilder = () => {
             type: "header",
             name: "Hero Header",
             layouts: {
-              desktop: { x: 5, y: 2, width: 40, height: 6 },
+              desktop: { x: 5, y: 2, width: 40, height: 6, customized: true },
               mobile: {
                 x: null,
                 y: null,
@@ -1852,7 +1994,7 @@ export const MultipleSectionsBuilder = () => {
             type: "text",
             name: "Content",
             layouts: {
-              desktop: { x: 0, y: 0, width: 30, height: 6 },
+              desktop: { x: 0, y: 0, width: 30, height: 6, customized: true },
               mobile: {
                 x: null,
                 y: null,
@@ -1875,7 +2017,7 @@ export const MultipleSectionsBuilder = () => {
             type: "button",
             name: "CTA Button",
             layouts: {
-              desktop: { x: 19, y: 2, width: 12, height: 4 },
+              desktop: { x: 19, y: 2, width: 12, height: 4, customized: true },
               mobile: {
                 x: null,
                 y: null,
@@ -2104,7 +2246,7 @@ export const ActiveCanvasManagement = () => {
   // Create grid builder
   const builderEl = document.createElement("grid-builder");
   builderEl.components = simpleComponents;
-  builderEl.apiRef = { key: apiKey }; // Isolated instance for this story
+  builderEl.apiKey = apiKey; // Isolated instance for this story
 
   builderEl.initialState = {
     canvases: {
@@ -2116,7 +2258,7 @@ export const ActiveCanvasManagement = () => {
             type: "header",
             name: "Header 1",
             layouts: {
-              desktop: { x: 0, y: 0, width: 20, height: 4 },
+              desktop: { x: 0, y: 0, width: 20, height: 4, customized: true },
               mobile: {
                 x: null,
                 y: null,
@@ -2139,7 +2281,7 @@ export const ActiveCanvasManagement = () => {
             type: "text",
             name: "Text 2",
             layouts: {
-              desktop: { x: 0, y: 0, width: 25, height: 6 },
+              desktop: { x: 0, y: 0, width: 25, height: 6, customized: true },
               mobile: {
                 x: null,
                 y: null,
@@ -2162,7 +2304,7 @@ export const ActiveCanvasManagement = () => {
             type: "button",
             name: "Button 3",
             layouts: {
-              desktop: { x: 0, y: 0, width: 12, height: 4 },
+              desktop: { x: 0, y: 0, width: 12, height: 4, customized: true },
               mobile: {
                 x: null,
                 y: null,
@@ -2466,7 +2608,7 @@ export const UndoRedoDemo = () => {
   // Create grid builder
   const builderEl = document.createElement("grid-builder");
   builderEl.components = simpleComponents;
-  builderEl.apiRef = { key: apiKey }; // Isolated instance for this story
+  builderEl.apiKey = apiKey; // Isolated instance for this story
 
   builderEl.initialState = {
     canvases: {
@@ -2478,7 +2620,7 @@ export const UndoRedoDemo = () => {
             type: "header",
             name: "Starter Header",
             layouts: {
-              desktop: { x: 0, y: 0, width: 30, height: 4 },
+              desktop: { x: 0, y: 0, width: 30, height: 4, customized: true },
               mobile: {
                 x: null,
                 y: null,
@@ -2496,7 +2638,7 @@ export const UndoRedoDemo = () => {
             type: "text",
             name: "Text Block",
             layouts: {
-              desktop: { x: 0, y: 5, width: 20, height: 6 },
+              desktop: { x: 0, y: 5, width: 20, height: 6, customized: true },
               mobile: {
                 x: null,
                 y: null,
@@ -2519,7 +2661,7 @@ export const UndoRedoDemo = () => {
             type: "header",
             name: "Canvas 2 Header",
             layouts: {
-              desktop: { x: 0, y: 0, width: 25, height: 4 },
+              desktop: { x: 0, y: 0, width: 25, height: 4, customized: true },
               mobile: {
                 x: null,
                 y: null,
@@ -2917,7 +3059,7 @@ export const PluginSystemDemo = () => {
   // Create grid builder
   const builderEl = document.createElement("grid-builder");
   builderEl.components = simpleComponents;
-  builderEl.apiRef = { key: apiKey }; // Isolated instance for this story
+  builderEl.apiKey = apiKey; // Isolated instance for this story
 
   builderEl.initialState = {
     canvases: {
@@ -2929,7 +3071,7 @@ export const PluginSystemDemo = () => {
             type: "header",
             name: "Header",
             layouts: {
-              desktop: { x: 0, y: 0, width: 20, height: 4 },
+              desktop: { x: 0, y: 0, width: 20, height: 4, customized: true },
               mobile: {
                 x: null,
                 y: null,
@@ -3364,7 +3506,7 @@ export const EventsDemo = () => {
   // Create grid builder
   const builderEl = document.createElement("grid-builder");
   builderEl.components = simpleComponents;
-  builderEl.apiRef = { key: apiKey }; // Isolated instance for this story
+  builderEl.apiKey = apiKey; // Isolated instance for this story
 
   builderEl.initialState = {
     canvases: {
@@ -3376,7 +3518,7 @@ export const EventsDemo = () => {
             type: "header",
             name: "Header",
             layouts: {
-              desktop: { x: 0, y: 0, width: 20, height: 4 },
+              desktop: { x: 0, y: 0, width: 20, height: 4, customized: true },
               mobile: {
                 x: null,
                 y: null,
@@ -3788,7 +3930,7 @@ export const APIIntegrationDemo = () => {
   // Create grid builder
   const builderEl = document.createElement("grid-builder");
   builderEl.components = simpleComponents;
-  builderEl.apiRef = { key: apiKey }; // Isolated instance for this story
+  builderEl.apiKey = apiKey; // Isolated instance for this story
 
   builderEl.initialState = {
     canvases: {
@@ -4294,7 +4436,7 @@ export const ClickToAddFeature = () => {
   // Create grid builder
   const builderEl = document.createElement("grid-builder");
   builderEl.components = simpleComponents;
-  builderEl.apiRef = { key: apiKey }; // Isolated instance for this story
+  builderEl.apiKey = apiKey; // Isolated instance for this story
 
   // Pre-populate with some items to demonstrate collision detection
   builderEl.initialState = {
@@ -4307,7 +4449,7 @@ export const ClickToAddFeature = () => {
             type: "header",
             name: "Header",
             layouts: {
-              desktop: { x: 2, y: 2, width: 20, height: 4 },
+              desktop: { x: 2, y: 2, width: 20, height: 4, customized: true },
               mobile: {
                 x: null,
                 y: null,
@@ -4325,7 +4467,7 @@ export const ClickToAddFeature = () => {
             type: "text",
             name: "Text",
             layouts: {
-              desktop: { x: 23, y: 2, width: 15, height: 6 },
+              desktop: { x: 23, y: 2, width: 15, height: 6, customized: true },
               mobile: {
                 x: null,
                 y: null,
@@ -4345,7 +4487,7 @@ export const ClickToAddFeature = () => {
             type: "button",
             name: "Button",
             layouts: {
-              desktop: { x: 2, y: 7, width: 12, height: 4 },
+              desktop: { x: 2, y: 7, width: 12, height: 4, customized: true },
               mobile: {
                 x: null,
                 y: null,
@@ -4784,7 +4926,7 @@ export const ExportImportWorkflow = () => {
 
   const builderEl = document.createElement("grid-builder");
   builderEl.components = simpleComponents;
-  builderEl.apiRef = { key: apiKey }; // Isolated instance for this story
+  builderEl.apiKey = apiKey; // Isolated instance for this story
 
   builderEl.initialState = {
     canvases: {
@@ -4796,7 +4938,7 @@ export const ExportImportWorkflow = () => {
             type: "header",
             name: "Header",
             layouts: {
-              desktop: { x: 0, y: 0, width: 30, height: 4 },
+              desktop: { x: 0, y: 0, width: 30, height: 4, customized: true },
               mobile: {
                 x: null,
                 y: null,
@@ -4814,7 +4956,7 @@ export const ExportImportWorkflow = () => {
             type: "text",
             name: "Text",
             layouts: {
-              desktop: { x: 0, y: 5, width: 25, height: 6 },
+              desktop: { x: 0, y: 5, width: 25, height: 6, customized: true },
               mobile: {
                 x: null,
                 y: null,
@@ -4824,7 +4966,9 @@ export const ExportImportWorkflow = () => {
               },
             },
             zIndex: 2,
-            config: { text: "Export this multi-canvas layout to JSON and reload it later!" },
+            config: {
+              text: "Export this multi-canvas layout to JSON and reload it later!",
+            },
           },
         ],
         zIndexCounter: 3,
@@ -4837,7 +4981,7 @@ export const ExportImportWorkflow = () => {
             type: "button",
             name: "Button",
             layouts: {
-              desktop: { x: 2, y: 2, width: 15, height: 4 },
+              desktop: { x: 2, y: 2, width: 15, height: 4, customized: true },
               mobile: {
                 x: null,
                 y: null,
@@ -4855,7 +4999,7 @@ export const ExportImportWorkflow = () => {
             type: "text",
             name: "Text",
             layouts: {
-              desktop: { x: 20, y: 2, width: 20, height: 5 },
+              desktop: { x: 20, y: 2, width: 20, height: 5, customized: true },
               mobile: {
                 x: null,
                 y: null,
@@ -4865,7 +5009,9 @@ export const ExportImportWorkflow = () => {
               },
             },
             zIndex: 2,
-            config: { text: "All canvases and their components are exported together!" },
+            config: {
+              text: "All canvases and their components are exported together!",
+            },
           },
         ],
         zIndexCounter: 3,
@@ -5061,11 +5207,15 @@ export const ExportImportWorkflow = () => {
         Demonstrates persisting and restoring layouts. Build a layout, export it
         as JSON, then re-import it later.
         <br />
-        <strong>Try it:</strong> Drag different component types (📄 Header, 📝 Text, 🔘 Button) from the palette, export, save to file,
-        load from file, or re-import!
+        <strong>Try it:</strong> Drag different component types (📄 Header, 📝
+        Text, 🔘 Button) from the palette, export, save to file, load from file,
+        or re-import!
         <br />
-        <strong>🔑 Key insight:</strong> The <code style="background: #ffe; padding: 2px 4px; border-radius: 2px;">"type"</code> field
-        in each item tells the grid which component to render on import.
+        <strong>🔑 Key insight:</strong> The
+        <code style="background: #ffe; padding: 2px 4px; border-radius: 2px;"
+          >"type"</code
+        >
+        field in each item tells the grid which component to render on import.
       </p>
 
       ${statusDiv}
@@ -5076,8 +5226,12 @@ export const ExportImportWorkflow = () => {
 
       <div style="margin: 10px 0;">${saveFileBtn} ${loadFileBtn}</div>
 
-      <div style="display: grid; grid-template-columns: 280px 1fr; gap: 16px; margin: 20px 0;">
-        <div style="border: 1px solid #ddd; border-radius: 4px; padding: 12px; background: #f8f9fa;">
+      <div
+        style="display: grid; grid-template-columns: 280px 1fr; gap: 16px; margin: 20px 0;"
+      >
+        <div
+          style="border: 1px solid #ddd; border-radius: 4px; padding: 12px; background: #f8f9fa;"
+        >
           ${paletteEl}
         </div>
         <div
@@ -5097,21 +5251,51 @@ export const ExportImportWorkflow = () => {
       <div
         style="margin-top: 20px; padding: 20px; background: #e7f3ff; border-radius: 8px; border-left: 4px solid #007bff;"
       >
-        <h4 style="margin-top: 0; color: #004085;">🔍 How Component Types Work</h4>
+        <h4 style="margin-top: 0; color: #004085;">
+          🔍 How Component Types Work
+        </h4>
         <p style="margin: 0 0 12px 0; line-height: 1.6;">
-          Each exported item has a <code style="background: #fff; padding: 2px 6px; border-radius: 3px; font-weight: 600;">"type"</code> field
-          that identifies which component to render:
+          Each exported item has a
+          <code
+            style="background: #fff; padding: 2px 6px; border-radius: 3px; font-weight: 600;"
+            >"type"</code
+          >
+          field that identifies which component to render:
         </p>
         <ol style="margin: 0 0 12px 0; padding-left: 24px; line-height: 1.8;">
-          <li><strong>Export:</strong> Item includes <code style="background: #fff; padding: 2px 4px;">"type": "header"</code> in JSON</li>
-          <li><strong>Import:</strong> Grid builder parses the JSON and restores items</li>
-          <li><strong>Lookup:</strong> For each item, grid-item-wrapper calls <code style="background: #fff; padding: 2px 4px;">componentRegistry.get(item.type)</code></li>
-          <li><strong>Render:</strong> Calls the component's <code style="background: #fff; padding: 2px 4px;">render()</code> function to display it</li>
+          <li>
+            <strong>Export:</strong> Item includes
+            <code style="background: #fff; padding: 2px 4px;"
+              >"type": "header"</code
+            >
+            in JSON
+          </li>
+          <li>
+            <strong>Import:</strong> Grid builder parses the JSON and restores
+            items
+          </li>
+          <li>
+            <strong>Lookup:</strong> For each item, grid-item-wrapper calls
+            <code style="background: #fff; padding: 2px 4px;"
+              >componentRegistry.get(item.type)</code
+            >
+          </li>
+          <li>
+            <strong>Render:</strong> Calls the component's
+            <code style="background: #fff; padding: 2px 4px;">render()</code>
+            function to display it
+          </li>
         </ol>
-        <p style="margin: 0; padding: 12px; background: #fff; border-radius: 4px; font-size: 13px; line-height: 1.6;">
-          <strong>Example:</strong> If you drag a Button (🔘) into the grid and export, you'll see
-          <code style="background: #f0f0f0; padding: 2px 4px;">"type": "button"</code> in the JSON.
-          When you re-import, the grid looks up the "button" component definition and renders a button!
+        <p
+          style="margin: 0; padding: 12px; background: #fff; border-radius: 4px; font-size: 13px; line-height: 1.6;"
+        >
+          <strong>Example:</strong> If you drag a Button (🔘) into the grid and
+          export, you'll see
+          <code style="background: #f0f0f0; padding: 2px 4px;"
+            >"type": "button"</code
+          >
+          in the JSON. When you re-import, the grid looks up the "button"
+          component definition and renders a button!
         </p>
       </div>
 
@@ -5768,7 +5952,7 @@ export const UnknownComponentHandling = () => {
   // =================================================================
   const defaultBuilder = document.createElement("grid-builder");
   defaultBuilder.components = simpleComponents; // Known components only
-  defaultBuilder.apiRef = { key: defaultApiKey }; // Isolated instance for default mode
+  defaultBuilder.apiKey = defaultApiKey; // Isolated instance for default mode
   defaultBuilder.config = {
     enableVirtualRendering: false,
     snapToGrid: true,
@@ -5782,7 +5966,7 @@ export const UnknownComponentHandling = () => {
   // =================================================================
   const hiddenBuilder = document.createElement("grid-builder");
   hiddenBuilder.components = simpleComponents; // Known components only
-  hiddenBuilder.apiRef = { key: hiddenApiKey }; // Isolated instance for hidden mode
+  hiddenBuilder.apiKey = hiddenApiKey; // Isolated instance for hidden mode
   hiddenBuilder.config = {
     enableVirtualRendering: false,
     snapToGrid: true,
@@ -5795,7 +5979,7 @@ export const UnknownComponentHandling = () => {
   // =================================================================
   const customBuilder = document.createElement("grid-builder");
   customBuilder.components = simpleComponents; // Known components only
-  customBuilder.apiRef = { key: customApiKey }; // Isolated instance for custom mode
+  customBuilder.apiKey = customApiKey; // Isolated instance for custom mode
   customBuilder.config = {
     enableVirtualRendering: false,
     snapToGrid: true,
@@ -6435,13 +6619,13 @@ export const DynamicComponentRegistration = () => {
       icon: "📄",
       defaultSize: { width: 30, height: 4 },
       minSize: { width: 15, height: 3 },
-      render: ({ itemId: _itemId, config }) => {
+      render: ({ itemId: _itemId, config: _config }) => {
         const div = document.createElement("div");
         div.style.cssText =
           "padding: 12px; background: #f0f0f0; border-radius: 4px; width: 100%; height: 100%; box-sizing: border-box;";
         const h3 = document.createElement("h3");
         h3.style.cssText = "margin: 0; font-size: 16px;";
-        h3.textContent = config?.title || "Header";
+        h3.textContent = _config?.title || "Header";
         div.appendChild(h3);
         return div;
       },
@@ -6461,7 +6645,7 @@ export const DynamicComponentRegistration = () => {
   // Create grid builder first (so we can access its componentRegistry)
   const builderEl = document.createElement("grid-builder");
   builderEl.components = initialComponents;
-  builderEl.apiRef = { key: apiKey }; // Isolated instance for this story
+  builderEl.apiKey = apiKey; // Isolated instance for this story
 
   // Create component palette (we'll share the registry after grid-builder initializes)
   const paletteEl = document.createElement("component-palette");
@@ -6522,14 +6706,14 @@ export const DynamicComponentRegistration = () => {
                 icon: "🖼️",
                 defaultSize: { width: 20, height: 15 },
                 minSize: { width: 10, height: 8 },
-                render: ({ itemId: _itemId, config }) => {
+                render: ({ itemId: _itemId, config: _config }) => {
                   const div = document.createElement("div");
                   div.style.cssText =
                     "padding: 8px; background: #fff; border: 2px solid #e0e0e0; border-radius: 4px; width: 100%; height: 100%; box-sizing: border-box; display: flex; align-items: center; justify-content: center;";
                   const img = document.createElement("div");
                   img.style.cssText =
                     "width: 100%; height: 100%; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 4px; display: flex; align-items: center; justify-content: center; color: white; font-size: 24px;";
-                  img.textContent = config?.emoji || "🖼️";
+                  img.textContent = _config?.emoji || "🖼️";
                   div.appendChild(img);
                   return div;
                 },
@@ -6574,14 +6758,14 @@ export const DynamicComponentRegistration = () => {
                 icon: "📊",
                 defaultSize: { width: 25, height: 18 },
                 minSize: { width: 15, height: 12 },
-                render: ({ itemId: _itemId, config }) => {
+                render: ({ itemId: _itemId, config: _config }) => {
                   const div = document.createElement("div");
                   div.style.cssText =
                     "padding: 12px; background: #fff; border: 1px solid #ddd; border-radius: 4px; width: 100%; height: 100%; box-sizing: border-box;";
                   const title = document.createElement("h4");
                   title.style.cssText =
                     "margin: 0 0 8px 0; font-size: 14px; color: #333;";
-                  title.textContent = config?.title || "Sales Chart";
+                  title.textContent = _config?.title || "Sales Chart";
                   div.appendChild(title);
 
                   // Simple bar chart visualization
@@ -6633,7 +6817,7 @@ export const DynamicComponentRegistration = () => {
                 icon: "🎥",
                 defaultSize: { width: 30, height: 20 },
                 minSize: { width: 20, height: 15 },
-                render: ({ itemId: _itemId, config }) => {
+                render: ({ itemId: _itemId, config: _config }) => {
                   const div = document.createElement("div");
                   div.style.cssText =
                     "padding: 0; background: #000; border-radius: 4px; width: 100%; height: 100%; box-sizing: border-box; display: flex; align-items: center; justify-content: center; overflow: hidden;";
@@ -6645,7 +6829,7 @@ export const DynamicComponentRegistration = () => {
                   icon.textContent = "▶️";
                   const text = document.createElement("div");
                   text.style.cssText = "font-size: 14px; opacity: 0.9;";
-                  text.textContent = config?.title || "Video Player";
+                  text.textContent = _config?.title || "Video Player";
                   placeholder.appendChild(icon);
                   placeholder.appendChild(text);
                   div.appendChild(placeholder);
@@ -6827,6 +7011,760 @@ if (featureFlags.experimentalCharts) {
 5. Click "List Components" - see all registered types
 
 **Observable Pattern in Action**: The component-palette subscribes to ComponentRegistry via onChange. When api.registerComponent is called, the registry notifies all subscribers, triggering automatic palette re-render with the new component.
+      `.trim(),
+    },
+  },
+};
+
+export const ThreeBreakpointDemo = () => {
+  // **Shared State Demo**: All three instances share the same canvas data (items, positions)
+  // but each has independent viewport based on container width.
+  //
+  // **Try this**: Drag a component in desktop → see it update in tablet and mobile views!
+  // - Desktop and tablet show same manual layout (tablet inherits from desktop)
+  // - Mobile shows auto-stacked version of the same components
+  const sharedApiKey = "threeBreakpointDemo"; // All instances share this key
+
+  const createBuilder = (width, label, showPalette = false) => {
+    // Create component palette only for desktop instance
+    const paletteEl = showPalette
+      ? (() => {
+          const palette = document.createElement("component-palette");
+          palette.components = simpleComponents;
+          palette.targetGridBuilderId = sharedApiKey;
+          return palette;
+        })()
+      : null;
+
+    const builderEl = document.createElement("grid-builder");
+    builderEl.components = simpleComponents;
+    builderEl.apiKey = sharedApiKey; // Shared API key for synchronized state
+    builderEl.breakpoints = BREAKPOINTS_3;
+
+    // Only first instance provides initial layout (others will share it)
+    if (width === 1400) {
+      builderEl.initialState = {
+        canvases: {
+          canvas1: {
+            items: create3BreakpointLayout(),
+            zIndexCounter: 8,
+          },
+        },
+      };
+    }
+
+    builderEl.config = {
+      enableVirtualRendering: false,
+      showGridLines: true,
+    };
+
+    return { builderEl, paletteEl, width, label };
+  };
+
+  const builders = [
+    createBuilder(600, "Mobile (< 768px)", false), // 600px container = 600px grid-builder (< 768px)
+    createBuilder(900, "Tablet (768-1023px)", false), // 900px container = 900px grid-builder (768-1023px)
+    createBuilder(1400, "Desktop (≥ 1024px)", true), // 1400px container = 1200px grid-builder (≥ 1024px) + palette
+  ];
+
+  return html`
+    <div
+      style="font-family: system-ui, -apple-system, sans-serif; padding: 20px;"
+    >
+      <h2 style="margin-top: 0; color: #333;">
+        3-Breakpoint Responsive Demo (Mobile + Tablet + Desktop)
+      </h2>
+      <p style="color: #666; margin-bottom: 20px;">
+        <strong>🔄 Live Multi-Viewport Synchronization:</strong> All three
+        instances share the same canvas data. Drag a component in desktop →
+        watch it update in tablet and mobile views!
+        <br />
+        <strong>✨ Layout Inheritance:</strong> Tablet inherits desktop layout -
+        only desktop configuration needed!
+      </p>
+
+      <div
+        style="padding: 16px; background: linear-gradient(135deg, #e0f2fe 0%, #dbeafe 100%); border-radius: 8px; border-left: 4px solid #0ea5e9; margin-bottom: 30px;"
+      >
+        <h4 style="margin: 0 0 12px 0; color: #0369a1; font-size: 15px;">
+          📐 Breakpoint Configuration:
+        </h4>
+        <div
+          style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; font-size: 13px;"
+        >
+          <div
+            style="padding: 12px; background: white; border-radius: 4px; border: 1px solid #bae6fd;"
+          >
+            <strong style="color: #0284c7;">Mobile (0px+)</strong>
+            <div style="margin-top: 8px; color: #666; line-height: 1.6;">
+              • Mode: <code>stack</code><br />
+              • Full-width<br />
+              • Auto-stacked
+            </div>
+          </div>
+          <div
+            style="padding: 12px; background: white; border-radius: 4px; border: 1px solid #bae6fd;"
+          >
+            <strong style="color: #0284c7;">Tablet (768px+)</strong>
+            <div style="margin-top: 8px; color: #666; line-height: 1.6;">
+              • Mode: <code>inherit</code><br />
+              • From: desktop<br />
+              • No config needed ✨
+            </div>
+          </div>
+          <div
+            style="padding: 12px; background: white; border-radius: 4px; border: 1px solid #bae6fd;"
+          >
+            <strong style="color: #0284c7;">Desktop (1024px+)</strong>
+            <div style="margin-top: 8px; color: #666; line-height: 1.6;">
+              • Mode: <code>manual</code><br />
+              • Custom positioning<br />
+              • 3-column grid
+            </div>
+          </div>
+        </div>
+      </div>
+
+      ${builders.map(({ builderEl, paletteEl, width, label }) => {
+        const gridBuilderWidth = paletteEl ? width - 200 : width;
+        const isMobile = gridBuilderWidth < 768;
+        const isTablet = gridBuilderWidth >= 768 && gridBuilderWidth < 1024;
+        return html`
+          <div style="margin-bottom: 30px;">
+            <h3
+              style="margin: 0 0 10px 0; color: ${isMobile
+                ? "#007bff"
+                : isTablet
+                  ? "#6f42c1"
+                  : "#28a745"}; font-size: 16px;"
+            >
+              ${isMobile ? "📱" : isTablet ? "📱" : "✅"} ${label}
+            </h3>
+            <div
+              style="display: flex; width: ${width}px; height: 500px; border: 3px solid ${isMobile
+                ? "#007bff"
+                : isTablet
+                  ? "#6f42c1"
+                  : "#28a745"}; border-radius: 8px; overflow: hidden;"
+            >
+              ${paletteEl
+                ? html`
+                    <div
+                      style="width: 200px; flex-shrink: 0; border-right: 1px solid #ddd; background: #f5f5f5; overflow-y: auto;"
+                    >
+                      ${paletteEl}
+                    </div>
+                  `
+                : ""}
+              <div style="flex: 1; overflow: hidden;">${builderEl}</div>
+            </div>
+            <p style="margin-top: 8px; font-size: 13px; color: #666;">
+              <strong>Container width:</strong> ${width}px
+              <strong>(grid-builder: ${gridBuilderWidth}px)</strong> •
+              <strong>Active viewport:</strong>
+              ${isMobile ? "mobile" : isTablet ? "tablet" : "desktop"}
+              ${isTablet ? " (inherits desktop layout)" : ""}
+            </p>
+          </div>
+        `;
+      })}
+
+      <div
+        style="margin-top: 30px; padding: 20px; background: #f0fdf4; border-radius: 8px; border-left: 4px solid #22c55e;"
+      >
+        <h4 style="margin-top: 0; color: #15803d;">
+          ✨ Layout Inheritance in Action
+        </h4>
+        <p style="margin: 0 0 12px 0; line-height: 1.6; color: #166534;">
+          Notice how
+          <strong>tablet displays the same 3-column layout as desktop</strong>
+          without any extra configuration! This is the power of layout
+          inheritance:
+        </p>
+        <ol
+          style="margin: 0; padding-left: 24px; line-height: 1.8; color: #166534;"
+        >
+          <li>
+            Configure desktop layout once (3-column grid with manual
+            positioning)
+          </li>
+          <li>
+            Tablet inherits desktop layout at render time (no duplication in
+            configuration!)
+          </li>
+          <li>
+            Mobile uses auto-stacking (full-width, vertically stacked
+            components)
+          </li>
+          <li>
+            Result: One layout definition serves two breakpoints (desktop +
+            tablet)
+          </li>
+        </ol>
+        <p
+          style="margin: 12px 0 0 0; padding: 12px; background: white; border-radius: 4px; line-height: 1.6; color: #166534; font-size: 14px;"
+        >
+          <strong>💡 How it works:</strong> Each item has
+          <code
+            style="background: #dcfce7; padding: 2px 6px; border-radius: 3px;"
+            >layouts.tablet = {x: null, y: null, width: null, height: null,
+            customized: false}</code
+          >. At render time, the system resolves this to use
+          <code
+            style="background: #dcfce7; padding: 2px 6px; border-radius: 3px;"
+            >layouts.desktop</code
+          >
+          values automatically via the
+          <code
+            style="background: #dcfce7; padding: 2px 6px; border-radius: 3px;"
+            >inheritFrom: 'desktop'</code
+          >
+          configuration.
+        </p>
+      </div>
+    </div>
+  `;
+};
+
+ThreeBreakpointDemo.parameters = {
+  docs: {
+    description: {
+      story: `
+**Use Case**: Creating responsive layouts with mobile, tablet, and desktop breakpoints using layout inheritance to minimize configuration
+
+This story demonstrates a 3-breakpoint responsive system (mobile/tablet/desktop) where tablet automatically inherits the desktop layout. This pattern reduces configuration burden by allowing one layout definition to serve multiple breakpoints, while still providing automatic mobile-optimized stacking.
+
+**When to use**: Use 3-breakpoint layouts when you need to:
+- Support mobile phones, tablets, and desktop displays with distinct breakpoints
+- Minimize layout configuration by using inheritance (tablet inherits desktop)
+- Provide automatic mobile stacking without manual configuration
+- Create responsive designs that work across all common device sizes
+- Build marketing pages, landing pages, or content sites with responsive layouts
+
+**Key features demonstrated**:
+- **Mobile breakpoint (0px+)**: Auto-stack mode for full-width vertical stacking
+- **Tablet breakpoint (768px+)**: Inherit mode - automatically uses desktop layout
+- **Desktop breakpoint (1024px+)**: Manual mode for custom 3-column grid positioning
+- **Layout inheritance**: Tablet gets desktop layout without any configuration
+- **Container-based switching**: Each builder instance responds to its own container width
+- **Side-by-side comparison**: See all three viewports simultaneously
+
+**Breakpoint configuration**:
+\\\`\\\`\\\`typescript
+const BREAKPOINTS_3 = {
+  mobile: {
+    minWidth: 0,
+    layoutMode: 'stack'       // Auto-stack vertically, full-width
+  },
+  tablet: {
+    minWidth: 768,
+    layoutMode: 'inherit',    // Inherit from desktop
+    inheritFrom: 'desktop'
+  },
+  desktop: {
+    minWidth: 1024,
+    layoutMode: 'manual'      // Custom positioning (3-column grid)
+  }
+};
+\\\`\\\`\\\`
+
+**Layout inheritance explained**:
+
+When tablet viewport is active (container width 768-1023px):
+1. Grid-item-wrapper looks for tablet layout in \`item.layouts.tablet\`
+2. Finds \`customized: false\` (not manually configured)
+3. Checks \`inheritFrom: 'desktop'\` in breakpoint config
+4. Falls back to \`item.layouts.desktop\`
+5. Renders using desktop layout (3-column grid)
+
+**Result**: Desktop layout automatically works on tablets without duplication!
+
+**Try this**:
+1. Observe how mobile viewport (600px) shows full-width stacked components
+2. Notice how tablet viewport (900px) shows the same 3-column layout as desktop
+3. See how desktop viewport (1200px) uses the manually configured 3-column grid
+4. Resize your browser window to see container-based viewport switching in action
+5. Open DevTools console to see viewport switch messages
+
+**Implementation snippet**:
+\\\`\\\`\\\`typescript
+import { create3BreakpointLayout, BREAKPOINTS_3 } from './sample-layouts';
+
+const builder = document.querySelector('grid-builder');
+builder.components = componentDefinitions;
+builder.breakpoints = BREAKPOINTS_3;
+
+// Use pre-built 3-breakpoint layout
+builder.initialState = {
+  canvases: {
+    'canvas1': {
+      items: create3BreakpointLayout(),
+      zIndexCounter: 8
+    }
+  }
+};
+\\\`\\\`\\\`
+
+**Item structure example**:
+\\\`\\\`\\\`typescript
+{
+  id: 'item-1',
+  type: 'header',
+  layouts: {
+    desktop: {
+      x: 0, y: 0, width: 50, height: 6,
+      customized: true  // Manually configured
+    },
+    tablet: {
+      x: null, y: null, width: null, height: null,
+      customized: false  // Inherits from desktop
+    },
+    mobile: {
+      x: 0, y: 0, width: 50, height: 6,
+      customized: false  // Auto-stacked
+    }
+  }
+}
+\\\`\\\`\\\`
+
+**Real-world use cases**:
+- **Marketing sites**: Hero + features + CTA sections responsive across all devices
+- **Product pages**: Product images, descriptions, specs adapt to screen size
+- **Blog layouts**: Article content, sidebar, comments reflow for tablets/mobile
+- **Portfolio sites**: Project galleries, case studies responsive on all devices
+- **Landing pages**: Conversion-optimized layouts for desktop, tablet, mobile traffic
+
+**Performance benefits**:
+- **Reduced config size**: One layout definition (desktop) serves two breakpoints (desktop + tablet)
+- **Faster development**: Configure desktop, get tablet automatically
+- **Easier maintenance**: Update desktop layout, tablet updates automatically
+- **Type safety**: TypeScript validates breakpoint names at compile time
+
+**Mobile-first approach**:
+The breakpoint system uses mobile-first min-width breakpoints:
+- Container width 0-767px → mobile viewport (auto-stack)
+- Container width 768-1023px → tablet viewport (inherit desktop)
+- Container width 1024px+ → desktop viewport (3-column grid)
+
+**Pro tip**: Use 3-breakpoint layouts for most content sites and marketing pages. The mobile/tablet/desktop split covers 95% of use cases, and layout inheritance (tablet inherits desktop) means you only configure two layouts (mobile stack + desktop grid) instead of three. This reduces development time and configuration complexity while still providing excellent responsive behavior across all device sizes.
+      `.trim(),
+    },
+  },
+};
+
+export const FiveBreakpointDemo = () => {
+  // **Shared State Demo**: All five instances share the same canvas data (items, positions)
+  // but each has independent viewport based on container width.
+  //
+  // **Try this**: Drag a component in xl → see it update across all viewports!
+  // - xs/sm show auto-stacked mobile layouts
+  // - md/lg/xl show same 4-column layout (md and lg inherit from xl)
+  const sharedApiKey = "fiveBreakpointDemo"; // All instances share this key
+
+  const createBuilder = (width, label, color, showPalette = false) => {
+    // Create component palette only for xl instance
+    const paletteEl = showPalette
+      ? (() => {
+          const palette = document.createElement("component-palette");
+          palette.components = simpleComponents;
+          palette.targetGridBuilderId = sharedApiKey;
+          return palette;
+        })()
+      : null;
+
+    const builderEl = document.createElement("grid-builder");
+    builderEl.components = simpleComponents;
+    builderEl.apiKey = sharedApiKey; // Shared API key for synchronized state
+    builderEl.breakpoints = BREAKPOINTS_5;
+
+    // Only first instance provides initial layout (others will share it)
+    if (width === 1550) {
+      builderEl.initialState = {
+        canvases: {
+          canvas1: {
+            items: create5BreakpointLayout(),
+            zIndexCounter: 8,
+          },
+        },
+      };
+    }
+
+    builderEl.config = {
+      enableVirtualRendering: false,
+      showGridLines: true,
+    };
+
+    return { builderEl, paletteEl, width, label, color };
+  };
+
+  const builders = [
+    createBuilder(600, "XS - Extra Small (< 576px)", "#dc3545", false), // 600px container = 420px grid-builder
+    createBuilder(850, "SM - Small (576-767px)", "#fd7e14", false), // 850px container = 670px grid-builder
+    createBuilder(1050, "MD - Medium (768-991px)", "#ffc107", false), // 1050px container = 870px grid-builder
+    createBuilder(1300, "LG - Large (992-1199px)", "#28a745", false), // 1300px container = 1120px grid-builder
+    createBuilder(1550, "XL - Extra Large (≥ 1200px)", "#007bff", true), // 1550px container = 1370px grid-builder + palette
+  ];
+
+  return html`
+    <div
+      style="font-family: system-ui, -apple-system, sans-serif; padding: 20px;"
+    >
+      <h2 style="margin-top: 0; color: #333;">
+        5-Breakpoint Responsive Demo (Bootstrap-Style xs/sm/md/lg/xl)
+      </h2>
+      <p style="color: #666; margin-bottom: 20px;">
+        <strong>🔄 Live Multi-Viewport Synchronization:</strong> All five
+        instances share the same canvas data. Drag a component in xl → watch it
+        update across all viewports!
+        <br />
+        <strong>✨ Layout Inheritance:</strong> md and lg inherit from xl -
+        configure xl once, get 3 breakpoints automatically!
+      </p>
+
+      <div
+        style="padding: 16px; background: linear-gradient(135deg, #e0f2fe 0%, #dbeafe 100%); border-radius: 8px; border-left: 4px solid #0ea5e9; margin-bottom: 30px;"
+      >
+        <h4 style="margin: 0 0 12px 0; color: #0369a1; font-size: 15px;">
+          📐 Bootstrap-Style Breakpoint Configuration:
+        </h4>
+        <div
+          style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; font-size: 12px;"
+        >
+          <div
+            style="padding: 10px; background: white; border-radius: 4px; border: 1px solid #fca5a5;"
+          >
+            <strong style="color: #dc2626;">XS (0px+)</strong>
+            <div style="margin-top: 6px; color: #666; line-height: 1.5;">
+              Mode: <code>stack</code>
+            </div>
+          </div>
+          <div
+            style="padding: 10px; background: white; border-radius: 4px; border: 1px solid #fdba74;"
+          >
+            <strong style="color: #ea580c;">SM (576px+)</strong>
+            <div style="margin-top: 6px; color: #666; line-height: 1.5;">
+              Mode: <code>stack</code>
+            </div>
+          </div>
+          <div
+            style="padding: 10px; background: white; border-radius: 4px; border: 1px solid #fde047;"
+          >
+            <strong style="color: #ca8a04;">MD (768px+)</strong>
+            <div style="margin-top: 6px; color: #666; line-height: 1.5;">
+              Mode: <code>inherit</code><br />
+              From: xl ✨
+            </div>
+          </div>
+          <div
+            style="padding: 10px; background: white; border-radius: 4px; border: 1px solid #86efac;"
+          >
+            <strong style="color: #16a34a;">LG (992px+)</strong>
+            <div style="margin-top: 6px; color: #666; line-height: 1.5;">
+              Mode: <code>inherit</code><br />
+              From: xl ✨
+            </div>
+          </div>
+          <div
+            style="padding: 10px; background: white; border-radius: 4px; border: 1px solid #93c5fd;"
+          >
+            <strong style="color: #2563eb;">XL (1200px+)</strong>
+            <div style="margin-top: 6px; color: #666; line-height: 1.5;">
+              Mode: <code>manual</code><br />
+              4-column grid
+            </div>
+          </div>
+        </div>
+      </div>
+
+      ${builders.map(({ builderEl, paletteEl, width, label, color }) => {
+        const gridBuilderWidth = paletteEl ? width - 180 : width;
+        const isXs = gridBuilderWidth < 576;
+        const isSm = gridBuilderWidth >= 576 && gridBuilderWidth < 768;
+        const isMd = gridBuilderWidth >= 768 && gridBuilderWidth < 992;
+        const isLg = gridBuilderWidth >= 992 && gridBuilderWidth < 1200;
+        return html`
+          <div style="margin-bottom: 25px;">
+            <h3
+              style="margin: 0 0 10px 0; color: ${color}; font-size: 15px; font-weight: 600;"
+            >
+              ${label}
+            </h3>
+            <div
+              style="display: flex; width: ${width}px; height: 450px; border: 3px solid ${color}; border-radius: 8px; overflow: hidden;"
+            >
+              ${paletteEl
+                ? html`
+                    <div
+                      style="width: 180px; flex-shrink: 0; border-right: 1px solid #ddd; background: #f5f5f5; overflow-y: auto;"
+                    >
+                      ${paletteEl}
+                    </div>
+                  `
+                : ""}
+              <div style="flex: 1; overflow: hidden;">${builderEl}</div>
+            </div>
+            <p style="margin-top: 8px; font-size: 12px; color: #666;">
+              Container: ${width}px
+              <strong>(grid-builder: ${gridBuilderWidth}px)</strong> •
+              ${isXs
+                ? "xs viewport (stack)"
+                : isSm
+                  ? "sm viewport (stack)"
+                  : isMd
+                    ? "md viewport (inherits xl - 4-column)"
+                    : isLg
+                      ? "lg viewport (inherits xl - 4-column)"
+                      : "xl viewport (manual - 4-column)"}
+            </p>
+          </div>
+        `;
+      })}
+
+      <div
+        style="margin-top: 30px; padding: 20px; background: #fef3c7; border-radius: 8px; border-left: 4px solid #f59e0b;"
+      >
+        <h4 style="margin-top: 0; color: #92400e;">
+          🎯 Key Insight: 3 Breakpoints from 1 Configuration
+        </h4>
+        <p style="margin: 0 0 12px 0; line-height: 1.6; color: #78350f;">
+          The power of layout inheritance: Configure
+          <strong>xl layout once</strong>, and both md and lg automatically
+          display it at render time!
+        </p>
+        <ul
+          style="margin: 0; padding-left: 24px; line-height: 1.8; color: #78350f;"
+        >
+          <li>
+            <strong>xs + sm</strong> → Auto-stack (mobile-optimized, full-width)
+          </li>
+          <li>
+            <strong>md + lg + xl</strong> → Share same 4-column grid layout (via
+            inheritance)
+          </li>
+          <li>
+            <strong>Total layouts configured</strong>: Only 2 (mobile stack + xl
+            grid)
+          </li>
+          <li>
+            <strong>Total breakpoints served</strong>: 5 (xs, sm, md, lg, xl)
+          </li>
+        </ul>
+      </div>
+    </div>
+  `;
+};
+
+FiveBreakpointDemo.parameters = {
+  docs: {
+    description: {
+      story: `
+**Use Case**: Creating comprehensive responsive layouts with Bootstrap-style 5-breakpoint system (xs/sm/md/lg/xl) using layout inheritance for maximum efficiency
+
+This story demonstrates a Bootstrap-style 5-breakpoint responsive system where md and lg breakpoints inherit from xl. This powerful pattern means you only configure 2 layouts (mobile stack + xl grid) but serve 5 different breakpoints. The inheritance system automatically adapts your xl layout for md and lg viewports, dramatically reducing configuration complexity.
+
+**When to use**: Use 5-breakpoint layouts when you need to:
+- Match Bootstrap's responsive breakpoint system for consistency
+- Support granular device targeting (phones, phablets, tablets, laptops, desktops)
+- Minimize configuration through aggressive layout inheritance
+- Build enterprise applications with complex responsive requirements
+- Create design systems that match Bootstrap conventions
+- Provide distinct experiences for different screen size ranges
+
+**Key features demonstrated**:
+- **xs breakpoint (0-575px)**: Stack mode - auto-stack for extra-small phones
+- **sm breakpoint (576-767px)**: Stack mode - auto-stack for small phones/phablets
+- **md breakpoint (768-991px)**: Inherit from xl - medium tablets get desktop layout
+- **lg breakpoint (992-1199px)**: Inherit from xl - large tablets/laptops get desktop layout
+- **xl breakpoint (1200px+)**: Manual mode - 4-column grid for wide displays
+- **Layout inheritance chain**: md → xl, lg → xl (2 breakpoints inherit from 1)
+- **Container-based switching**: Automatic viewport detection via ResizeObserver
+- **Side-by-side comparison**: See all 5 viewports simultaneously
+
+**Breakpoint configuration**:
+\\\`\\\`\\\`typescript
+const BREAKPOINTS_5 = {
+  xs: {
+    minWidth: 0,
+    layoutMode: 'stack'         // Extra-small phones
+  },
+  sm: {
+    minWidth: 576,
+    layoutMode: 'stack'         // Small phones/phablets
+  },
+  md: {
+    minWidth: 768,
+    layoutMode: 'inherit',      // Medium tablets inherit xl
+    inheritFrom: 'xl'
+  },
+  lg: {
+    minWidth: 992,
+    layoutMode: 'inherit',      // Large tablets/laptops inherit xl
+    inheritFrom: 'xl'
+  },
+  xl: {
+    minWidth: 1200,
+    layoutMode: 'manual'        // Extra-large desktops (4-column grid)
+  }
+};
+\\\`\\\`\\\`
+
+**How layout inheritance works**:
+
+**For md viewport (768-991px container width)**:
+1. Grid-item-wrapper checks \`item.layouts.md.customized\` → false
+2. Reads \`BREAKPOINTS_5.md.inheritFrom\` → 'xl'
+3. Falls back to \`item.layouts.xl\`
+4. Renders 4-column grid layout from xl breakpoint
+5. **No md-specific configuration needed!**
+
+**For lg viewport (992-1199px container width)**:
+1. Grid-item-wrapper checks \`item.layouts.lg.customized\` → false
+2. Reads \`BREAKPOINTS_5.lg.inheritFrom\` → 'xl'
+3. Falls back to \`item.layouts.xl\`
+4. Renders 4-column grid layout from xl breakpoint
+5. **No lg-specific configuration needed!**
+
+**Result**: One xl layout definition serves 3 breakpoints (md + lg + xl)
+
+**Configuration efficiency**:
+- **Breakpoints defined**: 5 (xs, sm, md, lg, xl)
+- **Layouts configured per item**: 2 (xs/sm stack + xl grid)
+- **Breakpoints served**: 5 (all devices covered)
+- **Configuration reduction**: 60% less configuration than 5 unique layouts
+
+**Try this**:
+1. Compare xs (400px) and sm (650px) - both show auto-stacked mobile layouts
+2. Compare md (850px), lg (1100px), xl (1400px) - all three show the same 4-column grid
+3. Observe how layout inheritance eliminates duplicate configuration
+4. Resize your browser to see automatic viewport switching
+5. Open DevTools console to see detailed viewport switch messages
+
+**Implementation snippet**:
+\\\`\\\`\\\`typescript
+import { create5BreakpointLayout, BREAKPOINTS_5 } from './sample-layouts';
+
+const builder = document.querySelector('grid-builder');
+builder.components = componentDefinitions;
+builder.breakpoints = BREAKPOINTS_5;
+
+// Use pre-built 5-breakpoint layout
+builder.initialState = {
+  canvases: {
+    'canvas1': {
+      items: create5BreakpointLayout(),
+      zIndexCounter: 8
+    }
+  }
+};
+\\\`\\\`\\\`
+
+**Item structure with 5 breakpoints**:
+\\\`\\\`\\\`typescript
+{
+  id: 'item-2',
+  type: 'text-block',
+  layouts: {
+    xl: {
+      x: 0, y: 8, width: 12, height: 10,
+      customized: true  // Only xl is manually configured
+    },
+    lg: {
+      x: null, y: null, width: null, height: null,
+      customized: false  // Inherits from xl
+    },
+    md: {
+      x: null, y: null, width: null, height: null,
+      customized: false  // Inherits from xl
+    },
+    sm: {
+      x: 0, y: 0, width: 50, height: 10,
+      customized: false  // Auto-stacked
+    },
+    xs: {
+      x: 0, y: 0, width: 50, height: 10,
+      customized: false  // Auto-stacked
+    }
+  }
+}
+\\\`\\\`\\\`
+
+**Bootstrap alignment**:
+This breakpoint system matches Bootstrap 5's responsive breakpoints exactly:
+
+| Breakpoint | Min Width | Bootstrap Class | Grid Layout |
+|------------|-----------|-----------------|-------------|
+| xs | 0px | (none) | Stack (mobile) |
+| sm | 576px | \`.col-sm-*\` | Stack (mobile) |
+| md | 768px | \`.col-md-*\` | 4-column (inherit xl) |
+| lg | 992px | \`.col-lg-*\` | 4-column (inherit xl) |
+| xl | 1200px | \`.col-xl-*\` | 4-column (manual) |
+
+**Real-world use cases**:
+- **Bootstrap-based sites**: Match your existing Bootstrap responsive strategy
+- **Enterprise applications**: Complex dashboards, admin panels, data tables
+- **E-commerce**: Product catalogs, checkout flows, account dashboards
+- **SaaS platforms**: Multi-column layouts for different device types
+- **Design systems**: Comprehensive responsive system matching Bootstrap conventions
+- **Analytics dashboards**: Charts, tables, widgets adapt to all screen sizes
+
+**Performance benefits**:
+- **Minimal re-renders**: Viewport switches update currentViewport state only
+- **Cached grid calculations**: Grid size calculated once per viewport switch
+- **Efficient inheritance**: Layout lookup is O(1) hash map access
+- **No duplicate data**: Inherited layouts reference original, no memory duplication
+
+**Development workflow**:
+1. **Design xl layout first** (widest viewport, most horizontal space)
+2. **Configure xs/sm stacking** (mobile-first auto-stack behavior)
+3. **Test md/lg inheritance** (verify xl layout works on tablets/laptops)
+4. **Customize if needed** (override specific breakpoints only when required)
+5. **Deploy** (5-breakpoint system with minimal configuration)
+
+**Mobile-first approach**:
+Breakpoints use mobile-first min-width strategy:
+- Container 0-575px → xs viewport (stack)
+- Container 576-767px → sm viewport (stack)
+- Container 768-991px → md viewport (inherit xl)
+- Container 992-1199px → lg viewport (inherit xl)
+- Container 1200px+ → xl viewport (4-column grid)
+
+**Advanced customization**:
+You can override inherited layouts for specific breakpoints:
+
+\\\`\\\`\\\`typescript
+// Override md to use 2-column instead of 4-column
+const item = {
+  id: 'custom-item',
+  layouts: {
+    xl: { x: 0, y: 0, width: 12, height: 10, customized: true },  // 4-column grid
+    lg: { x: null, y: null, width: null, height: null, customized: false },  // Inherit xl (4-column)
+    md: { x: 0, y: 0, width: 25, height: 10, customized: true },  // Override: 2-column grid
+    sm: { x: 0, y: 0, width: 50, height: 10, customized: false },  // Stack
+    xs: { x: 0, y: 0, width: 50, height: 10, customized: false }   // Stack
+  }
+};
+// Result: xs/sm stack, md uses 2-column, lg uses 4-column (inherited from xl), xl uses 4-column
+\\\`\\\`\\\`
+
+**Comparison with 3-breakpoint system**:
+
+| Feature | 3-Breakpoint | 5-Breakpoint |
+|---------|--------------|--------------|
+| **Granularity** | Good (mobile/tablet/desktop) | Excellent (xs/sm/md/lg/xl) |
+| **Configuration** | Minimal (2 layouts) | Minimal (2 layouts via inheritance) |
+| **Bootstrap alignment** | No | Yes (exact match) |
+| **Use cases** | Most content sites | Enterprise apps, design systems |
+| **Complexity** | Lower | Higher (more breakpoints to understand) |
+
+**When to choose 5-breakpoint over 3-breakpoint**:
+- ✅ Building design system that must match Bootstrap conventions
+- ✅ Enterprise app with complex responsive requirements
+- ✅ Need granular control across many device sizes
+- ✅ Supporting both phablets (sm) and tablets (md)
+- ❌ Simple content site (3-breakpoint is sufficient)
+- ❌ Minimizing complexity (3-breakpoint is simpler)
+
+**Pro tip**: Use 5-breakpoint layouts when you need Bootstrap alignment or enterprise-level responsive granularity. The inheritance system (md/lg inherit from xl) means you still only configure 2 layouts (mobile stack + xl grid), so complexity is manageable. For most projects, the 3-breakpoint system (mobile/tablet/desktop) is sufficient and simpler to understand. Choose based on your project's responsive requirements and team familiarity with Bootstrap conventions.
       `.trim(),
     },
   },
