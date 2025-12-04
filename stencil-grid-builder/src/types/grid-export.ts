@@ -206,14 +206,18 @@ export interface GridExport {
   canvases: Record<string, GridExportCanvas>;
 
   /**
-   * Current viewport mode
+   * Current viewport/breakpoint name
    *
-   * **'desktop'**: Wide layout (side-by-side components)
-   * **'mobile'**: Narrow layout (stacked components)
+   * **Examples**: 'desktop', 'mobile', 'tablet', 'xs', 'sm', 'md', 'lg', 'xl'
+   * **Multi-breakpoint support**: Can be any breakpoint name from breakpoints config
+   *
+   * **Default (2-breakpoint)**:
+   * - 'desktop': Wide layout (side-by-side components)
+   * - 'mobile': Narrow layout (stacked components)
    *
    * **Note**: Viewer can override this via props
    */
-  viewport: "desktop" | "mobile";
+  viewport: string;
 
   /**
    * Optional metadata

@@ -76,7 +76,7 @@ describe("GridBuilderAPI", () => {
           type: "header",
           name: "Test Header",
           layouts: {
-            desktop: { x: 0, y: 0, width: 10, height: 6 },
+            desktop: { x: 0, y: 0, width: 10, height: 6, customized: true },
             mobile: {
               x: null,
               y: null,
@@ -162,6 +162,7 @@ describe("GridBuilderAPI", () => {
           y: 10,
           width: 20,
           height: 15,
+          customized: true,
         });
         expect(gridState.canvases.canvas1.items).toHaveLength(1);
       });
@@ -227,7 +228,7 @@ describe("GridBuilderAPI", () => {
       it("should update item properties", () => {
         api.updateItem("canvas1", itemId, {
           layouts: {
-            desktop: { x: 5, y: 5, width: 15, height: 12 },
+            desktop: { x: 5, y: 5, width: 15, height: 12, customized: true },
             mobile: {
               x: null,
               y: null,
@@ -480,7 +481,13 @@ describe("GridBuilderAPI", () => {
                   type: "header",
                   name: "Imported Header",
                   layouts: {
-                    desktop: { x: 5, y: 5, width: 10, height: 10 },
+                    desktop: {
+                      x: 5,
+                      y: 5,
+                      width: 10,
+                      height: 10,
+                      customized: true,
+                    },
                     mobile: {
                       x: null,
                       y: null,

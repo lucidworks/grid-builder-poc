@@ -1155,7 +1155,7 @@ export interface GridConfig {
    * Prefer leaving undefined to use smart per-error strategies.
    * @default undefined
    */
-  recoveryStrategy?: 'graceful' | 'strict' | 'retry' | 'ignore';
+  recoveryStrategy?: "graceful" | "strict" | "retry" | "ignore";
 
   /**
    * Instance identifier (internal use)

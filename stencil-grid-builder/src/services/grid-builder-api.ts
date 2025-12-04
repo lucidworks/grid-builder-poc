@@ -76,8 +76,6 @@ import {
   MoveItemCommand,
   RemoveCanvasCommand,
   RemoveItemCommand,
-  SetViewportCommand,
-  ToggleGridCommand,
   UpdateItemCommand,
 } from "./undo-redo-commands";
 import {
@@ -413,7 +411,7 @@ export class GridBuilderAPI {
       type: componentType,
       name: componentType,
       layouts: {
-        desktop: { x, y, width, height },
+        desktop: { x, y, width, height, customized: true },
         mobile: {
           x: null,
           y: null,
@@ -452,6 +450,12 @@ export class GridBuilderAPI {
     const command = new RemoveItemCommand(canvasId, item, this.stateInstance);
     command.redo(); // Execute command first
     pushCommand(command); // Then add to history
+
+    // Clear selection if this item was selected (view state management)
+    if (this.stateInstance.selectedItemId === itemId) {
+      this.stateInstance.selectedItemId = null;
+      this.stateInstance.selectedCanvasId = null;
+    }
 
     this.eventEmitter.emit("itemRemoved", {
       itemId,
@@ -673,7 +677,7 @@ export class GridBuilderAPI {
         type,
         name: type,
         layouts: {
-          desktop: { x, y, width, height },
+          desktop: { x, y, width, height, customized: true },
           mobile: {
             x: null,
             y: null,
@@ -1395,19 +1399,15 @@ export class GridBuilderAPI {
   /**
    * Change the current viewport
    *
-   * This operation is undoable.
+   * **View state operation** - NOT undoable (view state is instance-specific)
    * @param viewport - Target viewport ('desktop' or 'mobile')
    * @fires viewportChanged
    */
   setViewport(viewport: "desktop" | "mobile"): void {
     const oldViewport = this.stateInstance.currentViewport;
-    const command = new SetViewportCommand(
-      oldViewport,
-      viewport,
-      this.stateInstance,
-    );
-    command.redo(); // Execute command first
-    pushCommand(command); // Then add to history
+
+    // Directly modify instance view state (no command needed)
+    this.stateInstance.currentViewport = viewport;
 
     this.eventEmitter.emit("viewportChanged", {
       oldViewport,
@@ -1418,19 +1418,13 @@ export class GridBuilderAPI {
   /**
    * Toggle grid visibility
    *
-   * This operation is undoable.
+   * **View state operation** - NOT undoable (view state is instance-specific)
    * @param visible - True to show grid, false to hide
    * @fires gridVisibilityChanged
    */
   toggleGrid(visible: boolean): void {
-    const oldValue = this.stateInstance.showGrid;
-    const command = new ToggleGridCommand(
-      oldValue,
-      visible,
-      this.stateInstance,
-    );
-    command.redo(); // Execute command first
-    pushCommand(command); // Then add to history
+    // Directly modify instance view state (no command needed)
+    this.stateInstance.showGrid = visible;
 
     this.eventEmitter.emit("gridVisibilityChanged", {
       visible,
