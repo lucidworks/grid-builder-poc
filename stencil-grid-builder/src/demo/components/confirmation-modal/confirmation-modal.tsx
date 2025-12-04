@@ -12,11 +12,11 @@ import { ConfirmationModalData } from "../../types/confirmation-modal-data";
  *
  * Library Feature Being Demonstrated:
  * -----------------------------------
- * This modal is used with the library's **onBeforeDelete hook** system.
+ * This modal is used with the library's **beforeDeleteHook hook** system.
  *
  * How It Works:
  * -------------
- * 1. Library calls onBeforeDelete hook when user deletes component
+ * 1. Library calls beforeDeleteHook hook when user deletes component
  * 2. Hook returns a Promise that doesn't resolve immediately
  * 3. Host app shows this modal (or any modal library)
  * 4. User clicks "Delete" or "Cancel"

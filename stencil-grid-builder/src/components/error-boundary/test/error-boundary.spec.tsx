@@ -194,7 +194,7 @@ describe("error-boundary", () => {
 
       // Setup event listener
       let eventDetail: any = null;
-      page.root.addEventListener("error", (e: Event) => {
+      page.root.addEventListener("componentError", (e: Event) => {
         eventDetail = (e as CustomEvent).detail;
       });
 
@@ -348,7 +348,7 @@ describe("error-boundary", () => {
 
       // Setup event listener
       let eventDetail: any = null;
-      page.root.addEventListener("error", (e: Event) => {
+      page.root.addEventListener("componentError", (e: Event) => {
         eventDetail = (e as CustomEvent).detail;
       });
 

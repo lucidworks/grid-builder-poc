@@ -83,7 +83,7 @@ describe("canvas-section - Active Canvas", () => {
           undoRedoManagerInstance={mockUndoRedoManagerInstance}
           eventManagerInstance={mockEventManagerInstance}
           stateInstance={mockStateInstance}
-          onStateChange={mockOnStateChange}
+          stateChangeCallback={mockOnStateChange}
         />
       ),
     });

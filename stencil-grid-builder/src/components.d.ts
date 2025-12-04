@@ -153,6 +153,10 @@ export namespace Components {
          */
         "backgroundColor"?: string;
         /**
+          * Deletion hook (from parent grid-builder)  **Source**: grid-builder component (from beforeDeleteHook prop) **Purpose**: Pass through to grid-item-wrapper for deletion interception **Optional**: If not provided, components delete immediately
+         */
+        "beforeDeleteHook"?: DeletionHook;
+        /**
           * Canvas ID for state management  **Format**: 'canvas1', 'canvas2', etc. **Purpose**: Key for accessing canvas data in gridState.canvases **Required**: Component won't render without valid canvasId
          */
         "canvasId": string;
@@ -188,13 +192,9 @@ export namespace Components {
          */
         "isActive"?: boolean;
         /**
-          * Deletion hook (from parent grid-builder)  **Source**: grid-builder component (from onBeforeDelete prop) **Purpose**: Pass through to grid-item-wrapper for deletion interception **Optional**: If not provided, components delete immediately
+          * State change subscription function (passed from grid-builder)  **Required for editing mode** (grid-builder provides this)  **Source**: grid-builder (this.stateManager.onChange) **Purpose**: Subscribe to instance-specific state changes for reactivity  **Usage**: ```typescript stateChangeCallback={(key, callback) => this.stateManager.onChange(key, callback)} ```
          */
-        "onBeforeDelete"?: DeletionHook;
-        /**
-          * State change subscription function (passed from grid-builder)  **Required for editing mode** (grid-builder provides this)  **Source**: grid-builder (this.stateManager.onChange) **Purpose**: Subscribe to instance-specific state changes for reactivity  **Usage**: ```typescript onStateChange={(key, callback) => this.stateManager.onChange(key, callback)} ```
-         */
-        "onStateChange"?: (key: string, callback: Function) => void;
+        "stateChangeCallback"?: (key: string, callback: Function) => void;
         /**
           * State manager instance (passed from grid-builder)  **Required for editing mode** (grid-builder provides this)  **Source**: grid-builder → canvas-section → grid-item-wrapper **Purpose**: Support multiple grid-builder instances with isolated state **Used by**: DragHandler, ResizeHandler for accessing canvases and viewport
          */
@@ -372,10 +372,10 @@ export namespace Components {
      * deletion hook system with a custom confirmation modal.
      * Library Feature Being Demonstrated:
      * -----------------------------------
-     * This modal is used with the library's **onBeforeDelete hook** system.
+     * This modal is used with the library's **beforeDeleteHook hook** system.
      * How It Works:
      * -------------
-     * 1. Library calls onBeforeDelete hook when user deletes component
+     * 1. Library calls beforeDeleteHook hook when user deletes component
      * 2. Hook returns a Promise that doesn't resolve immediately
      * 3. Host app shows this modal (or any modal library)
      * 4. User clicks "Delete" or "Cancel"
@@ -562,6 +562,10 @@ export namespace Components {
          */
         "apiRef"?: { key?: string } | null;
         /**
+          * Hook called before deleting a component  **Optional prop**: Intercept deletion requests for custom workflows **Purpose**: Allow host app to show confirmation, make API calls, etc.  **Hook behavior**: - Return `true` to proceed with deletion - Return `false` to cancel the deletion - Return a Promise for async operations (modals, API calls)  **Example - Confirmation modal**: ```typescript const beforeDeleteHook = async (context) => {   const confirmed = await showConfirmModal(     `Delete ${context.item.name}?`,     'This action cannot be undone.'   );   return confirmed; }; <grid-builder beforeDeleteHook={beforeDeleteHook} ... /> ```  **Example - API call + confirmation**: ```typescript const beforeDeleteHook = async (context) => {   // Show loading modal   const modal = showLoadingModal('Deleting...');    try {     // Make API call     await fetch(`/api/components/${context.itemId}`, {       method: 'DELETE'     });     modal.close();     return true; // Proceed with deletion   } catch (error) {     modal.close();     showErrorModal('Failed to delete component');     return false; // Cancel deletion   } }; ```  **Default behavior**: If not provided, components delete immediately
+         */
+        "beforeDeleteHook"?: DeletionHook;
+        /**
           * Breakpoint configuration for responsive layouts  **Optional prop**: Define custom responsive breakpoints **Default**: `{ mobile: { minWidth: 0, layoutMode: 'stack' }, desktop: { minWidth: 768, layoutMode: 'manual' } }` **Backwards compatible**: Existing desktop/mobile behavior maintained by default  **Breakpoint structure**: - `minWidth`: Container width in pixels (mobile-first approach) - `layoutMode`: 'manual' | 'stack' | 'inherit' - `inheritFrom`: Which breakpoint to inherit from (for layoutMode='inherit')  **Layout modes**: - **manual**: Items must be individually positioned (desktop-style) - **stack**: Items auto-stack vertically, full-width (mobile-style) - **inherit**: Inherit layout from another breakpoint  **Examples**:  1. **Simple format** (min-width only): ```typescript <grid-builder breakpoints={{ mobile: 0, desktop: 768 }}></grid-builder> ```  2. **Full format** (3 breakpoints with layout modes): ```typescript <grid-builder breakpoints={{   mobile: { minWidth: 0, layoutMode: 'stack' },   tablet: { minWidth: 768, layoutMode: 'inherit', inheritFrom: 'desktop' },   desktop: { minWidth: 1024, layoutMode: 'manual' } }}></grid-builder> ```  3. **Bootstrap-style** (5 breakpoints): ```typescript <grid-builder breakpoints={{   xs: { minWidth: 0, layoutMode: 'stack' },   sm: { minWidth: 576, layoutMode: 'stack' },   md: { minWidth: 768, layoutMode: 'inherit', inheritFrom: 'lg' },   lg: { minWidth: 992, layoutMode: 'manual' },   xl: { minWidth: 1200, layoutMode: 'manual' } }}></grid-builder> ```  **Automatic viewport detection**: - ResizeObserver monitors container width changes - Current viewport determined by container width (not window size) - Layout automatically switches when container resizes - No manual viewport switching needed
          */
         "breakpoints"?: any;
@@ -623,10 +627,6 @@ export namespace Components {
          */
         "instanceId"?: string;
         /**
-          * Hook called before deleting a component  **Optional prop**: Intercept deletion requests for custom workflows **Purpose**: Allow host app to show confirmation, make API calls, etc.  **Hook behavior**: - Return `true` to proceed with deletion - Return `false` to cancel the deletion - Return a Promise for async operations (modals, API calls)  **Example - Confirmation modal**: ```typescript const onBeforeDelete = async (context) => {   const confirmed = await showConfirmModal(     `Delete ${context.item.name}?`,     'This action cannot be undone.'   );   return confirmed; }; <grid-builder onBeforeDelete={onBeforeDelete} ... /> ```  **Example - API call + confirmation**: ```typescript const onBeforeDelete = async (context) => {   // Show loading modal   const modal = showLoadingModal('Deleting...');    try {     // Make API call     await fetch(`/api/components/${context.itemId}`, {       method: 'DELETE'     });     modal.close();     return true; // Proceed with deletion   } catch (error) {     modal.close();     showErrorModal('Failed to delete component');     return false; // Cancel deletion   } }; ```  **Default behavior**: If not provided, components delete immediately
-         */
-        "onBeforeDelete"?: DeletionHook;
-        /**
           * Plugin instances for extending functionality  **Optional prop**: Array of GridBuilderPlugin instances **Purpose**: Add custom features, analytics, integrations  **Plugin lifecycle**: 1. Library calls plugin.init(api) on componentDidLoad 2. Plugin subscribes to events, adds UI, etc. 3. Library calls plugin.destroy() on disconnectedCallback  **Example**: ```typescript class AnalyticsPlugin implements GridBuilderPlugin {   name = 'analytics';    init(api: GridBuilderAPI) {     api.on('componentAdded', (e) => {       analytics.track('Component Added', { type: e.item.type });     });   }    destroy() {     // Cleanup   } }  const plugins = [new AnalyticsPlugin()]; ```
          */
         "plugins"?: GridBuilderPlugin[];
@@ -675,6 +675,10 @@ export namespace Components {
      */
     interface GridItemWrapper {
         /**
+          * Deletion hook (from parent grid-builder)  **Source**: grid-builder component (from beforeDeleteHook prop) **Purpose**: Allow host app to intercept deletion requests  **Hook behavior**: - Called before deleting a component - Receives context with item data - Returns true/false or Promise<boolean> - If false, deletion is cancelled - If true, deletion proceeds  **Default**: If not provided, components delete immediately
+         */
+        "beforeDeleteHook"?: (context: any) => boolean | Promise<boolean>;
+        /**
           * Breakpoint configuration (for viewer mode)  **Purpose**: Define responsive breakpoints and layout modes **Source**: grid-viewer → canvas-section-viewer → grid-item-wrapper **Used by**: render() to determine auto-stacking and layout inheritance  **Note**: When in builder mode (viewerMode=false), this is ignored and stateInstance.breakpoints is used instead. When in viewer mode (viewerMode=true), this prop is optional (defaults to DEFAULT_BREAKPOINTS).
          */
         "breakpoints"?: any;
@@ -710,10 +714,6 @@ export namespace Components {
           * Grid item data (position, size, type, etc.)  **Source**: Parent canvas-section component **Contains**: id, canvasId, type, name, layouts (desktop/mobile), zIndex, config
          */
         "item": GridItem;
-        /**
-          * Deletion hook (from parent grid-builder)  **Source**: grid-builder component (from onBeforeDelete prop) **Purpose**: Allow host app to intercept deletion requests  **Hook behavior**: - Called before deleting a component - Receives context with item data - Returns true/false or Promise<boolean> - If false, deletion is cancelled - If true, deletion proceeds  **Default**: If not provided, components delete immediately
-         */
-        "onBeforeDelete"?: (context: any) => boolean | Promise<boolean>;
         /**
           * Render version (force re-render trigger)  **Source**: Parent canvas-section (incremented on resize) **Purpose**: Force grid calculation refresh when container resizes
          */
@@ -1189,10 +1189,10 @@ declare global {
      * deletion hook system with a custom confirmation modal.
      * Library Feature Being Demonstrated:
      * -----------------------------------
-     * This modal is used with the library's **onBeforeDelete hook** system.
+     * This modal is used with the library's **beforeDeleteHook hook** system.
      * How It Works:
      * -------------
-     * 1. Library calls onBeforeDelete hook when user deletes component
+     * 1. Library calls beforeDeleteHook hook when user deletes component
      * 2. Hook returns a Promise that doesn't resolve immediately
      * 3. Host app shows this modal (or any modal library)
      * 4. User clicks "Delete" or "Cancel"
@@ -1294,7 +1294,7 @@ declare global {
         new (): HTMLDashboardWidgetDragCloneElement;
     };
     interface HTMLErrorBoundaryElementEventMap {
-        "error": BaseErrorEventDetail;
+        "componentError": BaseErrorEventDetail;
     }
     /**
      * ErrorBoundary Component
@@ -1673,6 +1673,10 @@ declare namespace LocalJSX {
          */
         "backgroundColor"?: string;
         /**
+          * Deletion hook (from parent grid-builder)  **Source**: grid-builder component (from beforeDeleteHook prop) **Purpose**: Pass through to grid-item-wrapper for deletion interception **Optional**: If not provided, components delete immediately
+         */
+        "beforeDeleteHook"?: DeletionHook;
+        /**
           * Canvas ID for state management  **Format**: 'canvas1', 'canvas2', etc. **Purpose**: Key for accessing canvas data in gridState.canvases **Required**: Component won't render without valid canvasId
          */
         "canvasId": string;
@@ -1708,13 +1712,9 @@ declare namespace LocalJSX {
          */
         "isActive"?: boolean;
         /**
-          * Deletion hook (from parent grid-builder)  **Source**: grid-builder component (from onBeforeDelete prop) **Purpose**: Pass through to grid-item-wrapper for deletion interception **Optional**: If not provided, components delete immediately
+          * State change subscription function (passed from grid-builder)  **Required for editing mode** (grid-builder provides this)  **Source**: grid-builder (this.stateManager.onChange) **Purpose**: Subscribe to instance-specific state changes for reactivity  **Usage**: ```typescript stateChangeCallback={(key, callback) => this.stateManager.onChange(key, callback)} ```
          */
-        "onBeforeDelete"?: DeletionHook;
-        /**
-          * State change subscription function (passed from grid-builder)  **Required for editing mode** (grid-builder provides this)  **Source**: grid-builder (this.stateManager.onChange) **Purpose**: Subscribe to instance-specific state changes for reactivity  **Usage**: ```typescript onStateChange={(key, callback) => this.stateManager.onChange(key, callback)} ```
-         */
-        "onStateChange"?: (key: string, callback: Function) => void;
+        "stateChangeCallback"?: (key: string, callback: Function) => void;
         /**
           * State manager instance (passed from grid-builder)  **Required for editing mode** (grid-builder provides this)  **Source**: grid-builder → canvas-section → grid-item-wrapper **Purpose**: Support multiple grid-builder instances with isolated state **Used by**: DragHandler, ResizeHandler for accessing canvases and viewport
          */
@@ -1892,10 +1892,10 @@ declare namespace LocalJSX {
      * deletion hook system with a custom confirmation modal.
      * Library Feature Being Demonstrated:
      * -----------------------------------
-     * This modal is used with the library's **onBeforeDelete hook** system.
+     * This modal is used with the library's **beforeDeleteHook hook** system.
      * How It Works:
      * -------------
-     * 1. Library calls onBeforeDelete hook when user deletes component
+     * 1. Library calls beforeDeleteHook hook when user deletes component
      * 2. Hook returns a Promise that doesn't resolve immediately
      * 3. Host app shows this modal (or any modal library)
      * 4. User clicks "Delete" or "Cancel"
@@ -2046,7 +2046,7 @@ declare namespace LocalJSX {
         /**
           * Error event emitter  **Purpose**: Notify parent components of errors **Event name**: 'error' **Detail type**: BaseErrorEventDetail  **Event structure**: ```typescript {   error: Error,              // The caught error   errorInfo: {     errorBoundary: string,   // Which boundary caught it     timestamp: number,     userAgent: string,     componentStack?: string,     ...context               // Additional context   },   severity: 'critical' | 'error' | 'warning' | 'info',   recoverable: boolean } ```  **Example**: ```typescript <error-boundary onError={(e) => {   console.error('Error caught:', e.detail.error);   logToSentry(e.detail); }}>   ... </error-boundary> ```
          */
-        "onError"?: (event: ErrorBoundaryCustomEvent<BaseErrorEventDetail>) => void;
+        "onComponentError"?: (event: ErrorBoundaryCustomEvent<BaseErrorEventDetail>) => void;
         /**
           * Error recovery strategy  **Purpose**: Control how component recovers from errors **Default**: Auto-determined from error classification  **Strategies**: - `graceful`: Show fallback UI, emit event, continue operation - `strict`: Re-throw error, propagate to parent - `retry`: Attempt automatic retry (not implemented for render errors) - `ignore`: Swallow error, render nothing  **Example**: ```typescript <error-boundary recovery-strategy="graceful">...</error-boundary> ```
          */
@@ -2074,6 +2074,10 @@ declare namespace LocalJSX {
          */
         "apiRef"?: { key?: string } | null;
         /**
+          * Hook called before deleting a component  **Optional prop**: Intercept deletion requests for custom workflows **Purpose**: Allow host app to show confirmation, make API calls, etc.  **Hook behavior**: - Return `true` to proceed with deletion - Return `false` to cancel the deletion - Return a Promise for async operations (modals, API calls)  **Example - Confirmation modal**: ```typescript const beforeDeleteHook = async (context) => {   const confirmed = await showConfirmModal(     `Delete ${context.item.name}?`,     'This action cannot be undone.'   );   return confirmed; }; <grid-builder beforeDeleteHook={beforeDeleteHook} ... /> ```  **Example - API call + confirmation**: ```typescript const beforeDeleteHook = async (context) => {   // Show loading modal   const modal = showLoadingModal('Deleting...');    try {     // Make API call     await fetch(`/api/components/${context.itemId}`, {       method: 'DELETE'     });     modal.close();     return true; // Proceed with deletion   } catch (error) {     modal.close();     showErrorModal('Failed to delete component');     return false; // Cancel deletion   } }; ```  **Default behavior**: If not provided, components delete immediately
+         */
+        "beforeDeleteHook"?: DeletionHook;
+        /**
           * Breakpoint configuration for responsive layouts  **Optional prop**: Define custom responsive breakpoints **Default**: `{ mobile: { minWidth: 0, layoutMode: 'stack' }, desktop: { minWidth: 768, layoutMode: 'manual' } }` **Backwards compatible**: Existing desktop/mobile behavior maintained by default  **Breakpoint structure**: - `minWidth`: Container width in pixels (mobile-first approach) - `layoutMode`: 'manual' | 'stack' | 'inherit' - `inheritFrom`: Which breakpoint to inherit from (for layoutMode='inherit')  **Layout modes**: - **manual**: Items must be individually positioned (desktop-style) - **stack**: Items auto-stack vertically, full-width (mobile-style) - **inherit**: Inherit layout from another breakpoint  **Examples**:  1. **Simple format** (min-width only): ```typescript <grid-builder breakpoints={{ mobile: 0, desktop: 768 }}></grid-builder> ```  2. **Full format** (3 breakpoints with layout modes): ```typescript <grid-builder breakpoints={{   mobile: { minWidth: 0, layoutMode: 'stack' },   tablet: { minWidth: 768, layoutMode: 'inherit', inheritFrom: 'desktop' },   desktop: { minWidth: 1024, layoutMode: 'manual' } }}></grid-builder> ```  3. **Bootstrap-style** (5 breakpoints): ```typescript <grid-builder breakpoints={{   xs: { minWidth: 0, layoutMode: 'stack' },   sm: { minWidth: 576, layoutMode: 'stack' },   md: { minWidth: 768, layoutMode: 'inherit', inheritFrom: 'lg' },   lg: { minWidth: 992, layoutMode: 'manual' },   xl: { minWidth: 1200, layoutMode: 'manual' } }}></grid-builder> ```  **Automatic viewport detection**: - ResizeObserver monitors container width changes - Current viewport determined by container width (not window size) - Layout automatically switches when container resizes - No manual viewport switching needed
          */
         "breakpoints"?: any;
@@ -2097,10 +2101,6 @@ declare namespace LocalJSX {
           * Unique instance identifier for multi-instance scenarios  **Optional prop**: Auto-generated if not provided **Purpose**: Track individual instances in SharedStateRegistry  **Auto-generation**: If not provided, generates: `grid-builder-{timestamp}-{random}`  **Only relevant when**: apiKey is provided (shared mode) **Ignored when**: apiKey is undefined (local-only mode)
          */
         "instanceId"?: string;
-        /**
-          * Hook called before deleting a component  **Optional prop**: Intercept deletion requests for custom workflows **Purpose**: Allow host app to show confirmation, make API calls, etc.  **Hook behavior**: - Return `true` to proceed with deletion - Return `false` to cancel the deletion - Return a Promise for async operations (modals, API calls)  **Example - Confirmation modal**: ```typescript const onBeforeDelete = async (context) => {   const confirmed = await showConfirmModal(     `Delete ${context.item.name}?`,     'This action cannot be undone.'   );   return confirmed; }; <grid-builder onBeforeDelete={onBeforeDelete} ... /> ```  **Example - API call + confirmation**: ```typescript const onBeforeDelete = async (context) => {   // Show loading modal   const modal = showLoadingModal('Deleting...');    try {     // Make API call     await fetch(`/api/components/${context.itemId}`, {       method: 'DELETE'     });     modal.close();     return true; // Proceed with deletion   } catch (error) {     modal.close();     showErrorModal('Failed to delete component');     return false; // Cancel deletion   } }; ```  **Default behavior**: If not provided, components delete immediately
-         */
-        "onBeforeDelete"?: DeletionHook;
         /**
           * Component registry ready event  **Purpose**: Notifies external code when componentRegistry has been initialized **Fired**: After componentWillLoad creates the registry with component definitions **Use case**: Allows Storybook stories and other consumers to know when registry is ready for sharing  **Event detail**: { registry: ComponentRegistry } - Reference to the initialized registry  **Example usage**: ```typescript builderEl.addEventListener('registryReady', (event) => {   const { registry } = event.detail;   paletteEl.componentRegistry = registry; }); ```
          */
@@ -2127,6 +2127,10 @@ declare namespace LocalJSX {
      * **Dynamic rendering**: Uses ComponentDefinition.render() from registry
      */
     interface GridItemWrapper {
+        /**
+          * Deletion hook (from parent grid-builder)  **Source**: grid-builder component (from beforeDeleteHook prop) **Purpose**: Allow host app to intercept deletion requests  **Hook behavior**: - Called before deleting a component - Receives context with item data - Returns true/false or Promise<boolean> - If false, deletion is cancelled - If true, deletion proceeds  **Default**: If not provided, components delete immediately
+         */
+        "beforeDeleteHook"?: (context: any) => boolean | Promise<boolean>;
         /**
           * Breakpoint configuration (for viewer mode)  **Purpose**: Define responsive breakpoints and layout modes **Source**: grid-viewer → canvas-section-viewer → grid-item-wrapper **Used by**: render() to determine auto-stacking and layout inheritance  **Note**: When in builder mode (viewerMode=false), this is ignored and stateInstance.breakpoints is used instead. When in viewer mode (viewerMode=true), this prop is optional (defaults to DEFAULT_BREAKPOINTS).
          */
@@ -2163,10 +2167,6 @@ declare namespace LocalJSX {
           * Grid item data (position, size, type, etc.)  **Source**: Parent canvas-section component **Contains**: id, canvasId, type, name, layouts (desktop/mobile), zIndex, config
          */
         "item": GridItem;
-        /**
-          * Deletion hook (from parent grid-builder)  **Source**: grid-builder component (from onBeforeDelete prop) **Purpose**: Allow host app to intercept deletion requests  **Hook behavior**: - Called before deleting a component - Receives context with item data - Returns true/false or Promise<boolean> - If false, deletion is cancelled - If true, deletion proceeds  **Default**: If not provided, components delete immediately
-         */
-        "onBeforeDelete"?: (context: any) => boolean | Promise<boolean>;
         /**
           * Render version (force re-render trigger)  **Source**: Parent canvas-section (incremented on resize) **Purpose**: Force grid calculation refresh when container resizes
          */
@@ -2613,10 +2613,10 @@ declare module "@stencil/core" {
              * deletion hook system with a custom confirmation modal.
              * Library Feature Being Demonstrated:
              * -----------------------------------
-             * This modal is used with the library's **onBeforeDelete hook** system.
+             * This modal is used with the library's **beforeDeleteHook hook** system.
              * How It Works:
              * -------------
-             * 1. Library calls onBeforeDelete hook when user deletes component
+             * 1. Library calls beforeDeleteHook hook when user deletes component
              * 2. Hook returns a Promise that doesn't resolve immediately
              * 3. Host app shows this modal (or any modal library)
              * 4. User clicks "Delete" or "Cancel"

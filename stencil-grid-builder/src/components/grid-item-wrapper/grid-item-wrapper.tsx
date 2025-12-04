@@ -107,7 +107,7 @@ export class GridItemWrapper {
   /**
    * Deletion hook (from parent grid-builder)
    *
-   * **Source**: grid-builder component (from onBeforeDelete prop)
+   * **Source**: grid-builder component (from beforeDeleteHook prop)
    * **Purpose**: Allow host app to intercept deletion requests
    *
    * **Hook behavior**:
@@ -119,7 +119,7 @@ export class GridItemWrapper {
    *
    * **Default**: If not provided, components delete immediately
    */
-  @Prop() onBeforeDelete?: (context: any) => boolean | Promise<boolean>;
+  @Prop() beforeDeleteHook?: (context: any) => boolean | Promise<boolean>;
 
   /**
    * Theme configuration (from parent grid-builder)
@@ -1437,7 +1437,7 @@ export class GridItemWrapper {
     });
 
     // Dispatch deletion event directly
-    // The deletion hook (onBeforeDelete) is called by grid-builder's API deleteComponent method,
+    // The deletion hook (beforeDeleteHook) is called by grid-builder's API deleteComponent method,
     // not here - this prevents double-modal issue where user sees two confirmation dialogs
     const event = new CustomEvent("grid-item:delete", {
       detail: { itemId, canvasId },

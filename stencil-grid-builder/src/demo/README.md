@@ -23,7 +23,7 @@ Demonstrates how to define custom component types for the grid:
 
 #### 2. **Deletion Hook System** (`blog-app.tsx` + `confirmation-modal/`)
 Shows the library's most powerful extensibility feature:
-- **onBeforeDelete prop**: Intercept component deletion requests
+- **beforeDeleteHook prop**: Intercept component deletion requests
 - **Promise-based approval**: Async confirmation workflows
 - **Custom modals**: Use any modal library (Bootstrap, Material, etc.)
 - **API integration**: Make server calls before deletion
@@ -106,7 +106,7 @@ Each file has extensive inline comments explaining:
 **Library provides:**
 ```typescript
 // In grid-builder component
-@Prop() onBeforeDelete?: (context: DeletionHookContext) => boolean | Promise<boolean>;
+@Prop() beforeDeleteHook?: (context: DeletionHookContext) => boolean | Promise<boolean>;
 ```
 
 **Host app provides:**
@@ -124,7 +124,7 @@ private handleBeforeDelete = (context: DeletionHookContext): Promise<boolean> =>
 };
 
 // Pass to library
-<grid-builder onBeforeDelete={this.handleBeforeDelete} />
+<grid-builder beforeDeleteHook={this.handleBeforeDelete} />
 ```
 
 **Why this pattern:**

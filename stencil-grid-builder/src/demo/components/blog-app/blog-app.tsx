@@ -50,7 +50,7 @@ import "../live-data-drag-clone/live-data-drag-clone";
  *    - Library owns placement state (items, layouts, zIndex)
  *    - Separation of concerns pattern
  *
- * 4. **Deletion Hook** (onBeforeDelete prop)
+ * 4. **Deletion Hook** (beforeDeleteHook prop)
  *    - Intercept component deletion requests
  *    - Show confirmation modals before deletion
  *    - Make API calls or run custom validation
@@ -430,11 +430,11 @@ export class BlogApp {
    *
    * Library Feature: Deletion Hook System
    *
-   * This state demonstrates how to use the library's onBeforeDelete hook
+   * This state demonstrates how to use the library's beforeDeleteHook hook
    * to show a confirmation modal before component deletion.
    *
    * Pattern:
-   * 1. Library calls onBeforeDelete with deletion context
+   * 1. Library calls beforeDeleteHook with deletion context
    * 2. Host app returns Promise<boolean>
    * 3. Host app shows modal and stores Promise resolve function
    * 4. User confirms/cancels modal
@@ -876,13 +876,13 @@ export class BlogApp {
    * Deletion Hook Handler
    * ----------------------
    *
-   * Library Feature: onBeforeDelete Hook (grid-builder prop)
+   * Library Feature: beforeDeleteHook Hook (grid-builder prop)
    *
    * This is the most important demonstration in this demo. It shows how to use
    * the library's deletion hook system to implement custom deletion workflows.
    *
    * What the Library Provides:
-   * - onBeforeDelete prop on grid-builder component
+   * - beforeDeleteHook prop on grid-builder component
    * - Hook receives DeletionHookContext with item data
    * - Hook returns boolean or Promise<boolean>
    * - Library waits for hook approval before deleting
@@ -1554,7 +1554,7 @@ export class BlogApp {
                 config={this.gridConfig}
                 initialState={this.initialState}
                 canvasMetadata={mergedCanvasMetadata}
-                onBeforeDelete={this.handleBeforeDelete}
+                beforeDeleteHook={this.handleBeforeDelete}
                 uiOverrides={{
                   CanvasHeader: ({
                     canvasId,

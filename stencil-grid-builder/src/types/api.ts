@@ -339,7 +339,7 @@ export interface GridBuilderAPI {
    *
    * **Events triggered**: 'componentDeleted'
    * **Deselects**: If deleting selected item
-   * **Async**: Returns Promise because it may trigger onBeforeDelete hook
+   * **Async**: Returns Promise because it may trigger beforeDeleteHook
    * @param itemId - Item to delete
    * @returns Promise<true> if deleted, Promise<false> if item not found or deletion cancelled
    * @example

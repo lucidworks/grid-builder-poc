@@ -2713,12 +2713,12 @@ describe("grid-builder", () => {
         expect(preventDefaultSpy).not.toHaveBeenCalled();
       });
 
-      it("should respect onBeforeDelete hook when using Delete key", async () => {
+      it("should respect beforeDeleteHook hook when using Delete key", async () => {
         const mockHook = jest.fn(() => Promise.resolve(false)); // Cancel deletion
 
         const component = new GridBuilder();
         component.components = mockComponentDefinitions;
-        component.onBeforeDelete = mockHook;
+        component.beforeDeleteHook = mockHook;
 
         const mockHostElement = {
           addEventListener: jest.fn(),
@@ -2783,12 +2783,12 @@ describe("grid-builder", () => {
         expect(state.canvases.canvas1.items.length).toBe(1);
       });
 
-      it("should delete component when onBeforeDelete hook returns true", async () => {
+      it("should delete component when beforeDeleteHook hook returns true", async () => {
         const mockHook = jest.fn(() => Promise.resolve(true)); // Approve deletion
 
         const component = new GridBuilder();
         component.components = mockComponentDefinitions;
-        component.onBeforeDelete = mockHook;
+        component.beforeDeleteHook = mockHook;
 
         const mockHostElement = {
           addEventListener: jest.fn(),
@@ -3069,12 +3069,12 @@ describe("grid-builder", () => {
     });
 
     describe("deleteComponent Hook Integration", () => {
-      it("should call onBeforeDelete hook when deleting via API", async () => {
+      it("should call beforeDeleteHook hook when deleting via API", async () => {
         const mockHook = jest.fn(() => Promise.resolve(true));
 
         const component = new GridBuilder();
         component.components = mockComponentDefinitions;
-        component.onBeforeDelete = mockHook;
+        component.beforeDeleteHook = mockHook;
 
         component.componentWillLoad();
         component.componentDidLoad();
@@ -3121,7 +3121,7 @@ describe("grid-builder", () => {
 
         const component = new GridBuilder();
         component.components = mockComponentDefinitions;
-        component.onBeforeDelete = mockHook;
+        component.beforeDeleteHook = mockHook;
 
         component.componentWillLoad();
         component.componentDidLoad();
@@ -3162,7 +3162,7 @@ describe("grid-builder", () => {
       it("should proceed with deletion when hook is not provided", async () => {
         const component = new GridBuilder();
         component.components = mockComponentDefinitions;
-        // No onBeforeDelete hook provided
+        // No beforeDeleteHook hook provided
 
         component.componentWillLoad();
         component.componentDidLoad();
@@ -3208,7 +3208,7 @@ describe("grid-builder", () => {
 
         const component = new GridBuilder();
         component.components = mockComponentDefinitions;
-        component.onBeforeDelete = mockHook;
+        component.beforeDeleteHook = mockHook;
 
         component.componentWillLoad();
         component.componentDidLoad();
@@ -3242,7 +3242,7 @@ describe("grid-builder", () => {
 
         // Verify error was logged
         expect(consoleErrorSpy).toHaveBeenCalledWith(
-          "Error in onBeforeDelete hook:",
+          "Error in beforeDeleteHook hook:",
           expect.any(Error),
         );
 

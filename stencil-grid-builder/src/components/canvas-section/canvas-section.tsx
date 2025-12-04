@@ -196,11 +196,11 @@ export class CanvasSection {
   /**
    * Deletion hook (from parent grid-builder)
    *
-   * **Source**: grid-builder component (from onBeforeDelete prop)
+   * **Source**: grid-builder component (from beforeDeleteHook prop)
    * **Purpose**: Pass through to grid-item-wrapper for deletion interception
    * **Optional**: If not provided, components delete immediately
    */
-  @Prop() onBeforeDelete?: DeletionHook;
+  @Prop() beforeDeleteHook?: DeletionHook;
 
   /**
    * Virtual renderer service instance (passed from grid-builder)
@@ -253,10 +253,10 @@ export class CanvasSection {
    *
    * **Usage**:
    * ```typescript
-   * onStateChange={(key, callback) => this.stateManager.onChange(key, callback)}
+   * stateChangeCallback={(key, callback) => this.stateManager.onChange(key, callback)}
    * ```
    */
-  @Prop() onStateChange?: (key: string, callback: Function) => void;
+  @Prop() stateChangeCallback?: (key: string, callback: Function) => void;
 
   /**
    * DOM cache service instance (passed from grid-builder)
@@ -399,7 +399,7 @@ export class CanvasSection {
     );
 
     // Subscribe to state changes
-    this.onStateChange("canvases", () => {
+    this.stateChangeCallback("canvases", () => {
       try {
         if (this.canvasId && this.stateInstance.canvases[this.canvasId]) {
           this.canvas = this.stateInstance.canvases[this.canvasId];
@@ -418,7 +418,7 @@ export class CanvasSection {
     });
 
     // Subscribe to viewport changes (desktop ↔ mobile)
-    this.onStateChange("currentViewport", () => {
+    this.stateChangeCallback("currentViewport", () => {
       // Recalculate height for new viewport layout
       this.calculatedHeight = calculateCanvasHeight(
         this.canvasId,
@@ -428,7 +428,7 @@ export class CanvasSection {
     });
 
     // Subscribe to grid visibility changes
-    this.onStateChange("showGrid", () => {
+    this.stateChangeCallback("showGrid", () => {
       // Force re-render to update grid visibility class
       this.renderVersion++;
     });
@@ -922,7 +922,7 @@ export class CanvasSection {
                   renderVersion={this.renderVersion}
                   config={this.config}
                   componentRegistry={this.componentRegistry}
-                  onBeforeDelete={this.onBeforeDelete}
+                  beforeDeleteHook={this.beforeDeleteHook}
                   virtualRendererInstance={this.virtualRendererInstance}
                   eventManagerInstance={this.eventManagerInstance}
                   undoRedoManagerInstance={this.undoRedoManagerInstance}
@@ -942,7 +942,7 @@ export class CanvasSection {
                 renderVersion={this.renderVersion}
                 config={this.config}
                 componentRegistry={this.componentRegistry}
-                onBeforeDelete={this.onBeforeDelete}
+                beforeDeleteHook={this.beforeDeleteHook}
                 virtualRendererInstance={this.virtualRendererInstance}
                 eventManagerInstance={this.eventManagerInstance}
                 undoRedoManagerInstance={this.undoRedoManagerInstance}

@@ -349,19 +349,19 @@ export class GridBuilder {
    *
    * **Example - Confirmation modal**:
    * ```typescript
-   * const onBeforeDelete = async (context) => {
+   * const beforeDeleteHook = async (context) => {
    *   const confirmed = await showConfirmModal(
    *     `Delete ${context.item.name}?`,
    *     'This action cannot be undone.'
    *   );
    *   return confirmed;
    * };
-   * <grid-builder onBeforeDelete={onBeforeDelete} ... />
+   * <grid-builder beforeDeleteHook={beforeDeleteHook} ... />
    * ```
    *
    * **Example - API call + confirmation**:
    * ```typescript
-   * const onBeforeDelete = async (context) => {
+   * const beforeDeleteHook = async (context) => {
    *   // Show loading modal
    *   const modal = showLoadingModal('Deleting...');
    *
@@ -382,7 +382,7 @@ export class GridBuilder {
    *
    * **Default behavior**: If not provided, components delete immediately
    */
-  @Prop() onBeforeDelete?: DeletionHook;
+  @Prop() beforeDeleteHook?: DeletionHook;
 
   /**
    * Custom API exposure configuration
@@ -1397,10 +1397,10 @@ export class GridBuilder {
           return false;
         }
 
-        // Call onBeforeDelete hook if provided (for deletion confirmation)
-        if (this.onBeforeDelete) {
+        // Call beforeDeleteHook hook if provided (for deletion confirmation)
+        if (this.beforeDeleteHook) {
           try {
-            const shouldDelete = await this.onBeforeDelete({
+            const shouldDelete = await this.beforeDeleteHook({
               item: targetItem,
               canvasId: targetCanvasId,
               itemId,
@@ -1411,7 +1411,7 @@ export class GridBuilder {
               return false;
             }
           } catch (error) {
-            console.error("Error in onBeforeDelete hook:", error);
+            console.error("Error in beforeDeleteHook hook:", error);
             return false;
           }
         }
@@ -3404,12 +3404,12 @@ export class GridBuilder {
                       componentRegistry={this.componentRegistry}
                       backgroundColor={metadata.backgroundColor}
                       canvasTitle={metadata.title}
-                      onBeforeDelete={this.onBeforeDelete}
+                      beforeDeleteHook={this.beforeDeleteHook}
                       virtualRendererInstance={this.virtualRendererInstance}
                       eventManagerInstance={this.eventManagerInstance}
                       undoRedoManagerInstance={this.undoRedoManager}
                       stateInstance={this.stateManager!.state}
-                      onStateChange={(key: string, callback: Function) =>
+                      stateChangeCallback={(key: string, callback: Function) =>
                         this.stateManager!.onChange(key, callback)
                       }
                       domCacheInstance={this.domCacheInstance}

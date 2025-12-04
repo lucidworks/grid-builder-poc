@@ -224,12 +224,12 @@ export class ErrorBoundary {
    * ```
    */
   @Event({
-    eventName: "error",
+    eventName: "componentError",
     composed: true,
     cancelable: false,
     bubbles: true,
   })
-  errorEvent: EventEmitter<BaseErrorEventDetail>;
+  gridError: EventEmitter<BaseErrorEventDetail>;
 
   /**
    * Error state (internal)
@@ -306,7 +306,7 @@ export class ErrorBoundary {
       this.recoveryStrategy || getRecommendedStrategy(error, classification);
 
     // Emit error event to parent
-    this.errorEvent.emit(eventDetail);
+    this.gridError.emit(eventDetail);
 
     // Update state for error UI (only if graceful recovery)
     if (strategy === "graceful") {

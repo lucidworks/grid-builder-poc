@@ -1454,10 +1454,10 @@ export const WithDeletionHook = () => {
   };
 
   // Deletion hook with browser confirm
-  builderEl.onBeforeDelete = (context) => {
+  builderEl.beforeDeleteHook = (context) => {
     const componentName = context.item.name || context.item.type;
     const confirmed = confirm(
-      `Delete "${componentName}"?\n\nThis demonstrates the onBeforeDelete hook.\n\nIn a real app, you'd show a custom modal instead of browser confirm().`,
+      `Delete "${componentName}"?\n\nThis demonstrates the beforeDeleteHook hook.\n\nIn a real app, you'd show a custom modal instead of browser confirm().`,
     );
     return confirmed;
   };
@@ -1470,7 +1470,7 @@ export const WithDeletionHook = () => {
     <div style="font-family: system-ui, -apple-system, sans-serif; padding: 20px;">
       <h2 style="margin-top: 0; color: #333;">Deletion Hook Demo</h2>
       <p style="color: #666; margin-bottom: 20px;">
-        This demo shows the <code>onBeforeDelete</code> hook that intercepts component deletion.
+        This demo shows the <code>beforeDeleteHook</code> hook that intercepts component deletion.
         <br />
         Try deleting a component to see the confirmation dialog!
       </p>
@@ -1500,7 +1500,7 @@ export const WithDeletionHook = () => {
         <pre style="background: white; padding: 15px; border-radius: 4px; overflow-x: auto; font-size: 13px; line-height: 1.4;"}>
           <code dangerouslySetInnerHTML={{
             __html: '// Async deletion with custom modal\n' +
-            'builderEl.onBeforeDelete = async (context) => {\n' +
+            'builderEl.beforeDeleteHook = async (context) => {\n' +
             '  const confirmed = await showCustomModal({\n' +
             '    title: \'Delete Component?\',\n' +
             '    message: &#96;Delete "\\\\$' + '{context.item.name}"?&#96;,\n' +
@@ -1530,9 +1530,9 @@ WithDeletionHook.parameters = {
       story: `
 **Use Case**: Intercepting component deletion to add confirmation dialogs or perform cleanup actions
 
-This story demonstrates the \`onBeforeDelete\` hook that allows you to intercept delete operations before they execute. This is critical for implementing confirmations, API cleanup, permission checks, or preventing accidental deletions.
+This story demonstrates the \`beforeDeleteHook\` hook that allows you to intercept delete operations before they execute. This is critical for implementing confirmations, API cleanup, permission checks, or preventing accidental deletions.
 
-**When to use**: Use the onBeforeDelete hook when you need to:
+**When to use**: Use the beforeDeleteHook hook when you need to:
 - Show confirmation dialogs before deleting components
 - Perform server-side cleanup (delete from database, remove files, etc.)
 - Check user permissions before allowing deletion
@@ -1549,7 +1549,7 @@ This story demonstrates the \`onBeforeDelete\` hook that allows you to intercept
 
 **Hook signature**:
 \`\`\`typescript
-onBeforeDelete: (context: {
+beforeDeleteHook: (context: {
   item: GridItem,      // Full component data
   canvasId: string,    // Which canvas it's in
   itemId: string       // Component ID
@@ -1564,7 +1564,7 @@ onBeforeDelete: (context: {
 
 **Implementation - Simple confirmation**:
 \`\`\`typescript
-builder.onBeforeDelete = (context) => {
+builder.beforeDeleteHook = (context) => {
   const componentName = context.item.name || context.item.type;
   return confirm(\`Delete "\${componentName}"?\`);
 };
@@ -1572,7 +1572,7 @@ builder.onBeforeDelete = (context) => {
 
 **Implementation - Custom modal (production pattern)**:
 \`\`\`typescript
-builder.onBeforeDelete = async (context) => {
+builder.beforeDeleteHook = async (context) => {
   // Show your custom modal
   const confirmed = await showCustomModal({
     title: 'Delete Component?',
@@ -1600,7 +1600,7 @@ builder.onBeforeDelete = async (context) => {
 
 **Implementation - Permission check**:
 \`\`\`typescript
-builder.onBeforeDelete = async (context) => {
+builder.beforeDeleteHook = async (context) => {
   // Check if user has permission
   const canDelete = await checkPermission('delete:component');
 
@@ -1615,7 +1615,7 @@ builder.onBeforeDelete = async (context) => {
 
 **Implementation - Business rule validation**:
 \`\`\`typescript
-builder.onBeforeDelete = (context) => {
+builder.beforeDeleteHook = (context) => {
   const canvas = gridState.canvases[context.canvasId];
   const remainingItems = canvas.items.filter(i => i.id !== context.itemId);
 
