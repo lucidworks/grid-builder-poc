@@ -698,6 +698,85 @@ describe("grid-builder", () => {
     });
   });
 
+  describe("apiRef Auto-Defaulting (DX Improvement)", () => {
+    it("should auto-default apiRef.key to apiKey when only apiKey is set", () => {
+      const component = new GridBuilder();
+      component.components = mockComponentDefinitions;
+      component.apiKey = "myStoryKey";
+
+      component.componentWillLoad();
+
+      // Verify apiRef was auto-created with key matching apiKey
+      expect(component.apiRef).toBeDefined();
+      expect(component.apiRef?.key).toBe("myStoryKey");
+    });
+
+    it("should auto-default apiRef.key to 'gridBuilderAPI' when neither apiKey nor apiRef is set", () => {
+      const component = new GridBuilder();
+      component.components = mockComponentDefinitions;
+      // No apiKey or apiRef set
+
+      component.componentWillLoad();
+
+      // Verify apiRef was auto-created with default key
+      expect(component.apiRef).toBeDefined();
+      expect(component.apiRef?.key).toBe("gridBuilderAPI");
+    });
+
+    it("should respect explicit apiRef.key when both apiKey and apiRef are set", () => {
+      const component = new GridBuilder();
+      component.components = mockComponentDefinitions;
+      component.apiKey = "stateKey";
+      component.apiRef = { key: "customWindowKey" };
+
+      component.componentWillLoad();
+
+      // Verify explicit apiRef.key is preserved
+      expect(component.apiRef?.key).toBe("customWindowKey");
+    });
+
+    it("should respect apiRef=null to disable window exposure", () => {
+      const component = new GridBuilder();
+      component.components = mockComponentDefinitions;
+      component.apiKey = "stateKey";
+      component.apiRef = null; // Explicitly disable window exposure
+
+      component.componentWillLoad();
+
+      // Verify apiRef remains null
+      expect(component.apiRef).toBeNull();
+    });
+
+    it("should expose API at window[apiKey] when only apiKey is set", () => {
+      const component = new GridBuilder();
+      component.components = mockComponentDefinitions;
+      component.apiKey = "testAPI";
+
+      component.componentWillLoad();
+      component.componentDidLoad();
+
+      // Verify API was exposed at window.testAPI
+      expect((window as any).testAPI).toBeDefined();
+      expect(typeof (window as any).testAPI.undo).toBe("function");
+
+      // Cleanup
+      delete (window as any).testAPI;
+    });
+
+    it("should not expose API when apiRef=null", () => {
+      const component = new GridBuilder();
+      component.components = mockComponentDefinitions;
+      component.apiKey = "stateKey";
+      component.apiRef = null;
+
+      component.componentWillLoad();
+      component.componentDidLoad();
+
+      // Verify API was NOT exposed to window
+      expect((window as any).stateKey).toBeUndefined();
+    });
+  });
+
   describe("Configuration Options", () => {
     it("should accept enableAnimations config", () => {
       const customConfig = {

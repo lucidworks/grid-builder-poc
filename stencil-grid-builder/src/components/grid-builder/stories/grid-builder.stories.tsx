@@ -244,7 +244,7 @@ export const BasicBuilder = (args) => {
   // Create grid builder
   const builderEl = document.createElement("grid-builder");
   builderEl.components = simpleComponents;
-  builderEl.apiKey = apiKey; // Isolated instance for this story
+  builderEl.apiKey = apiKey; // Isolated instance for this story (API auto-exposed at window[apiKey])
 
   // Initialize with one empty canvas (required - default state has no canvases)
   builderEl.initialState = {
@@ -371,7 +371,7 @@ export const WithCustomTheme = (args) => {
 
   const builderEl = document.createElement("grid-builder");
   builderEl.components = simpleComponents;
-  builderEl.apiKey = apiKey; // Isolated instance for this story
+  builderEl.apiKey = apiKey; // Isolated instance for this story (API auto-exposed at window[apiKey])
 
   // Apply custom theme colors
   builderEl.theme = {
@@ -617,7 +617,7 @@ export const WithCustomGridConfig = (args) => {
 
   const builderEl = document.createElement("grid-builder");
   builderEl.components = simpleComponents;
-  builderEl.apiKey = apiKey; // Isolated instance for this story
+  builderEl.apiKey = apiKey; // Isolated instance for this story (API auto-exposed at window[apiKey])
   builderEl.config = {
     gridSizePercent: args.gridSizePercent,
     minGridSize: args.minGridSize,
@@ -750,7 +750,7 @@ export const WithInitialState = () => {
 
   const builderEl = document.createElement("grid-builder");
   builderEl.components = simpleComponents;
-  builderEl.apiKey = apiKey; // Isolated instance for this story
+  builderEl.apiKey = apiKey; // Isolated instance for this story (API auto-exposed at window[apiKey])
   builderEl.initialState = {
     canvases: {
       "canvas-1": {
@@ -904,7 +904,7 @@ export const ResponsiveViewportDemo = () => {
 
     const builderEl = document.createElement("grid-builder");
     builderEl.components = simpleComponents;
-    builderEl.apiKey = apiKey; // Isolated instance for this story
+    builderEl.apiKey = apiKey; // Isolated instance for this story (API auto-exposed at window[apiKey])
     builderEl.initialState = {
       canvases: {
         "canvas-1": {
@@ -1134,7 +1134,7 @@ export const WithCanvasMetadataAndCustomHeaders = () => {
   const apiKey = getUniqueApiKey();
   const builderEl = document.createElement("grid-builder");
   builderEl.components = simpleComponents;
-  builderEl.apiKey = apiKey; // Isolated instance for this story
+  builderEl.apiKey = apiKey; // Isolated instance for this story (API auto-exposed at window[apiKey])
 
   // Multiple canvas sections with metadata
   builderEl.initialState = {
@@ -1405,7 +1405,7 @@ export const WithDeletionHook = () => {
   // Create grid builder
   const builderEl = document.createElement("grid-builder");
   builderEl.components = simpleComponents;
-  builderEl.apiKey = apiKey; // Isolated instance for this story
+  builderEl.apiKey = apiKey; // Isolated instance for this story (API auto-exposed at window[apiKey])
 
   builderEl.initialState = {
     canvases: {
@@ -1646,7 +1646,7 @@ export const BatchOperationsPerformance = () => {
   const apiKey = getUniqueApiKey();
   const builderEl = document.createElement("grid-builder");
   builderEl.components = simpleComponents;
-  builderEl.apiKey = apiKey; // Isolated instance for this story
+  builderEl.apiKey = apiKey; // Isolated instance for this story (API auto-exposed at window[apiKey])
 
   builderEl.initialState = {
     canvases: {
@@ -1958,7 +1958,7 @@ export const MultipleSectionsBuilder = () => {
   // Create grid builder
   const builderEl = document.createElement("grid-builder");
   builderEl.components = simpleComponents;
-  builderEl.apiKey = apiKey; // Isolated instance for this story
+  builderEl.apiKey = apiKey; // Isolated instance for this story (API auto-exposed at window[apiKey])
 
   // Multi-section layout
   builderEl.initialState = {
@@ -2246,7 +2246,7 @@ export const ActiveCanvasManagement = () => {
   // Create grid builder
   const builderEl = document.createElement("grid-builder");
   builderEl.components = simpleComponents;
-  builderEl.apiKey = apiKey; // Isolated instance for this story
+  builderEl.apiKey = apiKey; // Isolated instance for this story (API auto-exposed at window[apiKey])
 
   builderEl.initialState = {
     canvases: {
@@ -2608,7 +2608,7 @@ export const UndoRedoDemo = () => {
   // Create grid builder
   const builderEl = document.createElement("grid-builder");
   builderEl.components = simpleComponents;
-  builderEl.apiKey = apiKey; // Isolated instance for this story
+  builderEl.apiKey = apiKey; // Isolated instance for this story (API auto-exposed at window[apiKey])
 
   builderEl.initialState = {
     canvases: {
@@ -3059,7 +3059,7 @@ export const PluginSystemDemo = () => {
   // Create grid builder
   const builderEl = document.createElement("grid-builder");
   builderEl.components = simpleComponents;
-  builderEl.apiKey = apiKey; // Isolated instance for this story
+  builderEl.apiKey = apiKey; // Isolated instance for this story (API auto-exposed at window[apiKey])
 
   builderEl.initialState = {
     canvases: {
@@ -3506,7 +3506,7 @@ export const EventsDemo = () => {
   // Create grid builder
   const builderEl = document.createElement("grid-builder");
   builderEl.components = simpleComponents;
-  builderEl.apiKey = apiKey; // Isolated instance for this story
+  builderEl.apiKey = apiKey; // Isolated instance for this story (API auto-exposed at window[apiKey])
 
   builderEl.initialState = {
     canvases: {
@@ -3930,7 +3930,7 @@ export const APIIntegrationDemo = () => {
   // Create grid builder
   const builderEl = document.createElement("grid-builder");
   builderEl.components = simpleComponents;
-  builderEl.apiKey = apiKey; // Isolated instance for this story
+  builderEl.apiKey = apiKey; // Isolated instance for this story (API auto-exposed at window[apiKey])
 
   builderEl.initialState = {
     canvases: {
@@ -4436,7 +4436,7 @@ export const ClickToAddFeature = () => {
   // Create grid builder
   const builderEl = document.createElement("grid-builder");
   builderEl.components = simpleComponents;
-  builderEl.apiKey = apiKey; // Isolated instance for this story
+  builderEl.apiKey = apiKey; // Isolated instance for this story (API auto-exposed at window[apiKey])
 
   // Pre-populate with some items to demonstrate collision detection
   builderEl.initialState = {
@@ -4926,7 +4926,7 @@ export const ExportImportWorkflow = () => {
 
   const builderEl = document.createElement("grid-builder");
   builderEl.components = simpleComponents;
-  builderEl.apiKey = apiKey; // Isolated instance for this story
+  builderEl.apiKey = apiKey; // Isolated instance for this story (API auto-exposed at window[apiKey])
 
   builderEl.initialState = {
     canvases: {
@@ -6645,7 +6645,7 @@ export const DynamicComponentRegistration = () => {
   // Create grid builder first (so we can access its componentRegistry)
   const builderEl = document.createElement("grid-builder");
   builderEl.components = initialComponents;
-  builderEl.apiKey = apiKey; // Isolated instance for this story
+  builderEl.apiKey = apiKey; // Isolated instance for this story (API auto-exposed at window[apiKey])
 
   // Create component palette (we'll share the registry after grid-builder initializes)
   const paletteEl = document.createElement("component-palette");

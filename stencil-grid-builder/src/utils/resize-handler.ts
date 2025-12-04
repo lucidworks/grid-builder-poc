@@ -1329,10 +1329,9 @@ export class ResizeHandler {
     });
     debug.log("---");
 
-    // If in mobile view, mark as customized
-    if (currentViewport === "mobile") {
-      itemToUpdate.layouts.mobile.customized = true;
-    }
+    // Mark current viewport as customized (user manually resized)
+    // This prevents inheritance/fallback from other breakpoints
+    layout.customized = true;
 
     // End performance tracking
     if (window.perfMonitor) {

@@ -388,26 +388,36 @@ export class GridBuilder {
    * Custom API exposure configuration
    *
    * **Optional prop**: Control where and how the Grid Builder API is exposed
-   * **Default**: `{ key: 'gridBuilderAPI' }`
+   * **Default**: Auto-defaults to `apiKey` if set, otherwise `'gridBuilderAPI'`
    * **Purpose**: Allows multiple grid-builder instances on the same page
    *
+   * **Auto-defaulting behavior** (DX improvement):
+   * - If only `apiKey` is set: `apiRef.key` auto-defaults to `apiKey`
+   * - If neither is set: `apiRef.key` auto-defaults to `'gridBuilderAPI'`
+   * - If explicit `apiRef` is set: Uses the explicit value (including `null`)
+   *
    * **Options**:
-   * 1. **Custom key on window** (multiple instances):
+   * 1. **Isolated instances with apiKey** (recommended - auto-defaults):
    * ```typescript
-   * <grid-builder api-ref={{ key: 'gridAPI1' }}></grid-builder>
-   * <grid-builder api-ref={{ key: 'gridAPI2' }}></grid-builder>
-   * // Access: window.gridAPI1, window.gridAPI2
+   * <grid-builder api-key="grid1"></grid-builder>
+   * <grid-builder api-key="grid2"></grid-builder>
+   * // API auto-exposed at: window.grid1, window.grid2
    * ```
    *
-   * 2. **Disable automatic exposure** (use ref instead):
+   * 2. **Custom key on window** (explicit override):
+   * ```typescript
+   * <grid-builder api-key="state1" api-ref={{ key: 'gridAPI1' }}></grid-builder>
+   * <grid-builder api-key="state2" api-ref={{ key: 'gridAPI2' }}></grid-builder>
+   * // State sharing: state1/state2, API: window.gridAPI1, window.gridAPI2
+   * ```
+   *
+   * 3. **Disable automatic exposure** (use ref instead):
    * ```typescript
    * <grid-builder api-ref={null}></grid-builder>
    * // Access via ref: <grid-builder ref={el => this.api = el?.api}></grid-builder>
    * ```
    */
-  @Prop() apiRef?: { key?: string } | null = {
-    key: "gridBuilderAPI",
-  };
+  @Prop() apiRef?: { key?: string } | null;
 
   /**
    * Breakpoint configuration for responsive layouts
@@ -894,6 +904,21 @@ export class GridBuilder {
     // Normalize apiKey: empty string becomes undefined (local-only mode)
     const normalizedApiKey = this.apiKey?.trim() || undefined;
 
+    // Auto-default apiRef.key to apiKey for better DX
+    // Priority: explicit apiRef (including null) > apiKey > "gridBuilderAPI" (default)
+    // This eliminates the need to set both props when using isolated instances
+    // Note: apiRef={null} disables window exposure (documented feature)
+    if (this.apiRef === undefined || (this.apiRef && !this.apiRef.key)) {
+      const defaultKey = normalizedApiKey || "gridBuilderAPI";
+      this.apiRef = { key: defaultKey };
+      debug.log(`GridBuilder: Auto-defaulted apiRef.key to "${defaultKey}"`, {
+        fromApiKey: !!normalizedApiKey,
+        fromDefault: !normalizedApiKey,
+      });
+    } else if (this.apiRef === null) {
+      debug.log("GridBuilder: apiRef explicitly set to null, skipping window exposure");
+    }
+
     // Generate or use provided instanceId (for SharedStateRegistry reference counting)
     // Note: StateManager will register the instance via addInstance(), we just need to generate the ID here
     if (normalizedApiKey) {
@@ -1179,29 +1204,27 @@ export class GridBuilder {
 
       const item = sourceCanvas.items[itemIndex];
 
-      // 2. Capture state BEFORE move (for undo)
-      const sourcePosition = {
-        x: item.layouts.desktop.x,
-        y: item.layouts.desktop.y,
-      };
-      const sourceMobileLayout = {
-        x: item.layouts.mobile.x,
-        y: item.layouts.mobile.y,
-        width: item.layouts.mobile.width,
-        height: item.layouts.mobile.height,
-        customized: item.layouts.mobile.customized,
-      };
+      // 2. Get current viewport for layout access
+      const currentViewport = this.stateManager!.state.currentViewport;
+      const currentLayout = item.layouts[currentViewport];
 
-      // 3. Convert drop position (pixels) to grid units for target canvas
+      // 3. Capture state BEFORE move (for undo)
+      const sourcePosition = {
+        x: currentLayout.x,
+        y: currentLayout.y,
+      };
+      const sourceCustomized = currentLayout.customized ?? false;
+
+      // 4. Convert drop position (pixels) to grid units for target canvas
       let gridX = pixelsToGridX(x, targetCanvasId, this.config);
       let gridY = pixelsToGridY(y, this.config);
 
-      // 4. Constrain position to target canvas boundaries
+      // 5. Constrain position to target canvas boundaries
       const constrained = constrainPositionToCanvas(
         gridX,
         gridY,
-        item.layouts.desktop.width,
-        item.layouts.desktop.height,
+        currentLayout.width,
+        currentLayout.height,
         CANVAS_WIDTH_UNITS,
       );
 
@@ -1210,12 +1233,16 @@ export class GridBuilder {
 
       const targetPosition = { x: gridX, y: gridY };
 
-      // 5. Capture source z-index before modification
+      // 6. Capture source z-index before modification
       const sourceZIndex = item.zIndex;
 
-      // 6. Update item position in desktop layout
-      item.layouts.desktop.x = gridX;
-      item.layouts.desktop.y = gridY;
+      // 7. Update item position in current viewport's layout
+      currentLayout.x = gridX;
+      currentLayout.y = gridY;
+
+      // Mark layout as customized (user manually dropped item)
+      currentLayout.customized = true;
+      const targetCustomized = true;
 
       // 7. Move item between canvases (updates canvasId, removes from source, adds to target)
       // Remove from source canvas
@@ -1255,10 +1282,10 @@ export class GridBuilder {
         targetZIndex,
         undefined, // sourceSize (not tracked for drag operations)
         undefined, // targetSize (not tracked for drag operations)
+        sourceCustomized, // Source customized flag (before drop)
+        targetCustomized, // Target customized flag (after drop, always true for manual drops)
         this.stateManager!.state, // Pass instance state
-        this.stateManager!.state.currentViewport, // Pass active viewport for viewport-specific undo/redo
-        sourceMobileLayout, // Mobile layout (unchanged during cross-canvas move)
-        sourceMobileLayout, // Mobile layout (unchanged during cross-canvas move)
+        currentViewport, // Pass active viewport for viewport-specific undo/redo
       );
       this.undoRedoManager?.push(command);
 
@@ -1455,9 +1482,10 @@ export class GridBuilder {
         itemId: item.id,
       });
 
-      // Capture old position for undo
+      // Capture old position and customized flag for undo
       const oldX = layout.x;
       const oldY = layout.y;
+      const oldCustomized = layout.customized ?? false;
 
       // Update position with boundary checks
       const newX = Math.max(0, layout.x + deltaX);
@@ -1477,14 +1505,11 @@ export class GridBuilder {
       layout.x = constrainedX;
       layout.y = constrainedY;
 
+      // Mark layout as customized (user manually nudged with arrow keys)
+      layout.customized = true;
+      const newCustomized = true;
+
       // Create undo command for nudge (same canvas = z-index unchanged)
-      const mobileLayout = {
-        x: item.layouts.mobile.x,
-        y: item.layouts.mobile.y,
-        width: item.layouts.mobile.width,
-        height: item.layouts.mobile.height,
-        customized: item.layouts.mobile.customized,
-      };
       const nudgeCommand = new MoveItemCommand(
         item.id,
         this.stateManager!.state.selectedCanvasId,
@@ -1496,10 +1521,10 @@ export class GridBuilder {
         item.zIndex, // targetZIndex (same canvas = no change)
         undefined, // sourceSize (not tracked for nudge operations)
         undefined, // targetSize (not tracked for nudge operations)
+        oldCustomized, // Source customized flag (before nudge)
+        newCustomized, // Target customized flag (after nudge, always true for manual nudges)
         this.stateManager!.state, // Pass instance state
         viewport, // Pass active viewport for viewport-specific undo/redo
-        mobileLayout, // Mobile layout (unchanged during keyboard nudge)
-        mobileLayout, // Mobile layout (unchanged during keyboard nudge)
       );
       this.undoRedoManager?.push(nudgeCommand);
 
@@ -2146,13 +2171,8 @@ export class GridBuilder {
           x: currentLayout.x,
           y: currentLayout.y,
         };
-        const mobileLayout = {
-          x: item.layouts.mobile.x,
-          y: item.layouts.mobile.y,
-          width: item.layouts.mobile.width,
-          height: item.layouts.mobile.height,
-          customized: item.layouts.mobile.customized,
-        };
+        // Preserve customized flag (programmatic move, not user interaction)
+        const customized = currentLayout.customized ?? false;
 
         // Calculate target z-index
         let targetZIndex = sourceZIndex;
@@ -2175,10 +2195,10 @@ export class GridBuilder {
           targetZIndex,
           undefined, // sourceSize (not tracked for simple moves)
           undefined, // targetSize (not tracked for simple moves)
+          customized, // sourceCustomized (preserve flag)
+          customized, // targetCustomized (preserve flag, programmatic move)
           this.stateManager!.state, // Pass instance state
           currentViewport, // Pass active viewport for viewport-specific undo/redo
-          mobileLayout, // Mobile layout (unchanged during API move)
-          mobileLayout, // Mobile layout (unchanged during API move)
         );
         command.redo();
         this.undoRedoManager?.push(command);

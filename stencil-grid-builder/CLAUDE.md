@@ -36,7 +36,7 @@ The build creates two outputs:
 
 ### Testing
 ```bash
-npm test                # Run all 206 tests
+npm test                # Run all 874 tests
 npm run test:watch      # Watch mode
 npm run test-unit       # Same as npm test
 
@@ -87,6 +87,7 @@ Utils Layer (Performance-critical code)
 ├── drag-handler.ts         - Drag & drop (30× faster than state-based)
 ├── resize-handler.ts       - 8-point resize with RAF batching
 ├── grid-calculations.ts    - Grid unit ↔ pixel conversions
+├── breakpoint-utils.ts     - Multi-breakpoint responsive utilities
 └── dom-cache.ts           - DOM read caching (100× fewer reads)
 
 Services Layer (State & business logic)
@@ -435,6 +436,292 @@ element.style.left = `${x}px`;
 element.style.top = `${y}px`;
 ```
 
+### Multi-Breakpoint Responsive Layouts
+
+**Support for multiple configurable breakpoints with flexible layout modes.**
+
+The library extends the original 2-breakpoint system (desktop/mobile) to support any number of breakpoints with customizable layout behaviors. This enables responsive designs that adapt to tablets, large desktops, and custom viewport sizes.
+
+#### Layout Modes
+
+Three layout modes control how items are positioned at each breakpoint:
+
+1. **`stack`** - Vertical auto-stacking (mobile-first)
+   - Items automatically stack vertically at full width
+   - Y-position calculated from cumulative heights of previous items
+   - Width fixed at 50 grid units (100% width)
+   - No manual positioning required
+
+2. **`manual`** - Individual positioning (desktop-style)
+   - Items positioned exactly as defined in their layout config
+   - Full control over x, y, width, height
+   - Requires explicit layout configuration
+
+3. **`inherit`** - Inherit from another breakpoint
+   - Uses layout from a different breakpoint via `inheritFrom` property
+   - Reduces configuration effort (e.g., tablet inherits from desktop)
+   - Layout resolution follows 4-level priority system
+
+#### Configuration Examples
+
+**2 breakpoints (default, backwards compatible):**
+```typescript
+<grid-builder
+  breakpoints={{
+    mobile: { minWidth: 0, layoutMode: 'stack' },
+    desktop: { minWidth: 768, layoutMode: 'manual' }
+  }}
+/>
+```
+
+**3 breakpoints (mobile + tablet + desktop):**
+```typescript
+<grid-builder
+  breakpoints={{
+    mobile: { minWidth: 0, layoutMode: 'stack' },
+    tablet: { minWidth: 768, layoutMode: 'inherit', inheritFrom: 'desktop' },
+    desktop: { minWidth: 1024, layoutMode: 'manual' }
+  }}
+/>
+```
+
+**5 breakpoints (Bootstrap-style):**
+```typescript
+<grid-builder
+  breakpoints={{
+    xs: { minWidth: 0, layoutMode: 'stack' },
+    sm: { minWidth: 576, layoutMode: 'stack' },
+    md: { minWidth: 768, layoutMode: 'inherit', inheritFrom: 'xl' },
+    lg: { minWidth: 992, layoutMode: 'inherit', inheritFrom: 'xl' },
+    xl: { minWidth: 1200, layoutMode: 'manual' }
+  }}
+/>
+```
+
+**Simple format (min-width only):**
+```typescript
+// Automatically normalized to full BreakpointConfig
+<grid-builder breakpoints={{ mobile: 0, desktop: 768 }} />
+```
+
+#### Layout Inheritance
+
+Items can inherit layouts from other breakpoints using the `inheritFrom` property:
+
+```typescript
+// Breakpoint configuration
+breakpoints: {
+  mobile: { minWidth: 0, layoutMode: 'stack' },
+  tablet: { minWidth: 768, layoutMode: 'inherit', inheritFrom: 'desktop' },
+  desktop: { minWidth: 1024, layoutMode: 'manual' }
+}
+
+// Item layouts
+layouts: {
+  desktop: { x: 10, y: 20, width: 30, height: 40, customized: true },
+  tablet: { x: null, y: null, width: null, height: null, customized: false }, // ← Inherits from desktop
+  mobile: { x: 0, y: 0, width: 50, height: 40, customized: false } // ← Auto-stacked
+}
+```
+
+**Result**: At tablet viewport, the item uses the desktop layout (x: 10, y: 20, width: 30, height: 40).
+
+#### Layout Resolution Priority
+
+When determining which layout to render, the system follows a 4-level priority:
+
+1. **Customized layout** - Use the breakpoint's own layout if `customized: true`
+2. **Inherit chain** - Follow `inheritFrom` chain to find a customized layout
+3. **Nearest by width** - Use the closest customized breakpoint by min-width
+4. **Fallback** - Use the largest manual breakpoint as last resort
+
+**Implementation** (see `src/utils/breakpoint-utils.ts`):
+```typescript
+import { getEffectiveLayout } from '../../utils/breakpoint-utils';
+
+const { layout, sourceBreakpoint } = getEffectiveLayout(item, 'tablet', breakpoints);
+// Returns: { layout: { x: 10, y: 20, ... }, sourceBreakpoint: 'desktop' }
+```
+
+#### Container-Based Viewport Switching
+
+Breakpoints are evaluated based on **container width**, not window viewport:
+
+```typescript
+// ResizeObserver monitors grid-builder container width
+const targetViewport = getViewportForWidth(containerWidth, breakpoints);
+// Returns: 'mobile' | 'tablet' | 'desktop' | ... (whichever breakpoint matches)
+```
+
+**Mobile-first algorithm**:
+- Breakpoints sorted by `minWidth` (ascending)
+- Largest matching `minWidth` wins
+- Example: At 900px width with breakpoints [0, 768, 1024], returns 'tablet' (768 ≤ 900 < 1024)
+
+**Why container-based**:
+- Enables multiple grid-builder instances with different viewports on same page
+- Side-by-side demos can show mobile/tablet/desktop simultaneously
+- More flexible than window-based media queries
+
+#### Auto-Stacking Algorithm
+
+For breakpoints with `layoutMode: 'stack'`, items automatically stack vertically:
+
+```typescript
+import { calculateAutoStackLayout } from '../../utils/breakpoint-utils';
+
+// Calculate stacked position for an item
+const stackedLayout = calculateAutoStackLayout(item, allCanvasItems, sourceBreakpoint);
+// Returns: { x: 0, y: cumulativeHeight, width: 50, height: itemHeight, customized: false }
+```
+
+**Algorithm**:
+1. Find item's index in canvas items array
+2. Sum heights of all previous items (index 0 to currentIndex - 1)
+3. Set y-position to cumulative height
+4. Set x: 0, width: 50 (full width), preserve height from source layout
+
+**Example**:
+```typescript
+// Items with heights: [10, 8, 6]
+// Item 0: y = 0
+// Item 1: y = 10 (0 + 10)
+// Item 2: y = 18 (0 + 10 + 8)
+```
+
+#### Storybook Demos
+
+See comprehensive multi-breakpoint demos in Storybook:
+
+```bash
+npm run storybook
+```
+
+**Available stories**:
+- **Default Demo** - 2 breakpoints (mobile + desktop), backwards compatible
+- **Three Breakpoint Demo** - Mobile/tablet/desktop side-by-side comparison
+- **Five Breakpoint Demo** - Bootstrap-style xs/sm/md/lg/xl breakpoints
+
+**Demo helper functions** (see `src/demo/sample-layouts.ts`):
+```typescript
+import {
+  create3BreakpointLayout,
+  create5BreakpointLayout,
+  BREAKPOINTS_3,
+  BREAKPOINTS_5
+} from './demo/sample-layouts';
+
+// Use in your own demos
+const items = create3BreakpointLayout();
+```
+
+#### Type Definitions
+
+**Core types** (exported from `src/types/api.ts`):
+```typescript
+// Layout mode for a breakpoint
+type LayoutMode = 'stack' | 'manual' | 'inherit';
+
+// Breakpoint configuration
+interface BreakpointDefinition {
+  minWidth: number;           // Minimum container width (mobile-first)
+  layoutMode?: LayoutMode;    // Default: 'manual'
+  inheritFrom?: string;       // Breakpoint name to inherit from
+}
+
+// Full breakpoint config (record of breakpoint name → definition)
+type BreakpointConfig = Record<string, BreakpointDefinition>;
+
+// Item layout at a specific breakpoint
+interface LayoutConfig {
+  x: number | null;           // Grid units from left
+  y: number | null;           // Grid units from top
+  width: number | null;       // Grid units wide
+  height: number | null;      // Grid units tall
+  customized: boolean;        // true = manually set, false = auto-calculated
+}
+
+// Grid item with multi-breakpoint layouts
+interface GridItem {
+  id: string;
+  canvasId: string;
+  type: string;
+  name: string;
+  zIndex: number;
+  layouts: Record<string, LayoutConfig>; // Dynamic breakpoint names
+  config: Record<string, any>;
+}
+```
+
+#### Backwards Compatibility
+
+**Default configuration maintains existing behavior:**
+```typescript
+export const DEFAULT_BREAKPOINTS: BreakpointConfig = {
+  mobile: { minWidth: 0, layoutMode: 'stack' },
+  desktop: { minWidth: 768, layoutMode: 'manual' }
+};
+```
+
+**All existing code continues to work**:
+- 2-breakpoint grids render identically
+- `currentViewport` type widened from `'desktop' | 'mobile'` to `string`
+- GridItem.layouts changed from `{ desktop, mobile }` to `Record<string, LayoutConfig>`
+- Type-safe with proper TypeScript definitions
+
+#### Utility Functions
+
+**Core utilities** (see `src/utils/breakpoint-utils.ts`, 46 unit tests):
+
+```typescript
+// Get viewport name for a container width
+getViewportForWidth(width: number, breakpoints: BreakpointConfig): string
+
+// Get effective layout for an item at a breakpoint (follows inheritance)
+getEffectiveLayout(
+  item: GridItem,
+  breakpointName: string,
+  breakpoints: BreakpointConfig
+): { layout: LayoutConfig; sourceBreakpoint: string }
+
+// Check if a breakpoint uses auto-stacking
+shouldAutoStack(breakpointName: string, breakpoints: BreakpointConfig): boolean
+
+// Calculate auto-stacked layout position
+calculateAutoStackLayout(
+  item: GridItem,
+  canvasItems: GridItem[],
+  sourceBreakpoint: string
+): LayoutConfig
+
+// Initialize layouts for a new item (all breakpoints)
+initializeLayouts(
+  breakpoints: BreakpointConfig,
+  baseLayout: LayoutConfig
+): Record<string, LayoutConfig>
+```
+
+**Usage example**:
+```typescript
+import {
+  getViewportForWidth,
+  getEffectiveLayout,
+  initializeLayouts
+} from './utils/breakpoint-utils';
+
+// Detect viewport from container width
+const viewport = getViewportForWidth(containerWidth, breakpoints);
+// → 'mobile' | 'tablet' | 'desktop' | ...
+
+// Get resolved layout (follows inheritance)
+const { layout, sourceBreakpoint } = getEffectiveLayout(item, viewport, breakpoints);
+// → { layout: { x: 10, y: 20, ... }, sourceBreakpoint: 'desktop' }
+
+// Initialize layouts for new item
+const layouts = initializeLayouts(breakpoints, { x: 10, y: 20, width: 30, height: 40, customized: true });
+// → { desktop: { x: 10, ... }, mobile: { x: 0, y: 0, width: 50, ... }, ... }
+```
+
 ## Testing
 
 ### Test Runner Configuration
@@ -454,10 +741,11 @@ Run tests using `npm test`, **not** `stencil test --spec`.
 
 ### Test Coverage
 
-- **206 comprehensive tests** across all layers
+- **874 comprehensive tests** across all layers
 - Component tests use `newSpecPage`
 - Utility tests use standard Jest assertions
 - Service tests mock dependencies where needed
+- Multi-breakpoint utilities: 46 unit tests in `breakpoint-utils.spec.ts`
 
 ### Writing New Tests
 
@@ -499,6 +787,7 @@ it('should update position on drag', async () => {
 | drag-handler.ts | Interact.js drag & drop (30× faster) |
 | resize-handler.ts | 8-point resize with RAF batching |
 | grid-calculations.ts | Grid system and conversions |
+| breakpoint-utils.ts | Multi-breakpoint responsive utilities (46 tests) |
 | dom-cache.ts | DOM read caching (100× fewer reads) |
 
 ### Services Layer (~2950 lines of docs)

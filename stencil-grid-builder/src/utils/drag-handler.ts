@@ -939,24 +939,14 @@ export class DragHandler {
 
     // Update item position in current viewport's layout (use constrained grid units)
     const currentViewport = this.state.currentViewport || "desktop";
-    const layout =
-      itemToUpdate.layouts[currentViewport as "desktop" | "mobile"];
+    const layout = itemToUpdate.layouts[currentViewport];
 
     layout.x = constrained.x;
     layout.y = constrained.y;
 
-    // If in mobile view, mark as customized
-    if (currentViewport === "mobile") {
-      itemToUpdate.layouts.mobile.customized = true;
-      // Set width/height if not already set (copy from desktop)
-      if (itemToUpdate.layouts.mobile.width === null) {
-        itemToUpdate.layouts.mobile.width = itemToUpdate.layouts.desktop.width;
-      }
-      if (itemToUpdate.layouts.mobile.height === null) {
-        itemToUpdate.layouts.mobile.height =
-          itemToUpdate.layouts.desktop.height;
-      }
-    }
+    // Mark current viewport as customized (user manually positioned)
+    // This prevents inheritance/fallback from other breakpoints
+    layout.customized = true;
 
     // Wait for next animation frame before applying final position
     // This allows CSS transitions to animate from current position to final snapped position

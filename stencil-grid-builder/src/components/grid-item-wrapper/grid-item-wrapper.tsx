@@ -1260,10 +1260,8 @@ export class GridItemWrapper {
       const snapshot = this.itemSnapshot;
 
       // Use current viewport's layout for comparison instead of hardcoded desktop
-      const snapshotLayout =
-        snapshot.layouts[currentViewport as "desktop" | "mobile"];
-      const updatedLayout =
-        updatedItem.layouts[currentViewport as "desktop" | "mobile"];
+      const snapshotLayout = snapshot.layouts[currentViewport];
+      const updatedLayout = updatedItem.layouts[currentViewport];
 
       const positionOnlyChanged =
         (snapshotLayout.x !== updatedLayout.x ||
@@ -1335,23 +1333,10 @@ export class GridItemWrapper {
                     height: updatedLayout.height,
                   }
                 : undefined,
+              currentLayout.customized ?? false, // Source customized flag
+              updatedLayout.customized ?? false, // Target customized flag
               this.stateInstance,
               currentViewport, // Pass active viewport for viewport-specific undo/redo
-              // Include mobile layouts for complete state tracking (only used for desktop operations)
-              {
-                x: snapshot.layouts.mobile.x,
-                y: snapshot.layouts.mobile.y,
-                width: snapshot.layouts.mobile.width,
-                height: snapshot.layouts.mobile.height,
-                customized: snapshot.layouts.mobile.customized,
-              },
-              {
-                x: updatedItem.layouts.mobile.x,
-                y: updatedItem.layouts.mobile.y,
-                width: updatedItem.layouts.mobile.width,
-                height: updatedItem.layouts.mobile.height,
-                customized: updatedItem.layouts.mobile.customized,
-              },
             ),
           );
         }

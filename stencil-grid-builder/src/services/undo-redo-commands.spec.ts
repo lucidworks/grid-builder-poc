@@ -266,6 +266,8 @@ describe("undo-redo-commands", () => {
         1, // targetZIndex
         undefined, // sourceSize
         undefined, // targetSize
+        false, // sourceCustomized
+        false, // targetCustomized
         gridState,
         "desktop",
       );
@@ -297,6 +299,8 @@ describe("undo-redo-commands", () => {
         1, // targetZIndex
         undefined, // sourceSize
         undefined, // targetSize
+        false, // sourceCustomized
+        false, // targetCustomized
         gridState,
         "desktop",
       );
@@ -327,6 +331,8 @@ describe("undo-redo-commands", () => {
         1, // targetZIndex
         undefined, // sourceSize
         undefined, // targetSize
+        false, // sourceCustomized
+        false, // targetCustomized
         gridState,
         "desktop",
       );
@@ -367,6 +373,8 @@ describe("undo-redo-commands", () => {
         1, // targetZIndex
         undefined, // sourceSize
         undefined, // targetSize
+        false, // sourceCustomized
+        false, // targetCustomized
         gridState,
         "desktop",
       );
@@ -398,6 +406,8 @@ describe("undo-redo-commands", () => {
         1, // targetZIndex
         undefined, // sourceSize
         undefined, // targetSize
+        false, // sourceCustomized
+        false, // targetCustomized
         gridState,
         "desktop",
       );
@@ -419,6 +429,8 @@ describe("undo-redo-commands", () => {
         1, // targetZIndex
         undefined, // sourceSize
         undefined, // targetSize
+        false, // sourceCustomized
+        false, // targetCustomized
         gridState,
         "desktop",
       );
@@ -446,6 +458,8 @@ describe("undo-redo-commands", () => {
         1, // targetZIndex
         undefined, // sourceSize
         undefined, // targetSize
+        false, // sourceCustomized
+        false, // targetCustomized
         gridState,
         "desktop",
       );
@@ -474,6 +488,8 @@ describe("undo-redo-commands", () => {
         1, // targetZIndex
         undefined, // sourceSize
         undefined, // targetSize
+        false, // sourceCustomized
+        false, // targetCustomized
         gridState,
         "desktop",
       );
@@ -509,6 +525,8 @@ describe("undo-redo-commands", () => {
         99, // targetZIndex (preserve during cross-canvas move)
         undefined, // sourceSize
         undefined, // targetSize
+        false, // sourceCustomized
+        false, // targetCustomized
         gridState,
         "desktop",
       );
@@ -542,6 +560,8 @@ describe("undo-redo-commands", () => {
 
         { width: 20, height: 15 }, // source size
         { width: 30, height: 25 }, // target size
+        false, // sourceCustomized
+        false, // targetCustomized
         gridState,
         "desktop",
       );
@@ -580,6 +600,8 @@ describe("undo-redo-commands", () => {
 
         { width: 20, height: 15 }, // source size
         { width: 30, height: 25 }, // target size
+        false, // sourceCustomized
+        false, // targetCustomized
         gridState,
         "desktop",
       );
@@ -620,6 +642,8 @@ describe("undo-redo-commands", () => {
 
         { width: 20, height: 15 }, // source size
         { width: 25, height: 20 }, // target size
+        false, // sourceCustomized
+        false, // targetCustomized
         gridState,
         "desktop",
       );
@@ -668,6 +692,8 @@ describe("undo-redo-commands", () => {
 
         { width: 10, height: 6 },
         { width: 20, height: 12 },
+        false, // sourceCustomized
+        false, // targetCustomized
         gridState,
         "desktop",
       );
@@ -713,6 +739,8 @@ describe("undo-redo-commands", () => {
         1, // targetZIndex
         undefined, // sourceSize
         undefined, // targetSize
+        false, // sourceCustomized
+        false, // targetCustomized
         gridState,
         "desktop",
       );
@@ -765,6 +793,8 @@ describe("undo-redo-commands", () => {
         1, // targetZIndex
         undefined, // sourceSize
         undefined, // targetSize
+        false, // sourceCustomized
+        false, // targetCustomized
         gridState,
         "desktop",
       );

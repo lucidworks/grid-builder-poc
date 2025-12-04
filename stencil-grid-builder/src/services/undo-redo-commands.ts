@@ -805,23 +805,11 @@ export class MoveItemCommand implements Command {
   /** Size after operation (grid units) - optional for resize tracking */
   private targetSize?: { width: number; height: number };
 
-  /** Mobile layout before operation - captures full mobile state including customized flag */
-  private sourceMobileLayout?: {
-    x: number | null;
-    y: number | null;
-    width: number | null;
-    height: number | null;
-    customized: boolean;
-  };
+  /** Customized flag before operation - tracks whether layout was manually customized */
+  private sourceCustomized: boolean;
 
-  /** Mobile layout after operation - captures full mobile state including customized flag */
-  private targetMobileLayout?: {
-    x: number | null;
-    y: number | null;
-    width: number | null;
-    height: number | null;
-    customized: boolean;
-  };
+  /** Customized flag after operation - tracks whether layout was manually customized */
+  private targetCustomized: boolean;
 
   /** Z-index in source canvas (for undo restoration) */
   private sourceZIndex: number;
@@ -880,10 +868,10 @@ export class MoveItemCommand implements Command {
    * @param targetZIndex - Z-index in target canvas (assigned during move)
    * @param sourceSize - Optional: Size before operation (for resize tracking)
    * @param targetSize - Optional: Size after operation (for resize tracking)
+   * @param sourceCustomized - Customized flag before operation
+   * @param targetCustomized - Customized flag after operation
    * @param stateInstance - GridState instance
-   * @param activeViewport - Which viewport was active during operation ('desktop' | 'mobile')
-   * @param sourceMobileLayout - Optional: Mobile layout before operation (for complete state tracking)
-   * @param targetMobileLayout - Optional: Mobile layout after operation (for complete state tracking)
+   * @param activeViewport - Which viewport was active during operation (e.g., 'desktop', 'mobile', 'tablet')
    */
   constructor(
     itemId: string,
@@ -896,22 +884,10 @@ export class MoveItemCommand implements Command {
     targetZIndex: number,
     sourceSize: { width: number; height: number } | undefined,
     targetSize: { width: number; height: number } | undefined,
+    sourceCustomized: boolean,
+    targetCustomized: boolean,
     stateInstance: any,
     activeViewport: string,
-    sourceMobileLayout?: {
-      x: number | null;
-      y: number | null;
-      width: number | null;
-      height: number | null;
-      customized: boolean;
-    },
-    targetMobileLayout?: {
-      x: number | null;
-      y: number | null;
-      width: number | null;
-      height: number | null;
-      customized: boolean;
-    },
   ) {
     this.itemId = itemId;
     this.sourceCanvasId = sourceCanvasId;
@@ -923,14 +899,10 @@ export class MoveItemCommand implements Command {
     this.targetZIndex = targetZIndex;
     this.sourceSize = sourceSize ? { ...sourceSize } : undefined;
     this.targetSize = targetSize ? { ...targetSize } : undefined;
+    this.sourceCustomized = sourceCustomized;
+    this.targetCustomized = targetCustomized;
     this.stateInstance = stateInstance;
     this.activeViewport = activeViewport;
-    this.sourceMobileLayout = sourceMobileLayout
-      ? { ...sourceMobileLayout }
-      : undefined;
-    this.targetMobileLayout = targetMobileLayout
-      ? { ...targetMobileLayout }
-      : undefined;
   }
 
   /**
@@ -1016,11 +988,8 @@ export class MoveItemCommand implements Command {
       item.layouts[this.activeViewport].height = this.sourceSize.height;
     }
 
-    // Restore full mobile layout ONLY if we're undoing a desktop operation
-    // (Mobile operations already restored mobile via activeViewport logic above)
-    if (this.activeViewport === "desktop" && this.sourceMobileLayout) {
-      item.layouts.mobile = { ...this.sourceMobileLayout };
-    }
+    // Restore customized flag for the active viewport
+    item.layouts[this.activeViewport].customized = this.sourceCustomized;
 
     // Add back to source canvas at original index
     const sourceCanvas = this.stateInstance.canvases[this.sourceCanvasId];
@@ -1120,11 +1089,8 @@ export class MoveItemCommand implements Command {
       item.layouts[this.activeViewport].height = this.targetSize.height;
     }
 
-    // Restore full mobile layout ONLY if we're redoing a desktop operation
-    // (Mobile operations already restored mobile via activeViewport logic above)
-    if (this.activeViewport === "desktop" && this.targetMobileLayout) {
-      item.layouts.mobile = { ...this.targetMobileLayout };
-    }
+    // Restore customized flag for the active viewport
+    item.layouts[this.activeViewport].customized = this.targetCustomized;
 
     // Add to target canvas
     const targetCanvas = this.stateInstance.canvases[this.targetCanvasId];

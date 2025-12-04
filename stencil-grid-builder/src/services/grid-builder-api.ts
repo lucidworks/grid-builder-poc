@@ -535,15 +535,8 @@ export class GridBuilderAPI {
       x: currentLayout.x,
       y: currentLayout.y,
     };
-
-    // Capture mobile layout for undo/redo
-    const mobileLayout = {
-      x: item.layouts.mobile.x,
-      y: item.layouts.mobile.y,
-      width: item.layouts.mobile.width,
-      height: item.layouts.mobile.height,
-      customized: item.layouts.mobile.customized,
-    };
+    // Preserve customized flag (programmatic move, not user interaction)
+    const customized = currentLayout.customized ?? false;
 
     // Calculate target z-index (new z-index for cross-canvas moves)
     let targetZIndex = sourceZIndex; // Same canvas = same z-index
@@ -565,10 +558,10 @@ export class GridBuilderAPI {
       targetZIndex,
       undefined, // sourceSize (not tracked for basic moves)
       undefined, // targetSize (not tracked for basic moves)
+      customized, // sourceCustomized (preserve flag)
+      customized, // targetCustomized (preserve flag, programmatic move)
       this.stateInstance,
       currentViewport, // Pass active viewport for viewport-specific undo/redo
-      mobileLayout, // sourceMobileLayout (unchanged during API move)
-      mobileLayout, // targetMobileLayout (unchanged during API move)
     );
     command.redo(); // Execute command first (applies targetZIndex)
     pushCommand(command); // Then add to history
