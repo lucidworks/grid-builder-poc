@@ -32,7 +32,10 @@ describe("GridViewer Helper Methods", () => {
         { type: "test", name: "Test", icon: "🧪", render: () => null },
       ];
 
-      const result = component.validateComponents(undefined, DEFAULT_BREAKPOINTS);
+      const result = component.validateComponents(
+        undefined,
+        DEFAULT_BREAKPOINTS,
+      );
 
       expect(result).toBe(true);
     });
@@ -40,7 +43,10 @@ describe("GridViewer Helper Methods", () => {
     it("should return false when components prop is empty array", () => {
       component.components = [];
 
-      const result = component.validateComponents(undefined, DEFAULT_BREAKPOINTS);
+      const result = component.validateComponents(
+        undefined,
+        DEFAULT_BREAKPOINTS,
+      );
 
       expect(result).toBe(false);
       expect(component.viewerState).toBeDefined();
@@ -49,7 +55,10 @@ describe("GridViewer Helper Methods", () => {
     it("should return false when components prop is undefined", () => {
       component.components = undefined;
 
-      const result = component.validateComponents(undefined, DEFAULT_BREAKPOINTS);
+      const result = component.validateComponents(
+        undefined,
+        DEFAULT_BREAKPOINTS,
+      );
 
       expect(result).toBe(false);
       expect(component.viewerState).toBeDefined();
@@ -58,7 +67,10 @@ describe("GridViewer Helper Methods", () => {
     it("should initialize local mode state when invalid and no apiKey", () => {
       component.components = [];
 
-      const result = component.validateComponents(undefined, DEFAULT_BREAKPOINTS);
+      const result = component.validateComponents(
+        undefined,
+        DEFAULT_BREAKPOINTS,
+      );
 
       expect(result).toBe(false);
       expect(component.viewerState).toBeDefined();
@@ -71,7 +83,10 @@ describe("GridViewer Helper Methods", () => {
       component.components = [];
       component.instanceId = "test-instance";
 
-      const result = component.validateComponents("test-api-key", DEFAULT_BREAKPOINTS);
+      const result = component.validateComponents(
+        "test-api-key",
+        DEFAULT_BREAKPOINTS,
+      );
 
       expect(result).toBe(false);
       expect(component.viewerState).toBeDefined();
@@ -208,7 +223,9 @@ describe("GridViewer Helper Methods", () => {
       expect(component.viewerState.state.currentViewport).toBe("desktop");
       expect(component.viewerState.state.canvases).toEqual({});
       expect(component.viewerState.state.selectedItemId).toBeNull();
-      expect(component.viewerState.state.breakpoints).toEqual(DEFAULT_BREAKPOINTS);
+      expect(component.viewerState.state.breakpoints).toEqual(
+        DEFAULT_BREAKPOINTS,
+      );
     });
 
     it("should restore state from GridExport format", () => {
@@ -416,7 +433,9 @@ describe("GridViewer Helper Methods", () => {
 
       expect(component.viewerState.state.currentViewport).toBe("mobile");
       expect(component.viewerState.state.selectedItemId).toBeNull();
-      expect(component.viewerState.state.breakpoints).toEqual(DEFAULT_BREAKPOINTS);
+      expect(component.viewerState.state.breakpoints).toEqual(
+        DEFAULT_BREAKPOINTS,
+      );
     });
   });
 });

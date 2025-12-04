@@ -216,6 +216,113 @@ export function validateGridItem(item: any): ValidationResult {
 }
 
 /**
+ * validateItemUpdates Helper Methods
+ * ===================================
+ *
+ * These methods were extracted from validateItemUpdates() to reduce cyclomatic complexity.
+ * Each method has a single responsibility and is documented with numbered steps.
+ */
+
+/**
+ * Validate layouts object in item updates
+ *
+ * **Purpose**: Validate desktop and mobile layouts if present in updates
+ *
+ * **Implementation Steps**:
+ * 1. Check if layouts is an object
+ * 2. Validate desktop layout if present
+ * 3. Validate mobile layout if present
+ * 4. Return accumulated errors
+ * @param updates - Item updates object
+ * @returns Array of validation errors (empty if valid)
+ */
+function validateLayoutUpdates(updates: any): string[] {
+  const errors: string[] = [];
+
+  // Step 1: Check if layouts is an object
+  if (typeof updates.layouts !== "object") {
+    errors.push("Updates.layouts must be an object");
+    return errors;
+  }
+
+  // Step 2: Validate desktop layout if present
+  if (updates.layouts.desktop) {
+    const desktopResult = validateLayout(updates.layouts.desktop, "desktop");
+    if (!desktopResult.valid) {
+      errors.push(...desktopResult.errors);
+    }
+  }
+
+  // Step 3: Validate mobile layout if present
+  if (updates.layouts.mobile) {
+    const mobileResult = validateLayout(updates.layouts.mobile, "mobile");
+    if (!mobileResult.valid) {
+      errors.push(...mobileResult.errors);
+    }
+  }
+
+  // Step 4: Return accumulated errors
+  return errors;
+}
+
+/**
+ * Validate zIndex field in item updates
+ *
+ * **Purpose**: Ensure zIndex is a finite number if present
+ *
+ * **Implementation Steps**:
+ * 1. Check if zIndex is present
+ * 2. Validate it's a finite number
+ * 3. Return error if invalid, empty array if valid
+ * @param updates - Item updates object
+ * @returns Array of validation errors (empty if valid)
+ */
+function validateZIndexUpdate(updates: any): string[] {
+  const errors: string[] = [];
+
+  // Step 1: Check if zIndex is present
+  // Step 2: Validate it's a finite number
+  if (
+    "zIndex" in updates &&
+    (typeof updates.zIndex !== "number" || !Number.isFinite(updates.zIndex))
+  ) {
+    // Step 3: Return error if invalid
+    errors.push(
+      `Updates.zIndex must be a finite number, got: ${updates.zIndex}`,
+    );
+  }
+
+  return errors;
+}
+
+/**
+ * Validate config field in item updates
+ *
+ * **Purpose**: Ensure config is an object if present (shape is not validated)
+ *
+ * **Implementation Steps**:
+ * 1. Check if config is present
+ * 2. Validate it's an object
+ * 3. Return error if invalid, empty array if valid
+ * @param updates - Item updates object
+ * @returns Array of validation errors (empty if valid)
+ */
+function validateConfigUpdate(updates: any): string[] {
+  const errors: string[] = [];
+
+  // Step 1: Check if config is present
+  // Step 2: Validate it's an object
+  if ("config" in updates && typeof updates.config !== "object") {
+    // Step 3: Return error if invalid
+    errors.push(
+      `Updates.config must be an object, got: ${typeof updates.config}`,
+    );
+  }
+
+  return errors;
+}
+
+/**
  * Validate item update object (partial updates)
  *
  * **Checks**:
@@ -230,60 +337,37 @@ export function validateGridItem(item: any): ValidationResult {
  * debug.warn('Invalid updates:', { itemId, errors: result.errors });
  * }
  * ```
+ *
+ * **Implementation Steps**:
+ * 1. Guard: Check if updates is an object
+ * 2. Validate layouts if present
+ * 3. Validate zIndex if present
+ * 4. Validate config if present
+ * 5. Return validation result
  * @param updates - Partial item updates to validate
  * @returns ValidationResult with errors if any
  */
 export function validateItemUpdates(updates: any): ValidationResult {
   const errors: string[] = [];
 
+  // Step 1: Guard - Check if updates is an object
   if (!updates || typeof updates !== "object") {
     errors.push("Updates must be an object");
     return { valid: false, errors };
   }
 
-  // Validate layouts if present
+  // Step 2: Validate layouts if present
   if (updates.layouts) {
-    if (typeof updates.layouts !== "object") {
-      errors.push("Updates.layouts must be an object");
-    } else {
-      // Validate desktop layout if present
-      if (updates.layouts.desktop) {
-        const desktopResult = validateLayout(
-          updates.layouts.desktop,
-          "desktop",
-        );
-        if (!desktopResult.valid) {
-          errors.push(...desktopResult.errors);
-        }
-      }
-
-      // Validate mobile layout if present
-      if (updates.layouts.mobile) {
-        const mobileResult = validateLayout(updates.layouts.mobile, "mobile");
-        if (!mobileResult.valid) {
-          errors.push(...mobileResult.errors);
-        }
-      }
-    }
+    errors.push(...validateLayoutUpdates(updates));
   }
 
-  // Validate zIndex if present
-  if (
-    "zIndex" in updates &&
-    (typeof updates.zIndex !== "number" || !Number.isFinite(updates.zIndex))
-  ) {
-    errors.push(
-      `Updates.zIndex must be a finite number, got: ${updates.zIndex}`,
-    );
-  }
+  // Step 3: Validate zIndex if present
+  errors.push(...validateZIndexUpdate(updates));
 
-  // Validate config if present (must be object, but any shape is allowed)
-  if ("config" in updates && typeof updates.config !== "object") {
-    errors.push(
-      `Updates.config must be an object, got: ${typeof updates.config}`,
-    );
-  }
+  // Step 4: Validate config if present
+  errors.push(...validateConfigUpdate(updates));
 
+  // Step 5: Return validation result
   return {
     valid: errors.length === 0,
     errors,
