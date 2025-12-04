@@ -150,6 +150,7 @@ import {
   constrainPositionToCanvas,
   CANVAS_WIDTH_UNITS,
 } from "./boundary-constraints";
+import { deepClone } from "./object-utils";
 
 /**
  * Extract current transform position from element's inline style
@@ -1081,7 +1082,7 @@ export class DragHandler {
     const baseItem = latestItem || this.item; // Fallback to stored item if not found
 
     // Step 3: Deep clone item to avoid direct state mutation
-    const itemToUpdate = JSON.parse(JSON.stringify(baseItem));
+    const itemToUpdate = deepClone(baseItem);
 
     // Step 4: Get current viewport (desktop or mobile)
     const currentViewport = this.state.currentViewport || "desktop";

@@ -158,6 +158,7 @@ import { GridItem } from "./state-manager";
 import { Command } from "./undo-redo";
 import { EventManager } from "./event-manager";
 import { createDebugLogger } from "../utils/debug";
+import { deepClone } from "../utils/object-utils";
 
 const debug = createDebugLogger("undo-redo-commands");
 
@@ -318,7 +319,7 @@ export class AddItemCommand implements Command {
   constructor(canvasId: string, item: GridItem, stateInstance: any) {
     this.canvasId = canvasId;
     // Deep clone the item to capture its state at time of creation
-    this.item = JSON.parse(JSON.stringify(item));
+    this.item = deepClone(item);
     this.stateInstance = stateInstance;
   }
 
@@ -358,7 +359,7 @@ export class AddItemCommand implements Command {
     }
 
     // Use the cloned item state
-    const itemCopy = JSON.parse(JSON.stringify(this.item));
+    const itemCopy = deepClone(this.item);
     canvas.items.push(itemCopy);
     this.stateInstance.canvases = { ...this.stateInstance.canvases };
   }
@@ -537,7 +538,7 @@ export class DeleteItemCommand implements Command {
   ) {
     this.canvasId = canvasId;
     // Deep clone the item to capture its state before deletion
-    this.item = JSON.parse(JSON.stringify(item));
+    this.item = deepClone(item);
     this.itemIndex = itemIndex;
     this.stateInstance = stateInstance;
   }
@@ -566,7 +567,7 @@ export class DeleteItemCommand implements Command {
       return;
     }
 
-    const itemCopy = JSON.parse(JSON.stringify(this.item));
+    const itemCopy = deepClone(this.item);
     // Insert at original index if possible, otherwise push to end
     if (this.itemIndex >= 0 && this.itemIndex <= canvas.items.length) {
       canvas.items.splice(this.itemIndex, 0, itemCopy);
@@ -1338,7 +1339,7 @@ export class BatchAddCommand implements Command {
         const item = Object.values(this.stateInstance.canvases)
           .flatMap((canvas: any) => canvas.items)
           .find((i: any) => i.id === id);
-        return item ? JSON.parse(JSON.stringify(item)) : null;
+        return item ? deepClone(item) : null;
       })
       .filter(Boolean) as GridItem[];
   }
@@ -1423,7 +1424,7 @@ export class BatchDeleteCommand implements Command {
         const item = Object.values(this.stateInstance.canvases)
           .flatMap((canvas: any) => canvas.items)
           .find((i: any) => i.id === id);
-        return item ? JSON.parse(JSON.stringify(item)) : null;
+        return item ? deepClone(item) : null;
       })
       .filter(Boolean) as GridItem[];
   }
@@ -1526,8 +1527,8 @@ export class BatchUpdateConfigCommand implements Command {
         return {
           itemId,
           canvasId,
-          oldItem: JSON.parse(JSON.stringify(item)),
-          newItem: JSON.parse(JSON.stringify({ ...item, ...itemUpdates })),
+          oldItem: deepClone(item),
+          newItem: deepClone({ ...item, ...itemUpdates }),
         };
       })
       .filter(Boolean) as {
@@ -1731,15 +1732,15 @@ export class RemoveCanvasCommand implements Command {
     // Snapshot canvas state (deep clone to prevent mutations)
     const canvas = this.stateInstance.canvases[canvasId];
     if (canvas) {
-      this.canvasSnapshot = JSON.parse(JSON.stringify(canvas));
+      this.canvasSnapshot = deepClone(canvas);
     }
   }
 
   undo(): void {
     // Restore canvas from snapshot (just layout state, no metadata)
     if (this.canvasSnapshot) {
-      this.stateInstance.canvases[this.canvasId] = JSON.parse(
-        JSON.stringify(this.canvasSnapshot),
+      this.stateInstance.canvases[this.canvasId] = deepClone(
+        this.canvasSnapshot,
       );
 
       // Trigger state change for reactivity

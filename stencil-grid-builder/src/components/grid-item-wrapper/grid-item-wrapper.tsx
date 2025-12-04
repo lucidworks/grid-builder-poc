@@ -46,6 +46,7 @@ import { GridConfig } from "../../types/grid-config";
 import { createDebugLogger } from "../../utils/debug";
 import { ComponentRegistry } from "../../services/component-registry";
 import { GridErrorAdapter } from "../../services/grid-error-adapter";
+import { deepClone } from "../../utils/object-utils";
 
 const debug = createDebugLogger("grid-item-wrapper");
 
@@ -989,7 +990,7 @@ export class GridItemWrapper {
    * Capture item snapshot for undo/redo
    */
   private captureItemSnapshot = () => {
-    this.itemSnapshot = JSON.parse(JSON.stringify(this.item));
+    this.itemSnapshot = deepClone(this.item);
   };
 
   /**

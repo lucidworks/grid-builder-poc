@@ -213,6 +213,7 @@ import {
 } from "./grid-calculations";
 import { BUILD_TIMESTAMP } from "./version";
 import { createDebugLogger } from "./debug";
+import { deepClone } from "./object-utils";
 
 const debug = createDebugLogger("resize-handler");
 
@@ -1602,7 +1603,7 @@ export class ResizeHandler {
     const baseItem = latestItem || this.item;
 
     // Create new object to avoid direct state mutation
-    const itemToUpdate = JSON.parse(JSON.stringify(baseItem));
+    const itemToUpdate = deepClone(baseItem);
 
     // Update item size and position in current viewport's layout (convert to grid units)
     const currentViewport = this.state.currentViewport || "desktop";
