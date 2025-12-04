@@ -232,6 +232,236 @@
 import { createStore } from "@stencil/store";
 import { createDebugLogger } from "../utils/debug";
 import { validateGridItem, validateItemUpdates } from "../utils/validation";
+import { sharedStateRegistry } from "./shared-state-registry";
+
+/**
+ * Breakpoint & Layout Type Definitions
+ * ======================================
+ *
+ * Multi-breakpoint responsive system supporting configurable breakpoints
+ * with per-breakpoint layout modes (manual positioning, auto-stacking, inheritance).
+ *
+ * ## Overview
+ *
+ * The grid builder supports flexible responsive breakpoints beyond the default
+ * desktop/mobile setup. Each breakpoint can have its own layout behavior:
+ *
+ * - **manual**: Items must be individually positioned (desktop-style)
+ * - **stack**: Items auto-stack vertically at full-width (mobile-style)
+ * - **inherit**: Inherit layout from another breakpoint
+ *
+ * ## Example Configurations
+ *
+ * **Default (backwards compatible)**:
+ * ```typescript
+ * {
+ *   mobile: { minWidth: 0, layoutMode: 'stack' },
+ *   desktop: { minWidth: 768, layoutMode: 'manual' }
+ * }
+ * ```
+ *
+ * **3-breakpoint (mobile/tablet/desktop)**:
+ * ```typescript
+ * {
+ *   mobile: { minWidth: 0, layoutMode: 'stack' },
+ *   tablet: { minWidth: 768, layoutMode: 'inherit', inheritFrom: 'desktop' },
+ *   desktop: { minWidth: 1024, layoutMode: 'manual' }
+ * }
+ * ```
+ *
+ * **5-breakpoint (Bootstrap-style)**:
+ * ```typescript
+ * {
+ *   xs: { minWidth: 0, layoutMode: 'stack' },
+ *   sm: { minWidth: 576, layoutMode: 'stack' },
+ *   md: { minWidth: 768, layoutMode: 'inherit', inheritFrom: 'lg' },
+ *   lg: { minWidth: 992, layoutMode: 'manual' },
+ *   xl: { minWidth: 1200, layoutMode: 'manual' }
+ * }
+ * ```
+ */
+
+/**
+ * Layout mode for a breakpoint
+ *
+ * - **manual**: Items must be individually positioned (desktop-style)
+ * - **stack**: Items auto-stack vertically, full-width (mobile-style)
+ * - **inherit**: Inherit layout from another breakpoint
+ */
+export type LayoutMode = "stack" | "manual" | "inherit";
+
+/**
+ * Configuration for a single breakpoint
+ *
+ * **Properties**:
+ * - `minWidth`: Minimum container width in pixels (mobile-first approach)
+ * - `layoutMode`: How items should be laid out (default: 'manual')
+ * - `inheritFrom`: Which breakpoint to inherit from (for layoutMode='inherit')
+ *
+ * **Example**:
+ * ```typescript
+ * {
+ *   minWidth: 768,
+ *   layoutMode: 'inherit',
+ *   inheritFrom: 'desktop'
+ * }
+ * ```
+ */
+export interface BreakpointDefinition {
+  /** Min container width in pixels (mobile-first) */
+  minWidth: number;
+
+  /** How items should be laid out (default: 'manual') */
+  layoutMode?: LayoutMode;
+
+  /** Which breakpoint to inherit from (for layoutMode='inherit') */
+  inheritFrom?: string;
+}
+
+/**
+ * Breakpoint configuration object
+ *
+ * Maps breakpoint names to their definitions.
+ *
+ * **Example**:
+ * ```typescript
+ * {
+ *   mobile: { minWidth: 0, layoutMode: 'stack' },
+ *   tablet: { minWidth: 768, layoutMode: 'inherit', inheritFrom: 'desktop' },
+ *   desktop: { minWidth: 1024, layoutMode: 'manual' }
+ * }
+ * ```
+ */
+export interface BreakpointConfig {
+  [name: string]: BreakpointDefinition;
+}
+
+/**
+ * Simplified breakpoint config (backwards compatible)
+ *
+ * Allows defining breakpoints as just min-width numbers:
+ * ```typescript
+ * { mobile: 0, desktop: 768 }
+ * ```
+ *
+ * This is automatically normalized to full BreakpointConfig format.
+ */
+export type SimpleBreakpointConfig = {
+  [name: string]: number;
+};
+
+/**
+ * Default breakpoints (backwards compatible)
+ *
+ * Maintains existing mobile/desktop behavior:
+ * - Mobile: Auto-stacking at container width < 768px
+ * - Desktop: Manual positioning at container width >= 768px
+ */
+export const DEFAULT_BREAKPOINTS: BreakpointConfig = {
+  mobile: {
+    minWidth: 0,
+    layoutMode: "stack",
+  },
+  desktop: {
+    minWidth: 768,
+    layoutMode: "manual",
+  },
+};
+
+/**
+ * Normalize simple config to full config
+ *
+ * Converts shorthand `{ mobile: 0, desktop: 768 }` to full format:
+ * ```typescript
+ * {
+ *   mobile: { minWidth: 0, layoutMode: 'manual' },
+ *   desktop: { minWidth: 768, layoutMode: 'manual' }
+ * }
+ * ```
+ *
+ * **Usage**:
+ * ```typescript
+ * const config = normalizeBreakpoints(props.breakpoints || DEFAULT_BREAKPOINTS);
+ * ```
+ */
+export function normalizeBreakpoints(
+  config: BreakpointConfig | SimpleBreakpointConfig,
+): BreakpointConfig {
+  const normalized: BreakpointConfig = {};
+
+  for (const [name, value] of Object.entries(config)) {
+    if (typeof value === "number") {
+      // Simple format: { mobile: 0, desktop: 768 }
+      normalized[name] = {
+        minWidth: value,
+        layoutMode: "manual",
+      };
+    } else {
+      // Full format: { mobile: { minWidth: 0, layoutMode: 'stack' } }
+      normalized[name] = value;
+    }
+  }
+
+  return normalized;
+}
+
+/**
+ * Layout configuration for a single breakpoint
+ *
+ * **Coordinates**: All positions in grid units (not pixels)
+ * **Null values**: Indicate auto-generated/inherited layout
+ * **customized flag**: Determines whether to use explicit values or auto-generate
+ *
+ * **Example (manual layout)**:
+ * ```typescript
+ * {
+ *   x: 5,
+ *   y: 2,
+ *   width: 20,
+ *   height: 8,
+ *   customized: true
+ * }
+ * ```
+ *
+ * **Example (auto-stack layout)**:
+ * ```typescript
+ * {
+ *   x: 0,
+ *   y: 0,  // Will be calculated from cumulative heights
+ *   width: 50,  // Full width
+ *   height: 8,
+ *   customized: false
+ * }
+ * ```
+ */
+export interface LayoutConfig {
+  /** Horizontal position in grid units (or null for auto-generation) */
+  x: number | null;
+
+  /** Vertical position in grid units (or null for auto-generation) */
+  y: number | null;
+
+  /** Width in grid units (or null for auto-generation) */
+  width: number | null;
+
+  /** Height in grid units (or null for auto-generation) */
+  height: number | null;
+
+  /**
+   * Whether user manually customized this breakpoint's layout
+   *
+   * **false**: Auto-generate based on breakpoint's layoutMode
+   * - layoutMode='stack': Calculate stacked position
+   * - layoutMode='inherit': Use inheritFrom breakpoint
+   * - layoutMode='manual': Use nearest defined breakpoint
+   *
+   * **true**: Use explicit x/y/width/height values
+   * - User dragged/resized in this breakpoint
+   * - Ignore auto-generation logic
+   * - Persist custom positioning
+   */
+  customized: boolean;
+}
 
 /**
  * Grid Item Interface
@@ -279,28 +509,37 @@ export interface GridItem {
   name: string;
 
   /**
-   * Dual layout system for responsive design
+   * Multi-breakpoint layout system for responsive design
    *
-   * **Desktop Layout** (required, never null):
-   * - Primary layout used in desktop viewport
-   * - All properties (x, y, width, height) always have numeric values
-   * - Coordinates in grid units (not pixels)
+   * **Dynamic breakpoints**: Supports any number of custom breakpoints
+   * - Keys match breakpoint names from BreakpointConfig
+   * - Each breakpoint has LayoutConfig (x, y, width, height, customized)
+   * - Backwards compatible with desktop/mobile
    *
-   * **Mobile Layout** (optional/auto-generated):
-   * - Properties can be null when not customized
-   * - `customized: false` → Auto-generated layout (full-width, stacked)
-   * - `customized: true` → User manually positioned in mobile view
+   * **Default breakpoints** (backwards compatible):
+   * - `desktop`: Manual positioning (layoutMode='manual')
+   * - `mobile`: Auto-stacking (layoutMode='stack')
    *
-   * **Auto-generation behavior** (when mobile.customized = false):
+   * **Custom breakpoints** (example):
+   * - `mobile`: Auto-stack at 0-767px
+   * - `tablet`: Inherit from desktop at 768-1023px
+   * - `desktop`: Manual positioning at 1024px+
+   *
+   * **Layout resolution**:
+   * 1. If breakpoint layout exists and `customized: true`, use it
+   * 2. If layoutMode='inherit', follow inheritFrom chain
+   * 3. Otherwise, fall back to nearest defined breakpoint by width
+   *
+   * **Auto-stacking behavior** (when layoutMode='stack' and customized=false):
    * ```typescript
-   * // grid-item-wrapper.tsx calculates:
+   * // grid-item-wrapper.tsx calculates cumulative y-position:
    * x: 0 (left edge)
-   * y: calculatedFromStackOrder
+   * y: sum of previous items' heights
    * width: 50 (full width = 100% of viewport)
-   * height: desktop.height (maintain aspect ratio)
+   * height: source breakpoint's height
    * ```
    *
-   * **Example usage**:
+   * **Example usage (default 2-breakpoint)**:
    * ```typescript
    * const item: GridItem = {
    *   id: 'item-1',
@@ -308,61 +547,32 @@ export interface GridItem {
    *   type: 'header',
    *   name: 'Hero Header',
    *   layouts: {
-   *     desktop: { x: 5, y: 2, width: 20, height: 8 },
-   *     mobile: {
-   *       x: null, y: null, width: null, height: null,
-   *       customized: false // Will auto-generate
-   *     }
+   *     desktop: { x: 5, y: 2, width: 20, height: 8, customized: true },
+   *     mobile: { x: 0, y: 0, width: 50, height: 8, customized: false }
    *   },
    *   zIndex: 1
    * };
    * ```
+   *
+   * **Example usage (3-breakpoint)**:
+   * ```typescript
+   * const item: GridItem = {
+   *   id: 'item-2',
+   *   canvasId: 'canvas1',
+   *   type: 'text',
+   *   name: 'Content Block',
+   *   layouts: {
+   *     desktop: { x: 10, y: 10, width: 30, height: 15, customized: true },
+   *     tablet: { x: null, y: null, width: null, height: null, customized: false }, // Inherits from desktop
+   *     mobile: { x: 0, y: 0, width: 50, height: 15, customized: false } // Auto-stacks
+   *   },
+   *   zIndex: 2
+   * };
+   * ```
    */
   layouts: {
-    /** Desktop layout (always fully defined) */
-    desktop: {
-      /** Horizontal position in grid units (0 = left edge) */
-      x: number;
-
-      /** Vertical position in grid units (0 = top edge) */
-      y: number;
-
-      /** Width in grid units (e.g., 20 units at 2% = 40% of container) */
-      width: number;
-
-      /** Height in grid units (e.g., 8 units × 20px = 160px) */
-      height: number;
-    };
-
-    /** Mobile layout (optional/auto-generated) */
-    mobile: {
-      /** Horizontal position or null for auto-generation */
-      x: number | null;
-
-      /** Vertical position or null for auto-generation */
-      y: number | null;
-
-      /** Width or null for auto-generation (typically full-width) */
-      width: number | null;
-
-      /** Height or null for auto-generation */
-      height: number | null;
-
-      /**
-       * Whether user manually customized mobile layout
-       *
-       * **false**: Auto-generate from desktop layout
-       * - Full width (50 grid units)
-       * - Stacked vertically
-       * - Maintains desktop height
-       *
-       * **true**: Use explicit mobile x/y/width/height
-       * - User dragged/resized in mobile view
-       * - Ignore desktop layout
-       * - Persist custom positioning
-       */
-      customized: boolean;
-    };
+    /** Dynamic breakpoint layouts (keys match BreakpointConfig names) */
+    [breakpointName: string]: LayoutConfig;
   };
 
   /**
@@ -561,16 +771,26 @@ export interface GridState {
   activeCanvasId: string | null;
 
   /**
-   * Current viewport mode (desktop or mobile)
+   * Current viewport/breakpoint name
+   *
+   * **Dynamic**: Matches one of the breakpoint names from `breakpoints` config
+   * **Automatic**: Determined by ResizeObserver based on container width
+   * **Examples**: 'mobile', 'tablet', 'desktop', 'xs', 'sm', 'md', 'lg', 'xl'
    *
    * **Affects**:
-   * - Which layout is rendered (item.layouts.desktop vs item.layouts.mobile)
-   * - Grid calculations (responsive vs fixed)
-   * - Canvas width (full vs mobile viewport)
+   * - Which layout is rendered for each item
+   * - Auto-stacking behavior (if layoutMode='stack')
+   * - Layout inheritance (if layoutMode='inherit')
    *
-   * **Toggle**: User clicks viewport switcher button
+   * **Resolution**:
+   * Container width is compared against breakpoint minWidth values:
+   * - Width >= 1024px → 'desktop' (with default config)
+   * - Width >= 768px && < 1024px → 'tablet' (with 3-breakpoint config)
+   * - Width < 768px → 'mobile'
+   *
+   * **Backwards compatible**: Defaults to 'desktop' or 'mobile' with DEFAULT_BREAKPOINTS
    */
-  currentViewport: "desktop" | "mobile";
+  currentViewport: string;
 
   /**
    * Whether to show grid lines on canvases
@@ -580,6 +800,26 @@ export interface GridState {
    * **Rendering**: CSS background-image with grid pattern
    */
   showGrid: boolean;
+
+  /**
+   * Breakpoint configuration for responsive layouts
+   *
+   * **Purpose**: Defines all available breakpoints and their behavior
+   * **Source**: Set from component prop or defaults to DEFAULT_BREAKPOINTS
+   * **Normalized**: Always in full BreakpointConfig format (not SimpleBreakpointConfig)
+   *
+   * **Default** (backwards compatible):
+   * ```typescript
+   * {
+   *   mobile: { minWidth: 0, layoutMode: 'stack' },
+   *   desktop: { minWidth: 768, layoutMode: 'manual' }
+   * }
+   * ```
+   *
+   * **Per-instance**: Each grid-builder/grid-viewer can have different breakpoints
+   * **Reactive**: Changes trigger re-render and viewport recalculation
+   */
+  breakpoints: BreakpointConfig;
 }
 
 /**
@@ -743,17 +983,20 @@ export interface ViewerState {
   canvases: Record<string, ViewerCanvas>;
 
   /**
-   * Current viewport mode (desktop or mobile)
+   * Current viewport/breakpoint name
+   *
+   * **Dynamic**: Matches one of the breakpoint names from `breakpoints` config
+   * **Examples**: 'mobile', 'tablet', 'desktop', 'xs', 'sm', 'md', 'lg', 'xl'
    *
    * **Affects**:
-   * - Which layout is rendered (item.layouts.desktop vs item.layouts.mobile)
+   * - Which layout is rendered for each item (item.layouts[currentViewport])
    * - Responsive layout calculations
    * - Canvas width and item positioning
    *
    * **Auto-switching**: Can use ResizeObserver for container-based switching
    * **Manual override**: Can be set via props or API
    */
-  currentViewport: "desktop" | "mobile";
+  currentViewport: string;
 
   /**
    * Selected item ID (editing-only, always null in viewer mode)
@@ -781,6 +1024,145 @@ export interface ViewerState {
    * **Builder mode**: This field tracks which canvas is currently focused for editing
    */
   activeCanvasId: string | null;
+
+  /**
+   * Breakpoint configuration (instance-specific for multi-breakpoint demos)
+   *
+   * **Purpose**: Each grid-builder instance can have different breakpoint configs
+   * **Source**: Set from component prop or defaults to DEFAULT_BREAKPOINTS
+   *
+   * **Example**:
+   * - Demo 1 uses 3 breakpoints (mobile/tablet/desktop)
+   * - Demo 2 uses 5 breakpoints (xs/sm/md/lg/xl)
+   */
+  breakpoints: BreakpointConfig;
+}
+
+/**
+ * Instance View State Interface
+ * ===============================
+ *
+ * Instance-specific view state (per grid-builder instance).
+ * This is the state that should NOT be shared across instances with the same API key.
+ *
+ * ## Split State Architecture
+ *
+ * When multiple instances share the same API key, they share **data state** but
+ * maintain independent **view state**:
+ *
+ * **Shared Data State** (SharedDataState):
+ * - `canvases` - All grid items, positions, layouts, z-index
+ * - Stored in SharedStateRegistry, one per API key
+ * - Changes propagate to all instances sharing the same key
+ *
+ * **Instance View State** (InstanceViewState):
+ * - `currentViewport` - Current breakpoint display (mobile, tablet, desktop)
+ * - `selectedItemId`, `selectedCanvasId`, `activeCanvasId` - Selection state
+ * - `showGrid`, `breakpoints` - Display preferences
+ * - Unique per grid-builder instance
+ * - Changes only affect the specific instance
+ *
+ * ## Use Case: Multi-Viewport Demo
+ *
+ * Three grid-builder instances showing same layout at different viewports:
+ *
+ * ```typescript
+ * // All share API key 'multiViewportDemo'
+ * <grid-builder apiRef={{ key: 'multiViewportDemo' }} style="width: 375px" />  // Mobile
+ * <grid-builder apiRef={{ key: 'multiViewportDemo' }} style="width: 768px" />  // Tablet
+ * <grid-builder apiRef={{ key: 'multiViewportDemo' }} style="width: 1200px" /> // Desktop
+ *
+ * // Shared state: All three show same items/positions (canvases)
+ * // Instance state: Each has different currentViewport based on container width
+ * // Result: Move item in desktop → all three instances update, each displaying at their viewport
+ * ```
+ *
+ * ## Why Split State?
+ *
+ * **Problem with full state sharing**:
+ * When instances share all state including `currentViewport`, they fight over the value:
+ * - Mobile (375px) sets `currentViewport = 'mobile'`
+ * - Tablet (768px) sets `currentViewport = 'tablet'`
+ * - Desktop (1200px) sets `currentViewport = 'desktop'`
+ * - Last one to update wins → all instances render at that viewport ❌
+ *
+ * **Solution with split state**:
+ * Each instance has its own `currentViewport` that responds to its container width:
+ * - Mobile instance always shows 'mobile' viewport
+ * - Tablet instance always shows 'tablet' viewport
+ * - Desktop instance always shows 'desktop' viewport
+ * - All share the same `canvases` data ✅
+ */
+export interface InstanceViewState {
+  /**
+   * Current viewport/breakpoint name for this instance
+   *
+   * **Instance-specific**: Each grid-builder has its own viewport
+   * **Container-based**: Automatically updated by ResizeObserver watching container width
+   * **Examples**: 'mobile', 'tablet', 'desktop', 'xs', 'sm', 'md', 'lg', 'xl'
+   *
+   * **Affects**:
+   * - Which layout is rendered for each item (item.layouts[currentViewport])
+   * - Auto-stacking behavior (if layoutMode='stack')
+   * - Layout inheritance resolution (if layoutMode='inherit')
+   */
+  currentViewport: string;
+
+  /**
+   * Currently selected item ID (editing UI state)
+   *
+   * **Instance-specific**: Selection is per grid-builder instance
+   * **Use cases**:
+   * - Highlight selected item with border/shadow
+   * - Show config panel for selected item
+   * - Enable delete/duplicate actions
+   *
+   * **Deselection**: Set to null when clicking canvas background
+   */
+  selectedItemId: string | null;
+
+  /**
+   * Canvas containing selected item (editing UI state)
+   *
+   * **Instance-specific**: Each instance tracks its own selection
+   * **Paired with**: selectedItemId (both set together or both null)
+   */
+  selectedCanvasId: string | null;
+
+  /**
+   * Currently active/focused canvas (editing UI state)
+   *
+   * **Instance-specific**: Each instance has its own active canvas
+   * **Use cases**:
+   * - Visual feedback (highlight active canvas)
+   * - Canvas-specific settings panel
+   * - Multi-section editing context
+   */
+  activeCanvasId: string | null;
+
+  /**
+   * Whether to show grid lines (display preference)
+   *
+   * **Instance-specific**: Each instance can toggle grid independently
+   * **Visual aid**: Helps align items during editing
+   * **Default**: true (grid visible)
+   */
+  showGrid: boolean;
+
+  /**
+   * Breakpoint configuration (instance-specific)
+   *
+   * **Instance-specific**: Each instance can have different breakpoint configs
+   * **Source**: Set from component prop or defaults to DEFAULT_BREAKPOINTS
+   * **Normalized**: Always in full BreakpointConfig format
+   *
+   * **Why instance-specific**:
+   * - Different demos may use different breakpoint configurations
+   * - 3-breakpoint demo uses mobile/tablet/desktop
+   * - 5-breakpoint demo uses xs/sm/md/lg/xl
+   * - Each instance needs its own config for proper viewport detection
+   */
+  breakpoints: BreakpointConfig;
 }
 
 /**
@@ -803,6 +1185,7 @@ const defaultInitialState: GridState = {
   activeCanvasId: null,
   currentViewport: "desktop",
   showGrid: true,
+  breakpoints: DEFAULT_BREAKPOINTS,
 };
 
 /**
@@ -858,6 +1241,10 @@ const debug = createDebugLogger("state-manager");
 export class StateManager {
   /**
    * Reactive state proxy (mutate to trigger updates)
+   *
+   * **Split state architecture**:
+   * - When apiKey provided: Merges shared data store + instance view store via Proxy
+   * - When no apiKey: Single local store (backward compatible)
    *
    * **Access pattern**:
    * ```typescript
@@ -916,35 +1303,254 @@ export class StateManager {
   private initialState: GridState;
 
   /**
+   * API key for state sharing (optional)
+   *
+   * **Purpose**: When provided, multiple instances with same key share data state
+   * **Default**: null (instance-specific state, no sharing)
+   */
+  private apiKey: string | null = null;
+
+  /**
+   * Instance ID for reference counting
+   *
+   * **Purpose**: Track this instance in SharedStateRegistry for cleanup
+   * **Generated**: Unique ID per StateManager instance
+   */
+  private instanceId: string | null = null;
+
+  /**
+   * Shared data store (when apiKey provided)
+   *
+   * **Contains**: canvases (items, positions, layouts, z-index)
+   * **Shared**: All instances with same apiKey share this store
+   * **Source**: SharedStateRegistry
+   */
+  private sharedStore: any = null;
+
+  /**
+   * Instance view store (when apiKey provided)
+   *
+   * **Contains**: currentViewport, selectedItemId, showGrid, etc.
+   * **Instance-specific**: Each instance has its own view store
+   * **Source**: Created locally per instance
+   */
+  private instanceStore: any = null;
+
+  /**
    * Create new StateManager instance
+   *
+   * **New: Split State Architecture**
+   * @param apiKey - Optional API key for state sharing (multi-instance support)
+   * @param instanceId - Optional instance ID for reference counting
    * @param initialState - Optional custom initial state (for import/restore)
    * @example
    * ```typescript
-   * // Empty state (default)
+   * // Single instance (backward compatible)
    * const manager = new StateManager();
+   *
+   * // Multi-instance with shared state
+   * const manager1 = new StateManager('demoAPI', 'instance-1');
+   * const manager2 = new StateManager('demoAPI', 'instance-2'); // Shares data with manager1
    *
    * // Restore from saved state
    * const savedState = JSON.parse(localStorage.getItem('grid-state'));
-   * const manager = new StateManager(savedState);
+   * const manager = new StateManager('myAPI', 'instance-1', savedState);
    * ```
    */
-  constructor(initialState?: Partial<GridState>) {
+  constructor(
+    apiKey?: string | null,
+    instanceId?: string | null,
+    initialState?: Partial<GridState>,
+  ) {
+    // Handle backward compatibility: if first param is object, it's initialState (old signature)
+    if (typeof apiKey === "object" && apiKey !== null) {
+      initialState = apiKey as any;
+      apiKey = null;
+      instanceId = null;
+    }
+
+    this.apiKey = apiKey || null;
+    this.instanceId =
+      instanceId ||
+      `instance-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+
     // Merge custom initial state with defaults
     const fullInitialState: GridState = {
       ...defaultInitialState,
       ...initialState,
     };
 
-    // Create StencilJS reactive store
-    const { state, onChange, dispose } =
-      createStore<GridState>(fullInitialState);
+    if (this.apiKey) {
+      // **Split state mode**: Shared data + instance view state
+      debug.log(
+        `Creating StateManager with split state (apiKey: ${this.apiKey}, instanceId: ${this.instanceId})`,
+      );
 
-    this.state = state;
-    this.onChange = onChange;
-    this.dispose = dispose;
+      // Get or create shared data store from registry
+      const registryEntry = sharedStateRegistry.getOrCreate(this.apiKey, {
+        canvases: fullInitialState.canvases,
+      });
+      this.sharedStore = registryEntry.store;
+
+      // Register this instance for reference counting
+      sharedStateRegistry.addInstance(this.apiKey, this.instanceId);
+
+      // Create instance-specific view store
+      const {
+        state: viewState,
+        onChange: viewOnChange,
+        dispose: viewDispose,
+      } = createStore<InstanceViewState>({
+        currentViewport: fullInitialState.currentViewport,
+        selectedItemId: fullInitialState.selectedItemId,
+        selectedCanvasId: fullInitialState.selectedCanvasId,
+        activeCanvasId: fullInitialState.activeCanvasId,
+        showGrid: fullInitialState.showGrid,
+        breakpoints: fullInitialState.breakpoints,
+      });
+
+      this.instanceStore = {
+        state: viewState,
+        onChange: viewOnChange,
+        dispose: viewDispose,
+      };
+
+      // Create unified state proxy that merges both stores
+      this.state = this.createStateProxy();
+
+      // Create unified onChange handler
+      this.onChange = this.createUnifiedOnChangeHandler();
+
+      // Create unified dispose handler
+      const originalDispose = viewDispose;
+      this.dispose = () => {
+        // Dispose instance view store
+        originalDispose();
+
+        // Unregister from shared state registry
+        if (this.apiKey && this.instanceId) {
+          sharedStateRegistry.removeInstance(this.apiKey, this.instanceId);
+        }
+      };
+    } else {
+      // **Single store mode**: Backward compatible behavior
+      debug.log(
+        `Creating StateManager with single store (backward compatible mode)`,
+      );
+
+      // Create StencilJS reactive store (original behavior)
+      const { state, onChange, dispose } =
+        createStore<GridState>(fullInitialState);
+
+      this.state = state;
+      this.onChange = onChange;
+      this.dispose = dispose;
+    }
 
     // Store initial state for reset() (deep clone to prevent mutations)
     this.initialState = JSON.parse(JSON.stringify(fullInitialState));
+  }
+
+  /**
+   * Create state proxy that merges shared data store + instance view store
+   *
+   * **Purpose**: Provide unified GridState interface that routes reads/writes
+   * to the appropriate store (shared or instance)
+   *
+   * **Shared properties**: canvases
+   * **Instance properties**: currentViewport, selectedItemId, selectedCanvasId, activeCanvasId, showGrid, breakpoints
+   */
+  private createStateProxy(): GridState {
+    if (!this.sharedStore || !this.instanceStore) {
+      throw new Error("createStateProxy called without shared/instance stores");
+    }
+
+    return new Proxy({} as GridState, {
+      get: (_target, prop) => {
+        // Shared data properties
+        if (prop === "canvases") {
+          return this.sharedStore.state.canvases;
+        }
+
+        // Instance view properties
+        if (
+          [
+            "currentViewport",
+            "selectedItemId",
+            "selectedCanvasId",
+            "activeCanvasId",
+            "showGrid",
+            "breakpoints",
+          ].includes(prop as string)
+        ) {
+          return this.instanceStore.state[prop];
+        }
+
+        return undefined;
+      },
+      set: (_target, prop, value) => {
+        // Shared data properties
+        if (prop === "canvases") {
+          this.sharedStore.state.canvases = value;
+          return true;
+        }
+
+        // Instance view properties
+        if (
+          [
+            "currentViewport",
+            "selectedItemId",
+            "selectedCanvasId",
+            "activeCanvasId",
+            "showGrid",
+            "breakpoints",
+          ].includes(prop as string)
+        ) {
+          this.instanceStore.state[prop] = value;
+          return true;
+        }
+
+        return false;
+      },
+    });
+  }
+
+  /**
+   * Create unified onChange handler that subscribes to both stores
+   *
+   * **Purpose**: Allow components to subscribe to state changes from either store
+   * using a single onChange() method
+   */
+  private createUnifiedOnChangeHandler() {
+    if (!this.sharedStore || !this.instanceStore) {
+      throw new Error(
+        "createUnifiedOnChangeHandler called without shared/instance stores",
+      );
+    }
+
+    return (key: string, callback: Function) => {
+      // Subscribe to shared store for 'canvases'
+      if (key === "canvases") {
+        return this.sharedStore.onChange(key, callback);
+      }
+
+      // Subscribe to instance store for view properties
+      if (
+        [
+          "currentViewport",
+          "selectedItemId",
+          "selectedCanvasId",
+          "activeCanvasId",
+          "showGrid",
+          "breakpoints",
+        ].includes(key)
+      ) {
+        return this.instanceStore.onChange(key, callback);
+      }
+
+      // Unknown key - no-op
+      return () => {};
+    };
   }
 
   /**
@@ -1704,7 +2310,7 @@ export class StateManager {
         type: itemData.type || "unknown",
         name: itemData.name || "Unnamed",
         layouts: itemData.layouts || {
-          desktop: { x: 0, y: 0, width: 20, height: 10 },
+          desktop: { x: 0, y: 0, width: 20, height: 10, customized: true },
           mobile: {
             x: null,
             y: null,

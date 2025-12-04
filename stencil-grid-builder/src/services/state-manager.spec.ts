@@ -82,7 +82,7 @@ describe("state-manager", () => {
         type: "text",
         name: "Test Item",
         layouts: {
-          desktop: { x: 0, y: 0, width: 10, height: 6 },
+          desktop: { x: 0, y: 0, width: 10, height: 6, customized: true },
           mobile: {
             x: null,
             y: null,
@@ -107,7 +107,7 @@ describe("state-manager", () => {
         type: "text",
         name: "Test Item",
         layouts: {
-          desktop: { x: 0, y: 0, width: 10, height: 6 },
+          desktop: { x: 0, y: 0, width: 10, height: 6, customized: true },
           mobile: {
             x: null,
             y: null,
@@ -137,7 +137,7 @@ describe("state-manager", () => {
         type: "text",
         name: "Test Item",
         layouts: {
-          desktop: { x: 0, y: 0, width: 10, height: 6 },
+          desktop: { x: 0, y: 0, width: 10, height: 6, customized: true },
           mobile: {
             x: null,
             y: null,
@@ -166,7 +166,7 @@ describe("state-manager", () => {
         type: "text",
         name: "Test Item 2",
         layouts: {
-          desktop: { x: 10, y: 0, width: 10, height: 6 },
+          desktop: { x: 10, y: 0, width: 10, height: 6, customized: true },
           mobile: {
             x: null,
             y: null,
@@ -203,7 +203,7 @@ describe("state-manager", () => {
         type: "text",
         name: "Test Item",
         layouts: {
-          desktop: { x: 0, y: 0, width: 10, height: 6 },
+          desktop: { x: 0, y: 0, width: 10, height: 6, customized: true },
           mobile: {
             x: null,
             y: null,
@@ -227,7 +227,7 @@ describe("state-manager", () => {
     it("should update nested properties", () => {
       updateItem("canvas1", "test-1", {
         layouts: {
-          desktop: { x: 5, y: 5, width: 15, height: 10 },
+          desktop: { x: 5, y: 5, width: 15, height: 10, customized: true },
           mobile: {
             x: null,
             y: null,
@@ -262,7 +262,7 @@ describe("state-manager", () => {
         type: "text",
         name: "Test Item",
         layouts: {
-          desktop: { x: 0, y: 0, width: 10, height: 6 },
+          desktop: { x: 0, y: 0, width: 10, height: 6, customized: true },
           mobile: {
             x: null,
             y: null,
@@ -309,7 +309,7 @@ describe("state-manager", () => {
         type: "text",
         name: "Test Item",
         layouts: {
-          desktop: { x: 0, y: 0, width: 10, height: 6 },
+          desktop: { x: 0, y: 0, width: 10, height: 6, customized: true },
           mobile: {
             x: null,
             y: null,
@@ -382,7 +382,7 @@ describe("state-manager", () => {
             type: "header",
             name: "Header",
             layouts: {
-              desktop: { x: 0, y: 0, width: 20, height: 8 },
+              desktop: { x: 0, y: 0, width: 20, height: 8, customized: true },
               mobile: {
                 x: null,
                 y: null,
@@ -397,7 +397,7 @@ describe("state-manager", () => {
             type: "text",
             name: "Text",
             layouts: {
-              desktop: { x: 0, y: 10, width: 20, height: 10 },
+              desktop: { x: 0, y: 10, width: 20, height: 10, customized: true },
               mobile: {
                 x: null,
                 y: null,
@@ -412,7 +412,7 @@ describe("state-manager", () => {
             type: "button",
             name: "Button",
             layouts: {
-              desktop: { x: 5, y: 5, width: 10, height: 4 },
+              desktop: { x: 5, y: 5, width: 10, height: 4, customized: true },
               mobile: {
                 x: null,
                 y: null,
@@ -748,7 +748,7 @@ describe("state-manager", () => {
         type: "header",
         name: "Header Item",
         layouts: {
-          desktop: { x: 1, y: 1, width: 10, height: 6 },
+          desktop: { x: 1, y: 1, width: 10, height: 6, customized: true },
           mobile: { x: 1, y: 1, width: 14, height: 5, customized: false },
         },
         config: {},
@@ -772,7 +772,7 @@ describe("state-manager", () => {
         type: "header",
         name: "Header Item",
         layouts: {
-          desktop: { x: 1, y: 1, width: 10, height: 6 },
+          desktop: { x: 1, y: 1, width: 10, height: 6, customized: true },
           mobile: { x: 1, y: 1, width: 14, height: 5, customized: false },
         },
         config: {},
@@ -801,7 +801,7 @@ describe("state-manager", () => {
         type: "header",
         name: "Header Item",
         layouts: {
-          desktop: { x: 1, y: 1, width: 10, height: 6 },
+          desktop: { x: 1, y: 1, width: 10, height: 6, customized: true },
           mobile: { x: 1, y: 1, width: 14, height: 5, customized: false },
         },
         config: {},
