@@ -29,12 +29,12 @@
  * 7. Dev vs Prod - Development vs production mode behavior
  */
 
-import { html } from 'lit-html';
-import { unsafeHTML } from 'lit-html/directives/unsafe-html.js';
-import { action } from '@storybook/addon-actions';
+import { html } from "lit-html";
+import { unsafeHTML } from "lit-html/directives/unsafe-html.js";
+import { action } from "@storybook/addon-actions";
 
 export default {
-  title: 'Components/Error Boundary',
+  title: "Components/Error Boundary",
   parameters: {
     docs: {
       description: {
@@ -69,9 +69,12 @@ Error boundaries catch JavaScript errors in child components, preventing entire 
  * This allows the component to render initially, then error during lifecycle
  * (Exported for potential use in future error boundary demonstrations)
  */
-export const ThrowingComponent = ({ delay = 0, message = 'Component error' }) => {
-  const div = document.createElement('div');
-  div.textContent = 'Loading...';
+export const ThrowingComponent = ({
+  delay = 0,
+  message = "Component error",
+}) => {
+  const div = document.createElement("div");
+  div.textContent = "Loading...";
 
   // Throw error after delay
   setTimeout(() => {
@@ -87,15 +90,16 @@ export const ThrowingComponent = ({ delay = 0, message = 'Component error' }) =>
  * (Exported for potential use in future error boundary demonstrations)
  */
 export const InteractiveThrowingComponent = () => {
-  const div = document.createElement('div');
-  div.style.cssText = 'padding: 20px; background: #f0f0f0; border-radius: 4px;';
+  const div = document.createElement("div");
+  div.style.cssText = "padding: 20px; background: #f0f0f0; border-radius: 4px;";
 
-  const button = document.createElement('button');
-  button.textContent = 'Click to trigger error';
-  button.style.cssText = 'padding: 8px 16px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer;';
+  const button = document.createElement("button");
+  button.textContent = "Click to trigger error";
+  button.style.cssText =
+    "padding: 8px 16px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer;";
 
   button.onclick = () => {
-    throw new Error('Button click error');
+    throw new Error("Button click error");
   };
 
   div.appendChild(button);
@@ -106,9 +110,11 @@ export const InteractiveThrowingComponent = () => {
  * Normal working component (for comparison)
  */
 const WorkingComponent = () => {
-  const div = document.createElement('div');
-  div.style.cssText = 'padding: 20px; background: #d4edda; color: #155724; border: 1px solid #c3e6cb; border-radius: 4px;';
-  div.innerHTML = '<strong>✓ Working Component</strong><p style="margin: 8px 0 0 0;">This component is rendering normally.</p>';
+  const div = document.createElement("div");
+  div.style.cssText =
+    "padding: 20px; background: #d4edda; color: #155724; border: 1px solid #c3e6cb; border-radius: 4px;";
+  div.innerHTML =
+    '<strong>✓ Working Component</strong><p style="margin: 8px 0 0 0;">This component is rendering normally.</p>';
   return div;
 };
 
@@ -136,21 +142,24 @@ const WorkingComponent = () => {
  * - ✅ User keeps working, doesn't lose progress
  */
 export const Comparison = () => {
-  const container = document.createElement('div');
-  container.style.cssText = 'padding: 20px;';
+  const container = document.createElement("div");
+  container.style.cssText = "padding: 20px;";
 
-  const header = document.createElement('h2');
-  header.textContent = 'Scenario: Component Error - With vs Without Error Boundary';
+  const header = document.createElement("h2");
+  header.textContent =
+    "Scenario: Component Error - With vs Without Error Boundary";
   container.appendChild(header);
 
-  const description = document.createElement('p');
-  description.textContent = 'This demonstrates what happens when a component fails. Click "Trigger Error" to simulate a component crash.';
-  description.style.cssText = 'color: #666; margin-bottom: 24px;';
+  const description = document.createElement("p");
+  description.textContent =
+    'This demonstrates what happens when a component fails. Click "Trigger Error" to simulate a component crash.';
+  description.style.cssText = "color: #666; margin-bottom: 24px;";
   container.appendChild(description);
 
   // Side-by-side comparison grid
-  const grid = document.createElement('div');
-  grid.style.cssText = 'display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 16px;';
+  const grid = document.createElement("div");
+  grid.style.cssText =
+    "display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 16px;";
 
   // LEFT: Without error boundary
   const withoutHTML = `
@@ -215,15 +224,17 @@ export const Comparison = () => {
   // Setup error triggers after mount
   setTimeout(() => {
     // Without boundary - crashes entire container
-    const triggerWithout = document.getElementById('trigger-error-without');
+    const triggerWithout = document.getElementById("trigger-error-without");
     if (triggerWithout) {
-      triggerWithout.addEventListener('click', () => {
+      triggerWithout.addEventListener("click", () => {
         // Show button feedback
-        (triggerWithout as HTMLButtonElement).textContent = 'Error Triggered!';
+        (triggerWithout as HTMLButtonElement).textContent = "Error Triggered!";
         (triggerWithout as HTMLButtonElement).disabled = true;
 
         setTimeout(() => {
-          const container = document.getElementById('without-boundary-container');
+          const container = document.getElementById(
+            "without-boundary-container",
+          );
           if (container) {
             // Simulate complete crash - replace with error message
             container.innerHTML = `
@@ -245,33 +256,39 @@ export const Comparison = () => {
     }
 
     // With boundary - only Component B fails
-    const triggerWith = document.getElementById('trigger-error-with');
+    const triggerWith = document.getElementById("trigger-error-with");
     if (triggerWith) {
-      triggerWith.addEventListener('click', async () => {
+      triggerWith.addEventListener("click", async () => {
         // Show button feedback
-        (triggerWith as HTMLButtonElement).textContent = 'Triggering Error...';
-        (triggerWith as HTMLButtonElement).style.background = '#ffc107';
-        (triggerWith as HTMLButtonElement).style.color = '#000';
+        (triggerWith as HTMLButtonElement).textContent = "Triggering Error...";
+        (triggerWith as HTMLButtonElement).style.background = "#ffc107";
+        (triggerWith as HTMLButtonElement).style.color = "#000";
 
         setTimeout(async () => {
-          const errorBoundary = document.querySelector('error-boundary[error-boundary="comparison-demo"]');
+          const errorBoundary = document.querySelector(
+            'error-boundary[error-boundary="comparison-demo"]',
+          );
 
           if (errorBoundary) {
             try {
               // Use the public simulateError method
               await (errorBoundary as any).simulateError(
-                new Error('Analytics widget: Cannot read property "metrics" of undefined')
+                new Error(
+                  'Analytics widget: Cannot read property "metrics" of undefined',
+                ),
               );
 
               // Update button to show it was triggered
-              (triggerWith as HTMLButtonElement).textContent = 'Error Triggered!';
-              (triggerWith as HTMLButtonElement).style.background = '#28a745';
-              (triggerWith as HTMLButtonElement).style.color = '#fff';
+              (triggerWith as HTMLButtonElement).textContent =
+                "Error Triggered!";
+              (triggerWith as HTMLButtonElement).style.background = "#28a745";
+              (triggerWith as HTMLButtonElement).style.color = "#fff";
               (triggerWith as HTMLButtonElement).disabled = true;
             } catch (e) {
-              console.error('Error triggering error boundary:', e);
-              (triggerWith as HTMLButtonElement).textContent = 'Failed to Trigger';
-              (triggerWith as HTMLButtonElement).style.background = '#dc3545';
+              console.error("Error triggering error boundary:", e);
+              (triggerWith as HTMLButtonElement).textContent =
+                "Failed to Trigger";
+              (triggerWith as HTMLButtonElement).style.background = "#dc3545";
             }
           }
         }, 300);
@@ -303,21 +320,23 @@ export const Comparison = () => {
  */
 export const Basic = () => {
   // Create a container with multiple components (some fail, some work)
-  const container = document.createElement('div');
-  container.style.cssText = 'padding: 20px; display: flex; flex-direction: column; gap: 16px;';
+  const container = document.createElement("div");
+  container.style.cssText =
+    "padding: 20px; display: flex; flex-direction: column; gap: 16px;";
 
   // Header
-  const header = document.createElement('h2');
-  header.textContent = 'Scenario 1: Basic Error Boundary';
+  const header = document.createElement("h2");
+  header.textContent = "Scenario 1: Basic Error Boundary";
   container.appendChild(header);
 
-  const description = document.createElement('p');
-  description.textContent = 'The error boundary catches component errors and shows default fallback UI with a retry button. Working components are unaffected.';
-  description.style.cssText = 'color: #666; margin-bottom: 16px;';
+  const description = document.createElement("p");
+  description.textContent =
+    "The error boundary catches component errors and shows default fallback UI with a retry button. Working components are unaffected.";
+  description.style.cssText = "color: #666; margin-bottom: 16px;";
   container.appendChild(description);
 
   // Working component (no error boundary needed)
-  const workingWrapper = document.createElement('div');
+  const workingWrapper = document.createElement("div");
   workingWrapper.appendChild(WorkingComponent());
   container.appendChild(workingWrapper);
 
@@ -334,23 +353,25 @@ export const Basic = () => {
     </error-boundary>
   `;
 
-  const errorWrapper = document.createElement('div');
+  const errorWrapper = document.createElement("div");
   errorWrapper.innerHTML = errorBoundaryHTML;
   container.appendChild(errorWrapper);
 
   // Trigger error after component mounts
   setTimeout(async () => {
-    const errorBoundary = errorWrapper.querySelector('error-boundary[error-boundary="basic-demo"]');
+    const errorBoundary = errorWrapper.querySelector(
+      'error-boundary[error-boundary="basic-demo"]',
+    );
     if (errorBoundary) {
       // Use the public simulateError method
       await (errorBoundary as any).simulateError(
-        new Error('Failed to load image: Invalid URL format')
+        new Error("Failed to load image: Invalid URL format"),
       );
     }
   }, 500);
 
   // Another working component (shows isolation)
-  const workingWrapper2 = document.createElement('div');
+  const workingWrapper2 = document.createElement("div");
   workingWrapper2.appendChild(WorkingComponent());
   container.appendChild(workingWrapper2);
 
@@ -384,21 +405,22 @@ export const Basic = () => {
  * - Brand-specific error messaging
  */
 export const CustomFallback = () => {
-  const container = document.createElement('div');
-  container.style.cssText = 'padding: 20px;';
+  const container = document.createElement("div");
+  container.style.cssText = "padding: 20px;";
 
-  const header = document.createElement('h2');
-  header.textContent = 'Scenario 2: Custom Fallback UI';
+  const header = document.createElement("h2");
+  header.textContent = "Scenario 2: Custom Fallback UI";
   container.appendChild(header);
 
-  const description = document.createElement('p');
-  description.textContent = 'Error boundaries support custom fallback components for brand-specific error messaging and UI.';
-  description.style.cssText = 'color: #666; margin-bottom: 16px;';
+  const description = document.createElement("p");
+  description.textContent =
+    "Error boundaries support custom fallback components for brand-specific error messaging and UI.";
+  description.style.cssText = "color: #666; margin-bottom: 16px;";
   container.appendChild(description);
 
   // Custom fallback function (passed as a function that returns HTMLElement)
   const customFallback = (error: Error, errorInfo: any, retry: () => void) => {
-    const fallbackDiv = document.createElement('div');
+    const fallbackDiv = document.createElement("div");
     fallbackDiv.style.cssText = `
       padding: 24px;
       background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -413,10 +435,10 @@ export const CustomFallback = () => {
         <h3 style="margin: 0; font-size: 20px;">Oops! Something went wrong</h3>
       </div>
       <p style="margin: 0 0 12px 0; opacity: 0.9; font-size: 14px;">
-        ${error.message || 'An unexpected error occurred'}
+        ${error.message || "An unexpected error occurred"}
       </p>
       <p style="margin: 0 0 16px 0; opacity: 0.7; font-size: 12px;">
-        Error boundary: ${errorInfo.errorBoundary || 'unknown'}
+        Error boundary: ${errorInfo.errorBoundary || "unknown"}
       </p>
       <button
         id="custom-retry-btn"
@@ -435,9 +457,9 @@ export const CustomFallback = () => {
     `;
 
     // Add retry handler
-    const retryBtn = fallbackDiv.querySelector('#custom-retry-btn');
+    const retryBtn = fallbackDiv.querySelector("#custom-retry-btn");
     if (retryBtn) {
-      retryBtn.addEventListener('click', retry);
+      retryBtn.addEventListener("click", retry);
     }
 
     return fallbackDiv;
@@ -456,19 +478,19 @@ export const CustomFallback = () => {
     </error-boundary>
   `;
 
-  const errorWrapper = document.createElement('div');
+  const errorWrapper = document.createElement("div");
   errorWrapper.innerHTML = errorBoundaryHTML;
   container.appendChild(errorWrapper);
 
   // Apply custom fallback after mount
   setTimeout(async () => {
-    const errorBoundary = errorWrapper.querySelector('error-boundary');
+    const errorBoundary = errorWrapper.querySelector("error-boundary");
     if (errorBoundary) {
       (errorBoundary as any).errorFallback = customFallback;
 
       // Trigger error using public method
       await (errorBoundary as any).simulateError(
-        new Error('WebSocket connection failed: ECONNREFUSED')
+        new Error("WebSocket connection failed: ECONNREFUSED"),
       );
     }
   }, 500);
@@ -525,24 +547,24 @@ export const CustomFallback = () => {
  * - Storybook Actions integration
  */
 export const Events = () => {
-  const container = document.createElement('div');
-  container.style.cssText = 'padding: 20px;';
+  const container = document.createElement("div");
+  container.style.cssText = "padding: 20px;";
 
-  const header = document.createElement('h2');
-  header.textContent = 'Scenario 3: Error Events & Logging';
+  const header = document.createElement("h2");
+  header.textContent = "Scenario 3: Error Events & Logging";
   container.appendChild(header);
 
-  const description = document.createElement('p');
+  const description = document.createElement("p");
   description.innerHTML = `
     Error boundaries emit events for integration with logging systems like Sentry, LogRocket, or Datadog.<br><br>
     <strong>📊 Open the "Actions" tab at the bottom of this page</strong> to see detailed error event logs with full context.<br>
     Each error event includes: error message, severity, recoverable status, error boundary identifier, timestamp, and stack trace.
   `;
-  description.style.cssText = 'color: #666; margin-bottom: 16px;';
+  description.style.cssText = "color: #666; margin-bottom: 16px;";
   container.appendChild(description);
 
   // Instructions callout
-  const callout = document.createElement('div');
+  const callout = document.createElement("div");
   callout.style.cssText = `
     padding: 16px;
     background: #e3f2fd;
@@ -575,20 +597,22 @@ export const Events = () => {
     </error-boundary>
   `;
 
-  const errorWrapper = document.createElement('div');
+  const errorWrapper = document.createElement("div");
   errorWrapper.innerHTML = errorBoundaryHTML;
   container.appendChild(errorWrapper);
 
   // Setup event listener after mount
   setTimeout(() => {
-    const errorBoundary = document.querySelector('error-boundary#events-error-boundary');
-    const triggerBtn = document.querySelector('#trigger-error-btn');
+    const errorBoundary = document.querySelector(
+      "error-boundary#events-error-boundary",
+    );
+    const triggerBtn = document.querySelector("#trigger-error-btn");
 
     if (errorBoundary && triggerBtn) {
       let errorCount = 0; // Counter for unique error IDs
 
       // Listen for error events
-      errorBoundary.addEventListener('error', ((event: CustomEvent) => {
+      errorBoundary.addEventListener("error", ((event: CustomEvent) => {
         const { error, errorInfo, severity, recoverable } = event.detail;
         errorCount++; // Increment for each error
 
@@ -607,20 +631,20 @@ export const Events = () => {
         });
 
         // Log to console (for developers debugging)
-        console.group('🔴 Error Boundary Event');
-        console.error('Error:', error);
-        console.log('Error Info:', errorInfo);
-        console.log('Severity:', severity);
-        console.log('Recoverable:', recoverable);
+        console.group("🔴 Error Boundary Event");
+        console.error("Error:", error);
+        console.log("Error Info:", errorInfo);
+        console.log("Severity:", severity);
+        console.log("Recoverable:", recoverable);
         console.groupEnd();
       }) as EventListener);
 
       // Trigger button handler
-      triggerBtn.addEventListener('click', async () => {
+      triggerBtn.addEventListener("click", async () => {
         // Show button feedback
-        (triggerBtn as HTMLButtonElement).textContent = 'Triggering Error...';
-        (triggerBtn as HTMLButtonElement).style.background = '#ffc107';
-        (triggerBtn as HTMLButtonElement).style.color = '#000';
+        (triggerBtn as HTMLButtonElement).textContent = "Triggering Error...";
+        (triggerBtn as HTMLButtonElement).style.background = "#ffc107";
+        (triggerBtn as HTMLButtonElement).style.color = "#000";
         (triggerBtn as HTMLButtonElement).disabled = true;
 
         setTimeout(async () => {
@@ -628,25 +652,26 @@ export const Events = () => {
             try {
               // Use the public simulateError method
               await (errorBoundary as any).simulateError(
-                new Error('User-triggered error for event demonstration')
+                new Error("User-triggered error for event demonstration"),
               );
 
               // Update button to show it was triggered
-              (triggerBtn as HTMLButtonElement).textContent = 'Error Logged! ✓';
-              (triggerBtn as HTMLButtonElement).style.background = '#28a745';
-              (triggerBtn as HTMLButtonElement).style.color = '#fff';
+              (triggerBtn as HTMLButtonElement).textContent = "Error Logged! ✓";
+              (triggerBtn as HTMLButtonElement).style.background = "#28a745";
+              (triggerBtn as HTMLButtonElement).style.color = "#fff";
 
               // Reset button after 1 second so user can trigger more errors
               setTimeout(() => {
-                (triggerBtn as HTMLButtonElement).textContent = 'Trigger Error';
-                (triggerBtn as HTMLButtonElement).style.background = '#dc3545';
-                (triggerBtn as HTMLButtonElement).style.color = 'white';
+                (triggerBtn as HTMLButtonElement).textContent = "Trigger Error";
+                (triggerBtn as HTMLButtonElement).style.background = "#dc3545";
+                (triggerBtn as HTMLButtonElement).style.color = "white";
                 (triggerBtn as HTMLButtonElement).disabled = false;
               }, 1000);
             } catch (e) {
-              console.error('Error triggering error boundary:', e);
-              (triggerBtn as HTMLButtonElement).textContent = 'Failed to Trigger';
-              (triggerBtn as HTMLButtonElement).style.background = '#dc3545';
+              console.error("Error triggering error boundary:", e);
+              (triggerBtn as HTMLButtonElement).textContent =
+                "Failed to Trigger";
+              (triggerBtn as HTMLButtonElement).style.background = "#dc3545";
               (triggerBtn as HTMLButtonElement).disabled = false;
             }
           }
@@ -696,21 +721,23 @@ export const Events = () => {
  * - Per-component recovery configuration
  */
 export const Degradation = () => {
-  const container = document.createElement('div');
-  container.style.cssText = 'padding: 20px;';
+  const container = document.createElement("div");
+  container.style.cssText = "padding: 20px;";
 
-  const header = document.createElement('h2');
-  header.textContent = 'Scenario 4: Graceful Degradation Strategies';
+  const header = document.createElement("h2");
+  header.textContent = "Scenario 4: Graceful Degradation Strategies";
   container.appendChild(header);
 
-  const description = document.createElement('p');
-  description.textContent = 'Different recovery strategies determine how the app responds to errors. Compare graceful vs ignore vs strict.';
-  description.style.cssText = 'color: #666; margin-bottom: 16px;';
+  const description = document.createElement("p");
+  description.textContent =
+    "Different recovery strategies determine how the app responds to errors. Compare graceful vs ignore vs strict.";
+  description.style.cssText = "color: #666; margin-bottom: 16px;";
   container.appendChild(description);
 
   // Strategy comparison grid
-  const grid = document.createElement('div');
-  grid.style.cssText = 'display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 16px; margin-bottom: 16px;';
+  const grid = document.createElement("div");
+  grid.style.cssText =
+    "display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 16px; margin-bottom: 16px;";
 
   // Graceful strategy
   const gracefulHTML = `
@@ -771,26 +798,32 @@ export const Degradation = () => {
   // Trigger errors after mount
   setTimeout(async () => {
     // Graceful strategy
-    const gracefulBoundary = container.querySelector('error-boundary[error-boundary="graceful-demo"]');
+    const gracefulBoundary = container.querySelector(
+      'error-boundary[error-boundary="graceful-demo"]',
+    );
     if (gracefulBoundary) {
       await (gracefulBoundary as any).simulateError(
-        new Error('Failed to fetch tweets: Rate limit exceeded')
+        new Error("Failed to fetch tweets: Rate limit exceeded"),
       );
     }
 
     // Ignore strategy
-    const ignoreBoundary = container.querySelector('error-boundary[error-boundary="ignore-demo"]');
+    const ignoreBoundary = container.querySelector(
+      'error-boundary[error-boundary="ignore-demo"]',
+    );
     if (ignoreBoundary) {
       await (ignoreBoundary as any).simulateError(
-        new Error('Analytics endpoint unreachable')
+        new Error("Analytics endpoint unreachable"),
       );
     }
 
     // Strict strategy (inner boundary)
-    const strictBoundary = container.querySelector('error-boundary[error-boundary="strict-inner"]');
+    const strictBoundary = container.querySelector(
+      'error-boundary[error-boundary="strict-inner"]',
+    );
     if (strictBoundary) {
       await (strictBoundary as any).simulateError(
-        new Error('Payment gateway connection failed')
+        new Error("Payment gateway connection failed"),
       );
     }
   }, 500);
@@ -844,21 +877,22 @@ export const Degradation = () => {
  * - Severity-based routing (e.g., critical errors to incident channel)
  */
 export const Severity = () => {
-  const container = document.createElement('div');
-  container.style.cssText = 'padding: 20px;';
+  const container = document.createElement("div");
+  container.style.cssText = "padding: 20px;";
 
-  const header = document.createElement('h2');
-  header.textContent = 'Scenario 5: Error Severity Levels';
+  const header = document.createElement("h2");
+  header.textContent = "Scenario 5: Error Severity Levels";
   container.appendChild(header);
 
-  const description = document.createElement('p');
-  description.textContent = 'Errors are automatically classified by severity. Visual treatment adapts to severity level.';
-  description.style.cssText = 'color: #666; margin-bottom: 16px;';
+  const description = document.createElement("p");
+  description.textContent =
+    "Errors are automatically classified by severity. Visual treatment adapts to severity level.";
+  description.style.cssText = "color: #666; margin-bottom: 16px;";
   container.appendChild(description);
 
   // Severity comparison grid
-  const grid = document.createElement('div');
-  grid.style.cssText = 'display: grid; gap: 16px;';
+  const grid = document.createElement("div");
+  grid.style.cssText = "display: grid; gap: 16px;";
 
   // Warning severity (item-level error)
   const warningHTML = `
@@ -917,26 +951,32 @@ export const Severity = () => {
   // Trigger errors after mount
   setTimeout(async () => {
     // Grid item wrapper (Warning severity)
-    const itemBoundary = container.querySelector('error-boundary[error-boundary="grid-item-wrapper"]');
+    const itemBoundary = container.querySelector(
+      'error-boundary[error-boundary="grid-item-wrapper"]',
+    );
     if (itemBoundary) {
       await (itemBoundary as any).simulateError(
-        new Error('Failed to render image thumbnail')
+        new Error("Failed to render image thumbnail"),
       );
     }
 
     // Canvas section (Error severity)
-    const canvasBoundary = container.querySelector('error-boundary[error-boundary="canvas-section"]');
+    const canvasBoundary = container.querySelector(
+      'error-boundary[error-boundary="canvas-section"]',
+    );
     if (canvasBoundary) {
       await (canvasBoundary as any).simulateError(
-        new Error('Canvas dropzone initialization failed')
+        new Error("Canvas dropzone initialization failed"),
       );
     }
 
     // Grid builder (Critical severity)
-    const builderBoundary = container.querySelector('error-boundary[error-boundary="grid-builder"]');
+    const builderBoundary = container.querySelector(
+      'error-boundary[error-boundary="grid-builder"]',
+    );
     if (builderBoundary) {
       await (builderBoundary as any).simulateError(
-        new Error('Grid state corrupted: Cannot deserialize layout data')
+        new Error("Grid state corrupted: Cannot deserialize layout data"),
       );
     }
   }, 500);
@@ -1004,21 +1044,23 @@ export const Severity = () => {
  * - Error reporting integration (dev: console, prod: Sentry)
  */
 export const DevVsProd = () => {
-  const container = document.createElement('div');
-  container.style.cssText = 'padding: 20px;';
+  const container = document.createElement("div");
+  container.style.cssText = "padding: 20px;";
 
-  const header = document.createElement('h2');
-  header.textContent = 'Scenario 6: Development vs Production Mode';
+  const header = document.createElement("h2");
+  header.textContent = "Scenario 6: Development vs Production Mode";
   container.appendChild(header);
 
-  const description = document.createElement('p');
-  description.textContent = 'Error UI adapts based on environment. Development shows stack traces, production shows user-friendly messages.';
-  description.style.cssText = 'color: #666; margin-bottom: 16px;';
+  const description = document.createElement("p");
+  description.textContent =
+    "Error UI adapts based on environment. Development shows stack traces, production shows user-friendly messages.";
+  description.style.cssText = "color: #666; margin-bottom: 16px;";
   container.appendChild(description);
 
   // Mode comparison grid
-  const grid = document.createElement('div');
-  grid.style.cssText = 'display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px;';
+  const grid = document.createElement("div");
+  grid.style.cssText =
+    "display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px;";
 
   // Development mode simulation
   const devHTML = `
@@ -1062,31 +1104,33 @@ export const DevVsProd = () => {
   // Simulate development/production environments after mount
   setTimeout(async () => {
     // Development boundary - enable detailed errors
-    const devBoundary = container.querySelector('#dev-error-boundary');
+    const devBoundary = container.querySelector("#dev-error-boundary");
     if (devBoundary) {
       // In real usage, this would check process.env.NODE_ENV
       // For demo, we simulate dev mode with data attribute
-      devBoundary.setAttribute('data-env', 'development');
+      devBoundary.setAttribute("data-env", "development");
     }
 
     // Production boundary - suppress details
-    const prodBoundary = container.querySelector('#prod-error-boundary');
+    const prodBoundary = container.querySelector("#prod-error-boundary");
     if (prodBoundary) {
-      prodBoundary.setAttribute('data-env', 'production');
+      prodBoundary.setAttribute("data-env", "production");
     }
 
     // Trigger errors
-    const devBoundaryEl = container.querySelector('#dev-error-boundary');
+    const devBoundaryEl = container.querySelector("#dev-error-boundary");
     if (devBoundaryEl) {
       await (devBoundaryEl as any).simulateError(
-        new Error('TypeError: Cannot read property "data" of undefined at ComponentRenderer.tsx:42')
+        new Error(
+          'TypeError: Cannot read property "data" of undefined at ComponentRenderer.tsx:42',
+        ),
       );
     }
 
-    const prodBoundaryEl = container.querySelector('#prod-error-boundary');
+    const prodBoundaryEl = container.querySelector("#prod-error-boundary");
     if (prodBoundaryEl) {
       await (prodBoundaryEl as any).simulateError(
-        new Error('TypeError: Cannot read property "data" of undefined')
+        new Error('TypeError: Cannot read property "data" of undefined'),
       );
     }
   }, 100);

@@ -29,7 +29,7 @@ import {
   ErrorClassification,
   BaseErrorInfo,
   BaseErrorEventDetail,
-} from '../types/error-types';
+} from "../types/error-types";
 
 /**
  * Classify error by type and determine handling strategy
@@ -63,7 +63,6 @@ import {
  * //   userMessage: 'An unexpected error occurred. Please try again.'
  * // }
  * ```
- *
  * @param error - Error object to classify
  * @returns Classification result with type, severity, and recovery info
  */
@@ -73,89 +72,89 @@ export function classifyError(error: Error): ErrorClassification {
 
   // Network errors (recoverable, user should retry)
   if (
-    errorName.includes('network') ||
-    errorMessage.includes('network') ||
-    errorMessage.includes('fetch') ||
-    errorMessage.includes('timeout') ||
-    errorMessage.includes('offline')
+    errorName.includes("network") ||
+    errorMessage.includes("network") ||
+    errorMessage.includes("fetch") ||
+    errorMessage.includes("timeout") ||
+    errorMessage.includes("offline")
   ) {
     return {
-      type: 'network',
-      severity: 'error',
+      type: "network",
+      severity: "error",
       recoverable: true,
       shouldReport: true,
-      userMessage: 'Network error. Please check your connection and try again.',
+      userMessage: "Network error. Please check your connection and try again.",
     };
   }
 
   // Validation errors (recoverable, expected, don't spam logs)
   if (
-    errorName.includes('validation') ||
-    errorMessage.includes('invalid') ||
-    errorMessage.includes('required') ||
-    errorMessage.includes('must be')
+    errorName.includes("validation") ||
+    errorMessage.includes("invalid") ||
+    errorMessage.includes("required") ||
+    errorMessage.includes("must be")
   ) {
     return {
-      type: 'validation',
-      severity: 'warning',
+      type: "validation",
+      severity: "warning",
       recoverable: true,
       shouldReport: false, // Expected errors, don't spam monitoring
-      userMessage: 'Please check your input and try again.',
+      userMessage: "Please check your input and try again.",
     };
   }
 
   // Permission/Auth errors (critical, user needs to login)
   if (
-    errorName.includes('auth') ||
-    errorName.includes('permission') ||
-    errorMessage.includes('unauthorized') ||
-    errorMessage.includes('forbidden') ||
-    errorMessage.includes('access denied')
+    errorName.includes("auth") ||
+    errorName.includes("permission") ||
+    errorMessage.includes("unauthorized") ||
+    errorMessage.includes("forbidden") ||
+    errorMessage.includes("access denied")
   ) {
     return {
-      type: 'permission',
-      severity: 'critical',
+      type: "permission",
+      severity: "critical",
       recoverable: false,
       shouldReport: true,
-      userMessage: 'You do not have permission to perform this action.',
+      userMessage: "You do not have permission to perform this action.",
     };
   }
 
   // Timeout errors (recoverable, user should retry)
-  if (errorMessage.includes('timeout') || errorMessage.includes('timed out')) {
+  if (errorMessage.includes("timeout") || errorMessage.includes("timed out")) {
     return {
-      type: 'timeout',
-      severity: 'warning',
+      type: "timeout",
+      severity: "warning",
       recoverable: true,
       shouldReport: true,
-      userMessage: 'Operation timed out. Please try again.',
+      userMessage: "Operation timed out. Please try again.",
     };
   }
 
   // Runtime errors (recoverable, developer should fix)
   if (
-    errorName === 'typeerror' ||
-    errorName === 'referenceerror' ||
-    errorName === 'rangeerror' ||
-    errorMessage.includes('undefined') ||
-    errorMessage.includes('null')
+    errorName === "typeerror" ||
+    errorName === "referenceerror" ||
+    errorName === "rangeerror" ||
+    errorMessage.includes("undefined") ||
+    errorMessage.includes("null")
   ) {
     return {
-      type: 'runtime',
-      severity: 'error',
+      type: "runtime",
+      severity: "error",
       recoverable: true,
       shouldReport: true,
-      userMessage: 'An unexpected error occurred. Please try again.',
+      userMessage: "An unexpected error occurred. Please try again.",
     };
   }
 
   // Unknown error type (assume recoverable, report for investigation)
   return {
-    type: 'unknown',
-    severity: 'error',
+    type: "unknown",
+    severity: "error",
     recoverable: true,
     shouldReport: true,
-    userMessage: 'Something went wrong. Please try again.',
+    userMessage: "Something went wrong. Please try again.",
   };
 }
 
@@ -178,7 +177,6 @@ export function classifyError(error: Error): ErrorClassification {
  * const stack = extractComponentStack(error);
  * // "grid-builder > canvas-section > grid-item-wrapper"
  * ```
- *
  * @param error - Error object with stack trace
  * @returns Component hierarchy string or undefined if not available
  */
@@ -196,9 +194,11 @@ export function extractComponentStack(error: Error): string | undefined {
   }
 
   // Remove duplicates and build hierarchy
-  const uniqueComponents = Array.from(new Set(matches.map((m) => m.replace(/^at /, ''))));
+  const uniqueComponents = Array.from(
+    new Set(matches.map((m) => m.replace(/^at /, ""))),
+  );
 
-  return uniqueComponents.join(' > ');
+  return uniqueComponents.join(" > ");
 }
 
 /**
@@ -222,7 +222,6 @@ export function extractComponentStack(error: Error): string | undefined {
  * // Dev: "TypeError: Cannot read property 'foo' of undefined"
  * // Prod: "An unexpected error occurred. Please try again."
  * ```
- *
  * @param error - Error object
  * @param classification - Error classification result
  * @param isDevelopment - Whether in development mode (show technical details)
@@ -249,7 +248,7 @@ export function formatErrorMessage(
   }
 
   // Last resort: Generic message
-  return 'An error occurred. Please try again.';
+  return "An error occurred. Please try again.";
 }
 
 /**
@@ -261,25 +260,24 @@ export function formatErrorMessage(
  * **Event Structure**:
  * ```typescript
  * {
- *   error: Error,
- *   errorInfo: { errorBoundary, timestamp, componentStack, ...context },
- *   severity: 'critical' | 'error' | 'warning' | 'info',
- *   recoverable: boolean
+ * error: Error,
+ * errorInfo: { errorBoundary, timestamp, componentStack, ...context },
+ * severity: 'critical' | 'error' | 'warning' | 'info',
+ * recoverable: boolean
  * }
  * ```
  *
  * **Usage**:
  * ```typescript
  * const detail = buildErrorEventDetail(
- *   error,
- *   'my-component',
- *   { userId: '123' }
+ * error,
+ * 'my-component',
+ * { userId: '123' }
  * );
  *
  * const event = new CustomEvent('error', { detail });
  * element.dispatchEvent(event);
  * ```
- *
  * @param error - Error object
  * @param errorBoundary - Which boundary caught the error
  * @param additionalContext - Domain-specific context to merge
@@ -296,7 +294,8 @@ export function buildErrorEventDetail(
   const errorInfo: BaseErrorInfo = {
     errorBoundary,
     timestamp: Date.now(),
-    userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : undefined,
+    userAgent:
+      typeof navigator !== "undefined" ? navigator.userAgent : undefined,
     componentStack,
     ...additionalContext,
   };
@@ -327,12 +326,14 @@ export function buildErrorEventDetail(
  * const sanitized = sanitizeError(error);
  * // Error: 'Auth failed for token=REDACTED'
  * ```
- *
  * @param error - Error object to sanitize
  * @param removeStack - Whether to remove stack trace (default: false)
  * @returns Sanitized error object (new instance)
  */
-export function sanitizeError(error: Error, removeStack: boolean = false): Error {
+export function sanitizeError(
+  error: Error,
+  removeStack: boolean = false,
+): Error {
   const sanitized = new Error(sanitizeString(error.message));
   sanitized.name = error.name;
 
@@ -354,17 +355,19 @@ export function sanitizeError(error: Error, removeStack: boolean = false): Error
  * - `token=xxx` → `token=REDACTED`
  * - `key=xxx` → `key=REDACTED`
  * - Email addresses → `***@***.***`
- *
  * @param str - String to sanitize
  * @returns Sanitized string
  */
 function sanitizeString(str: string): string {
   return str
-    .replace(/password=([^&\s]+)/gi, 'password=REDACTED')
-    .replace(/token=([^&\s]+)/gi, 'token=REDACTED')
-    .replace(/key=([^&\s]+)/gi, 'key=REDACTED')
-    .replace(/api[-_]?key=([^&\s]+)/gi, 'api_key=REDACTED')
-    .replace(/\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/g, '***@***.***');
+    .replace(/password=([^&\s]+)/gi, "password=REDACTED")
+    .replace(/token=([^&\s]+)/gi, "token=REDACTED")
+    .replace(/key=([^&\s]+)/gi, "key=REDACTED")
+    .replace(/api[-_]?key=([^&\s]+)/gi, "api_key=REDACTED")
+    .replace(
+      /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/g,
+      "***@***.***",
+    );
 }
 
 /**
@@ -386,10 +389,9 @@ function sanitizeString(str: string): string {
  * **Example**:
  * ```typescript
  * if (shouldReportError(error)) {
- *   Sentry.captureException(error);
+ * Sentry.captureException(error);
  * }
  * ```
- *
  * @param error - Error object
  * @returns true if should be reported to monitoring
  */
@@ -397,12 +399,12 @@ export function shouldReportError(error: Error): boolean {
   const classification = classifyError(error);
 
   // Don't report validation errors (expected)
-  if (classification.type === 'validation') {
+  if (classification.type === "validation") {
     return false;
   }
 
   // Don't report ResizeObserver loop limit (browser quirk)
-  if (error.message.includes('ResizeObserver loop')) {
+  if (error.message.includes("ResizeObserver loop")) {
     return false;
   }
 
@@ -421,22 +423,21 @@ export function shouldReportError(error: Error): boolean {
  * - error: ⚠️ (warning sign)
  * - warning: ⚡ (lightning bolt)
  * - info: ℹ️ (information)
- *
  * @param severity - Error severity level
  * @returns Emoji icon
  */
 export function getErrorIcon(severity: ErrorSeverity): string {
   switch (severity) {
-    case 'critical':
-      return '🔴';
-    case 'error':
-      return '⚠️';
-    case 'warning':
-      return '⚡';
-    case 'info':
-      return 'ℹ️';
+    case "critical":
+      return "🔴";
+    case "error":
+      return "⚠️";
+    case "warning":
+      return "⚡";
+    case "info":
+      return "ℹ️";
     default:
-      return '❓';
+      return "❓";
   }
 }
 
@@ -450,7 +451,6 @@ export function getErrorIcon(severity: ErrorSeverity): string {
  * - Limit to maxLength characters
  * - Add ellipsis if truncated
  * - Keep full message in development mode
- *
  * @param message - Error message to truncate
  * @param maxLength - Maximum length (default: 100)
  * @param isDevelopment - Whether in development mode (no truncation)
@@ -470,7 +470,7 @@ export function truncateErrorMessage(
     return message;
   }
 
-  return message.substring(0, maxLength - 3) + '...';
+  return message.substring(0, maxLength - 3) + "...";
 }
 
 /**
@@ -485,7 +485,6 @@ export function truncateErrorMessage(
  * - Stencil build warnings
  *
  * **Use Case**: Don't show dev-only errors in production UI
- *
  * @param error - Error object
  * @returns true if dev-only error
  */
@@ -493,9 +492,9 @@ export function isDevelopmentOnlyError(error: Error): boolean {
   const message = error.message.toLowerCase();
 
   return (
-    message.includes('hmr') ||
-    message.includes('hot reload') ||
-    message.includes('source map') ||
-    message.includes('[stencil]')
+    message.includes("hmr") ||
+    message.includes("hot reload") ||
+    message.includes("source map") ||
+    message.includes("[stencil]")
   );
 }

@@ -24,8 +24,11 @@
  * @module error-recovery
  */
 
-import { ErrorRecoveryStrategy, ErrorClassification } from '../types/error-types';
-import { classifyError } from './error-handler';
+import {
+  ErrorRecoveryStrategy,
+  ErrorClassification,
+} from "../types/error-types";
+import { classifyError } from "./error-handler";
 
 /**
  * Retry configuration options
@@ -105,7 +108,9 @@ export const DEFAULT_RETRY_CONFIG: RetryConfig = {
   jitterFactor: 0.1,
   shouldRetry: (error: Error) => {
     const classification = classifyError(error);
-    return classification.type === 'network' || classification.type === 'timeout';
+    return (
+      classification.type === "network" || classification.type === "timeout"
+    );
   },
 };
 
@@ -164,14 +169,17 @@ export interface RetryResult<T> {
  * const delay2 = calculateRetryDelay(1, config); // ~2000ms ± 200ms
  * const delay3 = calculateRetryDelay(2, config); // ~4000ms ± 400ms
  * ```
- *
  * @param attempt - Current attempt number (0-indexed)
  * @param config - Retry configuration
  * @returns Delay in milliseconds before next retry
  */
-export function calculateRetryDelay(attempt: number, config: RetryConfig): number {
+export function calculateRetryDelay(
+  attempt: number,
+  config: RetryConfig,
+): number {
   // Exponential backoff: baseDelay * (multiplier ^ attempt)
-  const exponentialDelay = config.baseDelay * Math.pow(config.backoffMultiplier, attempt);
+  const exponentialDelay =
+    config.baseDelay * Math.pow(config.backoffMultiplier, attempt);
 
   // Cap at maximum delay
   const cappedDelay = Math.min(exponentialDelay, config.maxDelay);
@@ -199,33 +207,32 @@ export function calculateRetryDelay(attempt: number, config: RetryConfig): numbe
  * **Example - Network request**:
  * ```typescript
  * const result = await retryOperation(
- *   async () => {
- *     const response = await fetch('/api/data');
- *     if (!response.ok) throw new Error('Network error');
- *     return response.json();
- *   },
- *   {
- *     maxRetries: 3,
- *     baseDelay: 1000,
- *     shouldRetry: (error) => error.message.includes('Network')
- *   }
+ * async () => {
+ * const response = await fetch('/api/data');
+ * if (!response.ok) throw new Error('Network error');
+ * return response.json();
+ * },
+ * {
+ * maxRetries: 3,
+ * baseDelay: 1000,
+ * shouldRetry: (error) => error.message.includes('Network')
+ * }
  * );
  *
  * if (result.success) {
- *   console.log('Data:', result.result);
+ * console.log('Data:', result.result);
  * } else {
- *   console.error('Failed after 3 retries:', result.error);
+ * console.error('Failed after 3 retries:', result.error);
  * }
  * ```
  *
  * **Example - Component render**:
  * ```typescript
  * const result = await retryOperation(
- *   async () => renderComplexComponent(itemId),
- *   DEFAULT_RETRY_CONFIG
+ * async () => renderComplexComponent(itemId),
+ * DEFAULT_RETRY_CONFIG
  * );
  * ```
- *
  * @param operation - Async function to retry
  * @param config - Retry configuration (uses defaults if not provided)
  * @returns RetryResult with success/failure status
@@ -296,7 +303,7 @@ export async function retryOperation<T>(
  * - half-open → closed: If test request succeeds
  * - half-open → open: If test request fails
  */
-export type CircuitState = 'closed' | 'open' | 'half-open';
+export type CircuitState = "closed" | "open" | "half-open";
 
 /**
  * Circuit breaker configuration
@@ -380,7 +387,7 @@ export interface CircuitBreakerConfig {
  * ```
  */
 export class CircuitBreaker<T> {
-  private state: CircuitState = 'closed';
+  private state: CircuitState = "closed";
   private failures: number[] = []; // Timestamps of failures
   private successes: number = 0;
   private nextAttempt: number = 0;
@@ -403,7 +410,6 @@ export class CircuitBreaker<T> {
    * - `closed`: Execute operation normally
    * - `open`: Reject immediately (fast fail)
    * - `half-open`: Allow single test request
-   *
    * @param operation - Async function to execute
    * @returns Promise resolving to operation result
    * @throws Error if circuit is open or operation fails
@@ -412,8 +418,10 @@ export class CircuitBreaker<T> {
     this.updateState();
 
     // Circuit open - reject immediately
-    if (this.state === 'open') {
-      throw new Error('Circuit breaker is open - service temporarily unavailable');
+    if (this.state === "open") {
+      throw new Error(
+        "Circuit breaker is open - service temporarily unavailable",
+      );
     }
 
     try {
@@ -437,9 +445,12 @@ export class CircuitBreaker<T> {
   private recordSuccess(): void {
     this.successes++;
 
-    if (this.state === 'half-open' && this.successes >= this.config.successThreshold) {
+    if (
+      this.state === "half-open" &&
+      this.successes >= this.config.successThreshold
+    ) {
       // Recovered! Close circuit
-      this.state = 'closed';
+      this.state = "closed";
       this.successes = 0;
       this.failures = [];
     }
@@ -457,17 +468,19 @@ export class CircuitBreaker<T> {
 
     // Clean old failures outside window
     const windowStart = now - this.config.windowDuration;
-    this.failures = this.failures.filter((timestamp) => timestamp >= windowStart);
+    this.failures = this.failures.filter(
+      (timestamp) => timestamp >= windowStart,
+    );
 
     // Check if should open circuit
-    if (this.state === 'half-open') {
+    if (this.state === "half-open") {
       // Failed during test - reopen circuit
-      this.state = 'open';
+      this.state = "open";
       this.successes = 0;
       this.nextAttempt = now + this.config.timeout;
     } else if (this.failures.length >= this.config.failureThreshold) {
       // Too many failures - open circuit
-      this.state = 'open';
+      this.state = "open";
       this.successes = 0;
       this.nextAttempt = now + this.config.timeout;
     }
@@ -479,9 +492,9 @@ export class CircuitBreaker<T> {
    * - open → half-open (after timeout expires)
    */
   private updateState(): void {
-    if (this.state === 'open' && Date.now() >= this.nextAttempt) {
+    if (this.state === "open" && Date.now() >= this.nextAttempt) {
       // Timeout expired - try half-open
-      this.state = 'half-open';
+      this.state = "half-open";
       this.successes = 0;
     }
   }
@@ -491,7 +504,7 @@ export class CircuitBreaker<T> {
    * **Use case**: Administrative reset, service known to be healthy
    */
   reset(): void {
-    this.state = 'closed';
+    this.state = "closed";
     this.failures = [];
     this.successes = 0;
     this.nextAttempt = 0;
@@ -520,7 +533,6 @@ export class CircuitBreaker<T> {
  * const strategy2 = getRecommendedStrategy(permissionError);
  * // Returns: 'strict'
  * ```
- *
  * @param error - Error to classify
  * @param classification - Optional pre-computed classification
  * @returns Recommended recovery strategy
@@ -532,27 +544,27 @@ export function getRecommendedStrategy(
   const errorClass = classification || classifyError(error);
 
   // Permission errors - strict (don't retry, propagate upward)
-  if (errorClass.type === 'permission') {
-    return 'strict';
+  if (errorClass.type === "permission") {
+    return "strict";
   }
 
   // Network/timeout errors - retry with backoff
-  if (errorClass.type === 'network' || errorClass.type === 'timeout') {
-    return 'retry';
+  if (errorClass.type === "network" || errorClass.type === "timeout") {
+    return "retry";
   }
 
   // Validation errors - graceful (show message, allow correction)
-  if (errorClass.type === 'validation') {
-    return 'graceful';
+  if (errorClass.type === "validation") {
+    return "graceful";
   }
 
   // Low-severity errors - ignore (log only)
-  if (errorClass.severity === 'info' || errorClass.severity === 'warning') {
-    return 'ignore';
+  if (errorClass.severity === "info" || errorClass.severity === "warning") {
+    return "ignore";
   }
 
   // Default: graceful degradation
-  return 'graceful';
+  return "graceful";
 }
 
 /**
@@ -570,14 +582,13 @@ export function getRecommendedStrategy(
  * **Example**:
  * ```typescript
  * const result = await executeWithRecovery(
- *   async () => fetchUserData(userId),
- *   {
- *     fallback: defaultUserData,
- *     retryConfig: { maxRetries: 3 }
- *   }
+ * async () => fetchUserData(userId),
+ * {
+ * fallback: defaultUserData,
+ * retryConfig: { maxRetries: 3 }
+ * }
  * );
  * ```
- *
  * @param operation - Async function to execute
  * @param options - Recovery options
  * @returns Operation result or fallback value
@@ -593,7 +604,7 @@ export async function executeWithRecovery<T>(
 ): Promise<T | undefined> {
   try {
     // If retry strategy specified, use retry logic
-    if (options.strategy === 'retry' || !options.strategy) {
+    if (options.strategy === "retry" || !options.strategy) {
       const result = await retryOperation(operation, options.retryConfig);
       if (result.success) {
         return result.result;
@@ -602,15 +613,16 @@ export async function executeWithRecovery<T>(
       // Retry failed - determine fallback strategy
       const error = result.error!;
       const classification = classifyError(error);
-      const strategy = options.strategy || getRecommendedStrategy(error, classification);
+      const strategy =
+        options.strategy || getRecommendedStrategy(error, classification);
 
       if (options.onError) {
         options.onError(error, strategy);
       }
 
-      if (strategy === 'graceful') {
+      if (strategy === "graceful") {
         return options.fallback;
-      } else if (strategy === 'ignore') {
+      } else if (strategy === "ignore") {
         return undefined;
       } else {
         throw error;
@@ -620,20 +632,22 @@ export async function executeWithRecovery<T>(
     // Non-retry strategies - execute once
     return await operation();
   } catch (error) {
-    const actualError = error instanceof Error ? error : new Error(String(error));
+    const actualError =
+      error instanceof Error ? error : new Error(String(error));
     const classification = classifyError(actualError);
-    const strategy = options.strategy || getRecommendedStrategy(actualError, classification);
+    const strategy =
+      options.strategy || getRecommendedStrategy(actualError, classification);
 
     if (options.onError) {
       options.onError(actualError, strategy);
     }
 
     switch (strategy) {
-      case 'graceful':
+      case "graceful":
         return options.fallback;
-      case 'ignore':
+      case "ignore":
         return undefined;
-      case 'strict':
+      case "strict":
       default:
         throw actualError;
     }

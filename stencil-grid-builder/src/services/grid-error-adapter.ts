@@ -51,13 +51,13 @@
  * @module grid-error-adapter
  */
 
-import { EventManager } from './event-manager';
+import { EventManager } from "./event-manager";
 import {
   BaseErrorEventDetail,
   BaseErrorInfo,
   ErrorRecoveryStrategy,
   ErrorFallbackRenderer,
-} from '../types/error-types';
+} from "../types/error-types";
 import {
   GridErrorBoundaryLevel,
   GridErrorInfo,
@@ -66,8 +66,8 @@ import {
   getGridErrorSeverity,
   isGridErrorRecoverable,
   formatGridErrorMessage,
-} from '../types/grid-error-types';
-import { classifyError } from '../utils/error-handler';
+} from "../types/grid-error-types";
+import { classifyError } from "../utils/error-handler";
 
 /**
  * Grid error adapter options
@@ -213,12 +213,15 @@ export class GridErrorAdapter {
    * Create grid error adapter
    *
    * **Purpose**: Initialize adapter for grid instance
-   *
    * @param eventManager - EventManager instance for this grid
    * @param gridId - Grid instance identifier
    * @param options - Optional adapter configuration
    */
-  constructor(eventManager: EventManager, gridId: string, options: GridErrorAdapterOptions = {}) {
+  constructor(
+    eventManager: EventManager,
+    gridId: string,
+    options: GridErrorAdapterOptions = {},
+  ) {
     this.eventManager = eventManager;
     this.gridId = gridId;
     this.options = {
@@ -243,29 +246,29 @@ export class GridErrorAdapter {
    * **Example**:
    * ```typescript
    * const baseDetail: BaseErrorEventDetail = {
-   *   error: new Error('Component failed'),
-   *   errorInfo: {
-   *     errorBoundary: 'grid-item-wrapper',
-   *     itemId: 'item-123',
-   *     canvasId: 'canvas1',
-   *     componentType: 'header',
-   *     timestamp: Date.now()
-   *   },
-   *   severity: 'error',
-   *   recoverable: true
+   * error: new Error('Component failed'),
+   * errorInfo: {
+   * errorBoundary: 'grid-item-wrapper',
+   * itemId: 'item-123',
+   * canvasId: 'canvas1',
+   * componentType: 'header',
+   * timestamp: Date.now()
+   * },
+   * severity: 'error',
+   * recoverable: true
    * };
    *
    * const gridDetail = adapter.convertToGridError(baseDetail);
    * // gridDetail.errorInfo.errorBoundary is now typed as GridErrorBoundaryLevel
    * // gridDetail.errorInfo has itemId, canvasId, componentType
    * ```
-   *
    * @param baseDetail - Generic error event detail from error-boundary
    * @returns Grid-specific error event detail
    */
   convertToGridError(baseDetail: BaseErrorEventDetail): GridErrorEventDetail {
     // Extract grid-specific fields from context
-    const { errorBoundary, itemId, canvasId, componentType, ...otherContext } = baseDetail.errorInfo;
+    const { errorBoundary, itemId, canvasId, componentType, ...otherContext } =
+      baseDetail.errorInfo;
 
     // Build grid error info
     const gridErrorInfo: GridErrorInfo = {
@@ -280,10 +283,16 @@ export class GridErrorAdapter {
     };
 
     // Recalculate severity based on grid context
-    const gridSeverity = getGridErrorSeverity(gridErrorInfo.errorBoundary, baseDetail.error);
+    const gridSeverity = getGridErrorSeverity(
+      gridErrorInfo.errorBoundary,
+      baseDetail.error,
+    );
 
     // Recalculate recoverability based on grid context
-    const gridRecoverable = isGridErrorRecoverable(gridErrorInfo.errorBoundary, baseDetail.error);
+    const gridRecoverable = isGridErrorRecoverable(
+      gridErrorInfo.errorBoundary,
+      baseDetail.error,
+    );
 
     return {
       error: baseDetail.error,
@@ -308,12 +317,11 @@ export class GridErrorAdapter {
    * **Example**:
    * ```typescript
    * <error-boundary
-   *   error-boundary="grid-item-wrapper"
-   *   context={{ itemId: 'item-123', canvasId: 'canvas1' }}
-   *   onError={(e) => this.errorAdapter.handleErrorEvent(e.detail)}
+   * error-boundary="grid-item-wrapper"
+   * context={{ itemId: 'item-123', canvasId: 'canvas1' }}
+   * onError={(e) => this.errorAdapter.handleErrorEvent(e.detail)}
    * />
    * ```
-   *
    * @param baseDetail - Generic error event detail from error-boundary
    */
   handleErrorEvent(baseDetail: BaseErrorEventDetail): void {
@@ -331,7 +339,7 @@ export class GridErrorAdapter {
     }
 
     // Emit to EventManager for plugin consumption
-    this.eventManager.emit('error', gridDetail);
+    this.eventManager.emit("error", gridDetail);
   }
 
   /**
@@ -345,12 +353,15 @@ export class GridErrorAdapter {
    * - error: console.error (red)
    * - warning: console.warn (yellow)
    * - info: console.info (blue)
-   *
    * @param detail - Grid error event detail
    */
   private logError(detail: GridErrorEventDetail): void {
-    const isDevelopment = process.env.NODE_ENV !== 'production';
-    const message = formatGridErrorMessage(detail.errorInfo, detail.error, isDevelopment);
+    const isDevelopment = process.env.NODE_ENV !== "production";
+    const message = formatGridErrorMessage(
+      detail.errorInfo,
+      detail.error,
+      isDevelopment,
+    );
 
     const logData = {
       message,
@@ -365,23 +376,23 @@ export class GridErrorAdapter {
     };
 
     switch (detail.severity) {
-      case 'critical':
-        console.error('🔴 CRITICAL ERROR:', logData, detail.error);
+      case "critical":
+        console.error("🔴 CRITICAL ERROR:", logData, detail.error);
         if (detail.error.stack) {
-          console.error('Stack trace:', detail.error.stack);
+          console.error("Stack trace:", detail.error.stack);
         }
         break;
 
-      case 'error':
-        console.error('❌ ERROR:', logData, detail.error);
+      case "error":
+        console.error("❌ ERROR:", logData, detail.error);
         break;
 
-      case 'warning':
-        console.warn('⚠️ WARNING:', logData, detail.error);
+      case "warning":
+        console.warn("⚠️ WARNING:", logData, detail.error);
         break;
 
-      case 'info':
-        console.info('ℹ️ INFO:', logData, detail.error);
+      case "info":
+        console.info("ℹ️ INFO:", logData, detail.error);
         break;
     }
   }
@@ -403,19 +414,20 @@ export class GridErrorAdapter {
    * import * as Sentry from '@sentry/browser';
    *
    * Sentry.init({
-   *   dsn: 'YOUR_SENTRY_DSN',
-   *   environment: process.env.NODE_ENV
+   * dsn: 'YOUR_SENTRY_DSN',
+   * environment: process.env.NODE_ENV
    * });
    *
    * // Grid builder will automatically report errors
    * ```
-   *
    * @param detail - Grid error event detail
    */
   private reportError(detail: GridErrorEventDetail): void {
     // Check if Sentry is available
-    if (typeof window === 'undefined' || !(window as any).Sentry) {
-      console.warn('GridErrorAdapter: Sentry is not configured, skipping error report');
+    if (typeof window === "undefined" || !(window as any).Sentry) {
+      console.warn(
+        "GridErrorAdapter: Sentry is not configured, skipping error report",
+      );
       return;
     }
 
@@ -424,13 +436,15 @@ export class GridErrorAdapter {
     // Send to Sentry with context
     Sentry.withScope((scope: any) => {
       // Set context
-      scope.setTag('grid-id', this.gridId);
-      scope.setTag('error-boundary', detail.errorInfo.errorBoundary);
-      scope.setTag('severity', detail.severity);
-      scope.setLevel(detail.severity === 'critical' ? 'fatal' : detail.severity);
+      scope.setTag("grid-id", this.gridId);
+      scope.setTag("error-boundary", detail.errorInfo.errorBoundary);
+      scope.setTag("severity", detail.severity);
+      scope.setLevel(
+        detail.severity === "critical" ? "fatal" : detail.severity,
+      );
 
       // Add grid-specific context
-      scope.setContext('grid-error', {
+      scope.setContext("grid-error", {
         errorBoundary: detail.errorInfo.errorBoundary,
         itemId: detail.errorInfo.itemId,
         canvasId: detail.errorInfo.canvasId,
@@ -440,7 +454,7 @@ export class GridErrorAdapter {
 
       // Add component stack if available
       if (detail.errorInfo.componentStack) {
-        scope.setContext('component-stack', {
+        scope.setContext("component-stack", {
           stack: detail.errorInfo.componentStack,
         });
       }
@@ -466,37 +480,39 @@ export class GridErrorAdapter {
    * **Example - grid-item-wrapper.tsx**:
    * ```typescript
    * render() {
-   *   const errorConfig = this.errorAdapter.createErrorBoundaryConfig(
-   *     'grid-item-wrapper',
-   *     {
-   *       itemId: this.itemId,
-   *       canvasId: this.canvasId,
-   *       componentType: this.item.type
-   *     }
-   *   );
+   * const errorConfig = this.errorAdapter.createErrorBoundaryConfig(
+   * 'grid-item-wrapper',
+   * {
+   * itemId: this.itemId,
+   * canvasId: this.canvasId,
+   * componentType: this.item.type
+   * }
+   * );
    *
-   *   return (
-   *     <error-boundary {...errorConfig}>
-   *       {this.renderItemContent()}
-   *     </error-boundary>
-   *   );
+   * return (
+   * <error-boundary {...errorConfig}>
+   * {this.renderItemContent()}
+   * </error-boundary>
+   * );
    * }
    * ```
-   *
    * @param errorBoundary - Which error boundary level
    * @param gridContext - Grid-specific context (itemId, canvasId, componentType)
    * @returns Error boundary configuration object
    */
   createErrorBoundaryConfig(
     errorBoundary: GridErrorBoundaryLevel,
-    gridContext: Omit<GridErrorContext, 'errorBoundary'> = {},
+    gridContext: Omit<GridErrorContext, "errorBoundary"> = {},
   ) {
     // Build context
     const context = buildGridErrorContext(errorBoundary, gridContext);
 
     // Determine showErrorUI
-    const isDevelopment = process.env.NODE_ENV !== 'production';
-    const showErrorUI = this.options.showErrorUI !== undefined ? this.options.showErrorUI : isDevelopment;
+    const isDevelopment = process.env.NODE_ENV !== "production";
+    const showErrorUI =
+      this.options.showErrorUI !== undefined
+        ? this.options.showErrorUI
+        : isDevelopment;
 
     return {
       errorBoundary,
@@ -504,7 +520,8 @@ export class GridErrorAdapter {
       errorFallback: this.options.errorFallback,
       recoveryStrategy: this.options.recoveryStrategy,
       context,
-      onError: (e: CustomEvent<BaseErrorEventDetail>) => this.handleErrorEvent(e.detail),
+      onError: (e: CustomEvent<BaseErrorEventDetail>) =>
+        this.handleErrorEvent(e.detail),
     };
   }
 
@@ -521,33 +538,32 @@ export class GridErrorAdapter {
    * **Example - Quick error handling**:
    * ```typescript
    * render() {
-   *   return this.errorAdapter.wrapRender(
-   *     'grid-item-wrapper',
-   *     () => {
-   *       // Component render logic that might throw
-   *       return <div>{this.renderComplexContent()}</div>;
-   *     },
-   *     {
-   *       itemId: this.itemId,
-   *       canvasId: this.canvasId,
-   *       componentType: this.item.type
-   *     }
-   *   );
+   * return this.errorAdapter.wrapRender(
+   * 'grid-item-wrapper',
+   * () => {
+   * // Component render logic that might throw
+   * return <div>{this.renderComplexContent()}</div>;
+   * },
+   * {
+   * itemId: this.itemId,
+   * canvasId: this.canvasId,
+   * componentType: this.item.type
+   * }
+   * );
    * }
    * ```
    *
    * **Note**: For proper error isolation, prefer:
    * ```typescript
    * render() {
-   *   const config = this.errorAdapter.createErrorBoundaryConfig(...);
-   *   return (
-   *     <error-boundary {...config}>
-   *       {this.renderContent()}
-   *     </error-boundary>
-   *   );
+   * const config = this.errorAdapter.createErrorBoundaryConfig(...);
+   * return (
+   * <error-boundary {...config}>
+   * {this.renderContent()}
+   * </error-boundary>
+   * );
    * }
    * ```
-   *
    * @param errorBoundary - Which error boundary level
    * @param renderFn - Render function that might throw
    * @param gridContext - Grid-specific context
@@ -556,19 +572,21 @@ export class GridErrorAdapter {
   wrapRender(
     errorBoundary: GridErrorBoundaryLevel,
     renderFn: () => any,
-    gridContext: Omit<GridErrorContext, 'errorBoundary'> = {},
+    gridContext: Omit<GridErrorContext, "errorBoundary"> = {},
   ): any {
     try {
       return renderFn();
     } catch (error) {
-      const actualError = error instanceof Error ? error : new Error(String(error));
+      const actualError =
+        error instanceof Error ? error : new Error(String(error));
 
       // Build error context
       const context = buildGridErrorContext(errorBoundary, gridContext);
       const errorInfo: BaseErrorInfo = {
         errorBoundary,
         timestamp: Date.now(),
-        userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : undefined,
+        userAgent:
+          typeof navigator !== "undefined" ? navigator.userAgent : undefined,
         ...context,
       };
 
@@ -601,7 +619,6 @@ export class GridErrorAdapter {
    *
    * **Purpose**: Access current adapter configuration
    * **Use case**: Debugging, configuration introspection
-   *
    * @returns Current adapter options
    */
   getOptions(): GridErrorAdapterOptions {
@@ -622,7 +639,6 @@ export class GridErrorAdapter {
    * // Disable logging in production
    * adapter.updateOptions({ logErrors: false });
    * ```
-   *
    * @param options - Partial options to update
    */
   updateOptions(options: Partial<GridErrorAdapterOptions>): void {
@@ -637,7 +653,6 @@ export class GridErrorAdapter {
    *
    * **Purpose**: Identify which grid this adapter belongs to
    * **Use case**: Debugging, multi-grid scenarios
-   *
    * @returns Grid instance identifier
    */
   getGridId(): string {

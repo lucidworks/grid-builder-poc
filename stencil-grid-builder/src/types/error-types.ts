@@ -33,7 +33,7 @@
  * - `warning`: Degraded experience (fallback UI shown)
  * - `info`: Informational (recovered automatically)
  */
-export type ErrorSeverity = 'critical' | 'error' | 'warning' | 'info';
+export type ErrorSeverity = "critical" | "error" | "warning" | "info";
 
 /**
  * Error boundary level identifier
@@ -52,7 +52,7 @@ export type ErrorBoundaryLevel = string;
  * - `retry`: Attempt automatic retry (with exponential backoff)
  * - `ignore`: Log error but continue without UI change
  */
-export type ErrorRecoveryStrategy = 'graceful' | 'strict' | 'retry' | 'ignore';
+export type ErrorRecoveryStrategy = "graceful" | "strict" | "retry" | "ignore";
 
 /**
  * Base error information context

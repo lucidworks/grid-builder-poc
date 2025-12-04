@@ -64,20 +64,29 @@
  * @module error-boundary
  */
 
-import { Component, h, Prop, State, Event, EventEmitter, Element, Method } from '@stencil/core';
+import {
+  Component,
+  h,
+  Prop,
+  State,
+  Event,
+  EventEmitter,
+  Element,
+  Method,
+} from "@stencil/core";
 import {
   BaseErrorEventDetail,
   BaseErrorInfo,
   ErrorFallbackRenderer,
   ErrorRecoveryStrategy,
-} from '../../types/error-types';
+} from "../../types/error-types";
 import {
   classifyError,
   buildErrorEventDetail,
   formatErrorMessage,
   getErrorIcon,
-} from '../../utils/error-handler';
-import { getRecommendedStrategy } from '../../utils/error-recovery';
+} from "../../utils/error-handler";
+import { getRecommendedStrategy } from "../../utils/error-recovery";
 
 /**
  * ErrorBoundary Component
@@ -90,8 +99,8 @@ import { getRecommendedStrategy } from '../../utils/error-recovery';
  * **Reusable**: Zero dependencies, can be extracted to standalone package
  */
 @Component({
-  tag: 'error-boundary',
-  styleUrl: 'error-boundary.scss',
+  tag: "error-boundary",
+  styleUrl: "error-boundary.scss",
   shadow: false,
 })
 export class ErrorBoundary {
@@ -215,7 +224,7 @@ export class ErrorBoundary {
    * ```
    */
   @Event({
-    eventName: 'error',
+    eventName: "error",
     composed: true,
     cancelable: false,
     bubbles: true,
@@ -274,37 +283,44 @@ export class ErrorBoundary {
    * 3. Emit error event
    * 4. Update state for error UI
    * 5. Apply recovery strategy
-   *
    * @param error - Caught error
    */
   private handleError(error: Error): void {
     // Prevent infinite error loops
     if (this.renderErrorCaught) {
-      console.error('ErrorBoundary: Infinite error loop detected', error);
+      console.error("ErrorBoundary: Infinite error loop detected", error);
       return;
     }
     this.renderErrorCaught = true;
 
     // Build error event detail
-    const eventDetail = buildErrorEventDetail(error, this.errorBoundary, this.context);
+    const eventDetail = buildErrorEventDetail(
+      error,
+      this.errorBoundary,
+      this.context,
+    );
 
     // Classify error to determine recovery strategy
     const classification = classifyError(error);
-    const strategy = this.recoveryStrategy || getRecommendedStrategy(error, classification);
+    const strategy =
+      this.recoveryStrategy || getRecommendedStrategy(error, classification);
 
     // Emit error event to parent
     this.errorEvent.emit(eventDetail);
 
     // Update state for error UI (only if graceful recovery)
-    if (strategy === 'graceful') {
+    if (strategy === "graceful") {
       this.caughtError = error;
       this.errorInfo = eventDetail.errorInfo;
-    } else if (strategy === 'strict') {
+    } else if (strategy === "strict") {
       // Re-throw error to propagate upward
       throw error;
-    } else if (strategy === 'ignore') {
+    } else if (strategy === "ignore") {
       // Swallow error, log to console
-      console.warn('ErrorBoundary: Ignoring error (recovery strategy: ignore)', error);
+      console.warn(
+        "ErrorBoundary: Ignoring error (recovery strategy: ignore)",
+        error,
+      );
       // Reset flag immediately for ignore strategy (no state change = no re-render)
       this.renderErrorCaught = false;
     }
@@ -338,13 +354,12 @@ export class ErrorBoundary {
    * const errorBoundary = document.querySelector('error-boundary');
    * await errorBoundary.simulateError(new Error('Test error'));
    * ```
-   *
    * @param error - Error to simulate (or string message)
    * @returns Promise<void>
    */
   @Method()
   async simulateError(error: Error | string): Promise<void> {
-    const errorObj = typeof error === 'string' ? new Error(error) : error;
+    const errorObj = typeof error === "string" ? new Error(error) : error;
     this.handleError(errorObj);
   }
 
@@ -366,10 +381,15 @@ export class ErrorBoundary {
       // Wrap slot in div with class for performance
       // This allows CSS to use simple class selector (.error-boundary-content)
       // instead of complex :not() selectors (much faster with 1000+ items)
-      return <div class="error-boundary-content"><slot></slot></div>;
+      return (
+        <div class="error-boundary-content">
+          <slot />
+        </div>
+      );
     } catch (error) {
       // Catch render errors
-      const actualError = error instanceof Error ? error : new Error(String(error));
+      const actualError =
+        error instanceof Error ? error : new Error(String(error));
       this.handleError(actualError);
       return null;
     }
@@ -386,7 +406,6 @@ export class ErrorBoundary {
    * - Error message (user-friendly or technical based on NODE_ENV)
    * - Retry button (calls handleRetry)
    * - Error details (in development mode)
-   *
    * @returns JSX for default error UI
    */
   private renderDefaultFallback() {
@@ -396,15 +415,24 @@ export class ErrorBoundary {
 
     const classification = classifyError(this.caughtError);
     const icon = getErrorIcon(classification.severity);
-    const isDevelopment = process.env.NODE_ENV !== 'production';
-    const message = formatErrorMessage(this.caughtError, classification, isDevelopment);
+    const isDevelopment = process.env.NODE_ENV !== "production";
+    const message = formatErrorMessage(
+      this.caughtError,
+      classification,
+      isDevelopment,
+    );
 
     return (
-      <div class="error-boundary-fallback" data-severity={classification.severity}>
+      <div
+        class="error-boundary-fallback"
+        data-severity={classification.severity}
+      >
         <div class="error-boundary-header">
           <span class="error-boundary-icon">{icon}</span>
           <span class="error-boundary-title">
-            {classification.severity === 'critical' ? 'Critical Error' : 'Error'}
+            {classification.severity === "critical"
+              ? "Critical Error"
+              : "Error"}
           </span>
         </div>
 
@@ -442,7 +470,6 @@ export class ErrorBoundary {
    * 1. errorFallback prop (renderer function)
    * 2. slot="fallback" (custom JSX/HTML)
    * 3. Default fallback (built-in UI)
-   *
    * @returns JSX for custom error UI or null
    */
   private renderCustomFallback() {
@@ -452,7 +479,11 @@ export class ErrorBoundary {
 
     // 1. Try errorFallback prop (renderer function)
     if (this.errorFallback) {
-      const rendered = this.errorFallback(this.caughtError, this.errorInfo, this.handleRetry);
+      const rendered = this.errorFallback(
+        this.caughtError,
+        this.errorInfo,
+        this.handleRetry,
+      );
 
       // Handle both HTMLElement and JSX returns
       if (rendered instanceof HTMLElement) {
@@ -471,7 +502,7 @@ export class ErrorBoundary {
     if (fallbackSlot) {
       return (
         <div class="error-boundary-custom">
-          <slot name="fallback"></slot>
+          <slot name="fallback" />
         </div>
       );
     }
@@ -485,12 +516,11 @@ export class ErrorBoundary {
    *
    * **Purpose**: Performance optimization for CSS selector matching
    * **Why**: Class selectors are faster than attribute selectors (important with 1000+ items)
-   *
    * @returns BEM modifier class (e.g., 'error-boundary-wrapper--canvas-section')
    */
   private getBoundaryModifierClass(): string {
     // Sanitize errorBoundary prop for use as class name (replace invalid chars)
-    const sanitized = this.errorBoundary.replace(/[^a-zA-Z0-9-]/g, '-');
+    const sanitized = this.errorBoundary.replace(/[^a-zA-Z0-9-]/g, "-");
     return `error-boundary-wrapper--${sanitized}`;
   }
 
@@ -516,14 +546,17 @@ export class ErrorBoundary {
     // No error - render children normally
     if (!this.caughtError) {
       return (
-        <div class={`error-boundary-wrapper ${modifierClass}`} data-error-boundary={this.errorBoundary}>
+        <div
+          class={`error-boundary-wrapper ${modifierClass}`}
+          data-error-boundary={this.errorBoundary}
+        >
           {this.renderContent()}
         </div>
       );
     }
 
     // Error caught - determine if should show error UI
-    const isDevelopment = process.env.NODE_ENV !== 'production';
+    const isDevelopment = process.env.NODE_ENV !== "production";
     const shouldShowUI =
       this.showErrorUI !== undefined ? this.showErrorUI : isDevelopment;
 
@@ -541,7 +574,10 @@ export class ErrorBoundary {
     const customFallback = this.renderCustomFallback();
 
     return (
-      <div class={`error-boundary-wrapper error-boundary-error ${modifierClass}`} data-error-boundary={this.errorBoundary}>
+      <div
+        class={`error-boundary-wrapper error-boundary-error ${modifierClass}`}
+        data-error-boundary={this.errorBoundary}
+      >
         {customFallback || this.renderDefaultFallback()}
       </div>
     );

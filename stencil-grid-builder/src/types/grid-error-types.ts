@@ -28,7 +28,7 @@ import {
   BaseErrorInfo,
   BaseErrorEventDetail,
   ErrorSeverity,
-} from './error-types';
+} from "./error-types";
 
 /**
  * Grid-specific error boundary levels
@@ -50,7 +50,10 @@ import {
  * };
  * ```
  */
-export type GridErrorBoundaryLevel = 'grid-builder' | 'canvas-section' | 'grid-item-wrapper';
+export type GridErrorBoundaryLevel =
+  | "grid-builder"
+  | "canvas-section"
+  | "grid-item-wrapper";
 
 /**
  * Grid-specific error information
@@ -194,18 +197,17 @@ export type GridErrorEventHandler = (detail: GridErrorEventDetail) => void;
  * **Example**:
  * ```typescript
  * const context = buildGridErrorContext('grid-item-wrapper', {
- *   itemId: 'item-123',
- *   canvasId: 'canvas1',
- *   componentType: 'header'
+ * itemId: 'item-123',
+ * canvasId: 'canvas1',
+ * componentType: 'header'
  * });
  *
  * // Use in error boundary
  * <error-boundary
- *   error-boundary="grid-item-wrapper"
- *   context={context}
+ * error-boundary="grid-item-wrapper"
+ * context={context}
  * />
  * ```
- *
  * @param errorBoundary - Which boundary caught the error
  * @param gridContext - Grid-specific context fields
  * @returns Complete error context object
@@ -244,7 +246,6 @@ export function buildGridErrorContext(
  * const severity2 = getGridErrorSeverity('grid-builder', error);
  * // Returns 'critical' for builder-level failures
  * ```
- *
  * @param errorBoundary - Which boundary caught the error
  * @param error - The caught error
  * @returns Recommended severity level
@@ -254,29 +255,32 @@ export function getGridErrorSeverity(
   error: Error,
 ): ErrorSeverity {
   // Critical errors (whole grid fails)
-  if (errorBoundary === 'grid-builder') {
+  if (errorBoundary === "grid-builder") {
     // Builder init, API creation, global state
-    return 'critical';
+    return "critical";
   }
 
   // High-severity errors (canvas fails)
-  if (errorBoundary === 'canvas-section') {
+  if (errorBoundary === "canvas-section") {
     // Check if it's a minor error (validation, render)
-    if (error.message.includes('invalid') || error.message.includes('not found')) {
-      return 'error';
+    if (
+      error.message.includes("invalid") ||
+      error.message.includes("not found")
+    ) {
+      return "error";
     }
     // Canvas-level failures are critical for that canvas
-    return 'critical';
+    return "critical";
   }
 
   // Item-level errors (isolated, grid continues)
-  if (errorBoundary === 'grid-item-wrapper') {
+  if (errorBoundary === "grid-item-wrapper") {
     // Most item errors are isolated and recoverable
-    return 'error';
+    return "error";
   }
 
   // Default: error
-  return 'error';
+  return "error";
 }
 
 /**
@@ -298,7 +302,6 @@ export function getGridErrorSeverity(
  * const recoverable2 = isGridErrorRecoverable('grid-builder', error);
  * // Returns false - grid cannot function without builder
  * ```
- *
  * @param errorBoundary - Which boundary caught the error
  * @param error - The caught error
  * @returns true if grid can continue operating
@@ -308,23 +311,26 @@ export function isGridErrorRecoverable(
   error: Error,
 ): boolean {
   // Item-level errors are always recoverable
-  if (errorBoundary === 'grid-item-wrapper') {
+  if (errorBoundary === "grid-item-wrapper") {
     return true;
   }
 
   // Canvas-level errors are usually recoverable
-  if (errorBoundary === 'canvas-section') {
+  if (errorBoundary === "canvas-section") {
     // Critical errors are not recoverable
-    if (error.message.includes('fatal') || error.message.includes('critical')) {
+    if (error.message.includes("fatal") || error.message.includes("critical")) {
       return false;
     }
     return true;
   }
 
   // Builder-level errors are usually not recoverable
-  if (errorBoundary === 'grid-builder') {
+  if (errorBoundary === "grid-builder") {
     // Only validation/minor errors are recoverable
-    if (error.message.includes('validation') || error.message.includes('config')) {
+    if (
+      error.message.includes("validation") ||
+      error.message.includes("config")
+    ) {
       return true;
     }
     return false;
@@ -348,13 +354,12 @@ export function isGridErrorRecoverable(
  * **Example**:
  * ```typescript
  * const message = formatGridErrorMessage({
- *   errorBoundary: 'grid-item-wrapper',
- *   componentType: 'header',
- *   itemId: 'item-123'
+ * errorBoundary: 'grid-item-wrapper',
+ * componentType: 'header',
+ * itemId: 'item-123'
  * }, error);
  * // Returns: "Unable to load header component"
  * ```
- *
  * @param errorInfo - Grid error information
  * @param error - The caught error
  * @param isDevelopment - Whether in development mode (show technical details)
@@ -372,19 +377,19 @@ export function formatGridErrorMessage(
 
   // Production mode - user-friendly messages
   switch (errorInfo.errorBoundary) {
-    case 'grid-item-wrapper':
+    case "grid-item-wrapper":
       if (errorInfo.componentType) {
         return `Unable to load ${errorInfo.componentType} component. Please try again.`;
       }
-      return 'Unable to load component. Please try again.';
+      return "Unable to load component. Please try again.";
 
-    case 'canvas-section':
-      return 'Unable to render canvas section. Please refresh the page.';
+    case "canvas-section":
+      return "Unable to render canvas section. Please refresh the page.";
 
-    case 'grid-builder':
-      return 'Grid builder failed to initialize. Please refresh the page.';
+    case "grid-builder":
+      return "Grid builder failed to initialize. Please refresh the page.";
 
     default:
-      return 'Something went wrong. Please try again.';
+      return "Something went wrong. Please try again.";
   }
 }
