@@ -208,11 +208,9 @@ function removeItemFromCanvas(
   canvas.items = canvas.items.filter((i) => i.id !== itemId);
   state.canvases = { ...state.canvases };
 
-  // Clear selection if this item was selected
-  if (state.selectedItemId === itemId) {
-    state.selectedItemId = null;
-    state.selectedCanvasId = null;
-  }
+  // NOTE: Selection clearing removed - view state should not be modified by commands
+  // Selection is instance-specific view state, not shared data state
+  // Selection clearing should happen at the API/component level when needed
 }
 
 /**
@@ -848,8 +846,8 @@ export class MoveItemCommand implements Command {
   /** GridState instance for multi-instance support */
   private stateInstance: any;
 
-  /** Active viewport during operation ('desktop' | 'mobile') - determines which layout to restore on undo/redo */
-  private activeViewport: "desktop" | "mobile";
+  /** Active viewport during operation - determines which layout to restore on undo/redo */
+  private activeViewport: string;
 
   /**
    * Capture item move operation
@@ -899,7 +897,7 @@ export class MoveItemCommand implements Command {
     sourceSize: { width: number; height: number } | undefined,
     targetSize: { width: number; height: number } | undefined,
     stateInstance: any,
-    activeViewport: "desktop" | "mobile",
+    activeViewport: string,
     sourceMobileLayout?: {
       x: number | null;
       y: number | null;
@@ -1281,8 +1279,8 @@ export class SetViewportCommand implements Command {
   private stateInstance: any;
 
   constructor(
-    private oldViewport: "desktop" | "mobile",
-    private newViewport: "desktop" | "mobile",
+    private oldViewport: string,
+    private newViewport: string,
     stateInstance: any,
   ) {
     this.stateInstance = stateInstance;

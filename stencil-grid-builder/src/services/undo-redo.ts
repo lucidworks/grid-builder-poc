@@ -821,6 +821,28 @@ export class UndoRedoManager {
     this.historyPosition = -1;
     this.updateButtonStates();
   }
+
+  /**
+   * Get undo stack size
+   *
+   * **Purpose**: Return the number of commands that can be undone
+   * **Use case**: Debugging, analytics, UI display (e.g., "5 actions can be undone")
+   * @returns Number of commands that can be undone
+   */
+  getUndoStackSize(): number {
+    return this.historyPosition + 1; // Position 0 = 1 command, -1 = 0 commands
+  }
+
+  /**
+   * Get redo stack size
+   *
+   * **Purpose**: Return the number of commands that can be redone
+   * **Use case**: Debugging, analytics, UI display (e.g., "3 actions can be redone")
+   * @returns Number of commands that can be redone
+   */
+  getRedoStackSize(): number {
+    return this.commandHistory.length - 1 - this.historyPosition;
+  }
 }
 
 /**

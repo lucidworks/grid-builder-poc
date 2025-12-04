@@ -21,7 +21,7 @@ function createTestItem(
     type: "text",
     name: `Test Item ${id}`,
     layouts: {
-      desktop: { x, y, width: 10, height: 6 },
+      desktop: { x, y, width: 10, height: 6, customized: true },
       mobile: {
         x: null,
         y: null,
@@ -77,7 +77,7 @@ describe("undo-redo-commands", () => {
       expect(gridState.canvases.canvas1.items[0].id).toBe("item-1");
     });
 
-    it("should clear selection when undoing if item was selected", () => {
+    it("should NOT clear selection when undoing (selection is instance view state)", () => {
       const item = createTestItem("item-1", "canvas1");
       const command = new AddItemCommand("canvas1", item, gridState);
 
@@ -86,10 +86,10 @@ describe("undo-redo-commands", () => {
       gridState.selectedItemId = "item-1";
       gridState.selectedCanvasId = "canvas1";
 
-      // Undo should clear selection
+      // Undo should NOT clear selection (view state managed at API level)
       command.undo();
-      expect(gridState.selectedItemId).toBeNull();
-      expect(gridState.selectedCanvasId).toBeNull();
+      expect(gridState.selectedItemId).toBe("item-1");
+      expect(gridState.selectedCanvasId).toBe("canvas1");
     });
 
     it("should not clear selection when undoing if different item was selected", () => {
@@ -201,7 +201,7 @@ describe("undo-redo-commands", () => {
       expect(gridState.canvases.canvas1.items[1].id).toBe("item-2");
     });
 
-    it("should clear selection when redoing if item was selected", () => {
+    it("should NOT clear selection when redoing (selection is instance view state)", () => {
       // Clear prepopulated items for isolated test
       gridState.canvases.canvas1.items = [];
 
@@ -213,10 +213,10 @@ describe("undo-redo-commands", () => {
       gridState.selectedItemId = "item-1";
       gridState.selectedCanvasId = "canvas1";
 
-      // Redo should clear selection
+      // Redo should NOT clear selection (view state managed at API level)
       command.redo();
-      expect(gridState.selectedItemId).toBeNull();
-      expect(gridState.selectedCanvasId).toBeNull();
+      expect(gridState.selectedItemId).toBe("item-1");
+      expect(gridState.selectedCanvasId).toBe("canvas1");
     });
 
     it("should handle undo/redo for non-existent canvas gracefully", () => {
