@@ -1108,7 +1108,7 @@ export class BlogApp {
             type: "blog-header",
             name: "Hero Header",
             layouts: {
-              desktop: { x: 0, y: 0, width: 50, height: 6 },
+              desktop: { x: 0, y: 0, width: 50, height: 6, customized: true },
               mobile: {
                 x: null,
                 y: null,
@@ -1129,7 +1129,7 @@ export class BlogApp {
             type: "blog-button",
             name: "Hero CTA",
             layouts: {
-              desktop: { x: 15, y: 7, width: 20, height: 4 }, // 4 units × 20px = 80px (matches CSS min-height)
+              desktop: { x: 15, y: 7, width: 20, height: 4, customized: true }, // 4 units × 20px = 80px (matches CSS min-height)
               mobile: {
                 x: null,
                 y: null,
@@ -1155,7 +1155,7 @@ export class BlogApp {
             type: "blog-article",
             name: "First Article",
             layouts: {
-              desktop: { x: 0, y: 0, width: 25, height: 12 },
+              desktop: { x: 0, y: 0, width: 25, height: 12, customized: true },
               mobile: {
                 x: null,
                 y: null,
@@ -1178,7 +1178,7 @@ export class BlogApp {
             type: "blog-article",
             name: "Second Article",
             layouts: {
-              desktop: { x: 25, y: 0, width: 25, height: 12 },
+              desktop: { x: 25, y: 0, width: 25, height: 12, customized: true },
               mobile: {
                 x: null,
                 y: null,
@@ -1201,7 +1201,7 @@ export class BlogApp {
             type: "blog-image",
             name: "Featured Image",
             layouts: {
-              desktop: { x: 0, y: 13, width: 12, height: 15 },
+              desktop: { x: 0, y: 13, width: 12, height: 15, customized: true },
               mobile: {
                 x: null,
                 y: null,
@@ -1224,7 +1224,13 @@ export class BlogApp {
             type: "blog-article",
             name: "Third Article",
             layouts: {
-              desktop: { x: 12, y: 13, width: 26, height: 12 },
+              desktop: {
+                x: 12,
+                y: 13,
+                width: 26,
+                height: 12,
+                customized: true,
+              },
               mobile: {
                 x: null,
                 y: null,
@@ -1252,7 +1258,7 @@ export class BlogApp {
             type: "blog-header",
             name: "Footer Header",
             layouts: {
-              desktop: { x: 0, y: 0, width: 50, height: 4 },
+              desktop: { x: 0, y: 0, width: 50, height: 4, customized: true },
               mobile: {
                 x: null,
                 y: null,
@@ -1273,7 +1279,7 @@ export class BlogApp {
             type: "blog-button",
             name: "Subscribe Button",
             layouts: {
-              desktop: { x: 15, y: 5, width: 20, height: 4 }, // 4 units × 20px = 80px (matches CSS min-height)
+              desktop: { x: 15, y: 5, width: 20, height: 4, customized: true }, // 4 units × 20px = 80px (matches CSS min-height)
               mobile: {
                 x: null,
                 y: null,

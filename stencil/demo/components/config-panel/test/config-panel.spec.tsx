@@ -129,7 +129,7 @@ describe("config-panel", () => {
           type: "header",
           name: "Test Header",
           layouts: {
-            desktop: { x: 0, y: 0, width: 50, height: 6 },
+            desktop: { x: 0, y: 0, width: 50, height: 6, customized: true },
             mobile: {
               x: null,
               y: null,
@@ -182,7 +182,7 @@ describe("config-panel", () => {
           type: "header",
           name: "Test Header",
           layouts: {
-            desktop: { x: 0, y: 0, width: 50, height: 6 },
+            desktop: { x: 0, y: 0, width: 50, height: 6, customized: true },
             mobile: {
               x: null,
               y: null,
@@ -200,7 +200,7 @@ describe("config-panel", () => {
           type: "text",
           name: "Test Text",
           layouts: {
-            desktop: { x: 0, y: 10, width: 25, height: 10 },
+            desktop: { x: 0, y: 10, width: 25, height: 10, customized: true },
             mobile: {
               x: null,
               y: null,
@@ -229,7 +229,7 @@ describe("config-panel", () => {
         type: "text",
         name: "Test Text",
         layouts: {
-          desktop: { x: 0, y: 10, width: 25, height: 10 },
+          desktop: { x: 0, y: 10, width: 25, height: 10, customized: true },
           mobile: {
             x: null,
             y: null,
@@ -269,7 +269,7 @@ describe("config-panel", () => {
         type: "header",
         name: "Test Header",
         layouts: {
-          desktop: { x: 0, y: 0, width: 50, height: 6 },
+          desktop: { x: 0, y: 0, width: 50, height: 6, customized: true },
           mobile: {
             x: null,
             y: null,
@@ -314,7 +314,7 @@ describe("config-panel", () => {
         type: "header",
         name: "Test Header",
         layouts: {
-          desktop: { x: 0, y: 0, width: 50, height: 6 },
+          desktop: { x: 0, y: 0, width: 50, height: 6, customized: true },
           mobile: {
             x: null,
             y: null,
@@ -366,7 +366,7 @@ describe("config-panel", () => {
         type: "header",
         name: "Test Header",
         layouts: {
-          desktop: { x: 5, y: 5, width: 50, height: 6 },
+          desktop: { x: 5, y: 5, width: 50, height: 6, customized: true },
           mobile: {
             x: null,
             y: null,
