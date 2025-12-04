@@ -916,7 +916,9 @@ export class GridBuilder {
         fromDefault: !normalizedApiKey,
       });
     } else if (this.apiRef === null) {
-      debug.log("GridBuilder: apiRef explicitly set to null, skipping window exposure");
+      debug.log(
+        "GridBuilder: apiRef explicitly set to null, skipping window exposure",
+      );
     }
 
     // Generate or use provided instanceId (for SharedStateRegistry reference counting)
@@ -937,7 +939,8 @@ export class GridBuilder {
 
     debug.log("GridBuilder: Instance identifiers", {
       apiKey: normalizedApiKey || "(none - local-only mode)",
-      resolvedInstanceId: this.resolvedInstanceId || "(not needed - local mode)",
+      resolvedInstanceId:
+        this.resolvedInstanceId || "(not needed - local mode)",
       cacheInstanceId: this.cacheInstanceId,
       willShareState: !!normalizedApiKey,
     });
@@ -985,9 +988,7 @@ export class GridBuilder {
     } else {
       // Local undo manager (backward compatible)
       this.undoRedoManager = new UndoRedoManager();
-      debug.log(
-        "GridBuilder: Using local undo/redo manager (local-only mode)",
-      );
+      debug.log("GridBuilder: Using local undo/redo manager (local-only mode)");
     }
 
     this.eventManagerInstance = new EventManager();
@@ -2356,9 +2357,7 @@ export class GridBuilder {
    */
   private isUndoShortcut(event: KeyboardEvent): boolean {
     return (
-      (event.metaKey || event.ctrlKey) &&
-      event.key === "z" &&
-      !event.shiftKey
+      (event.metaKey || event.ctrlKey) && event.key === "z" && !event.shiftKey
     );
   }
 
@@ -2702,8 +2701,7 @@ export class GridBuilder {
    */
   private handleCanvasMove = (event: Event): void => {
     const customEvent = event as CustomEvent;
-    const { itemId, sourceCanvasId, targetCanvasId, x, y } =
-      customEvent.detail;
+    const { itemId, sourceCanvasId, targetCanvasId, x, y } = customEvent.detail;
 
     this.processCanvasMove(itemId, sourceCanvasId, targetCanvasId, x, y);
   };
@@ -2831,8 +2829,8 @@ export class GridBuilder {
     currentLayout: any,
   ): { x: number; y: number } {
     // Convert drop position (pixels) to grid units for target canvas
-    let gridX = pixelsToGridX(x, targetCanvasId, this.config);
-    let gridY = pixelsToGridY(y, this.config);
+    const gridX = pixelsToGridX(x, targetCanvasId, this.config);
+    const gridY = pixelsToGridY(y, this.config);
 
     // Constrain position to target canvas boundaries
     const constrained = constrainPositionToCanvas(

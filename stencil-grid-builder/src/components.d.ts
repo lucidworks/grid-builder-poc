@@ -18,7 +18,11 @@ import { ComponentDefinition } from "./types/component-definition";
 import { GridBuilderAPI } from "./services/grid-builder-api";
 import { ConfirmationModalData } from "./demo/types/confirmation-modal-data";
 import { GridBuilderAPI as GridBuilderAPI1 } from "./types/api";
-import { BaseErrorEventDetail, ErrorFallbackRenderer, ErrorRecoveryStrategy } from "./types/error-types";
+import {
+  BaseErrorEventDetail,
+  ErrorFallbackRenderer,
+  ErrorRecoveryStrategy,
+} from "./types/error-types";
 import { GridBuilderTheme } from "./types/theme";
 import { GridBuilderPlugin } from "./types/plugin";
 import { UIComponentOverrides } from "./types/ui-overrides";
@@ -37,2734 +41,3143 @@ export { ComponentDefinition } from "./types/component-definition";
 export { GridBuilderAPI } from "./services/grid-builder-api";
 export { ConfirmationModalData } from "./demo/types/confirmation-modal-data";
 export { GridBuilderAPI as GridBuilderAPI1 } from "./types/api";
-export { BaseErrorEventDetail, ErrorFallbackRenderer, ErrorRecoveryStrategy } from "./types/error-types";
+export {
+  BaseErrorEventDetail,
+  ErrorFallbackRenderer,
+  ErrorRecoveryStrategy,
+} from "./types/error-types";
 export { GridBuilderTheme } from "./types/theme";
 export { GridBuilderPlugin } from "./types/plugin";
 export { UIComponentOverrides } from "./types/ui-overrides";
 export { GridExport } from "./types/grid-export";
 export { SectionEditorData } from "./demo/types/section-editor-data";
 export namespace Components {
-    interface BlogApp {
-    }
-    interface BlogArticle {
-        "author"?: string;
-        /**
-          * @default "#fff9c4"
-         */
-        "backgroundColor"?: string;
-        /**
-          * @default "Article content goes here"
-         */
-        "content": string;
-        "date"?: string;
-    }
-    interface BlogArticleDragClone {
-    }
-    interface BlogButton {
-        /**
-          * @default "#bbdefb"
-         */
-        "backgroundColor"?: string;
-        "href"?: string;
-        /**
-          * @default "Click me!"
-         */
-        "label": string;
-        /**
-          * @default "primary"
-         */
-        "variant": "primary" | "secondary";
-    }
-    interface BlogButtonDragClone {
-    }
-    interface BlogHeader {
-        /**
-          * @default "#e8eaf6"
-         */
-        "backgroundColor"?: string;
-        /**
-          * @default "Default Header"
-         */
-        "headerTitle": string;
-        "subtitle"?: string;
-    }
-    interface BlogHeaderDragClone {
-    }
-    interface BlogImage {
-        /**
-          * @default "Placeholder image"
-         */
-        "alt": string;
-        /**
-          * @default "#c8e6c9"
-         */
-        "backgroundColor"?: string;
-        "caption"?: string;
-        /**
-          * @default "contain"
-         */
-        "objectFit": "contain" | "cover";
-        /**
-          * @default "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&h=600&fit=crop"
-         */
-        "src": string;
-    }
-    interface BlogImageDragClone {
-    }
+  interface BlogApp {}
+  interface BlogArticle {
+    author?: string;
     /**
-     * CanvasHeader Component
-     * ======================
-     * Declarative header component for canvas sections.
-     * **Tag**: `<canvas-header>`
-     * **Shadow DOM**: Disabled (matches blog-app styling)
+     * @default "#fff9c4"
      */
-    interface CanvasHeader {
-        /**
-          * Canvas ID for data tracking  **Purpose**: Identify which canvas this header belongs to **Required**: Yes
-         */
-        "canvasId": string;
-        /**
-          * Whether this canvas is currently active  **Purpose**: Control header opacity (active = full opacity, inactive = dimmed) **Default**: false
-          * @default false
-         */
-        "isActive": boolean;
-        /**
-          * Whether this section can be deleted  **Purpose**: Control delete button visibility **Default**: true **Note**: Default sections (hero, articles, footer) should set to false
-          * @default true
-         */
-        "isDeletable": boolean;
-        /**
-          * Display title for the canvas section  **Purpose**: Text shown in the title badge **Required**: Yes **Note**: Named sectionTitle to avoid conflict with standard HTML title attribute
-         */
-        "sectionTitle": string;
-    }
+    backgroundColor?: string;
     /**
-     * CanvasSection Component
-     * =======================
-     * Library component providing individual canvas dropzone.
-     * **Tag**: `<canvas-section>`
-     * **Shadow DOM**: Disabled (required for interact.js compatibility)
-     * **Reactivity**: Listens to gridState changes via StencilJS store
+     * @default "Article content goes here"
      */
-    interface CanvasSection {
-        /**
-          * Background color for this canvas  **Host app responsibility**: Pass canvas styling from host app **Library does NOT store**: backgroundColor is presentation concern **Optional**: Defaults to '#ffffff'
-          * @example ```tsx <canvas-section   canvasId="hero-section"   backgroundColor="#f0f4f8" /> ```
-         */
-        "backgroundColor"?: string;
-        /**
-          * Canvas ID for state management  **Format**: 'canvas1', 'canvas2', etc. **Purpose**: Key for accessing canvas data in gridState.canvases **Required**: Component won't render without valid canvasId
-         */
-        "canvasId": string;
-        /**
-          * Canvas title (from canvasMetadata)  **Optional**: Display title for this section **Renders as**: Rotated tab on right side, outside section bounds **Builder mode only**: Title tabs visible in builder, not viewer **Source**: Passed from grid-builder via canvasMetadata[canvasId].title
-          * @example ```tsx <canvas-section   canvasId="hero-section"   canvasTitle="Hero Section" /> ```
-         */
-        "canvasTitle"?: string;
-        /**
-          * Component registry (from parent grid-builder)  **Source**: grid-builder component (built from components prop) **Structure**: ComponentRegistry service instance **Purpose**: Pass to grid-item-wrapper for dynamic rendering
-         */
-        "componentRegistry"?: ComponentRegistry;
-        /**
-          * Grid configuration options  **Optional**: Customizes grid system behavior **Passed from**: grid-builder component **Used for**: Grid size calculations, constraints
-         */
-        "config"?: GridConfig;
-        /**
-          * DOM cache service instance (passed from grid-builder)  **Required for editing mode** (grid-builder provides this)  **Source**: grid-builder → canvas-section → grid-item-wrapper **Purpose**: Support multiple grid-builder instances with isolated DOM caches **Used by**: DragHandler, ResizeHandler for fast canvas element lookups
-         */
-        "domCacheInstance"?: DOMCache;
-        /**
-          * Error adapter service instance (passed from grid-builder)  **Required for editing mode** (grid-builder provides this) **Optional for viewer mode** (grid-viewer doesn't need it)  **Source**: grid-builder → canvas-section → grid-item-wrapper **Purpose**: Support multiple grid-builder instances with isolated error handling **Used by**: Error boundary for handling canvas-level and item-level render errors  **Error isolation strategy**: - Canvas-level errors (dropzone failures, canvas rendering issues) caught here - Item-level errors caught by grid-item-wrapper error boundaries - Error adapter converts to GridErrorEventDetail and emits to EventManager
-         */
-        "errorAdapterInstance"?: GridErrorAdapter;
-        /**
-          * Event manager service instance (passed from grid-builder)  **Required for editing mode** (grid-builder provides this)  **Source**: grid-builder → canvas-section → grid-item-wrapper **Purpose**: Support multiple grid-builder instances with isolated services
-         */
-        "eventManagerInstance"?: EventManager;
-        /**
-          * Whether this canvas is currently active  **Purpose**: Indicate which canvas is currently focused/active **Source**: Computed from gridState.activeCanvasId in grid-builder **Default**: false **Visual effect**: Applies 'active' CSS class to grid-container  **Canvas becomes active when**: - User clicks item on canvas - User clicks canvas background - User starts dragging item on canvas - User starts resizing item on canvas - Programmatically via api.setActiveCanvas()  **Consumer styling hook**: Consumer can style active canvas via CSS: ```css .grid-container.active .canvas-title { opacity: 1; } ```
-          * @example ```tsx <canvas-section   canvasId="hero-section"   isActive={gridState.activeCanvasId === 'hero-section'} /> ```
-          * @default false
-         */
-        "isActive"?: boolean;
-        /**
-          * Deletion hook (from parent grid-builder)  **Source**: grid-builder component (from onBeforeDelete prop) **Purpose**: Pass through to grid-item-wrapper for deletion interception **Optional**: If not provided, components delete immediately
-         */
-        "onBeforeDelete"?: DeletionHook;
-        /**
-          * State change subscription function (passed from grid-builder)  **Required for editing mode** (grid-builder provides this)  **Source**: grid-builder (this.stateManager.onChange) **Purpose**: Subscribe to instance-specific state changes for reactivity  **Usage**: ```typescript onStateChange={(key, callback) => this.stateManager.onChange(key, callback)} ```
-         */
-        "onStateChange"?: (key: string, callback: Function) => void;
-        /**
-          * State manager instance (passed from grid-builder)  **Required for editing mode** (grid-builder provides this)  **Source**: grid-builder → canvas-section → grid-item-wrapper **Purpose**: Support multiple grid-builder instances with isolated state **Used by**: DragHandler, ResizeHandler for accessing canvases and viewport
-         */
-        "stateInstance"?: any;
-        /**
-          * Theme configuration (from parent grid-builder)  **Optional prop**: Theme for selection colors **Source**: grid-builder → canvas-section → grid-item-wrapper **Purpose**: Pass theme.selectionColor to grid-item-wrapper for component selection styling
-         */
-        "theme"?: any;
-        /**
-          * Undo/Redo manager service instance (passed from grid-builder)  **Required for editing mode** (grid-builder provides this)  **Source**: grid-builder → canvas-section → grid-item-wrapper **Purpose**: Support multiple grid-builder instances with isolated undo/redo stacks
-         */
-        "undoRedoManagerInstance"?: UndoRedoManager;
-        /**
-          * Virtual renderer service instance (passed from grid-builder)  **Required for editing mode** (grid-builder provides this)  **Source**: grid-builder → canvas-section → grid-item-wrapper **Purpose**: Support multiple grid-builder instances with isolated services
-         */
-        "virtualRendererInstance"?: VirtualRendererService;
-    }
+    content: string;
+    date?: string;
+  }
+  interface BlogArticleDragClone {}
+  interface BlogButton {
     /**
-     * CanvasSectionViewer Component
-     * ==============================
-     * Rendering-only canvas component for grid-viewer.
-     * **Tag**: `<canvas-section-viewer>`
-     * **Shadow DOM**: Disabled (consistent with canvas-section)
-     * **Reactivity**: Props-based (no global state subscription)
+     * @default "#bbdefb"
      */
-    interface CanvasSectionViewer {
-        /**
-          * Background color for this canvas  **Optional**: Canvas background color **Default**: '#ffffff'
-         */
-        "backgroundColor"?: string;
-        /**
-          * Breakpoint configuration for responsive layouts  **Optional prop**: Define custom responsive breakpoints **Source**: grid-viewer → canvas-section-viewer → grid-item-wrapper **Used by**: grid-item-wrapper for layout resolution and auto-stacking  **Purpose**: Passed through to grid-item-wrapper to enable multi-breakpoint responsive layouts in viewer mode. Grid-item-wrapper uses this to determine which layout to render, handle auto-stacking, and resolve layout inheritance.  **Example**: ```typescript const breakpoints = {   mobile: { minWidth: 0, layoutMode: 'stack' },   tablet: { minWidth: 768, layoutMode: 'inherit', inheritFrom: 'desktop' },   desktop: { minWidth: 1024, layoutMode: 'manual' } }; ```
-         */
-        "breakpoints"?: any;
-        /**
-          * Canvas ID for identification  **Format**: 'canvas1', 'hero-section', etc. **Purpose**: Element ID and data attribute
-         */
-        "canvasId": string;
-        /**
-          * Component registry (from parent grid-viewer)  **Source**: grid-viewer component **Structure**: ComponentRegistry service instance **Purpose**: Pass to grid-item-wrapper for dynamic rendering
-         */
-        "componentRegistry"?: ComponentRegistry;
-        /**
-          * Grid configuration options  **Optional**: Customizes grid system behavior **Passed from**: grid-viewer component
-         */
-        "config"?: GridConfig;
-        /**
-          * Current viewport/breakpoint name  **Required**: string matching a breakpoint name **Examples**: 'desktop', 'mobile', 'tablet', 'xs', 'sm', 'md', 'lg', 'xl' **Source**: Passed from grid-viewer component  **Purpose**: Determines which layout to render for each item (item.layouts[currentViewport]) **Multi-breakpoint support**: Can be any breakpoint name from breakpoints config
-         */
-        "currentViewport": string;
-        /**
-          * Error adapter service instance (passed from grid-viewer)  **Optional**: Provided by grid-viewer if error handling needed **Purpose**: Support error boundary integration for item render errors **Viewer mode**: May be undefined (simplified error handling without event emission)
-         */
-        "errorAdapterInstance"?: GridErrorAdapter;
-        /**
-          * Items to render in this canvas  **Required**: Array of GridItem objects **Source**: Passed from grid-viewer component  **Unlike canvas-section**: Items passed via props, not from global state
-         */
-        "items": GridItem[];
-        /**
-          * State instance (viewer state with editing fields set to null)  **Optional**: Provided by grid-viewer to eliminate defensive guards in grid-item-wrapper **Purpose**: Provide minimal state object matching StateManager structure **Value**: ViewerState with selectedItemId/selectedCanvasId/activeCanvasId always null
-         */
-        "stateInstance"?: any;
-        /**
-          * Virtual renderer service instance (passed from grid-builder)  **Optional**: Provided by grid-viewer if virtual rendering enabled **Purpose**: Lazy loading of grid items for better performance
-         */
-        "virtualRendererInstance"?: VirtualRendererService;
-    }
+    backgroundColor?: string;
+    href?: string;
     /**
-     * ComponentPalette Component
-     * ===========================
-     * Library component providing draggable component palette UI.
-     * **Tag**: `<component-palette>`
-     * **Shadow DOM**: Disabled (for consistency with other components)
-     * **Reactivity**: Re-renders when components prop changes
-     * ## Usage Patterns
-     * **Pattern 1: Default (inside grid-builder)**
-     * ```typescript
-     * // Palette automatically rendered by grid-builder
-     * <grid-builder components={componentDefinitions} />
-     * ```
-     * **Pattern 2: Independent placement**
-     * ```typescript
-     * // Place palette anywhere in your app
-     * <div class="my-layout">
-     *   <aside class="sidebar">
-     *     <component-palette
-     *       components={componentDefinitions}
-     *       config={gridConfig}
-     *     />
-     *   </aside>
-     *   <main>
-     *     <grid-builder
-     *       components={componentDefinitions}
-     *       config={gridConfig}
-     *       uiOverrides={{
-     *         ComponentPalette: () => null  // Hide default palette
-     *       }}
-     *     />
-     *   </main>
-     * </div>
-     * ```
-     * **Pattern 3: Custom wrapper component**
-     * ```typescript
-     * // Wrap in your own component for styling
-     * @Component ({ tag: 'my-palette-sidebar' })
-     * export class MyPaletteSidebar {
-     * @Prop () components: ComponentDefinition[];
-     * render() {
-     * return (
-     *  <div class="custom-sidebar">
-     *    <h3>Components</h3>
-     *    <component-palette components={this.components} />
-     *  </div>
-     * );
-     * }
-     * }
-     * ```
-     * ## Key Features
-     * - **Self-contained**: Works independently of grid-builder
-     * - **Drag/drop ready**: Uses interact.js for drag functionality
-     * - **Flexible placement**: Can be rendered anywhere in DOM
-     * - **Works across boundaries**: Drag from palette to any canvas-section
+     * @default "Click me!"
      */
-    interface ComponentPalette {
-        /**
-          * Component registry for reactive updates (Observer Pattern)  **Recommended**: Use this instead of components prop for dynamic registration **Optional prop**: ComponentRegistry instance from grid-builder **Source**: Passed from grid-builder component  **Benefits over components prop**: - Automatic palette updates when components are registered - No manual synchronization needed - Framework-driven reactive pattern  **Use case - Dynamic component registration**: ```typescript // In grid-builder story or consumer code const builderEl = document.querySelector('grid-builder'); const paletteEl = document.querySelector('component-palette');  // Share the registry (automatic sync!) paletteEl.componentRegistry = builderEl.componentRegistry;  // Register new component - palette updates automatically! const api = window.gridBuilderAPI; api.registerComponent(newComponentDef); ```  **Priority**: If both components and componentRegistry are provided, componentRegistry takes precedence
-         */
-        "componentRegistry"?: ComponentRegistry;
-        /**
-          * Component definitions to render in palette  **Deprecated**: Use componentRegistry prop for reactive updates **Backward compatibility**: Still supported for static component lists **Source**: Passed from grid-builder component or consumer code  **Each definition provides**: - type: Unique identifier for component - name: Display name in palette - icon: Visual identifier (emoji recommended) - defaultSize: Size when dropped (for drag clone sizing)  **Example**: ```typescript const components = [   {     type: 'header',     name: 'Header',     icon: '📄',     defaultSize: { width: 20, height: 8 },     render: ({ itemId, config }) => <my-header itemId={itemId} config={config} />   } ]; ```
-         */
-        "components"?: ComponentDefinition[];
-        /**
-          * Grid configuration options  **Optional prop**: Customizes grid system behavior **Passed from**: grid-builder component **Used for**: Drag clone sizing (gridToPixelsX/Y calculations)
-         */
-        "config"?: GridConfig;
-        /**
-          * Custom label for this palette instance  **Optional prop**: Provides a descriptive label for this specific palette **Default**: "Component palette" **Used for**: ARIA label on toolbar container  **Use case - Multiple palettes**: When multiple component palettes exist on the same page (e.g., categorized palettes), provide unique labels for screen reader users:  ```typescript <component-palette components={contentComponents} paletteLabel="Content components" /> <component-palette components={mediaComponents} paletteLabel="Media components" /> <component-palette components={interactiveComponents} paletteLabel="Interactive components" /> ```  **Accessibility benefit**: - Screen readers announce: "Content components, toolbar" - Users can navigate between palettes by their distinct labels - Each palette has unique ARIA IDs to avoid conflicts
-          * @default "Component palette"
-         */
-        "paletteLabel"?: string;
-        /**
-          * Show palette header (title)  **Optional prop**: Controls whether the "Components" header is displayed **Default**: true (shows header for backward compatibility)  **Use cases**: - `showHeader={true}` (default): Standard palette with "Components" title - `showHeader={false}`: Chromeless mode - just the component list  **Chromeless mode benefits**: - Embed palette in custom layouts - Add your own headers/titles - Integrate into existing UI structures - More flexible component placement  **Example - Chromeless with custom wrapper**: ```typescript <div class="my-custom-sidebar"> <h3 class="my-title">Available Components</h3> <p class="my-description">Drag to add</p> <component-palette components={componentDefinitions} showHeader={false} /> </div> ```
-          * @default true
-         */
-        "showHeader"?: boolean;
-        /**
-          * Target grid-builder instance ID  **Optional prop**: Specifies which grid-builder instance should receive click-to-add events **Default**: undefined (events received by all grid-builder instances) **Used for**: Multi-instance scenarios with multiple grid-builders on the same page  **Use case - Multiple grid-builders**: When multiple grid-builder instances exist on the same page, use this prop to route palette events to a specific instance:  ```typescript // Grid builders with different API keys <grid-builder api-ref={{ key: 'gridAPI1' }} components={...} /> <grid-builder api-ref={{ key: 'gridAPI2' }} components={...} />  // Palettes targeting specific builders <component-palette   components={components}   targetGridBuilderId="gridAPI1" /> <component-palette   components={components}   targetGridBuilderId="gridAPI2" /> ```  **How it works**: - Palette includes `targetGridBuilderId` in `palette-item-click` event detail - Grid-builder filters events by matching against its own instance ID - If omitted, all grid-builders receive the event (backward compatible)
-          * @default undefined
-         */
-        "targetGridBuilderId"?: string;
-    }
+    label: string;
     /**
-     * ConfigPanel Component
-     * =====================
-     * Library component providing configuration panel with auto-generated and custom forms.
-     * **Tag**: `<config-panel>`
-     * **Shadow DOM**: Disabled (for consistency with other components)
+     * @default "primary"
      */
-    interface ConfigPanel {
-        /**
-          * Grid Builder API instance  **Source**: Parent component (e.g., blog-app) **Purpose**: Access grid state and subscribe to events **Required**: Component won't work without valid API reference
-         */
-        "api"?: GridBuilderAPI;
-        /**
-          * Component registry (from parent grid-builder)  **Source**: grid-builder component **Purpose**: Look up component definitions for config forms
-         */
-        "componentRegistry"?: ComponentRegistry;
-    }
+    variant: "primary" | "secondary";
+  }
+  interface BlogButtonDragClone {}
+  interface BlogHeader {
     /**
-     * Confirmation Modal Component
-     * =============================
-     * Demo Component - NOT Part of Library
-     * This component demonstrates how to implement the grid-builder library's
-     * deletion hook system with a custom confirmation modal.
-     * Library Feature Being Demonstrated:
-     * -----------------------------------
-     * This modal is used with the library's **onBeforeDelete hook** system.
-     * How It Works:
-     * -------------
-     * 1. Library calls onBeforeDelete hook when user deletes component
-     * 2. Hook returns a Promise that doesn't resolve immediately
-     * 3. Host app shows this modal (or any modal library)
-     * 4. User clicks "Delete" or "Cancel"
-     * 5. Modal fires confirm/cancel event
-     * 6. Host app resolves Promise with true/false
-     * 7. Library proceeds with or cancels deletion
-     * Code Flow Example:
-     * ------------------
-     * ```typescript
-     * // In parent component (blog-app.tsx):
-     * private handleBeforeDelete = (context: DeletionHookContext): Promise<boolean> => {
-     *   return new Promise((resolve) => {
-     *     this.deleteResolve = resolve;
-     *     this.isConfirmModalOpen = true;  // Show this modal
-     *   });
-     * };
-     * private handleConfirmDelete = () => {
-     *   this.deleteResolve(true);   // Tell library to proceed
-     * };
-     * private handleCancelDelete = () => {
-     *   this.deleteResolve(false);  // Tell library to cancel
-     * };
-     * ```
-     * Why This Pattern:
-     * -----------------
-     * - **Library agnostic**: Library doesn't provide modal UI
-     * - **Flexibility**: Use any modal library (Material, Bootstrap, Ant Design, etc.)
-     * - **Customization**: Full control over modal appearance and behavior
-     * - **Async support**: Can make API calls before resolving
-     * Alternative Implementations:
-     * ---------------------------
-     * You could replace this component with:
-     * - Material Design modal
-     * - Bootstrap modal
-     * - Ant Design modal
-     * - Native browser confirm() (not recommended)
-     * - Custom modal from your design system
-     * The library doesn't care what modal you use - it just waits for the
-     * Promise to resolve with true/false.
+     * @default "#e8eaf6"
      */
-    interface ConfirmationModal {
-        /**
-          * Modal content (title and message) Passed from parent when showing confirmation
-          * @default null
-         */
-        "data": ConfirmationModalData | null;
-        /**
-          * Modal open/closed state Controlled by parent component (blog-app)
-          * @default false
-         */
-        "isOpen": boolean;
-    }
-    interface CustomConfigPanel {
-        /**
-          * Grid Builder API (accessed from window.gridBuilderAPI or passed as prop)  **Source**: window.gridBuilderAPI (set by grid-builder component) **Purpose**: Access grid state and methods **Required**: Component won't work without valid API reference
-         */
-        "api"?: GridBuilderAPI1;
-    }
+    backgroundColor?: string;
     /**
-     * Custom Drag Clone Component
-     * ============================
-     * Custom drag clone that shows a visual preview of the component being dragged.
-     * Each component type has a unique appearance that matches what will be placed
-     * on the canvas, helping with visual alignment and user understanding.
-     * The component fills the exact width and height provided, scaled to match
-     * the actual drop size.
+     * @default "Default Header"
      */
-    interface CustomDragClone {
-        /**
-          * Component type being dragged
-         */
-        "componentType": string;
-        /**
-          * Height in pixels
-         */
-        "height": number;
-        /**
-          * Icon/emoji
-         */
-        "icon": string;
-        /**
-          * Display name
-         */
-        "name": string;
-        /**
-          * Width in pixels
-         */
-        "width": number;
-    }
+    headerTitle: string;
+    subtitle?: string;
+  }
+  interface BlogHeaderDragClone {}
+  interface BlogImage {
     /**
-     * Custom Palette Item Component
-     * ==============================
-     * Example custom palette item that shows how consumers can create
-     * fully customized palette entries for their components.
-     * Updated to display SVG icons on top with titles below (similar to UI builder pattern)
+     * @default "Placeholder image"
      */
-    interface CustomPaletteItem {
-        /**
-          * Component type
-         */
-        "componentType": string;
-        /**
-          * Icon/emoji or SVG identifier
-         */
-        "icon": string;
-        /**
-          * Display name
-         */
-        "name": string;
-    }
-    interface DashboardWidget {
-        /**
-          * @default "#ffccbc"
-         */
-        "backgroundColor"?: string;
-    }
-    interface DashboardWidgetDragClone {
-    }
+    alt: string;
     /**
-     * ErrorBoundary Component
-     * ========================
-     * Generic error boundary for catching component render errors.
-     * **Tag**: `<error-boundary>`
-     * **Shadow DOM**: Disabled (allows slot content to access parent styles)
-     * **Reusable**: Zero dependencies, can be extracted to standalone package
+     * @default "#c8e6c9"
      */
-    interface ErrorBoundary {
-        /**
-          * Additional context for error info  **Purpose**: Add domain-specific context to error events **Default**: {}  **Example** (grid-builder specific): ```typescript <error-boundary context={{ itemId: 'item-123', canvasId: 'canvas1' }}>   ... </error-boundary> ```
-         */
-        "context"?: Record<string, any>;
-        /**
-          * Error boundary identifier  **Purpose**: Identifies which boundary caught the error **Required**: Yes **Example**: 'grid-builder', 'canvas-section', 'grid-item-wrapper'  **Used in error events**: Helps parent components know where error originated
-         */
-        "errorBoundary": string;
-        /**
-          * Custom error fallback renderer  **Purpose**: Render custom error UI **Default**: Uses default error UI (red box with message)  **Function signature**: ```typescript (error: Error, errorInfo: BaseErrorInfo, retry?: () => void) => any ```  **Example**: ```typescript errorBoundaryEl.errorFallback = (error, errorInfo, retry) => (   <div class="custom-error">     <h3>{error.message}</h3>     <button onClick={retry}>Try Again</button>   </div> ); ```
-         */
-        "errorFallback"?: ErrorFallbackRenderer;
-        /**
-          * Error recovery strategy  **Purpose**: Control how component recovers from errors **Default**: Auto-determined from error classification  **Strategies**: - `graceful`: Show fallback UI, emit event, continue operation - `strict`: Re-throw error, propagate to parent - `retry`: Attempt automatic retry (not implemented for render errors) - `ignore`: Swallow error, render nothing  **Example**: ```typescript <error-boundary recovery-strategy="graceful">...</error-boundary> ```
-         */
-        "recoveryStrategy"?: ErrorRecoveryStrategy;
-        /**
-          * Whether to show error UI  **Purpose**: Control error UI visibility **Default**: `process.env.NODE_ENV !== 'production'` (show in dev, hide in prod)  **Override behavior**: - `true`: Always show error UI - `false`: Never show error UI (emit event only) - `undefined`: Environment-based (dev: show, prod: hide)  **Example**: ```typescript <error-boundary show-error-ui={true}>...</error-boundary> ```
-         */
-        "showErrorUI"?: boolean;
-        /**
-          * Simulate Error (Public API for demos/testing)  **Purpose**: Manually trigger error boundary for demonstration or testing **Use case**: Storybook stories, E2E tests, demo scenarios  **Example**: ```typescript const errorBoundary = document.querySelector('error-boundary'); await errorBoundary.simulateError(new Error('Test error')); ```
-          * @param error - Error to simulate (or string message)
-          * @returns Promise<void>
-         */
-        "simulateError": (error: Error | string) => Promise<void>;
-    }
+    backgroundColor?: string;
+    caption?: string;
     /**
-     * GridBuilder Component
-     * ======================
-     * Main library component providing complete grid builder functionality.
-     * **Tag**: `<grid-builder>`
-     * **Shadow DOM**: Disabled (required for interact.js compatibility)
-     * **Reactivity**: Listens to gridState changes via StencilJS store
+     * @default "contain"
      */
-    interface GridBuilder {
-        /**
-          * Add a new canvas programmatically  **Purpose**: Create new section/canvas in the grid  **Example**: ```typescript const builder = document.querySelector('grid-builder'); await builder.addCanvas('new-section'); ```
-          * @param canvasId - Unique canvas identifier
-         */
-        "addCanvas": (canvasId: string) => Promise<void>;
-        /**
-          * Add a component programmatically  **Purpose**: Add new component to canvas without dragging from palette  **Example**: ```typescript const builder = document.querySelector('grid-builder'); const itemId = await builder.addComponent('canvas1', 'header', { x: 10, y: 10, width: 30, height: 6 }, { title: 'My Header' }); ```
-          * @param canvasId - Canvas to add component to
-          * @param componentType - Component type from registry
-          * @param position - Grid position and size
-          * @param config - Optional component configuration
-          * @returns Promise<string | null> - New item ID or null if failed
-         */
-        "addComponent": (canvasId: string, componentType: string, position: { x: number; y: number; width: number; height: number; }, config?: Record<string, any>) => Promise<string | null>;
-        /**
-          * API key for shared state across multiple instances  **Optional prop**: Enables multi-instance sharing **Purpose**: Multiple grid-builder instances with same apiKey share layout data  **Use cases**: - Multi-device preview (mobile + tablet + desktop views side-by-side) - Collaborative editing (multiple users editing same layout) - Synchronized state across instances  **Shared data**: Canvas items, layouts, and z-index counters **Instance-specific**: Current viewport, selection state (each instance independent)  **Example**: ```typescript // Instance 1: Mobile view <grid-builder apiKey="demo-layout" breakpoints={{ mobile: 0, desktop: 768 }}></grid-builder>  // Instance 2: Desktop view (shares data with Instance 1) <grid-builder apiKey="demo-layout" breakpoints={{ mobile: 0, desktop: 768 }}></grid-builder> ```  **Default**: undefined (local-only mode, no sharing)
-         */
-        "apiKey"?: string;
-        /**
-          * Custom API exposure configuration  **Optional prop**: Control where and how the Grid Builder API is exposed **Default**: `{ key: 'gridBuilderAPI' }` **Purpose**: Allows multiple grid-builder instances on the same page  **Options**: 1. **Custom key on window** (multiple instances): ```typescript <grid-builder api-ref={{ key: 'gridAPI1' }}></grid-builder> <grid-builder api-ref={{ key: 'gridAPI2' }}></grid-builder> // Access: window.gridAPI1, window.gridAPI2 ```  2. **Disable automatic exposure** (use ref instead): ```typescript <grid-builder api-ref={null}></grid-builder> // Access via ref: <grid-builder ref={el => this.api = el?.api}></grid-builder> ```
-          * @default {     key: "gridBuilderAPI",   }
-         */
-        "apiRef"?: { key?: string } | null;
-        /**
-          * Breakpoint configuration for responsive layouts  **Optional prop**: Define custom responsive breakpoints **Default**: `{ mobile: { minWidth: 0, layoutMode: 'stack' }, desktop: { minWidth: 768, layoutMode: 'manual' } }` **Backwards compatible**: Existing desktop/mobile behavior maintained by default  **Breakpoint structure**: - `minWidth`: Container width in pixels (mobile-first approach) - `layoutMode`: 'manual' | 'stack' | 'inherit' - `inheritFrom`: Which breakpoint to inherit from (for layoutMode='inherit')  **Layout modes**: - **manual**: Items must be individually positioned (desktop-style) - **stack**: Items auto-stack vertically, full-width (mobile-style) - **inherit**: Inherit layout from another breakpoint  **Examples**:  1. **Simple format** (min-width only): ```typescript <grid-builder breakpoints={{ mobile: 0, desktop: 768 }}></grid-builder> ```  2. **Full format** (3 breakpoints with layout modes): ```typescript <grid-builder breakpoints={{   mobile: { minWidth: 0, layoutMode: 'stack' },   tablet: { minWidth: 768, layoutMode: 'inherit', inheritFrom: 'desktop' },   desktop: { minWidth: 1024, layoutMode: 'manual' } }}></grid-builder> ```  3. **Bootstrap-style** (5 breakpoints): ```typescript <grid-builder breakpoints={{   xs: { minWidth: 0, layoutMode: 'stack' },   sm: { minWidth: 576, layoutMode: 'stack' },   md: { minWidth: 768, layoutMode: 'inherit', inheritFrom: 'lg' },   lg: { minWidth: 992, layoutMode: 'manual' },   xl: { minWidth: 1200, layoutMode: 'manual' } }}></grid-builder> ```  **Automatic viewport detection**: - ResizeObserver monitors container width changes - Current viewport determined by container width (not window size) - Layout automatically switches when container resizes - No manual viewport switching needed
-         */
-        "breakpoints"?: any;
-        /**
-          * Check if redo is available  **Purpose**: Determine if there are actions to redo  **Example**: ```typescript const builder = document.querySelector('grid-builder'); const canRedo = await builder.canRedo(); redoButton.disabled = !canRedo; ```
-          * @returns Promise<boolean> - True if redo is available
-         */
-        "canRedo": () => Promise<boolean>;
-        /**
-          * Check if undo is available  **Purpose**: Determine if there are actions to undo  **Example**: ```typescript const builder = document.querySelector('grid-builder'); const canUndo = await builder.canUndo(); undoButton.disabled = !canUndo; ```
-          * @returns Promise<boolean> - True if undo is available
-         */
-        "canUndo": () => Promise<boolean>;
-        /**
-          * Canvas metadata storage (host app responsibility)  **Optional prop**: Store canvas-level presentation metadata **Purpose**: Host app owns canvas metadata (titles, colors, settings)  **Separation of concerns**: - Library owns placement state (items, layouts, zIndex) - Host app owns presentation state (colors, titles, custom metadata)  **Structure**: Record<canvasId, any>  **Example**: ```typescript const canvasMetadata = {   'hero-section': {     title: 'Hero Section',     backgroundColor: '#f0f4f8',     customSettings: { ... }   },   'articles-grid': {     title: 'Articles Grid',     backgroundColor: '#ffffff'   } }; <grid-builder canvasMetadata={canvasMetadata} ... /> ```  **Use with canvas-click events**: - Library fires canvas-click event when canvas background clicked - Host app shows canvas settings panel - Host app updates canvasMetadata state - Library passes metadata to canvas-section via props
-         */
-        "canvasMetadata"?: Record<string, any>;
-        /**
-          * Component definitions registry  **Required prop**: Array of ComponentDefinition objects **Purpose**: Defines available component types (header, text, button, etc.)  **Each definition includes**: - type: Unique identifier (e.g., 'header', 'text-block') - name: Display name in palette - icon: Visual identifier (emoji recommended) - defaultSize: Initial size when dropped - render: Function returning component to render - configSchema: Optional auto-generated config form - renderConfigPanel: Optional custom config UI - Lifecycle hooks: onVisible, onHidden for virtual rendering  **Example**: ```typescript const components = [   {     type: 'header',     name: 'Header',     icon: '📄',     defaultSize: { width: 20, height: 8 },     render: ({ itemId, config }) => (       <my-header itemId={itemId} config={config} />     ),     configSchema: [       { name: 'text', label: 'Text', type: 'text', defaultValue: 'Header' }     ]   } ]; ```
-         */
-        "components": ComponentDefinition[];
-        /**
-          * Grid configuration options  **Optional prop**: Customizes grid system behavior **Default**: Standard 2% grid with 10px-50px constraints  **Configuration options**: - gridSizePercent: Grid unit as % of width (default: 2) - minGridSize: Minimum size in pixels (default: 10) - maxGridSize: Maximum size in pixels (default: 50) - snapToGrid: Enable snap-to-grid (default: true) - showGridLines: Show visual grid (default: true) - minItemSize: Minimum item dimensions (default: { width: 5, height: 4 }) - virtualRenderMargin: Pre-render margin (default: '20%')  **Example**: ```typescript const config = {   gridSizePercent: 3,           // 3% grid (33 units per 100%)   minGridSize: 15,              // 15px minimum   maxGridSize: 60,              // 60px maximum   snapToGrid: true,   virtualRenderMargin: '30%'    // Aggressive pre-loading }; ```
-         */
-        "config"?: GridConfig;
-        /**
-          * Delete a component programmatically  **Purpose**: Remove component from grid  **Example**: ```typescript const builder = document.querySelector('grid-builder'); const success = await builder.deleteComponent('item-123'); ```
-          * @param itemId - Item ID to delete
-          * @returns Promise<boolean> - True if deleted successfully
-         */
-        "deleteComponent": (itemId: string) => Promise<boolean>;
-        /**
-          * Export current state to JSON-serializable format  **Purpose**: Export grid layout for saving or transferring to viewer app  **Use Cases**: - Save layout to database/localStorage - Transfer layout to viewer app via API - Create layout templates/presets - Backup/restore functionality  **Example - Save to API**: ```typescript const builder = document.querySelector('grid-builder'); const exportData = await builder.exportState(); await fetch('/api/layouts', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(exportData) }); ```  **Example - Save to localStorage**: ```typescript const exportData = await builder.exportState(); localStorage.setItem('grid-layout', JSON.stringify(exportData)); ```
-          * @returns Promise<GridExport> - JSON-serializable export object
-         */
-        "exportState": () => Promise<GridExport>;
-        /**
-          * Get currently active canvas ID  **Purpose**: Check which canvas is currently active/focused
-          * @returns Promise<string | null> - Active canvas ID or null if none active
-          * @example ```typescript const builder = document.querySelector('grid-builder'); const activeId = await builder.getActiveCanvas(); if (activeId === 'canvas1') {   console.log('Canvas 1 is active'); } ```
-         */
-        "getActiveCanvas": () => Promise<string | null>;
-        /**
-          * Get current grid state  **Purpose**: Direct access to grid state for reading  **Example**: ```typescript const builder = document.querySelector('grid-builder'); const state = await builder.getState(); console.log('Current viewport:', state.currentViewport); ```
-          * @returns Promise<GridState> - Current grid state
-         */
-        "getState": () => Promise<GridState>;
-        /**
-          * Import state from JSON-serializable format  **Purpose**: Restore previously exported grid state  **Example**: ```typescript const builder = document.querySelector('grid-builder'); const savedState = JSON.parse(localStorage.getItem('grid-layout')); await builder.importState(savedState); ```
-          * @param state - GridExport or partial GridState object
-         */
-        "importState": (state: Partial<GridState> | GridExport) => Promise<void>;
-        /**
-          * Initial state to restore  **Optional prop**: Restore saved layout **Purpose**: Load previously saved grid state  **State structure**: Same as gridState (canvases, viewport, etc.)  **Example**: ```typescript const savedState = JSON.parse(localStorage.getItem('grid-state')); <grid-builder initialState={savedState} ... /> ```
-         */
-        "initialState"?: Partial<GridState>;
-        /**
-          * Unique instance identifier for multi-instance scenarios  **Optional prop**: Auto-generated if not provided **Purpose**: Track individual instances in SharedStateRegistry  **Auto-generation**: If not provided, generates: `grid-builder-{timestamp}-{random}`  **Only relevant when**: apiKey is provided (shared mode) **Ignored when**: apiKey is undefined (local-only mode)
-         */
-        "instanceId"?: string;
-        /**
-          * Hook called before deleting a component  **Optional prop**: Intercept deletion requests for custom workflows **Purpose**: Allow host app to show confirmation, make API calls, etc.  **Hook behavior**: - Return `true` to proceed with deletion - Return `false` to cancel the deletion - Return a Promise for async operations (modals, API calls)  **Example - Confirmation modal**: ```typescript const onBeforeDelete = async (context) => {   const confirmed = await showConfirmModal(     `Delete ${context.item.name}?`,     'This action cannot be undone.'   );   return confirmed; }; <grid-builder onBeforeDelete={onBeforeDelete} ... /> ```  **Example - API call + confirmation**: ```typescript const onBeforeDelete = async (context) => {   // Show loading modal   const modal = showLoadingModal('Deleting...');    try {     // Make API call     await fetch(`/api/components/${context.itemId}`, {       method: 'DELETE'     });     modal.close();     return true; // Proceed with deletion   } catch (error) {     modal.close();     showErrorModal('Failed to delete component');     return false; // Cancel deletion   } }; ```  **Default behavior**: If not provided, components delete immediately
-         */
-        "onBeforeDelete"?: DeletionHook;
-        /**
-          * Plugin instances for extending functionality  **Optional prop**: Array of GridBuilderPlugin instances **Purpose**: Add custom features, analytics, integrations  **Plugin lifecycle**: 1. Library calls plugin.init(api) on componentDidLoad 2. Plugin subscribes to events, adds UI, etc. 3. Library calls plugin.destroy() on disconnectedCallback  **Example**: ```typescript class AnalyticsPlugin implements GridBuilderPlugin {   name = 'analytics';    init(api: GridBuilderAPI) {     api.on('componentAdded', (e) => {       analytics.track('Component Added', { type: e.item.type });     });   }    destroy() {     // Cleanup   } }  const plugins = [new AnalyticsPlugin()]; ```
-         */
-        "plugins"?: GridBuilderPlugin[];
-        /**
-          * Redo last undone action  **Purpose**: Re-apply last undone action  **Example**: ```typescript const builder = document.querySelector('grid-builder'); await builder.redo(); ```
-         */
-        "redo": () => Promise<void>;
-        /**
-          * Remove a canvas programmatically  **Purpose**: Delete section/canvas from the grid  **Example**: ```typescript const builder = document.querySelector('grid-builder'); await builder.removeCanvas('old-section'); ```
-          * @param canvasId - Canvas identifier to remove
-         */
-        "removeCanvas": (canvasId: string) => Promise<void>;
-        /**
-          * Set active canvas programmatically  **Purpose**: Activate a specific canvas for focused editing  **Use cases**: - Focus specific section after adding items - Programmatic navigation between sections - Show canvas-specific settings panel  **Events triggered**: 'canvasActivated'
-          * @param canvasId - Canvas to activate
-          * @example ```typescript const builder = document.querySelector('grid-builder'); await builder.setActiveCanvas('canvas2'); ```
-         */
-        "setActiveCanvas": (canvasId: string) => Promise<void>;
-        /**
-          * Visual theme customization  **Optional prop**: Customizes colors, fonts, and styling **Default**: Bootstrap-inspired blue theme  **Theme options**: - primaryColor: Accent color (default: '#007bff') - paletteBackground: Palette sidebar color (default: '#f5f5f5') - canvasBackground: Canvas background (default: '#ffffff') - gridLineColor: Grid line color (default: 'rgba(0,0,0,0.1)') - selectionColor: Selection outline (default: '#007bff') - resizeHandleColor: Resize handle color (default: '#007bff') - fontFamily: UI font (default: system font stack) - customProperties: CSS variables for advanced theming  **Example**: ```typescript const theme = {   primaryColor: '#ff6b6b',        // Brand red   paletteBackground: '#fff5f5',   // Light red   customProperties: {     '--text-color': '#ffffff',     '--border-radius': '8px'   } }; ```
-         */
-        "theme"?: GridBuilderTheme;
-        /**
-          * Custom UI component overrides  **Optional prop**: Replace default UI components **Purpose**: Fully customize visual appearance  **Overridable components**: - ConfigPanel: Configuration panel UI - ComponentPalette: Component palette sidebar - Toolbar: Top toolbar with controls  **Example**: ```typescript const uiOverrides = {   Toolbar: (props) => (     <div class="my-toolbar">       <button onClick={props.onUndo}>Undo</button>       <button onClick={props.onRedo}>Redo</button>     </div>   ) }; ```
-         */
-        "uiOverrides"?: UIComponentOverrides;
-        /**
-          * Undo last action  **Purpose**: Revert last user action (move, resize, add, delete, etc.)  **Example**: ```typescript const builder = document.querySelector('grid-builder'); await builder.undo(); ```
-         */
-        "undo": () => Promise<void>;
-        /**
-          * Update component configuration  **Purpose**: Update component properties/config  **Example**: ```typescript const builder = document.querySelector('grid-builder'); const success = await builder.updateConfig('item-123', { title: 'Updated Title', color: '#ff0000' }); ```
-          * @param itemId - Item ID to update
-          * @param config - Configuration updates
-          * @returns Promise<boolean> - True if updated successfully
-         */
-        "updateConfig": (itemId: string, config: Record<string, any>) => Promise<boolean>;
-    }
+    objectFit: "contain" | "cover";
     /**
-     * GridItemWrapper Component
-     * ==========================
-     * Library component wrapping individual grid items with drag/resize/selection.
-     * **Tag**: `<grid-item-wrapper>`
-     * **Shadow DOM**: Disabled (required for interact.js compatibility)
-     * **Dynamic rendering**: Uses ComponentDefinition.render() from registry
+     * @default "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&h=600&fit=crop"
      */
-    interface GridItemWrapper {
-        /**
-          * Breakpoint configuration (for viewer mode)  **Purpose**: Define responsive breakpoints and layout modes **Source**: grid-viewer → canvas-section-viewer → grid-item-wrapper **Used by**: render() to determine auto-stacking and layout inheritance  **Note**: When in builder mode (viewerMode=false), this is ignored and stateInstance.breakpoints is used instead. When in viewer mode (viewerMode=true), this prop is optional (defaults to DEFAULT_BREAKPOINTS).
-         */
-        "breakpoints"?: any;
-        /**
-          * All items in the canvas (for viewer mode auto-layout)  **Purpose**: Calculate mobile auto-layout positions **Source**: grid-viewer → canvas-section-viewer → grid-item-wrapper **Used by**: render() to calculate stacked positions in mobile viewport  **Note**: When in builder mode (viewerMode=false), this is ignored and gridState.canvases is used instead. When in viewer mode (viewerMode=true), this prop is required for mobile auto-layout.
-         */
-        "canvasItems"?: GridItem[];
-        /**
-          * Component registry (from parent grid-builder)  **Source**: grid-builder component (built from components prop) **Structure**: ComponentRegistry service instance **Purpose**: Look up component definitions for dynamic rendering  **Instance-based architecture**: Each grid-builder instance has its own registry, supporting multiple grids with different component sets on the same page. Prop drilling (3 levels) is the correct pattern for this use case.
-         */
-        "componentRegistry"?: ComponentRegistry;
-        /**
-          * Grid configuration options  **Optional**: Customizes grid system behavior **Passed from**: grid-builder → canvas-section → grid-item-wrapper **Used for**: Grid size calculations with constraints
-         */
-        "config"?: GridConfig;
-        /**
-          * Current viewport (for viewer mode)  **Purpose**: Determine which layout to render (desktop or mobile) **Source**: grid-viewer → canvas-section-viewer → grid-item-wrapper **Used by**: render() to select appropriate layout  **Note**: When in builder mode (viewerMode=false), this is ignored and gridState.currentViewport is used instead. When in viewer mode (viewerMode=true), this prop is required.
-         */
-        "currentViewport"?: string;
-        /**
-          * DOM cache service instance (passed from grid-builder)  **Required for editing mode** (grid-builder provides this) **Optional for viewer mode** (grid-viewer doesn't need it)  **Source**: grid-builder → canvas-section → grid-item-wrapper **Purpose**: Support multiple grid-builder instances with isolated DOM caches **Used by**: DragHandler, ResizeHandler for fast canvas element lookups
-         */
-        "domCacheInstance"?: DOMCache;
-        /**
-          * Error adapter service instance (passed from grid-builder)  **Required for editing mode** (grid-builder provides this) **Optional for viewer mode** (grid-viewer doesn't need it)  **Source**: grid-builder → canvas-section → grid-item-wrapper **Purpose**: Support multiple grid-builder instances with isolated error handling **Used by**: Error boundary for handling component render errors  **Error isolation strategy**: - Item-level errors (component render failures) are caught by error boundary - Error adapter converts to GridErrorEventDetail and emits to EventManager - Other grid items continue functioning (isolation achieved) - Fallback UI shown for failed item (graceful degradation)
-         */
-        "errorAdapterInstance"?: GridErrorAdapter;
-        /**
-          * Event manager service instance (passed from grid-builder)  **Required for editing mode** (grid-builder provides this) **Optional for viewer mode** (grid-viewer doesn't need it)  **Source**: grid-builder → canvas-section → grid-item-wrapper **Purpose**: Support multiple grid-builder instances with isolated services
-         */
-        "eventManagerInstance"?: EventManager;
-        /**
-          * Grid item data (position, size, type, etc.)  **Source**: Parent canvas-section component **Contains**: id, canvasId, type, name, layouts (desktop/mobile), zIndex, config
-         */
-        "item": GridItem;
-        /**
-          * Deletion hook (from parent grid-builder)  **Source**: grid-builder component (from onBeforeDelete prop) **Purpose**: Allow host app to intercept deletion requests  **Hook behavior**: - Called before deleting a component - Receives context with item data - Returns true/false or Promise<boolean> - If false, deletion is cancelled - If true, deletion proceeds  **Default**: If not provided, components delete immediately
-         */
-        "onBeforeDelete"?: (context: any) => boolean | Promise<boolean>;
-        /**
-          * Render version (force re-render trigger)  **Source**: Parent canvas-section (incremented on resize) **Purpose**: Force grid calculation refresh when container resizes
-         */
-        "renderVersion"?: number;
-        /**
-          * State manager instance (passed from grid-builder)  **Required for editing mode** (grid-builder provides this) **Optional for viewer mode** (grid-viewer doesn't need it)  **Source**: grid-builder → canvas-section → grid-item-wrapper **Purpose**: Support multiple grid-builder instances with isolated state **Used by**: DragHandler, ResizeHandler for accessing canvases and viewport
-         */
-        "stateInstance"?: any;
-        /**
-          * Theme configuration (from parent grid-builder)  **Source**: grid-builder → canvas-section → grid-item-wrapper **Purpose**: Access theme.selectionColor for component selection styling  **Fallback chain for selection color**: 1. ComponentDefinition.selectionColor (per-component override) 2. theme.selectionColor (global theme default) 3. "#f59e0b" (hardcoded fallback - amber/gold)  **Why passed**: grid-item-wrapper doesn't have access to global theme, so must be passed through component tree
-         */
-        "theme"?: any;
-        /**
-          * Undo/Redo manager service instance (passed from grid-builder)  **Required for editing mode** (grid-builder provides this) **Optional for viewer mode** (grid-viewer doesn't need it)  **Source**: grid-builder → canvas-section → grid-item-wrapper **Purpose**: Support multiple grid-builder instances with isolated undo/redo stacks **Used by**: handleItemUpdate() for pushing move/resize commands to undo stack
-         */
-        "undoRedoManagerInstance"?: UndoRedoManager;
-        /**
-          * Viewer mode flag  **Purpose**: Disable editing features for rendering-only mode **Default**: false (editing enabled)  **When true**: - ❌ No drag-and-drop handlers - ❌ No resize handles - ❌ No item header (drag handle) - ❌ No delete button - ❌ No selection state - ✅ Only renders component content  **Use case**: grid-viewer component for display-only mode
-          * @default false
-         */
-        "viewerMode"?: boolean;
-        /**
-          * Virtual renderer service instance (passed from grid-builder)  **Required for editing mode** (grid-builder provides this) **Optional for viewer mode** (grid-viewer doesn't need it)  **Source**: grid-builder → canvas-section → grid-item-wrapper **Purpose**: Support multiple grid-builder instances with isolated services
-         */
-        "virtualRendererInstance"?: VirtualRendererService;
-    }
+    src: string;
+  }
+  interface BlogImageDragClone {}
+  /**
+   * CanvasHeader Component
+   * ======================
+   * Declarative header component for canvas sections.
+   * **Tag**: `<canvas-header>`
+   * **Shadow DOM**: Disabled (matches blog-app styling)
+   */
+  interface CanvasHeader {
     /**
-     * GridViewer Component
-     * ====================
-     * Rendering-only grid component for displaying layouts created in grid-builder.
-     * **Tag**: `<grid-viewer>`
-     * **Shadow DOM**: Disabled (consistent with grid-builder)
-     * **Reactivity**: Uses local store OR shared store (via apiKey prop)
-     * **Key differences from grid-builder**:
-     * - No interact.js dependency (80% bundle size reduction)
-     * - No palette, config panel, or editing UI
-     * - Simplified state (no selection, no z-index tracking)
-     * - Rendering-only canvas sections
-     * **Multi-instance sharing**:
-     * - **Local mode** (default): Each instance has independent state
-     * - **Shared mode** (with apiKey): Multiple instances share layout data
-     * - Same SharedStateRegistry pattern as grid-builder
-     * - Use case: Multi-device preview (mobile + tablet + desktop side-by-side)
+     * Canvas ID for data tracking  **Purpose**: Identify which canvas this header belongs to **Required**: Yes
      */
-    interface GridViewer {
-        /**
-          * API key for shared state across multiple instances  **Optional prop**: Enables multi-instance sharing **Purpose**: Multiple grid-viewer instances with same apiKey share layout data  **Use cases**: - Multi-device preview (mobile + tablet + desktop views side-by-side) - Collaborative viewing (multiple users viewing same layout) - Live updates across instances  **Shared data**: Canvas items and layouts **Instance-specific**: Current viewport (each instance can show different viewport)  **Example**: ```typescript // Instance 1: Mobile view <grid-viewer apiKey="demo-layout" breakpoints={{ mobile: 0, desktop: 768 }}></grid-viewer>  // Instance 2: Desktop view (shares data with Instance 1) <grid-viewer apiKey="demo-layout" breakpoints={{ mobile: 0, desktop: 768 }}></grid-viewer> ```  **Default**: undefined (local-only mode, no sharing)
-         */
-        "apiKey"?: string;
-        /**
-          * Breakpoint configuration for responsive layouts  **Optional prop**: Define custom responsive breakpoints **Default**: `{ mobile: { minWidth: 0, layoutMode: 'stack' }, desktop: { minWidth: 768, layoutMode: 'manual' } }` **Backwards compatible**: Existing desktop/mobile behavior maintained by default  **Should match builder config**: Use same breakpoints as builder for consistent behavior  **Examples**:  1. **Simple format** (min-width only): ```typescript <grid-viewer breakpoints={{ mobile: 0, desktop: 768 }}></grid-viewer> ```  2. **Full format** (3 breakpoints with layout modes): ```typescript <grid-viewer breakpoints={{   mobile: { minWidth: 0, layoutMode: 'stack' },   tablet: { minWidth: 768, layoutMode: 'inherit', inheritFrom: 'desktop' },   desktop: { minWidth: 1024, layoutMode: 'manual' } }}></grid-viewer> ```
-         */
-        "breakpoints"?: any;
-        /**
-          * Canvas metadata storage (host app responsibility)  **Optional prop**: Store canvas-level presentation metadata **Purpose**: Host app owns canvas metadata (titles, colors, settings)  **Structure**: Record<canvasId, any>  **Example**: ```typescript const canvasMetadata = {   'hero-section': {     backgroundColor: '#f0f4f8',     customSettings: { ... }   } }; ```
-         */
-        "canvasMetadata"?: Record<string, any>;
-        /**
-          * Component definitions registry  **Required prop**: Array of ComponentDefinition objects **Purpose**: Defines how to render each component type  **Must match builder definitions**: Same component types as used in builder  **Example**: ```typescript const components = [   {     type: 'header',     name: 'Header',     icon: '📄',     render: ({ itemId, config }) => (       <my-header itemId={itemId} config={config} />     )   } ]; ```
-         */
-        "components": ComponentDefinition[];
-        /**
-          * Grid configuration options  **Optional prop**: Grid system configuration **Default**: Standard 2% grid with 10px-50px constraints  **Should match builder config**: Use same config as builder for consistent rendering
-         */
-        "config"?: GridConfig;
-        /**
-          * Initial state to display  **Optional prop**: Layout data to render **Accepts**: ViewerState or GridExport (both compatible)  **From builder export**: ```typescript const exportData = await builder.exportState(); viewer.initialState = exportData; // Type-safe! ```  **From API**: ```typescript const layout = await fetch('/api/layouts/123').then(r => r.json()); viewer.initialState = layout; ```
-         */
-        "initialState"?: Partial<ViewerState> | GridExport;
-        /**
-          * Unique instance identifier for multi-instance scenarios  **Optional prop**: Auto-generated if not provided **Purpose**: Track individual instances in SharedStateRegistry  **Auto-generation**: If not provided, generates: `grid-viewer-{timestamp}-{random}`  **Only relevant when**: apiKey is provided (shared mode) **Ignored when**: apiKey is undefined (local-only mode)
-         */
-        "instanceId"?: string;
-        /**
-          * Visual theme customization  **Optional prop**: Customizes colors, fonts, and styling **Default**: Bootstrap-inspired blue theme
-         */
-        "theme"?: GridBuilderTheme;
-    }
-    interface ImageGallery {
-        /**
-          * @default "#f5f5f5"
-         */
-        "backgroundColor"?: string;
-        /**
-          * @default 6
-         */
-        "imageCount": number;
-    }
-    interface ImageGalleryDragClone {
-    }
-    interface LayerPanel {
-        /**
-          * Grid Builder API instance (instance-based architecture)  **Required**: Must be provided or component won't display items **Source**: Host app (blog-app) passes this via prop **Purpose**: Access instance-based state for multi-instance support  **Why needed**: Grid-builder uses its own state instance. The layer panel must access that same instance to display items correctly.
-         */
-        "api"?: any;
-        /**
-          * Canvas metadata for folder titles Map of canvasId → { title: string }
-          * @default {}
-         */
-        "canvasMetadata"?: Record<string, { title: string }>;
-        /**
-          * Height of folder header in pixels
-          * @default 40
-         */
-        "folderHeight"?: number;
-        /**
-          * Height of layer item in pixels
-          * @default 40
-         */
-        "itemHeight"?: number;
-        /**
-          * Search input debounce delay in milliseconds
-          * @default 300
-         */
-        "searchDebounceMs"?: number;
-        /**
-          * Pre-render buffer in pixels (renders items outside viewport)
-          * @default 200
-         */
-        "virtualBufferPx"?: number;
-        /**
-          * Number of items to render in virtual window
-          * @default 50
-         */
-        "virtualWindowSize"?: number;
-    }
-    interface LayerPanelFolderHeader {
-        /**
-          * Canvas ID this folder represents
-         */
-        "canvasId": string;
-        /**
-          * Display title for the canvas
-         */
-        "canvasTitle": string;
-        /**
-          * Whether this canvas is the active canvas
-          * @default false
-         */
-        "isActive"?: boolean;
-        /**
-          * Whether this folder has no items matching current search When true, folder appears dimmed
-          * @default false
-         */
-        "isEmpty"?: boolean;
-        /**
-          * Whether this folder is currently expanded
-          * @default true
-         */
-        "isExpanded"?: boolean;
-        /**
-          * Number of items in this canvas
-         */
-        "itemCount": number;
-        /**
-          * Total item count (for showing "0 / 15" during search)
-         */
-        "totalItemCount"?: number;
-    }
-    interface LayerPanelItem {
-        /**
-          * Canvas ID containing this item
-         */
-        "canvasId": string;
-        /**
-          * Whether this item is currently active/selected
-          * @default false
-         */
-        "isActive"?: boolean;
-        /**
-          * Unique ID of the grid item this represents
-         */
-        "itemId": string;
-        /**
-          * Display name of the item
-         */
-        "name": string;
-        /**
-          * Component type (for icon display)
-         */
-        "type": string;
-        /**
-          * Current z-index value
-         */
-        "zIndex": number;
-    }
-    interface LiveData {
-        /**
-          * @default "#b2ebf2"
-         */
-        "backgroundColor"?: string;
-    }
-    interface LiveDataDragClone {
-    }
+    canvasId: string;
     /**
-     * Section Editor Panel Component
-     * ===============================
-     * Demo Component - NOT Part of Library
-     * This component demonstrates how to build custom UI for editing canvas metadata
-     * in applications using the grid-builder library.
-     * Purpose:
-     * --------
-     * Shows how to create a side panel for editing section/canvas settings.
-     * This is completely custom to your application - the library doesn't provide this.
-     * Library Relationship:
-     * ---------------------
-     * - Library owns: Component placement, layouts, zIndex (grid state)
-     * - Host app owns: Canvas metadata (titles, colors, settings) - THIS COMPONENT
-     * - Metadata flows: App → Library via canvasMetadata prop
-     * Pattern Demonstrated:
-     * ---------------------
-     * 1. User clicks section header (demo UI)
-     * 2. App opens this panel (demo component)
-     * 3. User edits title/color
-     * 4. App updates canvasMetadata state
-     * 5. Library receives updated metadata via prop
-     * 6. Library passes backgroundColor to canvas-section
-     * Why This Approach:
-     * ------------------
-     * - Library stays focused on grid logic
-     * - Host app controls all presentation/metadata UI
-     * - You can use any UI framework (Material, Bootstrap, etc.)
-     * - Complete flexibility over settings panel design
+     * Whether this canvas is currently active  **Purpose**: Control header opacity (active = full opacity, inactive = dimmed) **Default**: false
+     * @default false
      */
-    interface SectionEditorPanel {
-        /**
-          * Panel open/closed state Controlled by parent component (blog-app)
-          * @default false
-         */
-        "isOpen": boolean;
-        /**
-          * Section data being edited Passed from parent when user clicks section header
-          * @default null
-         */
-        "sectionData": SectionEditorData | null;
-    }
+    isActive: boolean;
+    /**
+     * Whether this section can be deleted  **Purpose**: Control delete button visibility **Default**: true **Note**: Default sections (hero, articles, footer) should set to false
+     * @default true
+     */
+    isDeletable: boolean;
+    /**
+     * Display title for the canvas section  **Purpose**: Text shown in the title badge **Required**: Yes **Note**: Named sectionTitle to avoid conflict with standard HTML title attribute
+     */
+    sectionTitle: string;
+  }
+  /**
+   * CanvasSection Component
+   * =======================
+   * Library component providing individual canvas dropzone.
+   * **Tag**: `<canvas-section>`
+   * **Shadow DOM**: Disabled (required for interact.js compatibility)
+   * **Reactivity**: Listens to gridState changes via StencilJS store
+   */
+  interface CanvasSection {
+    /**
+     * Background color for this canvas  **Host app responsibility**: Pass canvas styling from host app **Library does NOT store**: backgroundColor is presentation concern **Optional**: Defaults to '#ffffff'
+     * @example ```tsx <canvas-section   canvasId="hero-section"   backgroundColor="#f0f4f8" /> ```
+     */
+    backgroundColor?: string;
+    /**
+     * Canvas ID for state management  **Format**: 'canvas1', 'canvas2', etc. **Purpose**: Key for accessing canvas data in gridState.canvases **Required**: Component won't render without valid canvasId
+     */
+    canvasId: string;
+    /**
+     * Canvas title (from canvasMetadata)  **Optional**: Display title for this section **Renders as**: Rotated tab on right side, outside section bounds **Builder mode only**: Title tabs visible in builder, not viewer **Source**: Passed from grid-builder via canvasMetadata[canvasId].title
+     * @example ```tsx <canvas-section   canvasId="hero-section"   canvasTitle="Hero Section" /> ```
+     */
+    canvasTitle?: string;
+    /**
+     * Component registry (from parent grid-builder)  **Source**: grid-builder component (built from components prop) **Structure**: ComponentRegistry service instance **Purpose**: Pass to grid-item-wrapper for dynamic rendering
+     */
+    componentRegistry?: ComponentRegistry;
+    /**
+     * Grid configuration options  **Optional**: Customizes grid system behavior **Passed from**: grid-builder component **Used for**: Grid size calculations, constraints
+     */
+    config?: GridConfig;
+    /**
+     * DOM cache service instance (passed from grid-builder)  **Required for editing mode** (grid-builder provides this)  **Source**: grid-builder → canvas-section → grid-item-wrapper **Purpose**: Support multiple grid-builder instances with isolated DOM caches **Used by**: DragHandler, ResizeHandler for fast canvas element lookups
+     */
+    domCacheInstance?: DOMCache;
+    /**
+     * Error adapter service instance (passed from grid-builder)  **Required for editing mode** (grid-builder provides this) **Optional for viewer mode** (grid-viewer doesn't need it)  **Source**: grid-builder → canvas-section → grid-item-wrapper **Purpose**: Support multiple grid-builder instances with isolated error handling **Used by**: Error boundary for handling canvas-level and item-level render errors  **Error isolation strategy**: - Canvas-level errors (dropzone failures, canvas rendering issues) caught here - Item-level errors caught by grid-item-wrapper error boundaries - Error adapter converts to GridErrorEventDetail and emits to EventManager
+     */
+    errorAdapterInstance?: GridErrorAdapter;
+    /**
+     * Event manager service instance (passed from grid-builder)  **Required for editing mode** (grid-builder provides this)  **Source**: grid-builder → canvas-section → grid-item-wrapper **Purpose**: Support multiple grid-builder instances with isolated services
+     */
+    eventManagerInstance?: EventManager;
+    /**
+     * Whether this canvas is currently active  **Purpose**: Indicate which canvas is currently focused/active **Source**: Computed from gridState.activeCanvasId in grid-builder **Default**: false **Visual effect**: Applies 'active' CSS class to grid-container  **Canvas becomes active when**: - User clicks item on canvas - User clicks canvas background - User starts dragging item on canvas - User starts resizing item on canvas - Programmatically via api.setActiveCanvas()  **Consumer styling hook**: Consumer can style active canvas via CSS: ```css .grid-container.active .canvas-title { opacity: 1; } ```
+     * @example ```tsx <canvas-section   canvasId="hero-section"   isActive={gridState.activeCanvasId === 'hero-section'} /> ```
+     * @default false
+     */
+    isActive?: boolean;
+    /**
+     * Deletion hook (from parent grid-builder)  **Source**: grid-builder component (from onBeforeDelete prop) **Purpose**: Pass through to grid-item-wrapper for deletion interception **Optional**: If not provided, components delete immediately
+     */
+    onBeforeDelete?: DeletionHook;
+    /**
+     * State change subscription function (passed from grid-builder)  **Required for editing mode** (grid-builder provides this)  **Source**: grid-builder (this.stateManager.onChange) **Purpose**: Subscribe to instance-specific state changes for reactivity  **Usage**: ```typescript onStateChange={(key, callback) => this.stateManager.onChange(key, callback)} ```
+     */
+    onStateChange?: (key: string, callback: Function) => void;
+    /**
+     * State manager instance (passed from grid-builder)  **Required for editing mode** (grid-builder provides this)  **Source**: grid-builder → canvas-section → grid-item-wrapper **Purpose**: Support multiple grid-builder instances with isolated state **Used by**: DragHandler, ResizeHandler for accessing canvases and viewport
+     */
+    stateInstance?: any;
+    /**
+     * Theme configuration (from parent grid-builder)  **Optional prop**: Theme for selection colors **Source**: grid-builder → canvas-section → grid-item-wrapper **Purpose**: Pass theme.selectionColor to grid-item-wrapper for component selection styling
+     */
+    theme?: any;
+    /**
+     * Undo/Redo manager service instance (passed from grid-builder)  **Required for editing mode** (grid-builder provides this)  **Source**: grid-builder → canvas-section → grid-item-wrapper **Purpose**: Support multiple grid-builder instances with isolated undo/redo stacks
+     */
+    undoRedoManagerInstance?: UndoRedoManager;
+    /**
+     * Virtual renderer service instance (passed from grid-builder)  **Required for editing mode** (grid-builder provides this)  **Source**: grid-builder → canvas-section → grid-item-wrapper **Purpose**: Support multiple grid-builder instances with isolated services
+     */
+    virtualRendererInstance?: VirtualRendererService;
+  }
+  /**
+   * CanvasSectionViewer Component
+   * ==============================
+   * Rendering-only canvas component for grid-viewer.
+   * **Tag**: `<canvas-section-viewer>`
+   * **Shadow DOM**: Disabled (consistent with canvas-section)
+   * **Reactivity**: Props-based (no global state subscription)
+   */
+  interface CanvasSectionViewer {
+    /**
+     * Background color for this canvas  **Optional**: Canvas background color **Default**: '#ffffff'
+     */
+    backgroundColor?: string;
+    /**
+     * Breakpoint configuration for responsive layouts  **Optional prop**: Define custom responsive breakpoints **Source**: grid-viewer → canvas-section-viewer → grid-item-wrapper **Used by**: grid-item-wrapper for layout resolution and auto-stacking  **Purpose**: Passed through to grid-item-wrapper to enable multi-breakpoint responsive layouts in viewer mode. Grid-item-wrapper uses this to determine which layout to render, handle auto-stacking, and resolve layout inheritance.  **Example**: ```typescript const breakpoints = {   mobile: { minWidth: 0, layoutMode: 'stack' },   tablet: { minWidth: 768, layoutMode: 'inherit', inheritFrom: 'desktop' },   desktop: { minWidth: 1024, layoutMode: 'manual' } }; ```
+     */
+    breakpoints?: any;
+    /**
+     * Canvas ID for identification  **Format**: 'canvas1', 'hero-section', etc. **Purpose**: Element ID and data attribute
+     */
+    canvasId: string;
+    /**
+     * Component registry (from parent grid-viewer)  **Source**: grid-viewer component **Structure**: ComponentRegistry service instance **Purpose**: Pass to grid-item-wrapper for dynamic rendering
+     */
+    componentRegistry?: ComponentRegistry;
+    /**
+     * Grid configuration options  **Optional**: Customizes grid system behavior **Passed from**: grid-viewer component
+     */
+    config?: GridConfig;
+    /**
+     * Current viewport/breakpoint name  **Required**: string matching a breakpoint name **Examples**: 'desktop', 'mobile', 'tablet', 'xs', 'sm', 'md', 'lg', 'xl' **Source**: Passed from grid-viewer component  **Purpose**: Determines which layout to render for each item (item.layouts[currentViewport]) **Multi-breakpoint support**: Can be any breakpoint name from breakpoints config
+     */
+    currentViewport: string;
+    /**
+     * Error adapter service instance (passed from grid-viewer)  **Optional**: Provided by grid-viewer if error handling needed **Purpose**: Support error boundary integration for item render errors **Viewer mode**: May be undefined (simplified error handling without event emission)
+     */
+    errorAdapterInstance?: GridErrorAdapter;
+    /**
+     * Items to render in this canvas  **Required**: Array of GridItem objects **Source**: Passed from grid-viewer component  **Unlike canvas-section**: Items passed via props, not from global state
+     */
+    items: GridItem[];
+    /**
+     * State instance (viewer state with editing fields set to null)  **Optional**: Provided by grid-viewer to eliminate defensive guards in grid-item-wrapper **Purpose**: Provide minimal state object matching StateManager structure **Value**: ViewerState with selectedItemId/selectedCanvasId/activeCanvasId always null
+     */
+    stateInstance?: any;
+    /**
+     * Virtual renderer service instance (passed from grid-builder)  **Optional**: Provided by grid-viewer if virtual rendering enabled **Purpose**: Lazy loading of grid items for better performance
+     */
+    virtualRendererInstance?: VirtualRendererService;
+  }
+  /**
+   * ComponentPalette Component
+   * ===========================
+   * Library component providing draggable component palette UI.
+   * **Tag**: `<component-palette>`
+   * **Shadow DOM**: Disabled (for consistency with other components)
+   * **Reactivity**: Re-renders when components prop changes
+   * ## Usage Patterns
+   * **Pattern 1: Default (inside grid-builder)**
+   * ```typescript
+   * // Palette automatically rendered by grid-builder
+   * <grid-builder components={componentDefinitions} />
+   * ```
+   * **Pattern 2: Independent placement**
+   * ```typescript
+   * // Place palette anywhere in your app
+   * <div class="my-layout">
+   *   <aside class="sidebar">
+   *     <component-palette
+   *       components={componentDefinitions}
+   *       config={gridConfig}
+   *     />
+   *   </aside>
+   *   <main>
+   *     <grid-builder
+   *       components={componentDefinitions}
+   *       config={gridConfig}
+   *       uiOverrides={{
+   *         ComponentPalette: () => null  // Hide default palette
+   *       }}
+   *     />
+   *   </main>
+   * </div>
+   * ```
+   * **Pattern 3: Custom wrapper component**
+   * ```typescript
+   * // Wrap in your own component for styling
+   * @Component ({ tag: 'my-palette-sidebar' })
+   * export class MyPaletteSidebar {
+   * @Prop () components: ComponentDefinition[];
+   * render() {
+   * return (
+   *  <div class="custom-sidebar">
+   *    <h3>Components</h3>
+   *    <component-palette components={this.components} />
+   *  </div>
+   * );
+   * }
+   * }
+   * ```
+   * ## Key Features
+   * - **Self-contained**: Works independently of grid-builder
+   * - **Drag/drop ready**: Uses interact.js for drag functionality
+   * - **Flexible placement**: Can be rendered anywhere in DOM
+   * - **Works across boundaries**: Drag from palette to any canvas-section
+   */
+  interface ComponentPalette {
+    /**
+     * Component registry for reactive updates (Observer Pattern)  **Recommended**: Use this instead of components prop for dynamic registration **Optional prop**: ComponentRegistry instance from grid-builder **Source**: Passed from grid-builder component  **Benefits over components prop**: - Automatic palette updates when components are registered - No manual synchronization needed - Framework-driven reactive pattern  **Use case - Dynamic component registration**: ```typescript // In grid-builder story or consumer code const builderEl = document.querySelector('grid-builder'); const paletteEl = document.querySelector('component-palette');  // Share the registry (automatic sync!) paletteEl.componentRegistry = builderEl.componentRegistry;  // Register new component - palette updates automatically! const api = window.gridBuilderAPI; api.registerComponent(newComponentDef); ```  **Priority**: If both components and componentRegistry are provided, componentRegistry takes precedence
+     */
+    componentRegistry?: ComponentRegistry;
+    /**
+     * Component definitions to render in palette  **Deprecated**: Use componentRegistry prop for reactive updates **Backward compatibility**: Still supported for static component lists **Source**: Passed from grid-builder component or consumer code  **Each definition provides**: - type: Unique identifier for component - name: Display name in palette - icon: Visual identifier (emoji recommended) - defaultSize: Size when dropped (for drag clone sizing)  **Example**: ```typescript const components = [   {     type: 'header',     name: 'Header',     icon: '📄',     defaultSize: { width: 20, height: 8 },     render: ({ itemId, config }) => <my-header itemId={itemId} config={config} />   } ]; ```
+     */
+    components?: ComponentDefinition[];
+    /**
+     * Grid configuration options  **Optional prop**: Customizes grid system behavior **Passed from**: grid-builder component **Used for**: Drag clone sizing (gridToPixelsX/Y calculations)
+     */
+    config?: GridConfig;
+    /**
+     * Custom label for this palette instance  **Optional prop**: Provides a descriptive label for this specific palette **Default**: "Component palette" **Used for**: ARIA label on toolbar container  **Use case - Multiple palettes**: When multiple component palettes exist on the same page (e.g., categorized palettes), provide unique labels for screen reader users:  ```typescript <component-palette components={contentComponents} paletteLabel="Content components" /> <component-palette components={mediaComponents} paletteLabel="Media components" /> <component-palette components={interactiveComponents} paletteLabel="Interactive components" /> ```  **Accessibility benefit**: - Screen readers announce: "Content components, toolbar" - Users can navigate between palettes by their distinct labels - Each palette has unique ARIA IDs to avoid conflicts
+     * @default "Component palette"
+     */
+    paletteLabel?: string;
+    /**
+     * Show palette header (title)  **Optional prop**: Controls whether the "Components" header is displayed **Default**: true (shows header for backward compatibility)  **Use cases**: - `showHeader={true}` (default): Standard palette with "Components" title - `showHeader={false}`: Chromeless mode - just the component list  **Chromeless mode benefits**: - Embed palette in custom layouts - Add your own headers/titles - Integrate into existing UI structures - More flexible component placement  **Example - Chromeless with custom wrapper**: ```typescript <div class="my-custom-sidebar"> <h3 class="my-title">Available Components</h3> <p class="my-description">Drag to add</p> <component-palette components={componentDefinitions} showHeader={false} /> </div> ```
+     * @default true
+     */
+    showHeader?: boolean;
+    /**
+     * Target grid-builder instance ID  **Optional prop**: Specifies which grid-builder instance should receive click-to-add events **Default**: undefined (events received by all grid-builder instances) **Used for**: Multi-instance scenarios with multiple grid-builders on the same page  **Use case - Multiple grid-builders**: When multiple grid-builder instances exist on the same page, use this prop to route palette events to a specific instance:  ```typescript // Grid builders with different API keys <grid-builder api-ref={{ key: 'gridAPI1' }} components={...} /> <grid-builder api-ref={{ key: 'gridAPI2' }} components={...} />  // Palettes targeting specific builders <component-palette   components={components}   targetGridBuilderId="gridAPI1" /> <component-palette   components={components}   targetGridBuilderId="gridAPI2" /> ```  **How it works**: - Palette includes `targetGridBuilderId` in `palette-item-click` event detail - Grid-builder filters events by matching against its own instance ID - If omitted, all grid-builders receive the event (backward compatible)
+     * @default undefined
+     */
+    targetGridBuilderId?: string;
+  }
+  /**
+   * ConfigPanel Component
+   * =====================
+   * Library component providing configuration panel with auto-generated and custom forms.
+   * **Tag**: `<config-panel>`
+   * **Shadow DOM**: Disabled (for consistency with other components)
+   */
+  interface ConfigPanel {
+    /**
+     * Grid Builder API instance  **Source**: Parent component (e.g., blog-app) **Purpose**: Access grid state and subscribe to events **Required**: Component won't work without valid API reference
+     */
+    api?: GridBuilderAPI;
+    /**
+     * Component registry (from parent grid-builder)  **Source**: grid-builder component **Purpose**: Look up component definitions for config forms
+     */
+    componentRegistry?: ComponentRegistry;
+  }
+  /**
+   * Confirmation Modal Component
+   * =============================
+   * Demo Component - NOT Part of Library
+   * This component demonstrates how to implement the grid-builder library's
+   * deletion hook system with a custom confirmation modal.
+   * Library Feature Being Demonstrated:
+   * -----------------------------------
+   * This modal is used with the library's **onBeforeDelete hook** system.
+   * How It Works:
+   * -------------
+   * 1. Library calls onBeforeDelete hook when user deletes component
+   * 2. Hook returns a Promise that doesn't resolve immediately
+   * 3. Host app shows this modal (or any modal library)
+   * 4. User clicks "Delete" or "Cancel"
+   * 5. Modal fires confirm/cancel event
+   * 6. Host app resolves Promise with true/false
+   * 7. Library proceeds with or cancels deletion
+   * Code Flow Example:
+   * ------------------
+   * ```typescript
+   * // In parent component (blog-app.tsx):
+   * private handleBeforeDelete = (context: DeletionHookContext): Promise<boolean> => {
+   *   return new Promise((resolve) => {
+   *     this.deleteResolve = resolve;
+   *     this.isConfirmModalOpen = true;  // Show this modal
+   *   });
+   * };
+   * private handleConfirmDelete = () => {
+   *   this.deleteResolve(true);   // Tell library to proceed
+   * };
+   * private handleCancelDelete = () => {
+   *   this.deleteResolve(false);  // Tell library to cancel
+   * };
+   * ```
+   * Why This Pattern:
+   * -----------------
+   * - **Library agnostic**: Library doesn't provide modal UI
+   * - **Flexibility**: Use any modal library (Material, Bootstrap, Ant Design, etc.)
+   * - **Customization**: Full control over modal appearance and behavior
+   * - **Async support**: Can make API calls before resolving
+   * Alternative Implementations:
+   * ---------------------------
+   * You could replace this component with:
+   * - Material Design modal
+   * - Bootstrap modal
+   * - Ant Design modal
+   * - Native browser confirm() (not recommended)
+   * - Custom modal from your design system
+   * The library doesn't care what modal you use - it just waits for the
+   * Promise to resolve with true/false.
+   */
+  interface ConfirmationModal {
+    /**
+     * Modal content (title and message) Passed from parent when showing confirmation
+     * @default null
+     */
+    data: ConfirmationModalData | null;
+    /**
+     * Modal open/closed state Controlled by parent component (blog-app)
+     * @default false
+     */
+    isOpen: boolean;
+  }
+  interface CustomConfigPanel {
+    /**
+     * Grid Builder API (accessed from window.gridBuilderAPI or passed as prop)  **Source**: window.gridBuilderAPI (set by grid-builder component) **Purpose**: Access grid state and methods **Required**: Component won't work without valid API reference
+     */
+    api?: GridBuilderAPI1;
+  }
+  /**
+   * Custom Drag Clone Component
+   * ============================
+   * Custom drag clone that shows a visual preview of the component being dragged.
+   * Each component type has a unique appearance that matches what will be placed
+   * on the canvas, helping with visual alignment and user understanding.
+   * The component fills the exact width and height provided, scaled to match
+   * the actual drop size.
+   */
+  interface CustomDragClone {
+    /**
+     * Component type being dragged
+     */
+    componentType: string;
+    /**
+     * Height in pixels
+     */
+    height: number;
+    /**
+     * Icon/emoji
+     */
+    icon: string;
+    /**
+     * Display name
+     */
+    name: string;
+    /**
+     * Width in pixels
+     */
+    width: number;
+  }
+  /**
+   * Custom Palette Item Component
+   * ==============================
+   * Example custom palette item that shows how consumers can create
+   * fully customized palette entries for their components.
+   * Updated to display SVG icons on top with titles below (similar to UI builder pattern)
+   */
+  interface CustomPaletteItem {
+    /**
+     * Component type
+     */
+    componentType: string;
+    /**
+     * Icon/emoji or SVG identifier
+     */
+    icon: string;
+    /**
+     * Display name
+     */
+    name: string;
+  }
+  interface DashboardWidget {
+    /**
+     * @default "#ffccbc"
+     */
+    backgroundColor?: string;
+  }
+  interface DashboardWidgetDragClone {}
+  /**
+   * ErrorBoundary Component
+   * ========================
+   * Generic error boundary for catching component render errors.
+   * **Tag**: `<error-boundary>`
+   * **Shadow DOM**: Disabled (allows slot content to access parent styles)
+   * **Reusable**: Zero dependencies, can be extracted to standalone package
+   */
+  interface ErrorBoundary {
+    /**
+     * Additional context for error info  **Purpose**: Add domain-specific context to error events **Default**: {}  **Example** (grid-builder specific): ```typescript <error-boundary context={{ itemId: 'item-123', canvasId: 'canvas1' }}>   ... </error-boundary> ```
+     */
+    context?: Record<string, any>;
+    /**
+     * Error boundary identifier  **Purpose**: Identifies which boundary caught the error **Required**: Yes **Example**: 'grid-builder', 'canvas-section', 'grid-item-wrapper'  **Used in error events**: Helps parent components know where error originated
+     */
+    errorBoundary: string;
+    /**
+     * Custom error fallback renderer  **Purpose**: Render custom error UI **Default**: Uses default error UI (red box with message)  **Function signature**: ```typescript (error: Error, errorInfo: BaseErrorInfo, retry?: () => void) => any ```  **Example**: ```typescript errorBoundaryEl.errorFallback = (error, errorInfo, retry) => (   <div class="custom-error">     <h3>{error.message}</h3>     <button onClick={retry}>Try Again</button>   </div> ); ```
+     */
+    errorFallback?: ErrorFallbackRenderer;
+    /**
+     * Error recovery strategy  **Purpose**: Control how component recovers from errors **Default**: Auto-determined from error classification  **Strategies**: - `graceful`: Show fallback UI, emit event, continue operation - `strict`: Re-throw error, propagate to parent - `retry`: Attempt automatic retry (not implemented for render errors) - `ignore`: Swallow error, render nothing  **Example**: ```typescript <error-boundary recovery-strategy="graceful">...</error-boundary> ```
+     */
+    recoveryStrategy?: ErrorRecoveryStrategy;
+    /**
+     * Whether to show error UI  **Purpose**: Control error UI visibility **Default**: `process.env.NODE_ENV !== 'production'` (show in dev, hide in prod)  **Override behavior**: - `true`: Always show error UI - `false`: Never show error UI (emit event only) - `undefined`: Environment-based (dev: show, prod: hide)  **Example**: ```typescript <error-boundary show-error-ui={true}>...</error-boundary> ```
+     */
+    showErrorUI?: boolean;
+    /**
+     * Simulate Error (Public API for demos/testing)  **Purpose**: Manually trigger error boundary for demonstration or testing **Use case**: Storybook stories, E2E tests, demo scenarios  **Example**: ```typescript const errorBoundary = document.querySelector('error-boundary'); await errorBoundary.simulateError(new Error('Test error')); ```
+     * @param error - Error to simulate (or string message)
+     * @returns Promise<void>
+     */
+    simulateError: (error: Error | string) => Promise<void>;
+  }
+  /**
+   * GridBuilder Component
+   * ======================
+   * Main library component providing complete grid builder functionality.
+   * **Tag**: `<grid-builder>`
+   * **Shadow DOM**: Disabled (required for interact.js compatibility)
+   * **Reactivity**: Listens to gridState changes via StencilJS store
+   */
+  interface GridBuilder {
+    /**
+     * Add a new canvas programmatically  **Purpose**: Create new section/canvas in the grid  **Example**: ```typescript const builder = document.querySelector('grid-builder'); await builder.addCanvas('new-section'); ```
+     * @param canvasId - Unique canvas identifier
+     */
+    addCanvas: (canvasId: string) => Promise<void>;
+    /**
+     * Add a component programmatically  **Purpose**: Add new component to canvas without dragging from palette  **Example**: ```typescript const builder = document.querySelector('grid-builder'); const itemId = await builder.addComponent('canvas1', 'header', { x: 10, y: 10, width: 30, height: 6 }, { title: 'My Header' }); ```
+     * @param canvasId - Canvas to add component to
+     * @param componentType - Component type from registry
+     * @param position - Grid position and size
+     * @param config - Optional component configuration
+     * @returns Promise<string | null> - New item ID or null if failed
+     */
+    addComponent: (
+      canvasId: string,
+      componentType: string,
+      position: { x: number; y: number; width: number; height: number },
+      config?: Record<string, any>,
+    ) => Promise<string | null>;
+    /**
+     * API key for shared state across multiple instances  **Optional prop**: Enables multi-instance sharing **Purpose**: Multiple grid-builder instances with same apiKey share layout data  **Use cases**: - Multi-device preview (mobile + tablet + desktop views side-by-side) - Collaborative editing (multiple users editing same layout) - Synchronized state across instances  **Shared data**: Canvas items, layouts, and z-index counters **Instance-specific**: Current viewport, selection state (each instance independent)  **Example**: ```typescript // Instance 1: Mobile view <grid-builder apiKey="demo-layout" breakpoints={{ mobile: 0, desktop: 768 }}></grid-builder>  // Instance 2: Desktop view (shares data with Instance 1) <grid-builder apiKey="demo-layout" breakpoints={{ mobile: 0, desktop: 768 }}></grid-builder> ```  **Default**: undefined (local-only mode, no sharing)
+     */
+    apiKey?: string;
+    /**
+     * Custom API exposure configuration  **Optional prop**: Control where and how the Grid Builder API is exposed **Default**: `{ key: 'gridBuilderAPI' }` **Purpose**: Allows multiple grid-builder instances on the same page  **Options**: 1. **Custom key on window** (multiple instances): ```typescript <grid-builder api-ref={{ key: 'gridAPI1' }}></grid-builder> <grid-builder api-ref={{ key: 'gridAPI2' }}></grid-builder> // Access: window.gridAPI1, window.gridAPI2 ```  2. **Disable automatic exposure** (use ref instead): ```typescript <grid-builder api-ref={null}></grid-builder> // Access via ref: <grid-builder ref={el => this.api = el?.api}></grid-builder> ```
+     * @default {     key: "gridBuilderAPI",   }
+     */
+    apiRef?: { key?: string } | null;
+    /**
+     * Breakpoint configuration for responsive layouts  **Optional prop**: Define custom responsive breakpoints **Default**: `{ mobile: { minWidth: 0, layoutMode: 'stack' }, desktop: { minWidth: 768, layoutMode: 'manual' } }` **Backwards compatible**: Existing desktop/mobile behavior maintained by default  **Breakpoint structure**: - `minWidth`: Container width in pixels (mobile-first approach) - `layoutMode`: 'manual' | 'stack' | 'inherit' - `inheritFrom`: Which breakpoint to inherit from (for layoutMode='inherit')  **Layout modes**: - **manual**: Items must be individually positioned (desktop-style) - **stack**: Items auto-stack vertically, full-width (mobile-style) - **inherit**: Inherit layout from another breakpoint  **Examples**:  1. **Simple format** (min-width only): ```typescript <grid-builder breakpoints={{ mobile: 0, desktop: 768 }}></grid-builder> ```  2. **Full format** (3 breakpoints with layout modes): ```typescript <grid-builder breakpoints={{   mobile: { minWidth: 0, layoutMode: 'stack' },   tablet: { minWidth: 768, layoutMode: 'inherit', inheritFrom: 'desktop' },   desktop: { minWidth: 1024, layoutMode: 'manual' } }}></grid-builder> ```  3. **Bootstrap-style** (5 breakpoints): ```typescript <grid-builder breakpoints={{   xs: { minWidth: 0, layoutMode: 'stack' },   sm: { minWidth: 576, layoutMode: 'stack' },   md: { minWidth: 768, layoutMode: 'inherit', inheritFrom: 'lg' },   lg: { minWidth: 992, layoutMode: 'manual' },   xl: { minWidth: 1200, layoutMode: 'manual' } }}></grid-builder> ```  **Automatic viewport detection**: - ResizeObserver monitors container width changes - Current viewport determined by container width (not window size) - Layout automatically switches when container resizes - No manual viewport switching needed
+     */
+    breakpoints?: any;
+    /**
+     * Check if redo is available  **Purpose**: Determine if there are actions to redo  **Example**: ```typescript const builder = document.querySelector('grid-builder'); const canRedo = await builder.canRedo(); redoButton.disabled = !canRedo; ```
+     * @returns Promise<boolean> - True if redo is available
+     */
+    canRedo: () => Promise<boolean>;
+    /**
+     * Check if undo is available  **Purpose**: Determine if there are actions to undo  **Example**: ```typescript const builder = document.querySelector('grid-builder'); const canUndo = await builder.canUndo(); undoButton.disabled = !canUndo; ```
+     * @returns Promise<boolean> - True if undo is available
+     */
+    canUndo: () => Promise<boolean>;
+    /**
+     * Canvas metadata storage (host app responsibility)  **Optional prop**: Store canvas-level presentation metadata **Purpose**: Host app owns canvas metadata (titles, colors, settings)  **Separation of concerns**: - Library owns placement state (items, layouts, zIndex) - Host app owns presentation state (colors, titles, custom metadata)  **Structure**: Record<canvasId, any>  **Example**: ```typescript const canvasMetadata = {   'hero-section': {     title: 'Hero Section',     backgroundColor: '#f0f4f8',     customSettings: { ... }   },   'articles-grid': {     title: 'Articles Grid',     backgroundColor: '#ffffff'   } }; <grid-builder canvasMetadata={canvasMetadata} ... /> ```  **Use with canvas-click events**: - Library fires canvas-click event when canvas background clicked - Host app shows canvas settings panel - Host app updates canvasMetadata state - Library passes metadata to canvas-section via props
+     */
+    canvasMetadata?: Record<string, any>;
+    /**
+     * Component definitions registry  **Required prop**: Array of ComponentDefinition objects **Purpose**: Defines available component types (header, text, button, etc.)  **Each definition includes**: - type: Unique identifier (e.g., 'header', 'text-block') - name: Display name in palette - icon: Visual identifier (emoji recommended) - defaultSize: Initial size when dropped - render: Function returning component to render - configSchema: Optional auto-generated config form - renderConfigPanel: Optional custom config UI - Lifecycle hooks: onVisible, onHidden for virtual rendering  **Example**: ```typescript const components = [   {     type: 'header',     name: 'Header',     icon: '📄',     defaultSize: { width: 20, height: 8 },     render: ({ itemId, config }) => (       <my-header itemId={itemId} config={config} />     ),     configSchema: [       { name: 'text', label: 'Text', type: 'text', defaultValue: 'Header' }     ]   } ]; ```
+     */
+    components: ComponentDefinition[];
+    /**
+     * Grid configuration options  **Optional prop**: Customizes grid system behavior **Default**: Standard 2% grid with 10px-50px constraints  **Configuration options**: - gridSizePercent: Grid unit as % of width (default: 2) - minGridSize: Minimum size in pixels (default: 10) - maxGridSize: Maximum size in pixels (default: 50) - snapToGrid: Enable snap-to-grid (default: true) - showGridLines: Show visual grid (default: true) - minItemSize: Minimum item dimensions (default: { width: 5, height: 4 }) - virtualRenderMargin: Pre-render margin (default: '20%')  **Example**: ```typescript const config = {   gridSizePercent: 3,           // 3% grid (33 units per 100%)   minGridSize: 15,              // 15px minimum   maxGridSize: 60,              // 60px maximum   snapToGrid: true,   virtualRenderMargin: '30%'    // Aggressive pre-loading }; ```
+     */
+    config?: GridConfig;
+    /**
+     * Delete a component programmatically  **Purpose**: Remove component from grid  **Example**: ```typescript const builder = document.querySelector('grid-builder'); const success = await builder.deleteComponent('item-123'); ```
+     * @param itemId - Item ID to delete
+     * @returns Promise<boolean> - True if deleted successfully
+     */
+    deleteComponent: (itemId: string) => Promise<boolean>;
+    /**
+     * Export current state to JSON-serializable format  **Purpose**: Export grid layout for saving or transferring to viewer app  **Use Cases**: - Save layout to database/localStorage - Transfer layout to viewer app via API - Create layout templates/presets - Backup/restore functionality  **Example - Save to API**: ```typescript const builder = document.querySelector('grid-builder'); const exportData = await builder.exportState(); await fetch('/api/layouts', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(exportData) }); ```  **Example - Save to localStorage**: ```typescript const exportData = await builder.exportState(); localStorage.setItem('grid-layout', JSON.stringify(exportData)); ```
+     * @returns Promise<GridExport> - JSON-serializable export object
+     */
+    exportState: () => Promise<GridExport>;
+    /**
+     * Get currently active canvas ID  **Purpose**: Check which canvas is currently active/focused
+     * @returns Promise<string | null> - Active canvas ID or null if none active
+     * @example ```typescript const builder = document.querySelector('grid-builder'); const activeId = await builder.getActiveCanvas(); if (activeId === 'canvas1') {   console.log('Canvas 1 is active'); } ```
+     */
+    getActiveCanvas: () => Promise<string | null>;
+    /**
+     * Get current grid state  **Purpose**: Direct access to grid state for reading  **Example**: ```typescript const builder = document.querySelector('grid-builder'); const state = await builder.getState(); console.log('Current viewport:', state.currentViewport); ```
+     * @returns Promise<GridState> - Current grid state
+     */
+    getState: () => Promise<GridState>;
+    /**
+     * Import state from JSON-serializable format  **Purpose**: Restore previously exported grid state  **Example**: ```typescript const builder = document.querySelector('grid-builder'); const savedState = JSON.parse(localStorage.getItem('grid-layout')); await builder.importState(savedState); ```
+     * @param state - GridExport or partial GridState object
+     */
+    importState: (state: Partial<GridState> | GridExport) => Promise<void>;
+    /**
+     * Initial state to restore  **Optional prop**: Restore saved layout **Purpose**: Load previously saved grid state  **State structure**: Same as gridState (canvases, viewport, etc.)  **Example**: ```typescript const savedState = JSON.parse(localStorage.getItem('grid-state')); <grid-builder initialState={savedState} ... /> ```
+     */
+    initialState?: Partial<GridState>;
+    /**
+     * Unique instance identifier for multi-instance scenarios  **Optional prop**: Auto-generated if not provided **Purpose**: Track individual instances in SharedStateRegistry  **Auto-generation**: If not provided, generates: `grid-builder-{timestamp}-{random}`  **Only relevant when**: apiKey is provided (shared mode) **Ignored when**: apiKey is undefined (local-only mode)
+     */
+    instanceId?: string;
+    /**
+     * Hook called before deleting a component  **Optional prop**: Intercept deletion requests for custom workflows **Purpose**: Allow host app to show confirmation, make API calls, etc.  **Hook behavior**: - Return `true` to proceed with deletion - Return `false` to cancel the deletion - Return a Promise for async operations (modals, API calls)  **Example - Confirmation modal**: ```typescript const onBeforeDelete = async (context) => {   const confirmed = await showConfirmModal(     `Delete ${context.item.name}?`,     'This action cannot be undone.'   );   return confirmed; }; <grid-builder onBeforeDelete={onBeforeDelete} ... /> ```  **Example - API call + confirmation**: ```typescript const onBeforeDelete = async (context) => {   // Show loading modal   const modal = showLoadingModal('Deleting...');    try {     // Make API call     await fetch(`/api/components/${context.itemId}`, {       method: 'DELETE'     });     modal.close();     return true; // Proceed with deletion   } catch (error) {     modal.close();     showErrorModal('Failed to delete component');     return false; // Cancel deletion   } }; ```  **Default behavior**: If not provided, components delete immediately
+     */
+    onBeforeDelete?: DeletionHook;
+    /**
+     * Plugin instances for extending functionality  **Optional prop**: Array of GridBuilderPlugin instances **Purpose**: Add custom features, analytics, integrations  **Plugin lifecycle**: 1. Library calls plugin.init(api) on componentDidLoad 2. Plugin subscribes to events, adds UI, etc. 3. Library calls plugin.destroy() on disconnectedCallback  **Example**: ```typescript class AnalyticsPlugin implements GridBuilderPlugin {   name = 'analytics';    init(api: GridBuilderAPI) {     api.on('componentAdded', (e) => {       analytics.track('Component Added', { type: e.item.type });     });   }    destroy() {     // Cleanup   } }  const plugins = [new AnalyticsPlugin()]; ```
+     */
+    plugins?: GridBuilderPlugin[];
+    /**
+     * Redo last undone action  **Purpose**: Re-apply last undone action  **Example**: ```typescript const builder = document.querySelector('grid-builder'); await builder.redo(); ```
+     */
+    redo: () => Promise<void>;
+    /**
+     * Remove a canvas programmatically  **Purpose**: Delete section/canvas from the grid  **Example**: ```typescript const builder = document.querySelector('grid-builder'); await builder.removeCanvas('old-section'); ```
+     * @param canvasId - Canvas identifier to remove
+     */
+    removeCanvas: (canvasId: string) => Promise<void>;
+    /**
+     * Set active canvas programmatically  **Purpose**: Activate a specific canvas for focused editing  **Use cases**: - Focus specific section after adding items - Programmatic navigation between sections - Show canvas-specific settings panel  **Events triggered**: 'canvasActivated'
+     * @param canvasId - Canvas to activate
+     * @example ```typescript const builder = document.querySelector('grid-builder'); await builder.setActiveCanvas('canvas2'); ```
+     */
+    setActiveCanvas: (canvasId: string) => Promise<void>;
+    /**
+     * Visual theme customization  **Optional prop**: Customizes colors, fonts, and styling **Default**: Bootstrap-inspired blue theme  **Theme options**: - primaryColor: Accent color (default: '#007bff') - paletteBackground: Palette sidebar color (default: '#f5f5f5') - canvasBackground: Canvas background (default: '#ffffff') - gridLineColor: Grid line color (default: 'rgba(0,0,0,0.1)') - selectionColor: Selection outline (default: '#007bff') - resizeHandleColor: Resize handle color (default: '#007bff') - fontFamily: UI font (default: system font stack) - customProperties: CSS variables for advanced theming  **Example**: ```typescript const theme = {   primaryColor: '#ff6b6b',        // Brand red   paletteBackground: '#fff5f5',   // Light red   customProperties: {     '--text-color': '#ffffff',     '--border-radius': '8px'   } }; ```
+     */
+    theme?: GridBuilderTheme;
+    /**
+     * Custom UI component overrides  **Optional prop**: Replace default UI components **Purpose**: Fully customize visual appearance  **Overridable components**: - ConfigPanel: Configuration panel UI - ComponentPalette: Component palette sidebar - Toolbar: Top toolbar with controls  **Example**: ```typescript const uiOverrides = {   Toolbar: (props) => (     <div class="my-toolbar">       <button onClick={props.onUndo}>Undo</button>       <button onClick={props.onRedo}>Redo</button>     </div>   ) }; ```
+     */
+    uiOverrides?: UIComponentOverrides;
+    /**
+     * Undo last action  **Purpose**: Revert last user action (move, resize, add, delete, etc.)  **Example**: ```typescript const builder = document.querySelector('grid-builder'); await builder.undo(); ```
+     */
+    undo: () => Promise<void>;
+    /**
+     * Update component configuration  **Purpose**: Update component properties/config  **Example**: ```typescript const builder = document.querySelector('grid-builder'); const success = await builder.updateConfig('item-123', { title: 'Updated Title', color: '#ff0000' }); ```
+     * @param itemId - Item ID to update
+     * @param config - Configuration updates
+     * @returns Promise<boolean> - True if updated successfully
+     */
+    updateConfig: (
+      itemId: string,
+      config: Record<string, any>,
+    ) => Promise<boolean>;
+  }
+  /**
+   * GridItemWrapper Component
+   * ==========================
+   * Library component wrapping individual grid items with drag/resize/selection.
+   * **Tag**: `<grid-item-wrapper>`
+   * **Shadow DOM**: Disabled (required for interact.js compatibility)
+   * **Dynamic rendering**: Uses ComponentDefinition.render() from registry
+   */
+  interface GridItemWrapper {
+    /**
+     * Breakpoint configuration (for viewer mode)  **Purpose**: Define responsive breakpoints and layout modes **Source**: grid-viewer → canvas-section-viewer → grid-item-wrapper **Used by**: render() to determine auto-stacking and layout inheritance  **Note**: When in builder mode (viewerMode=false), this is ignored and stateInstance.breakpoints is used instead. When in viewer mode (viewerMode=true), this prop is optional (defaults to DEFAULT_BREAKPOINTS).
+     */
+    breakpoints?: any;
+    /**
+     * All items in the canvas (for viewer mode auto-layout)  **Purpose**: Calculate mobile auto-layout positions **Source**: grid-viewer → canvas-section-viewer → grid-item-wrapper **Used by**: render() to calculate stacked positions in mobile viewport  **Note**: When in builder mode (viewerMode=false), this is ignored and gridState.canvases is used instead. When in viewer mode (viewerMode=true), this prop is required for mobile auto-layout.
+     */
+    canvasItems?: GridItem[];
+    /**
+     * Component registry (from parent grid-builder)  **Source**: grid-builder component (built from components prop) **Structure**: ComponentRegistry service instance **Purpose**: Look up component definitions for dynamic rendering  **Instance-based architecture**: Each grid-builder instance has its own registry, supporting multiple grids with different component sets on the same page. Prop drilling (3 levels) is the correct pattern for this use case.
+     */
+    componentRegistry?: ComponentRegistry;
+    /**
+     * Grid configuration options  **Optional**: Customizes grid system behavior **Passed from**: grid-builder → canvas-section → grid-item-wrapper **Used for**: Grid size calculations with constraints
+     */
+    config?: GridConfig;
+    /**
+     * Current viewport (for viewer mode)  **Purpose**: Determine which layout to render (desktop or mobile) **Source**: grid-viewer → canvas-section-viewer → grid-item-wrapper **Used by**: render() to select appropriate layout  **Note**: When in builder mode (viewerMode=false), this is ignored and gridState.currentViewport is used instead. When in viewer mode (viewerMode=true), this prop is required.
+     */
+    currentViewport?: string;
+    /**
+     * DOM cache service instance (passed from grid-builder)  **Required for editing mode** (grid-builder provides this) **Optional for viewer mode** (grid-viewer doesn't need it)  **Source**: grid-builder → canvas-section → grid-item-wrapper **Purpose**: Support multiple grid-builder instances with isolated DOM caches **Used by**: DragHandler, ResizeHandler for fast canvas element lookups
+     */
+    domCacheInstance?: DOMCache;
+    /**
+     * Error adapter service instance (passed from grid-builder)  **Required for editing mode** (grid-builder provides this) **Optional for viewer mode** (grid-viewer doesn't need it)  **Source**: grid-builder → canvas-section → grid-item-wrapper **Purpose**: Support multiple grid-builder instances with isolated error handling **Used by**: Error boundary for handling component render errors  **Error isolation strategy**: - Item-level errors (component render failures) are caught by error boundary - Error adapter converts to GridErrorEventDetail and emits to EventManager - Other grid items continue functioning (isolation achieved) - Fallback UI shown for failed item (graceful degradation)
+     */
+    errorAdapterInstance?: GridErrorAdapter;
+    /**
+     * Event manager service instance (passed from grid-builder)  **Required for editing mode** (grid-builder provides this) **Optional for viewer mode** (grid-viewer doesn't need it)  **Source**: grid-builder → canvas-section → grid-item-wrapper **Purpose**: Support multiple grid-builder instances with isolated services
+     */
+    eventManagerInstance?: EventManager;
+    /**
+     * Grid item data (position, size, type, etc.)  **Source**: Parent canvas-section component **Contains**: id, canvasId, type, name, layouts (desktop/mobile), zIndex, config
+     */
+    item: GridItem;
+    /**
+     * Deletion hook (from parent grid-builder)  **Source**: grid-builder component (from onBeforeDelete prop) **Purpose**: Allow host app to intercept deletion requests  **Hook behavior**: - Called before deleting a component - Receives context with item data - Returns true/false or Promise<boolean> - If false, deletion is cancelled - If true, deletion proceeds  **Default**: If not provided, components delete immediately
+     */
+    onBeforeDelete?: (context: any) => boolean | Promise<boolean>;
+    /**
+     * Render version (force re-render trigger)  **Source**: Parent canvas-section (incremented on resize) **Purpose**: Force grid calculation refresh when container resizes
+     */
+    renderVersion?: number;
+    /**
+     * State manager instance (passed from grid-builder)  **Required for editing mode** (grid-builder provides this) **Optional for viewer mode** (grid-viewer doesn't need it)  **Source**: grid-builder → canvas-section → grid-item-wrapper **Purpose**: Support multiple grid-builder instances with isolated state **Used by**: DragHandler, ResizeHandler for accessing canvases and viewport
+     */
+    stateInstance?: any;
+    /**
+     * Theme configuration (from parent grid-builder)  **Source**: grid-builder → canvas-section → grid-item-wrapper **Purpose**: Access theme.selectionColor for component selection styling  **Fallback chain for selection color**: 1. ComponentDefinition.selectionColor (per-component override) 2. theme.selectionColor (global theme default) 3. "#f59e0b" (hardcoded fallback - amber/gold)  **Why passed**: grid-item-wrapper doesn't have access to global theme, so must be passed through component tree
+     */
+    theme?: any;
+    /**
+     * Undo/Redo manager service instance (passed from grid-builder)  **Required for editing mode** (grid-builder provides this) **Optional for viewer mode** (grid-viewer doesn't need it)  **Source**: grid-builder → canvas-section → grid-item-wrapper **Purpose**: Support multiple grid-builder instances with isolated undo/redo stacks **Used by**: handleItemUpdate() for pushing move/resize commands to undo stack
+     */
+    undoRedoManagerInstance?: UndoRedoManager;
+    /**
+     * Viewer mode flag  **Purpose**: Disable editing features for rendering-only mode **Default**: false (editing enabled)  **When true**: - ❌ No drag-and-drop handlers - ❌ No resize handles - ❌ No item header (drag handle) - ❌ No delete button - ❌ No selection state - ✅ Only renders component content  **Use case**: grid-viewer component for display-only mode
+     * @default false
+     */
+    viewerMode?: boolean;
+    /**
+     * Virtual renderer service instance (passed from grid-builder)  **Required for editing mode** (grid-builder provides this) **Optional for viewer mode** (grid-viewer doesn't need it)  **Source**: grid-builder → canvas-section → grid-item-wrapper **Purpose**: Support multiple grid-builder instances with isolated services
+     */
+    virtualRendererInstance?: VirtualRendererService;
+  }
+  /**
+   * GridViewer Component
+   * ====================
+   * Rendering-only grid component for displaying layouts created in grid-builder.
+   * **Tag**: `<grid-viewer>`
+   * **Shadow DOM**: Disabled (consistent with grid-builder)
+   * **Reactivity**: Uses local store OR shared store (via apiKey prop)
+   * **Key differences from grid-builder**:
+   * - No interact.js dependency (80% bundle size reduction)
+   * - No palette, config panel, or editing UI
+   * - Simplified state (no selection, no z-index tracking)
+   * - Rendering-only canvas sections
+   * **Multi-instance sharing**:
+   * - **Local mode** (default): Each instance has independent state
+   * - **Shared mode** (with apiKey): Multiple instances share layout data
+   * - Same SharedStateRegistry pattern as grid-builder
+   * - Use case: Multi-device preview (mobile + tablet + desktop side-by-side)
+   */
+  interface GridViewer {
+    /**
+     * API key for shared state across multiple instances  **Optional prop**: Enables multi-instance sharing **Purpose**: Multiple grid-viewer instances with same apiKey share layout data  **Use cases**: - Multi-device preview (mobile + tablet + desktop views side-by-side) - Collaborative viewing (multiple users viewing same layout) - Live updates across instances  **Shared data**: Canvas items and layouts **Instance-specific**: Current viewport (each instance can show different viewport)  **Example**: ```typescript // Instance 1: Mobile view <grid-viewer apiKey="demo-layout" breakpoints={{ mobile: 0, desktop: 768 }}></grid-viewer>  // Instance 2: Desktop view (shares data with Instance 1) <grid-viewer apiKey="demo-layout" breakpoints={{ mobile: 0, desktop: 768 }}></grid-viewer> ```  **Default**: undefined (local-only mode, no sharing)
+     */
+    apiKey?: string;
+    /**
+     * Breakpoint configuration for responsive layouts  **Optional prop**: Define custom responsive breakpoints **Default**: `{ mobile: { minWidth: 0, layoutMode: 'stack' }, desktop: { minWidth: 768, layoutMode: 'manual' } }` **Backwards compatible**: Existing desktop/mobile behavior maintained by default  **Should match builder config**: Use same breakpoints as builder for consistent behavior  **Examples**:  1. **Simple format** (min-width only): ```typescript <grid-viewer breakpoints={{ mobile: 0, desktop: 768 }}></grid-viewer> ```  2. **Full format** (3 breakpoints with layout modes): ```typescript <grid-viewer breakpoints={{   mobile: { minWidth: 0, layoutMode: 'stack' },   tablet: { minWidth: 768, layoutMode: 'inherit', inheritFrom: 'desktop' },   desktop: { minWidth: 1024, layoutMode: 'manual' } }}></grid-viewer> ```
+     */
+    breakpoints?: any;
+    /**
+     * Canvas metadata storage (host app responsibility)  **Optional prop**: Store canvas-level presentation metadata **Purpose**: Host app owns canvas metadata (titles, colors, settings)  **Structure**: Record<canvasId, any>  **Example**: ```typescript const canvasMetadata = {   'hero-section': {     backgroundColor: '#f0f4f8',     customSettings: { ... }   } }; ```
+     */
+    canvasMetadata?: Record<string, any>;
+    /**
+     * Component definitions registry  **Required prop**: Array of ComponentDefinition objects **Purpose**: Defines how to render each component type  **Must match builder definitions**: Same component types as used in builder  **Example**: ```typescript const components = [   {     type: 'header',     name: 'Header',     icon: '📄',     render: ({ itemId, config }) => (       <my-header itemId={itemId} config={config} />     )   } ]; ```
+     */
+    components: ComponentDefinition[];
+    /**
+     * Grid configuration options  **Optional prop**: Grid system configuration **Default**: Standard 2% grid with 10px-50px constraints  **Should match builder config**: Use same config as builder for consistent rendering
+     */
+    config?: GridConfig;
+    /**
+     * Initial state to display  **Optional prop**: Layout data to render **Accepts**: ViewerState or GridExport (both compatible)  **From builder export**: ```typescript const exportData = await builder.exportState(); viewer.initialState = exportData; // Type-safe! ```  **From API**: ```typescript const layout = await fetch('/api/layouts/123').then(r => r.json()); viewer.initialState = layout; ```
+     */
+    initialState?: Partial<ViewerState> | GridExport;
+    /**
+     * Unique instance identifier for multi-instance scenarios  **Optional prop**: Auto-generated if not provided **Purpose**: Track individual instances in SharedStateRegistry  **Auto-generation**: If not provided, generates: `grid-viewer-{timestamp}-{random}`  **Only relevant when**: apiKey is provided (shared mode) **Ignored when**: apiKey is undefined (local-only mode)
+     */
+    instanceId?: string;
+    /**
+     * Visual theme customization  **Optional prop**: Customizes colors, fonts, and styling **Default**: Bootstrap-inspired blue theme
+     */
+    theme?: GridBuilderTheme;
+  }
+  interface ImageGallery {
+    /**
+     * @default "#f5f5f5"
+     */
+    backgroundColor?: string;
+    /**
+     * @default 6
+     */
+    imageCount: number;
+  }
+  interface ImageGalleryDragClone {}
+  interface LayerPanel {
+    /**
+     * Grid Builder API instance (instance-based architecture)  **Required**: Must be provided or component won't display items **Source**: Host app (blog-app) passes this via prop **Purpose**: Access instance-based state for multi-instance support  **Why needed**: Grid-builder uses its own state instance. The layer panel must access that same instance to display items correctly.
+     */
+    api?: any;
+    /**
+     * Canvas metadata for folder titles Map of canvasId → { title: string }
+     * @default {}
+     */
+    canvasMetadata?: Record<string, { title: string }>;
+    /**
+     * Height of folder header in pixels
+     * @default 40
+     */
+    folderHeight?: number;
+    /**
+     * Height of layer item in pixels
+     * @default 40
+     */
+    itemHeight?: number;
+    /**
+     * Search input debounce delay in milliseconds
+     * @default 300
+     */
+    searchDebounceMs?: number;
+    /**
+     * Pre-render buffer in pixels (renders items outside viewport)
+     * @default 200
+     */
+    virtualBufferPx?: number;
+    /**
+     * Number of items to render in virtual window
+     * @default 50
+     */
+    virtualWindowSize?: number;
+  }
+  interface LayerPanelFolderHeader {
+    /**
+     * Canvas ID this folder represents
+     */
+    canvasId: string;
+    /**
+     * Display title for the canvas
+     */
+    canvasTitle: string;
+    /**
+     * Whether this canvas is the active canvas
+     * @default false
+     */
+    isActive?: boolean;
+    /**
+     * Whether this folder has no items matching current search When true, folder appears dimmed
+     * @default false
+     */
+    isEmpty?: boolean;
+    /**
+     * Whether this folder is currently expanded
+     * @default true
+     */
+    isExpanded?: boolean;
+    /**
+     * Number of items in this canvas
+     */
+    itemCount: number;
+    /**
+     * Total item count (for showing "0 / 15" during search)
+     */
+    totalItemCount?: number;
+  }
+  interface LayerPanelItem {
+    /**
+     * Canvas ID containing this item
+     */
+    canvasId: string;
+    /**
+     * Whether this item is currently active/selected
+     * @default false
+     */
+    isActive?: boolean;
+    /**
+     * Unique ID of the grid item this represents
+     */
+    itemId: string;
+    /**
+     * Display name of the item
+     */
+    name: string;
+    /**
+     * Component type (for icon display)
+     */
+    type: string;
+    /**
+     * Current z-index value
+     */
+    zIndex: number;
+  }
+  interface LiveData {
+    /**
+     * @default "#b2ebf2"
+     */
+    backgroundColor?: string;
+  }
+  interface LiveDataDragClone {}
+  /**
+   * Section Editor Panel Component
+   * ===============================
+   * Demo Component - NOT Part of Library
+   * This component demonstrates how to build custom UI for editing canvas metadata
+   * in applications using the grid-builder library.
+   * Purpose:
+   * --------
+   * Shows how to create a side panel for editing section/canvas settings.
+   * This is completely custom to your application - the library doesn't provide this.
+   * Library Relationship:
+   * ---------------------
+   * - Library owns: Component placement, layouts, zIndex (grid state)
+   * - Host app owns: Canvas metadata (titles, colors, settings) - THIS COMPONENT
+   * - Metadata flows: App → Library via canvasMetadata prop
+   * Pattern Demonstrated:
+   * ---------------------
+   * 1. User clicks section header (demo UI)
+   * 2. App opens this panel (demo component)
+   * 3. User edits title/color
+   * 4. App updates canvasMetadata state
+   * 5. Library receives updated metadata via prop
+   * 6. Library passes backgroundColor to canvas-section
+   * Why This Approach:
+   * ------------------
+   * - Library stays focused on grid logic
+   * - Host app controls all presentation/metadata UI
+   * - You can use any UI framework (Material, Bootstrap, etc.)
+   * - Complete flexibility over settings panel design
+   */
+  interface SectionEditorPanel {
+    /**
+     * Panel open/closed state Controlled by parent component (blog-app)
+     * @default false
+     */
+    isOpen: boolean;
+    /**
+     * Section data being edited Passed from parent when user clicks section header
+     * @default null
+     */
+    sectionData: SectionEditorData | null;
+  }
 }
 export interface BlogButtonCustomEvent<T> extends CustomEvent<T> {
-    detail: T;
-    target: HTMLBlogButtonElement;
+  detail: T;
+  target: HTMLBlogButtonElement;
 }
 export interface CanvasHeaderCustomEvent<T> extends CustomEvent<T> {
-    detail: T;
-    target: HTMLCanvasHeaderElement;
+  detail: T;
+  target: HTMLCanvasHeaderElement;
 }
 export interface ConfirmationModalCustomEvent<T> extends CustomEvent<T> {
-    detail: T;
-    target: HTMLConfirmationModalElement;
+  detail: T;
+  target: HTMLConfirmationModalElement;
 }
 export interface ErrorBoundaryCustomEvent<T> extends CustomEvent<T> {
-    detail: T;
-    target: HTMLErrorBoundaryElement;
+  detail: T;
+  target: HTMLErrorBoundaryElement;
 }
 export interface GridBuilderCustomEvent<T> extends CustomEvent<T> {
-    detail: T;
-    target: HTMLGridBuilderElement;
+  detail: T;
+  target: HTMLGridBuilderElement;
 }
 export interface LayerPanelFolderHeaderCustomEvent<T> extends CustomEvent<T> {
-    detail: T;
-    target: HTMLLayerPanelFolderHeaderElement;
+  detail: T;
+  target: HTMLLayerPanelFolderHeaderElement;
 }
 export interface LayerPanelItemCustomEvent<T> extends CustomEvent<T> {
-    detail: T;
-    target: HTMLLayerPanelItemElement;
+  detail: T;
+  target: HTMLLayerPanelItemElement;
 }
 export interface SectionEditorPanelCustomEvent<T> extends CustomEvent<T> {
-    detail: T;
-    target: HTMLSectionEditorPanelElement;
+  detail: T;
+  target: HTMLSectionEditorPanelElement;
 }
 declare global {
-    interface HTMLBlogAppElement extends Components.BlogApp, HTMLStencilElement {
-    }
-    var HTMLBlogAppElement: {
-        prototype: HTMLBlogAppElement;
-        new (): HTMLBlogAppElement;
-    };
-    interface HTMLBlogArticleElement extends Components.BlogArticle, HTMLStencilElement {
-    }
-    var HTMLBlogArticleElement: {
-        prototype: HTMLBlogArticleElement;
-        new (): HTMLBlogArticleElement;
-    };
-    interface HTMLBlogArticleDragCloneElement extends Components.BlogArticleDragClone, HTMLStencilElement {
-    }
-    var HTMLBlogArticleDragCloneElement: {
-        prototype: HTMLBlogArticleDragCloneElement;
-        new (): HTMLBlogArticleDragCloneElement;
-    };
-    interface HTMLBlogButtonElementEventMap {
-        "buttonClick": void;
-    }
-    interface HTMLBlogButtonElement extends Components.BlogButton, HTMLStencilElement {
-        addEventListener<K extends keyof HTMLBlogButtonElementEventMap>(type: K, listener: (this: HTMLBlogButtonElement, ev: BlogButtonCustomEvent<HTMLBlogButtonElementEventMap[K]>) => any, options?: boolean | AddEventListenerOptions): void;
-        addEventListener<K extends keyof DocumentEventMap>(type: K, listener: (this: Document, ev: DocumentEventMap[K]) => any, options?: boolean | AddEventListenerOptions): void;
-        addEventListener<K extends keyof HTMLElementEventMap>(type: K, listener: (this: HTMLElement, ev: HTMLElementEventMap[K]) => any, options?: boolean | AddEventListenerOptions): void;
-        addEventListener(type: string, listener: EventListenerOrEventListenerObject, options?: boolean | AddEventListenerOptions): void;
-        removeEventListener<K extends keyof HTMLBlogButtonElementEventMap>(type: K, listener: (this: HTMLBlogButtonElement, ev: BlogButtonCustomEvent<HTMLBlogButtonElementEventMap[K]>) => any, options?: boolean | EventListenerOptions): void;
-        removeEventListener<K extends keyof DocumentEventMap>(type: K, listener: (this: Document, ev: DocumentEventMap[K]) => any, options?: boolean | EventListenerOptions): void;
-        removeEventListener<K extends keyof HTMLElementEventMap>(type: K, listener: (this: HTMLElement, ev: HTMLElementEventMap[K]) => any, options?: boolean | EventListenerOptions): void;
-        removeEventListener(type: string, listener: EventListenerOrEventListenerObject, options?: boolean | EventListenerOptions): void;
-    }
-    var HTMLBlogButtonElement: {
-        prototype: HTMLBlogButtonElement;
-        new (): HTMLBlogButtonElement;
-    };
-    interface HTMLBlogButtonDragCloneElement extends Components.BlogButtonDragClone, HTMLStencilElement {
-    }
-    var HTMLBlogButtonDragCloneElement: {
-        prototype: HTMLBlogButtonDragCloneElement;
-        new (): HTMLBlogButtonDragCloneElement;
-    };
-    interface HTMLBlogHeaderElement extends Components.BlogHeader, HTMLStencilElement {
-    }
-    var HTMLBlogHeaderElement: {
-        prototype: HTMLBlogHeaderElement;
-        new (): HTMLBlogHeaderElement;
-    };
-    interface HTMLBlogHeaderDragCloneElement extends Components.BlogHeaderDragClone, HTMLStencilElement {
-    }
-    var HTMLBlogHeaderDragCloneElement: {
-        prototype: HTMLBlogHeaderDragCloneElement;
-        new (): HTMLBlogHeaderDragCloneElement;
-    };
-    interface HTMLBlogImageElement extends Components.BlogImage, HTMLStencilElement {
-    }
-    var HTMLBlogImageElement: {
-        prototype: HTMLBlogImageElement;
-        new (): HTMLBlogImageElement;
-    };
-    interface HTMLBlogImageDragCloneElement extends Components.BlogImageDragClone, HTMLStencilElement {
-    }
-    var HTMLBlogImageDragCloneElement: {
-        prototype: HTMLBlogImageDragCloneElement;
-        new (): HTMLBlogImageDragCloneElement;
-    };
-    interface HTMLCanvasHeaderElementEventMap {
-        "headerClick": { canvasId: string };
-        "deleteClick": { canvasId: string };
-    }
-    /**
-     * CanvasHeader Component
-     * ======================
-     * Declarative header component for canvas sections.
-     * **Tag**: `<canvas-header>`
-     * **Shadow DOM**: Disabled (matches blog-app styling)
-     */
-    interface HTMLCanvasHeaderElement extends Components.CanvasHeader, HTMLStencilElement {
-        addEventListener<K extends keyof HTMLCanvasHeaderElementEventMap>(type: K, listener: (this: HTMLCanvasHeaderElement, ev: CanvasHeaderCustomEvent<HTMLCanvasHeaderElementEventMap[K]>) => any, options?: boolean | AddEventListenerOptions): void;
-        addEventListener<K extends keyof DocumentEventMap>(type: K, listener: (this: Document, ev: DocumentEventMap[K]) => any, options?: boolean | AddEventListenerOptions): void;
-        addEventListener<K extends keyof HTMLElementEventMap>(type: K, listener: (this: HTMLElement, ev: HTMLElementEventMap[K]) => any, options?: boolean | AddEventListenerOptions): void;
-        addEventListener(type: string, listener: EventListenerOrEventListenerObject, options?: boolean | AddEventListenerOptions): void;
-        removeEventListener<K extends keyof HTMLCanvasHeaderElementEventMap>(type: K, listener: (this: HTMLCanvasHeaderElement, ev: CanvasHeaderCustomEvent<HTMLCanvasHeaderElementEventMap[K]>) => any, options?: boolean | EventListenerOptions): void;
-        removeEventListener<K extends keyof DocumentEventMap>(type: K, listener: (this: Document, ev: DocumentEventMap[K]) => any, options?: boolean | EventListenerOptions): void;
-        removeEventListener<K extends keyof HTMLElementEventMap>(type: K, listener: (this: HTMLElement, ev: HTMLElementEventMap[K]) => any, options?: boolean | EventListenerOptions): void;
-        removeEventListener(type: string, listener: EventListenerOrEventListenerObject, options?: boolean | EventListenerOptions): void;
-    }
-    var HTMLCanvasHeaderElement: {
-        prototype: HTMLCanvasHeaderElement;
-        new (): HTMLCanvasHeaderElement;
-    };
-    /**
-     * CanvasSection Component
-     * =======================
-     * Library component providing individual canvas dropzone.
-     * **Tag**: `<canvas-section>`
-     * **Shadow DOM**: Disabled (required for interact.js compatibility)
-     * **Reactivity**: Listens to gridState changes via StencilJS store
-     */
-    interface HTMLCanvasSectionElement extends Components.CanvasSection, HTMLStencilElement {
-    }
-    var HTMLCanvasSectionElement: {
-        prototype: HTMLCanvasSectionElement;
-        new (): HTMLCanvasSectionElement;
-    };
-    /**
-     * CanvasSectionViewer Component
-     * ==============================
-     * Rendering-only canvas component for grid-viewer.
-     * **Tag**: `<canvas-section-viewer>`
-     * **Shadow DOM**: Disabled (consistent with canvas-section)
-     * **Reactivity**: Props-based (no global state subscription)
-     */
-    interface HTMLCanvasSectionViewerElement extends Components.CanvasSectionViewer, HTMLStencilElement {
-    }
-    var HTMLCanvasSectionViewerElement: {
-        prototype: HTMLCanvasSectionViewerElement;
-        new (): HTMLCanvasSectionViewerElement;
-    };
-    /**
-     * ComponentPalette Component
-     * ===========================
-     * Library component providing draggable component palette UI.
-     * **Tag**: `<component-palette>`
-     * **Shadow DOM**: Disabled (for consistency with other components)
-     * **Reactivity**: Re-renders when components prop changes
-     * ## Usage Patterns
-     * **Pattern 1: Default (inside grid-builder)**
-     * ```typescript
-     * // Palette automatically rendered by grid-builder
-     * <grid-builder components={componentDefinitions} />
-     * ```
-     * **Pattern 2: Independent placement**
-     * ```typescript
-     * // Place palette anywhere in your app
-     * <div class="my-layout">
-     *   <aside class="sidebar">
-     *     <component-palette
-     *       components={componentDefinitions}
-     *       config={gridConfig}
-     *     />
-     *   </aside>
-     *   <main>
-     *     <grid-builder
-     *       components={componentDefinitions}
-     *       config={gridConfig}
-     *       uiOverrides={{
-     *         ComponentPalette: () => null  // Hide default palette
-     *       }}
-     *     />
-     *   </main>
-     * </div>
-     * ```
-     * **Pattern 3: Custom wrapper component**
-     * ```typescript
-     * // Wrap in your own component for styling
-     * @Component ({ tag: 'my-palette-sidebar' })
-     * export class MyPaletteSidebar {
-     * @Prop () components: ComponentDefinition[];
-     * render() {
-     * return (
-     *  <div class="custom-sidebar">
-     *    <h3>Components</h3>
-     *    <component-palette components={this.components} />
-     *  </div>
-     * );
-     * }
-     * }
-     * ```
-     * ## Key Features
-     * - **Self-contained**: Works independently of grid-builder
-     * - **Drag/drop ready**: Uses interact.js for drag functionality
-     * - **Flexible placement**: Can be rendered anywhere in DOM
-     * - **Works across boundaries**: Drag from palette to any canvas-section
-     */
-    interface HTMLComponentPaletteElement extends Components.ComponentPalette, HTMLStencilElement {
-    }
-    var HTMLComponentPaletteElement: {
-        prototype: HTMLComponentPaletteElement;
-        new (): HTMLComponentPaletteElement;
-    };
-    /**
-     * ConfigPanel Component
-     * =====================
-     * Library component providing configuration panel with auto-generated and custom forms.
-     * **Tag**: `<config-panel>`
-     * **Shadow DOM**: Disabled (for consistency with other components)
-     */
-    interface HTMLConfigPanelElement extends Components.ConfigPanel, HTMLStencilElement {
-    }
-    var HTMLConfigPanelElement: {
-        prototype: HTMLConfigPanelElement;
-        new (): HTMLConfigPanelElement;
-    };
-    interface HTMLConfirmationModalElementEventMap {
-        "confirm": void;
-        "cancel": void;
-    }
-    /**
-     * Confirmation Modal Component
-     * =============================
-     * Demo Component - NOT Part of Library
-     * This component demonstrates how to implement the grid-builder library's
-     * deletion hook system with a custom confirmation modal.
-     * Library Feature Being Demonstrated:
-     * -----------------------------------
-     * This modal is used with the library's **onBeforeDelete hook** system.
-     * How It Works:
-     * -------------
-     * 1. Library calls onBeforeDelete hook when user deletes component
-     * 2. Hook returns a Promise that doesn't resolve immediately
-     * 3. Host app shows this modal (or any modal library)
-     * 4. User clicks "Delete" or "Cancel"
-     * 5. Modal fires confirm/cancel event
-     * 6. Host app resolves Promise with true/false
-     * 7. Library proceeds with or cancels deletion
-     * Code Flow Example:
-     * ------------------
-     * ```typescript
-     * // In parent component (blog-app.tsx):
-     * private handleBeforeDelete = (context: DeletionHookContext): Promise<boolean> => {
-     *   return new Promise((resolve) => {
-     *     this.deleteResolve = resolve;
-     *     this.isConfirmModalOpen = true;  // Show this modal
-     *   });
-     * };
-     * private handleConfirmDelete = () => {
-     *   this.deleteResolve(true);   // Tell library to proceed
-     * };
-     * private handleCancelDelete = () => {
-     *   this.deleteResolve(false);  // Tell library to cancel
-     * };
-     * ```
-     * Why This Pattern:
-     * -----------------
-     * - **Library agnostic**: Library doesn't provide modal UI
-     * - **Flexibility**: Use any modal library (Material, Bootstrap, Ant Design, etc.)
-     * - **Customization**: Full control over modal appearance and behavior
-     * - **Async support**: Can make API calls before resolving
-     * Alternative Implementations:
-     * ---------------------------
-     * You could replace this component with:
-     * - Material Design modal
-     * - Bootstrap modal
-     * - Ant Design modal
-     * - Native browser confirm() (not recommended)
-     * - Custom modal from your design system
-     * The library doesn't care what modal you use - it just waits for the
-     * Promise to resolve with true/false.
-     */
-    interface HTMLConfirmationModalElement extends Components.ConfirmationModal, HTMLStencilElement {
-        addEventListener<K extends keyof HTMLConfirmationModalElementEventMap>(type: K, listener: (this: HTMLConfirmationModalElement, ev: ConfirmationModalCustomEvent<HTMLConfirmationModalElementEventMap[K]>) => any, options?: boolean | AddEventListenerOptions): void;
-        addEventListener<K extends keyof DocumentEventMap>(type: K, listener: (this: Document, ev: DocumentEventMap[K]) => any, options?: boolean | AddEventListenerOptions): void;
-        addEventListener<K extends keyof HTMLElementEventMap>(type: K, listener: (this: HTMLElement, ev: HTMLElementEventMap[K]) => any, options?: boolean | AddEventListenerOptions): void;
-        addEventListener(type: string, listener: EventListenerOrEventListenerObject, options?: boolean | AddEventListenerOptions): void;
-        removeEventListener<K extends keyof HTMLConfirmationModalElementEventMap>(type: K, listener: (this: HTMLConfirmationModalElement, ev: ConfirmationModalCustomEvent<HTMLConfirmationModalElementEventMap[K]>) => any, options?: boolean | EventListenerOptions): void;
-        removeEventListener<K extends keyof DocumentEventMap>(type: K, listener: (this: Document, ev: DocumentEventMap[K]) => any, options?: boolean | EventListenerOptions): void;
-        removeEventListener<K extends keyof HTMLElementEventMap>(type: K, listener: (this: HTMLElement, ev: HTMLElementEventMap[K]) => any, options?: boolean | EventListenerOptions): void;
-        removeEventListener(type: string, listener: EventListenerOrEventListenerObject, options?: boolean | EventListenerOptions): void;
-    }
-    var HTMLConfirmationModalElement: {
-        prototype: HTMLConfirmationModalElement;
-        new (): HTMLConfirmationModalElement;
-    };
-    interface HTMLCustomConfigPanelElement extends Components.CustomConfigPanel, HTMLStencilElement {
-    }
-    var HTMLCustomConfigPanelElement: {
-        prototype: HTMLCustomConfigPanelElement;
-        new (): HTMLCustomConfigPanelElement;
-    };
-    /**
-     * Custom Drag Clone Component
-     * ============================
-     * Custom drag clone that shows a visual preview of the component being dragged.
-     * Each component type has a unique appearance that matches what will be placed
-     * on the canvas, helping with visual alignment and user understanding.
-     * The component fills the exact width and height provided, scaled to match
-     * the actual drop size.
-     */
-    interface HTMLCustomDragCloneElement extends Components.CustomDragClone, HTMLStencilElement {
-    }
-    var HTMLCustomDragCloneElement: {
-        prototype: HTMLCustomDragCloneElement;
-        new (): HTMLCustomDragCloneElement;
-    };
-    /**
-     * Custom Palette Item Component
-     * ==============================
-     * Example custom palette item that shows how consumers can create
-     * fully customized palette entries for their components.
-     * Updated to display SVG icons on top with titles below (similar to UI builder pattern)
-     */
-    interface HTMLCustomPaletteItemElement extends Components.CustomPaletteItem, HTMLStencilElement {
-    }
-    var HTMLCustomPaletteItemElement: {
-        prototype: HTMLCustomPaletteItemElement;
-        new (): HTMLCustomPaletteItemElement;
-    };
-    interface HTMLDashboardWidgetElement extends Components.DashboardWidget, HTMLStencilElement {
-    }
-    var HTMLDashboardWidgetElement: {
-        prototype: HTMLDashboardWidgetElement;
-        new (): HTMLDashboardWidgetElement;
-    };
-    interface HTMLDashboardWidgetDragCloneElement extends Components.DashboardWidgetDragClone, HTMLStencilElement {
-    }
-    var HTMLDashboardWidgetDragCloneElement: {
-        prototype: HTMLDashboardWidgetDragCloneElement;
-        new (): HTMLDashboardWidgetDragCloneElement;
-    };
-    interface HTMLErrorBoundaryElementEventMap {
-        "error": BaseErrorEventDetail;
-    }
-    /**
-     * ErrorBoundary Component
-     * ========================
-     * Generic error boundary for catching component render errors.
-     * **Tag**: `<error-boundary>`
-     * **Shadow DOM**: Disabled (allows slot content to access parent styles)
-     * **Reusable**: Zero dependencies, can be extracted to standalone package
-     */
-    interface HTMLErrorBoundaryElement extends Components.ErrorBoundary, HTMLStencilElement {
-        addEventListener<K extends keyof HTMLErrorBoundaryElementEventMap>(type: K, listener: (this: HTMLErrorBoundaryElement, ev: ErrorBoundaryCustomEvent<HTMLErrorBoundaryElementEventMap[K]>) => any, options?: boolean | AddEventListenerOptions): void;
-        addEventListener<K extends keyof DocumentEventMap>(type: K, listener: (this: Document, ev: DocumentEventMap[K]) => any, options?: boolean | AddEventListenerOptions): void;
-        addEventListener<K extends keyof HTMLElementEventMap>(type: K, listener: (this: HTMLElement, ev: HTMLElementEventMap[K]) => any, options?: boolean | AddEventListenerOptions): void;
-        addEventListener(type: string, listener: EventListenerOrEventListenerObject, options?: boolean | AddEventListenerOptions): void;
-        removeEventListener<K extends keyof HTMLErrorBoundaryElementEventMap>(type: K, listener: (this: HTMLErrorBoundaryElement, ev: ErrorBoundaryCustomEvent<HTMLErrorBoundaryElementEventMap[K]>) => any, options?: boolean | EventListenerOptions): void;
-        removeEventListener<K extends keyof DocumentEventMap>(type: K, listener: (this: Document, ev: DocumentEventMap[K]) => any, options?: boolean | EventListenerOptions): void;
-        removeEventListener<K extends keyof HTMLElementEventMap>(type: K, listener: (this: HTMLElement, ev: HTMLElementEventMap[K]) => any, options?: boolean | EventListenerOptions): void;
-        removeEventListener(type: string, listener: EventListenerOrEventListenerObject, options?: boolean | EventListenerOptions): void;
-    }
-    var HTMLErrorBoundaryElement: {
-        prototype: HTMLErrorBoundaryElement;
-        new (): HTMLErrorBoundaryElement;
-    };
-    interface HTMLGridBuilderElementEventMap {
-        "registryReady": { registry: ComponentRegistry };
-    }
-    /**
-     * GridBuilder Component
-     * ======================
-     * Main library component providing complete grid builder functionality.
-     * **Tag**: `<grid-builder>`
-     * **Shadow DOM**: Disabled (required for interact.js compatibility)
-     * **Reactivity**: Listens to gridState changes via StencilJS store
-     */
-    interface HTMLGridBuilderElement extends Components.GridBuilder, HTMLStencilElement {
-        addEventListener<K extends keyof HTMLGridBuilderElementEventMap>(type: K, listener: (this: HTMLGridBuilderElement, ev: GridBuilderCustomEvent<HTMLGridBuilderElementEventMap[K]>) => any, options?: boolean | AddEventListenerOptions): void;
-        addEventListener<K extends keyof DocumentEventMap>(type: K, listener: (this: Document, ev: DocumentEventMap[K]) => any, options?: boolean | AddEventListenerOptions): void;
-        addEventListener<K extends keyof HTMLElementEventMap>(type: K, listener: (this: HTMLElement, ev: HTMLElementEventMap[K]) => any, options?: boolean | AddEventListenerOptions): void;
-        addEventListener(type: string, listener: EventListenerOrEventListenerObject, options?: boolean | AddEventListenerOptions): void;
-        removeEventListener<K extends keyof HTMLGridBuilderElementEventMap>(type: K, listener: (this: HTMLGridBuilderElement, ev: GridBuilderCustomEvent<HTMLGridBuilderElementEventMap[K]>) => any, options?: boolean | EventListenerOptions): void;
-        removeEventListener<K extends keyof DocumentEventMap>(type: K, listener: (this: Document, ev: DocumentEventMap[K]) => any, options?: boolean | EventListenerOptions): void;
-        removeEventListener<K extends keyof HTMLElementEventMap>(type: K, listener: (this: HTMLElement, ev: HTMLElementEventMap[K]) => any, options?: boolean | EventListenerOptions): void;
-        removeEventListener(type: string, listener: EventListenerOrEventListenerObject, options?: boolean | EventListenerOptions): void;
-    }
-    var HTMLGridBuilderElement: {
-        prototype: HTMLGridBuilderElement;
-        new (): HTMLGridBuilderElement;
-    };
-    /**
-     * GridItemWrapper Component
-     * ==========================
-     * Library component wrapping individual grid items with drag/resize/selection.
-     * **Tag**: `<grid-item-wrapper>`
-     * **Shadow DOM**: Disabled (required for interact.js compatibility)
-     * **Dynamic rendering**: Uses ComponentDefinition.render() from registry
-     */
-    interface HTMLGridItemWrapperElement extends Components.GridItemWrapper, HTMLStencilElement {
-    }
-    var HTMLGridItemWrapperElement: {
-        prototype: HTMLGridItemWrapperElement;
-        new (): HTMLGridItemWrapperElement;
-    };
-    /**
-     * GridViewer Component
-     * ====================
-     * Rendering-only grid component for displaying layouts created in grid-builder.
-     * **Tag**: `<grid-viewer>`
-     * **Shadow DOM**: Disabled (consistent with grid-builder)
-     * **Reactivity**: Uses local store OR shared store (via apiKey prop)
-     * **Key differences from grid-builder**:
-     * - No interact.js dependency (80% bundle size reduction)
-     * - No palette, config panel, or editing UI
-     * - Simplified state (no selection, no z-index tracking)
-     * - Rendering-only canvas sections
-     * **Multi-instance sharing**:
-     * - **Local mode** (default): Each instance has independent state
-     * - **Shared mode** (with apiKey): Multiple instances share layout data
-     * - Same SharedStateRegistry pattern as grid-builder
-     * - Use case: Multi-device preview (mobile + tablet + desktop side-by-side)
-     */
-    interface HTMLGridViewerElement extends Components.GridViewer, HTMLStencilElement {
-    }
-    var HTMLGridViewerElement: {
-        prototype: HTMLGridViewerElement;
-        new (): HTMLGridViewerElement;
-    };
-    interface HTMLImageGalleryElement extends Components.ImageGallery, HTMLStencilElement {
-    }
-    var HTMLImageGalleryElement: {
-        prototype: HTMLImageGalleryElement;
-        new (): HTMLImageGalleryElement;
-    };
-    interface HTMLImageGalleryDragCloneElement extends Components.ImageGalleryDragClone, HTMLStencilElement {
-    }
-    var HTMLImageGalleryDragCloneElement: {
-        prototype: HTMLImageGalleryDragCloneElement;
-        new (): HTMLImageGalleryDragCloneElement;
-    };
-    interface HTMLLayerPanelElement extends Components.LayerPanel, HTMLStencilElement {
-    }
-    var HTMLLayerPanelElement: {
-        prototype: HTMLLayerPanelElement;
-        new (): HTMLLayerPanelElement;
-    };
-    interface HTMLLayerPanelFolderHeaderElementEventMap {
-        "toggleFolder": { canvasId: string };
-        "activateCanvas": { canvasId: string };
-        "scrollToCanvas": { canvasId: string };
-    }
-    interface HTMLLayerPanelFolderHeaderElement extends Components.LayerPanelFolderHeader, HTMLStencilElement {
-        addEventListener<K extends keyof HTMLLayerPanelFolderHeaderElementEventMap>(type: K, listener: (this: HTMLLayerPanelFolderHeaderElement, ev: LayerPanelFolderHeaderCustomEvent<HTMLLayerPanelFolderHeaderElementEventMap[K]>) => any, options?: boolean | AddEventListenerOptions): void;
-        addEventListener<K extends keyof DocumentEventMap>(type: K, listener: (this: Document, ev: DocumentEventMap[K]) => any, options?: boolean | AddEventListenerOptions): void;
-        addEventListener<K extends keyof HTMLElementEventMap>(type: K, listener: (this: HTMLElement, ev: HTMLElementEventMap[K]) => any, options?: boolean | AddEventListenerOptions): void;
-        addEventListener(type: string, listener: EventListenerOrEventListenerObject, options?: boolean | AddEventListenerOptions): void;
-        removeEventListener<K extends keyof HTMLLayerPanelFolderHeaderElementEventMap>(type: K, listener: (this: HTMLLayerPanelFolderHeaderElement, ev: LayerPanelFolderHeaderCustomEvent<HTMLLayerPanelFolderHeaderElementEventMap[K]>) => any, options?: boolean | EventListenerOptions): void;
-        removeEventListener<K extends keyof DocumentEventMap>(type: K, listener: (this: Document, ev: DocumentEventMap[K]) => any, options?: boolean | EventListenerOptions): void;
-        removeEventListener<K extends keyof HTMLElementEventMap>(type: K, listener: (this: HTMLElement, ev: HTMLElementEventMap[K]) => any, options?: boolean | EventListenerOptions): void;
-        removeEventListener(type: string, listener: EventListenerOrEventListenerObject, options?: boolean | EventListenerOptions): void;
-    }
-    var HTMLLayerPanelFolderHeaderElement: {
-        prototype: HTMLLayerPanelFolderHeaderElement;
-        new (): HTMLLayerPanelFolderHeaderElement;
-    };
-    interface HTMLLayerPanelItemElementEventMap {
-        "layerItemSelect": { itemId: string; canvasId: string };
-        "layerItemDragStart": {
-    itemId: string;
-    canvasId: string;
-    zIndex: number;
+  interface HTMLBlogAppElement extends Components.BlogApp, HTMLStencilElement {}
+  var HTMLBlogAppElement: {
+    prototype: HTMLBlogAppElement;
+    new (): HTMLBlogAppElement;
   };
-        "layerItemDrop": {
-    itemId: string;
-    canvasId: string;
-    oldZIndex: number;
-    newZIndex: number;
+  interface HTMLBlogArticleElement
+    extends Components.BlogArticle,
+      HTMLStencilElement {}
+  var HTMLBlogArticleElement: {
+    prototype: HTMLBlogArticleElement;
+    new (): HTMLBlogArticleElement;
   };
-    }
-    interface HTMLLayerPanelItemElement extends Components.LayerPanelItem, HTMLStencilElement {
-        addEventListener<K extends keyof HTMLLayerPanelItemElementEventMap>(type: K, listener: (this: HTMLLayerPanelItemElement, ev: LayerPanelItemCustomEvent<HTMLLayerPanelItemElementEventMap[K]>) => any, options?: boolean | AddEventListenerOptions): void;
-        addEventListener<K extends keyof DocumentEventMap>(type: K, listener: (this: Document, ev: DocumentEventMap[K]) => any, options?: boolean | AddEventListenerOptions): void;
-        addEventListener<K extends keyof HTMLElementEventMap>(type: K, listener: (this: HTMLElement, ev: HTMLElementEventMap[K]) => any, options?: boolean | AddEventListenerOptions): void;
-        addEventListener(type: string, listener: EventListenerOrEventListenerObject, options?: boolean | AddEventListenerOptions): void;
-        removeEventListener<K extends keyof HTMLLayerPanelItemElementEventMap>(type: K, listener: (this: HTMLLayerPanelItemElement, ev: LayerPanelItemCustomEvent<HTMLLayerPanelItemElementEventMap[K]>) => any, options?: boolean | EventListenerOptions): void;
-        removeEventListener<K extends keyof DocumentEventMap>(type: K, listener: (this: Document, ev: DocumentEventMap[K]) => any, options?: boolean | EventListenerOptions): void;
-        removeEventListener<K extends keyof HTMLElementEventMap>(type: K, listener: (this: HTMLElement, ev: HTMLElementEventMap[K]) => any, options?: boolean | EventListenerOptions): void;
-        removeEventListener(type: string, listener: EventListenerOrEventListenerObject, options?: boolean | EventListenerOptions): void;
-    }
-    var HTMLLayerPanelItemElement: {
-        prototype: HTMLLayerPanelItemElement;
-        new (): HTMLLayerPanelItemElement;
-    };
-    interface HTMLLiveDataElement extends Components.LiveData, HTMLStencilElement {
-    }
-    var HTMLLiveDataElement: {
-        prototype: HTMLLiveDataElement;
-        new (): HTMLLiveDataElement;
-    };
-    interface HTMLLiveDataDragCloneElement extends Components.LiveDataDragClone, HTMLStencilElement {
-    }
-    var HTMLLiveDataDragCloneElement: {
-        prototype: HTMLLiveDataDragCloneElement;
-        new (): HTMLLiveDataDragCloneElement;
-    };
-    interface HTMLSectionEditorPanelElementEventMap {
-        "closePanel": void;
-        "updateSection": {
-    canvasId: string;
-    title: string;
-    backgroundColor: string;
+  interface HTMLBlogArticleDragCloneElement
+    extends Components.BlogArticleDragClone,
+      HTMLStencilElement {}
+  var HTMLBlogArticleDragCloneElement: {
+    prototype: HTMLBlogArticleDragCloneElement;
+    new (): HTMLBlogArticleDragCloneElement;
   };
-        "previewColorChange": {
-    canvasId: string;
-    backgroundColor: string;
+  interface HTMLBlogButtonElementEventMap {
+    buttonClick: void;
+  }
+  interface HTMLBlogButtonElement
+    extends Components.BlogButton,
+      HTMLStencilElement {
+    addEventListener<K extends keyof HTMLBlogButtonElementEventMap>(
+      type: K,
+      listener: (
+        this: HTMLBlogButtonElement,
+        ev: BlogButtonCustomEvent<HTMLBlogButtonElementEventMap[K]>,
+      ) => any,
+      options?: boolean | AddEventListenerOptions,
+    ): void;
+    addEventListener<K extends keyof DocumentEventMap>(
+      type: K,
+      listener: (this: Document, ev: DocumentEventMap[K]) => any,
+      options?: boolean | AddEventListenerOptions,
+    ): void;
+    addEventListener<K extends keyof HTMLElementEventMap>(
+      type: K,
+      listener: (this: HTMLElement, ev: HTMLElementEventMap[K]) => any,
+      options?: boolean | AddEventListenerOptions,
+    ): void;
+    addEventListener(
+      type: string,
+      listener: EventListenerOrEventListenerObject,
+      options?: boolean | AddEventListenerOptions,
+    ): void;
+    removeEventListener<K extends keyof HTMLBlogButtonElementEventMap>(
+      type: K,
+      listener: (
+        this: HTMLBlogButtonElement,
+        ev: BlogButtonCustomEvent<HTMLBlogButtonElementEventMap[K]>,
+      ) => any,
+      options?: boolean | EventListenerOptions,
+    ): void;
+    removeEventListener<K extends keyof DocumentEventMap>(
+      type: K,
+      listener: (this: Document, ev: DocumentEventMap[K]) => any,
+      options?: boolean | EventListenerOptions,
+    ): void;
+    removeEventListener<K extends keyof HTMLElementEventMap>(
+      type: K,
+      listener: (this: HTMLElement, ev: HTMLElementEventMap[K]) => any,
+      options?: boolean | EventListenerOptions,
+    ): void;
+    removeEventListener(
+      type: string,
+      listener: EventListenerOrEventListenerObject,
+      options?: boolean | EventListenerOptions,
+    ): void;
+  }
+  var HTMLBlogButtonElement: {
+    prototype: HTMLBlogButtonElement;
+    new (): HTMLBlogButtonElement;
   };
-        "previewTitleChange": {
-    canvasId: string;
-    title: string;
+  interface HTMLBlogButtonDragCloneElement
+    extends Components.BlogButtonDragClone,
+      HTMLStencilElement {}
+  var HTMLBlogButtonDragCloneElement: {
+    prototype: HTMLBlogButtonDragCloneElement;
+    new (): HTMLBlogButtonDragCloneElement;
   };
-        "deleteSection": { canvasId: string };
-    }
-    /**
-     * Section Editor Panel Component
-     * ===============================
-     * Demo Component - NOT Part of Library
-     * This component demonstrates how to build custom UI for editing canvas metadata
-     * in applications using the grid-builder library.
-     * Purpose:
-     * --------
-     * Shows how to create a side panel for editing section/canvas settings.
-     * This is completely custom to your application - the library doesn't provide this.
-     * Library Relationship:
-     * ---------------------
-     * - Library owns: Component placement, layouts, zIndex (grid state)
-     * - Host app owns: Canvas metadata (titles, colors, settings) - THIS COMPONENT
-     * - Metadata flows: App → Library via canvasMetadata prop
-     * Pattern Demonstrated:
-     * ---------------------
-     * 1. User clicks section header (demo UI)
-     * 2. App opens this panel (demo component)
-     * 3. User edits title/color
-     * 4. App updates canvasMetadata state
-     * 5. Library receives updated metadata via prop
-     * 6. Library passes backgroundColor to canvas-section
-     * Why This Approach:
-     * ------------------
-     * - Library stays focused on grid logic
-     * - Host app controls all presentation/metadata UI
-     * - You can use any UI framework (Material, Bootstrap, etc.)
-     * - Complete flexibility over settings panel design
-     */
-    interface HTMLSectionEditorPanelElement extends Components.SectionEditorPanel, HTMLStencilElement {
-        addEventListener<K extends keyof HTMLSectionEditorPanelElementEventMap>(type: K, listener: (this: HTMLSectionEditorPanelElement, ev: SectionEditorPanelCustomEvent<HTMLSectionEditorPanelElementEventMap[K]>) => any, options?: boolean | AddEventListenerOptions): void;
-        addEventListener<K extends keyof DocumentEventMap>(type: K, listener: (this: Document, ev: DocumentEventMap[K]) => any, options?: boolean | AddEventListenerOptions): void;
-        addEventListener<K extends keyof HTMLElementEventMap>(type: K, listener: (this: HTMLElement, ev: HTMLElementEventMap[K]) => any, options?: boolean | AddEventListenerOptions): void;
-        addEventListener(type: string, listener: EventListenerOrEventListenerObject, options?: boolean | AddEventListenerOptions): void;
-        removeEventListener<K extends keyof HTMLSectionEditorPanelElementEventMap>(type: K, listener: (this: HTMLSectionEditorPanelElement, ev: SectionEditorPanelCustomEvent<HTMLSectionEditorPanelElementEventMap[K]>) => any, options?: boolean | EventListenerOptions): void;
-        removeEventListener<K extends keyof DocumentEventMap>(type: K, listener: (this: Document, ev: DocumentEventMap[K]) => any, options?: boolean | EventListenerOptions): void;
-        removeEventListener<K extends keyof HTMLElementEventMap>(type: K, listener: (this: HTMLElement, ev: HTMLElementEventMap[K]) => any, options?: boolean | EventListenerOptions): void;
-        removeEventListener(type: string, listener: EventListenerOrEventListenerObject, options?: boolean | EventListenerOptions): void;
-    }
-    var HTMLSectionEditorPanelElement: {
-        prototype: HTMLSectionEditorPanelElement;
-        new (): HTMLSectionEditorPanelElement;
+  interface HTMLBlogHeaderElement
+    extends Components.BlogHeader,
+      HTMLStencilElement {}
+  var HTMLBlogHeaderElement: {
+    prototype: HTMLBlogHeaderElement;
+    new (): HTMLBlogHeaderElement;
+  };
+  interface HTMLBlogHeaderDragCloneElement
+    extends Components.BlogHeaderDragClone,
+      HTMLStencilElement {}
+  var HTMLBlogHeaderDragCloneElement: {
+    prototype: HTMLBlogHeaderDragCloneElement;
+    new (): HTMLBlogHeaderDragCloneElement;
+  };
+  interface HTMLBlogImageElement
+    extends Components.BlogImage,
+      HTMLStencilElement {}
+  var HTMLBlogImageElement: {
+    prototype: HTMLBlogImageElement;
+    new (): HTMLBlogImageElement;
+  };
+  interface HTMLBlogImageDragCloneElement
+    extends Components.BlogImageDragClone,
+      HTMLStencilElement {}
+  var HTMLBlogImageDragCloneElement: {
+    prototype: HTMLBlogImageDragCloneElement;
+    new (): HTMLBlogImageDragCloneElement;
+  };
+  interface HTMLCanvasHeaderElementEventMap {
+    headerClick: { canvasId: string };
+    deleteClick: { canvasId: string };
+  }
+  /**
+   * CanvasHeader Component
+   * ======================
+   * Declarative header component for canvas sections.
+   * **Tag**: `<canvas-header>`
+   * **Shadow DOM**: Disabled (matches blog-app styling)
+   */
+  interface HTMLCanvasHeaderElement
+    extends Components.CanvasHeader,
+      HTMLStencilElement {
+    addEventListener<K extends keyof HTMLCanvasHeaderElementEventMap>(
+      type: K,
+      listener: (
+        this: HTMLCanvasHeaderElement,
+        ev: CanvasHeaderCustomEvent<HTMLCanvasHeaderElementEventMap[K]>,
+      ) => any,
+      options?: boolean | AddEventListenerOptions,
+    ): void;
+    addEventListener<K extends keyof DocumentEventMap>(
+      type: K,
+      listener: (this: Document, ev: DocumentEventMap[K]) => any,
+      options?: boolean | AddEventListenerOptions,
+    ): void;
+    addEventListener<K extends keyof HTMLElementEventMap>(
+      type: K,
+      listener: (this: HTMLElement, ev: HTMLElementEventMap[K]) => any,
+      options?: boolean | AddEventListenerOptions,
+    ): void;
+    addEventListener(
+      type: string,
+      listener: EventListenerOrEventListenerObject,
+      options?: boolean | AddEventListenerOptions,
+    ): void;
+    removeEventListener<K extends keyof HTMLCanvasHeaderElementEventMap>(
+      type: K,
+      listener: (
+        this: HTMLCanvasHeaderElement,
+        ev: CanvasHeaderCustomEvent<HTMLCanvasHeaderElementEventMap[K]>,
+      ) => any,
+      options?: boolean | EventListenerOptions,
+    ): void;
+    removeEventListener<K extends keyof DocumentEventMap>(
+      type: K,
+      listener: (this: Document, ev: DocumentEventMap[K]) => any,
+      options?: boolean | EventListenerOptions,
+    ): void;
+    removeEventListener<K extends keyof HTMLElementEventMap>(
+      type: K,
+      listener: (this: HTMLElement, ev: HTMLElementEventMap[K]) => any,
+      options?: boolean | EventListenerOptions,
+    ): void;
+    removeEventListener(
+      type: string,
+      listener: EventListenerOrEventListenerObject,
+      options?: boolean | EventListenerOptions,
+    ): void;
+  }
+  var HTMLCanvasHeaderElement: {
+    prototype: HTMLCanvasHeaderElement;
+    new (): HTMLCanvasHeaderElement;
+  };
+  /**
+   * CanvasSection Component
+   * =======================
+   * Library component providing individual canvas dropzone.
+   * **Tag**: `<canvas-section>`
+   * **Shadow DOM**: Disabled (required for interact.js compatibility)
+   * **Reactivity**: Listens to gridState changes via StencilJS store
+   */
+  interface HTMLCanvasSectionElement
+    extends Components.CanvasSection,
+      HTMLStencilElement {}
+  var HTMLCanvasSectionElement: {
+    prototype: HTMLCanvasSectionElement;
+    new (): HTMLCanvasSectionElement;
+  };
+  /**
+   * CanvasSectionViewer Component
+   * ==============================
+   * Rendering-only canvas component for grid-viewer.
+   * **Tag**: `<canvas-section-viewer>`
+   * **Shadow DOM**: Disabled (consistent with canvas-section)
+   * **Reactivity**: Props-based (no global state subscription)
+   */
+  interface HTMLCanvasSectionViewerElement
+    extends Components.CanvasSectionViewer,
+      HTMLStencilElement {}
+  var HTMLCanvasSectionViewerElement: {
+    prototype: HTMLCanvasSectionViewerElement;
+    new (): HTMLCanvasSectionViewerElement;
+  };
+  /**
+   * ComponentPalette Component
+   * ===========================
+   * Library component providing draggable component palette UI.
+   * **Tag**: `<component-palette>`
+   * **Shadow DOM**: Disabled (for consistency with other components)
+   * **Reactivity**: Re-renders when components prop changes
+   * ## Usage Patterns
+   * **Pattern 1: Default (inside grid-builder)**
+   * ```typescript
+   * // Palette automatically rendered by grid-builder
+   * <grid-builder components={componentDefinitions} />
+   * ```
+   * **Pattern 2: Independent placement**
+   * ```typescript
+   * // Place palette anywhere in your app
+   * <div class="my-layout">
+   *   <aside class="sidebar">
+   *     <component-palette
+   *       components={componentDefinitions}
+   *       config={gridConfig}
+   *     />
+   *   </aside>
+   *   <main>
+   *     <grid-builder
+   *       components={componentDefinitions}
+   *       config={gridConfig}
+   *       uiOverrides={{
+   *         ComponentPalette: () => null  // Hide default palette
+   *       }}
+   *     />
+   *   </main>
+   * </div>
+   * ```
+   * **Pattern 3: Custom wrapper component**
+   * ```typescript
+   * // Wrap in your own component for styling
+   * @Component ({ tag: 'my-palette-sidebar' })
+   * export class MyPaletteSidebar {
+   * @Prop () components: ComponentDefinition[];
+   * render() {
+   * return (
+   *  <div class="custom-sidebar">
+   *    <h3>Components</h3>
+   *    <component-palette components={this.components} />
+   *  </div>
+   * );
+   * }
+   * }
+   * ```
+   * ## Key Features
+   * - **Self-contained**: Works independently of grid-builder
+   * - **Drag/drop ready**: Uses interact.js for drag functionality
+   * - **Flexible placement**: Can be rendered anywhere in DOM
+   * - **Works across boundaries**: Drag from palette to any canvas-section
+   */
+  interface HTMLComponentPaletteElement
+    extends Components.ComponentPalette,
+      HTMLStencilElement {}
+  var HTMLComponentPaletteElement: {
+    prototype: HTMLComponentPaletteElement;
+    new (): HTMLComponentPaletteElement;
+  };
+  /**
+   * ConfigPanel Component
+   * =====================
+   * Library component providing configuration panel with auto-generated and custom forms.
+   * **Tag**: `<config-panel>`
+   * **Shadow DOM**: Disabled (for consistency with other components)
+   */
+  interface HTMLConfigPanelElement
+    extends Components.ConfigPanel,
+      HTMLStencilElement {}
+  var HTMLConfigPanelElement: {
+    prototype: HTMLConfigPanelElement;
+    new (): HTMLConfigPanelElement;
+  };
+  interface HTMLConfirmationModalElementEventMap {
+    confirm: void;
+    cancel: void;
+  }
+  /**
+   * Confirmation Modal Component
+   * =============================
+   * Demo Component - NOT Part of Library
+   * This component demonstrates how to implement the grid-builder library's
+   * deletion hook system with a custom confirmation modal.
+   * Library Feature Being Demonstrated:
+   * -----------------------------------
+   * This modal is used with the library's **onBeforeDelete hook** system.
+   * How It Works:
+   * -------------
+   * 1. Library calls onBeforeDelete hook when user deletes component
+   * 2. Hook returns a Promise that doesn't resolve immediately
+   * 3. Host app shows this modal (or any modal library)
+   * 4. User clicks "Delete" or "Cancel"
+   * 5. Modal fires confirm/cancel event
+   * 6. Host app resolves Promise with true/false
+   * 7. Library proceeds with or cancels deletion
+   * Code Flow Example:
+   * ------------------
+   * ```typescript
+   * // In parent component (blog-app.tsx):
+   * private handleBeforeDelete = (context: DeletionHookContext): Promise<boolean> => {
+   *   return new Promise((resolve) => {
+   *     this.deleteResolve = resolve;
+   *     this.isConfirmModalOpen = true;  // Show this modal
+   *   });
+   * };
+   * private handleConfirmDelete = () => {
+   *   this.deleteResolve(true);   // Tell library to proceed
+   * };
+   * private handleCancelDelete = () => {
+   *   this.deleteResolve(false);  // Tell library to cancel
+   * };
+   * ```
+   * Why This Pattern:
+   * -----------------
+   * - **Library agnostic**: Library doesn't provide modal UI
+   * - **Flexibility**: Use any modal library (Material, Bootstrap, Ant Design, etc.)
+   * - **Customization**: Full control over modal appearance and behavior
+   * - **Async support**: Can make API calls before resolving
+   * Alternative Implementations:
+   * ---------------------------
+   * You could replace this component with:
+   * - Material Design modal
+   * - Bootstrap modal
+   * - Ant Design modal
+   * - Native browser confirm() (not recommended)
+   * - Custom modal from your design system
+   * The library doesn't care what modal you use - it just waits for the
+   * Promise to resolve with true/false.
+   */
+  interface HTMLConfirmationModalElement
+    extends Components.ConfirmationModal,
+      HTMLStencilElement {
+    addEventListener<K extends keyof HTMLConfirmationModalElementEventMap>(
+      type: K,
+      listener: (
+        this: HTMLConfirmationModalElement,
+        ev: ConfirmationModalCustomEvent<
+          HTMLConfirmationModalElementEventMap[K]
+        >,
+      ) => any,
+      options?: boolean | AddEventListenerOptions,
+    ): void;
+    addEventListener<K extends keyof DocumentEventMap>(
+      type: K,
+      listener: (this: Document, ev: DocumentEventMap[K]) => any,
+      options?: boolean | AddEventListenerOptions,
+    ): void;
+    addEventListener<K extends keyof HTMLElementEventMap>(
+      type: K,
+      listener: (this: HTMLElement, ev: HTMLElementEventMap[K]) => any,
+      options?: boolean | AddEventListenerOptions,
+    ): void;
+    addEventListener(
+      type: string,
+      listener: EventListenerOrEventListenerObject,
+      options?: boolean | AddEventListenerOptions,
+    ): void;
+    removeEventListener<K extends keyof HTMLConfirmationModalElementEventMap>(
+      type: K,
+      listener: (
+        this: HTMLConfirmationModalElement,
+        ev: ConfirmationModalCustomEvent<
+          HTMLConfirmationModalElementEventMap[K]
+        >,
+      ) => any,
+      options?: boolean | EventListenerOptions,
+    ): void;
+    removeEventListener<K extends keyof DocumentEventMap>(
+      type: K,
+      listener: (this: Document, ev: DocumentEventMap[K]) => any,
+      options?: boolean | EventListenerOptions,
+    ): void;
+    removeEventListener<K extends keyof HTMLElementEventMap>(
+      type: K,
+      listener: (this: HTMLElement, ev: HTMLElementEventMap[K]) => any,
+      options?: boolean | EventListenerOptions,
+    ): void;
+    removeEventListener(
+      type: string,
+      listener: EventListenerOrEventListenerObject,
+      options?: boolean | EventListenerOptions,
+    ): void;
+  }
+  var HTMLConfirmationModalElement: {
+    prototype: HTMLConfirmationModalElement;
+    new (): HTMLConfirmationModalElement;
+  };
+  interface HTMLCustomConfigPanelElement
+    extends Components.CustomConfigPanel,
+      HTMLStencilElement {}
+  var HTMLCustomConfigPanelElement: {
+    prototype: HTMLCustomConfigPanelElement;
+    new (): HTMLCustomConfigPanelElement;
+  };
+  /**
+   * Custom Drag Clone Component
+   * ============================
+   * Custom drag clone that shows a visual preview of the component being dragged.
+   * Each component type has a unique appearance that matches what will be placed
+   * on the canvas, helping with visual alignment and user understanding.
+   * The component fills the exact width and height provided, scaled to match
+   * the actual drop size.
+   */
+  interface HTMLCustomDragCloneElement
+    extends Components.CustomDragClone,
+      HTMLStencilElement {}
+  var HTMLCustomDragCloneElement: {
+    prototype: HTMLCustomDragCloneElement;
+    new (): HTMLCustomDragCloneElement;
+  };
+  /**
+   * Custom Palette Item Component
+   * ==============================
+   * Example custom palette item that shows how consumers can create
+   * fully customized palette entries for their components.
+   * Updated to display SVG icons on top with titles below (similar to UI builder pattern)
+   */
+  interface HTMLCustomPaletteItemElement
+    extends Components.CustomPaletteItem,
+      HTMLStencilElement {}
+  var HTMLCustomPaletteItemElement: {
+    prototype: HTMLCustomPaletteItemElement;
+    new (): HTMLCustomPaletteItemElement;
+  };
+  interface HTMLDashboardWidgetElement
+    extends Components.DashboardWidget,
+      HTMLStencilElement {}
+  var HTMLDashboardWidgetElement: {
+    prototype: HTMLDashboardWidgetElement;
+    new (): HTMLDashboardWidgetElement;
+  };
+  interface HTMLDashboardWidgetDragCloneElement
+    extends Components.DashboardWidgetDragClone,
+      HTMLStencilElement {}
+  var HTMLDashboardWidgetDragCloneElement: {
+    prototype: HTMLDashboardWidgetDragCloneElement;
+    new (): HTMLDashboardWidgetDragCloneElement;
+  };
+  interface HTMLErrorBoundaryElementEventMap {
+    error: BaseErrorEventDetail;
+  }
+  /**
+   * ErrorBoundary Component
+   * ========================
+   * Generic error boundary for catching component render errors.
+   * **Tag**: `<error-boundary>`
+   * **Shadow DOM**: Disabled (allows slot content to access parent styles)
+   * **Reusable**: Zero dependencies, can be extracted to standalone package
+   */
+  interface HTMLErrorBoundaryElement
+    extends Components.ErrorBoundary,
+      HTMLStencilElement {
+    addEventListener<K extends keyof HTMLErrorBoundaryElementEventMap>(
+      type: K,
+      listener: (
+        this: HTMLErrorBoundaryElement,
+        ev: ErrorBoundaryCustomEvent<HTMLErrorBoundaryElementEventMap[K]>,
+      ) => any,
+      options?: boolean | AddEventListenerOptions,
+    ): void;
+    addEventListener<K extends keyof DocumentEventMap>(
+      type: K,
+      listener: (this: Document, ev: DocumentEventMap[K]) => any,
+      options?: boolean | AddEventListenerOptions,
+    ): void;
+    addEventListener<K extends keyof HTMLElementEventMap>(
+      type: K,
+      listener: (this: HTMLElement, ev: HTMLElementEventMap[K]) => any,
+      options?: boolean | AddEventListenerOptions,
+    ): void;
+    addEventListener(
+      type: string,
+      listener: EventListenerOrEventListenerObject,
+      options?: boolean | AddEventListenerOptions,
+    ): void;
+    removeEventListener<K extends keyof HTMLErrorBoundaryElementEventMap>(
+      type: K,
+      listener: (
+        this: HTMLErrorBoundaryElement,
+        ev: ErrorBoundaryCustomEvent<HTMLErrorBoundaryElementEventMap[K]>,
+      ) => any,
+      options?: boolean | EventListenerOptions,
+    ): void;
+    removeEventListener<K extends keyof DocumentEventMap>(
+      type: K,
+      listener: (this: Document, ev: DocumentEventMap[K]) => any,
+      options?: boolean | EventListenerOptions,
+    ): void;
+    removeEventListener<K extends keyof HTMLElementEventMap>(
+      type: K,
+      listener: (this: HTMLElement, ev: HTMLElementEventMap[K]) => any,
+      options?: boolean | EventListenerOptions,
+    ): void;
+    removeEventListener(
+      type: string,
+      listener: EventListenerOrEventListenerObject,
+      options?: boolean | EventListenerOptions,
+    ): void;
+  }
+  var HTMLErrorBoundaryElement: {
+    prototype: HTMLErrorBoundaryElement;
+    new (): HTMLErrorBoundaryElement;
+  };
+  interface HTMLGridBuilderElementEventMap {
+    registryReady: { registry: ComponentRegistry };
+  }
+  /**
+   * GridBuilder Component
+   * ======================
+   * Main library component providing complete grid builder functionality.
+   * **Tag**: `<grid-builder>`
+   * **Shadow DOM**: Disabled (required for interact.js compatibility)
+   * **Reactivity**: Listens to gridState changes via StencilJS store
+   */
+  interface HTMLGridBuilderElement
+    extends Components.GridBuilder,
+      HTMLStencilElement {
+    addEventListener<K extends keyof HTMLGridBuilderElementEventMap>(
+      type: K,
+      listener: (
+        this: HTMLGridBuilderElement,
+        ev: GridBuilderCustomEvent<HTMLGridBuilderElementEventMap[K]>,
+      ) => any,
+      options?: boolean | AddEventListenerOptions,
+    ): void;
+    addEventListener<K extends keyof DocumentEventMap>(
+      type: K,
+      listener: (this: Document, ev: DocumentEventMap[K]) => any,
+      options?: boolean | AddEventListenerOptions,
+    ): void;
+    addEventListener<K extends keyof HTMLElementEventMap>(
+      type: K,
+      listener: (this: HTMLElement, ev: HTMLElementEventMap[K]) => any,
+      options?: boolean | AddEventListenerOptions,
+    ): void;
+    addEventListener(
+      type: string,
+      listener: EventListenerOrEventListenerObject,
+      options?: boolean | AddEventListenerOptions,
+    ): void;
+    removeEventListener<K extends keyof HTMLGridBuilderElementEventMap>(
+      type: K,
+      listener: (
+        this: HTMLGridBuilderElement,
+        ev: GridBuilderCustomEvent<HTMLGridBuilderElementEventMap[K]>,
+      ) => any,
+      options?: boolean | EventListenerOptions,
+    ): void;
+    removeEventListener<K extends keyof DocumentEventMap>(
+      type: K,
+      listener: (this: Document, ev: DocumentEventMap[K]) => any,
+      options?: boolean | EventListenerOptions,
+    ): void;
+    removeEventListener<K extends keyof HTMLElementEventMap>(
+      type: K,
+      listener: (this: HTMLElement, ev: HTMLElementEventMap[K]) => any,
+      options?: boolean | EventListenerOptions,
+    ): void;
+    removeEventListener(
+      type: string,
+      listener: EventListenerOrEventListenerObject,
+      options?: boolean | EventListenerOptions,
+    ): void;
+  }
+  var HTMLGridBuilderElement: {
+    prototype: HTMLGridBuilderElement;
+    new (): HTMLGridBuilderElement;
+  };
+  /**
+   * GridItemWrapper Component
+   * ==========================
+   * Library component wrapping individual grid items with drag/resize/selection.
+   * **Tag**: `<grid-item-wrapper>`
+   * **Shadow DOM**: Disabled (required for interact.js compatibility)
+   * **Dynamic rendering**: Uses ComponentDefinition.render() from registry
+   */
+  interface HTMLGridItemWrapperElement
+    extends Components.GridItemWrapper,
+      HTMLStencilElement {}
+  var HTMLGridItemWrapperElement: {
+    prototype: HTMLGridItemWrapperElement;
+    new (): HTMLGridItemWrapperElement;
+  };
+  /**
+   * GridViewer Component
+   * ====================
+   * Rendering-only grid component for displaying layouts created in grid-builder.
+   * **Tag**: `<grid-viewer>`
+   * **Shadow DOM**: Disabled (consistent with grid-builder)
+   * **Reactivity**: Uses local store OR shared store (via apiKey prop)
+   * **Key differences from grid-builder**:
+   * - No interact.js dependency (80% bundle size reduction)
+   * - No palette, config panel, or editing UI
+   * - Simplified state (no selection, no z-index tracking)
+   * - Rendering-only canvas sections
+   * **Multi-instance sharing**:
+   * - **Local mode** (default): Each instance has independent state
+   * - **Shared mode** (with apiKey): Multiple instances share layout data
+   * - Same SharedStateRegistry pattern as grid-builder
+   * - Use case: Multi-device preview (mobile + tablet + desktop side-by-side)
+   */
+  interface HTMLGridViewerElement
+    extends Components.GridViewer,
+      HTMLStencilElement {}
+  var HTMLGridViewerElement: {
+    prototype: HTMLGridViewerElement;
+    new (): HTMLGridViewerElement;
+  };
+  interface HTMLImageGalleryElement
+    extends Components.ImageGallery,
+      HTMLStencilElement {}
+  var HTMLImageGalleryElement: {
+    prototype: HTMLImageGalleryElement;
+    new (): HTMLImageGalleryElement;
+  };
+  interface HTMLImageGalleryDragCloneElement
+    extends Components.ImageGalleryDragClone,
+      HTMLStencilElement {}
+  var HTMLImageGalleryDragCloneElement: {
+    prototype: HTMLImageGalleryDragCloneElement;
+    new (): HTMLImageGalleryDragCloneElement;
+  };
+  interface HTMLLayerPanelElement
+    extends Components.LayerPanel,
+      HTMLStencilElement {}
+  var HTMLLayerPanelElement: {
+    prototype: HTMLLayerPanelElement;
+    new (): HTMLLayerPanelElement;
+  };
+  interface HTMLLayerPanelFolderHeaderElementEventMap {
+    toggleFolder: { canvasId: string };
+    activateCanvas: { canvasId: string };
+    scrollToCanvas: { canvasId: string };
+  }
+  interface HTMLLayerPanelFolderHeaderElement
+    extends Components.LayerPanelFolderHeader,
+      HTMLStencilElement {
+    addEventListener<K extends keyof HTMLLayerPanelFolderHeaderElementEventMap>(
+      type: K,
+      listener: (
+        this: HTMLLayerPanelFolderHeaderElement,
+        ev: LayerPanelFolderHeaderCustomEvent<
+          HTMLLayerPanelFolderHeaderElementEventMap[K]
+        >,
+      ) => any,
+      options?: boolean | AddEventListenerOptions,
+    ): void;
+    addEventListener<K extends keyof DocumentEventMap>(
+      type: K,
+      listener: (this: Document, ev: DocumentEventMap[K]) => any,
+      options?: boolean | AddEventListenerOptions,
+    ): void;
+    addEventListener<K extends keyof HTMLElementEventMap>(
+      type: K,
+      listener: (this: HTMLElement, ev: HTMLElementEventMap[K]) => any,
+      options?: boolean | AddEventListenerOptions,
+    ): void;
+    addEventListener(
+      type: string,
+      listener: EventListenerOrEventListenerObject,
+      options?: boolean | AddEventListenerOptions,
+    ): void;
+    removeEventListener<
+      K extends keyof HTMLLayerPanelFolderHeaderElementEventMap,
+    >(
+      type: K,
+      listener: (
+        this: HTMLLayerPanelFolderHeaderElement,
+        ev: LayerPanelFolderHeaderCustomEvent<
+          HTMLLayerPanelFolderHeaderElementEventMap[K]
+        >,
+      ) => any,
+      options?: boolean | EventListenerOptions,
+    ): void;
+    removeEventListener<K extends keyof DocumentEventMap>(
+      type: K,
+      listener: (this: Document, ev: DocumentEventMap[K]) => any,
+      options?: boolean | EventListenerOptions,
+    ): void;
+    removeEventListener<K extends keyof HTMLElementEventMap>(
+      type: K,
+      listener: (this: HTMLElement, ev: HTMLElementEventMap[K]) => any,
+      options?: boolean | EventListenerOptions,
+    ): void;
+    removeEventListener(
+      type: string,
+      listener: EventListenerOrEventListenerObject,
+      options?: boolean | EventListenerOptions,
+    ): void;
+  }
+  var HTMLLayerPanelFolderHeaderElement: {
+    prototype: HTMLLayerPanelFolderHeaderElement;
+    new (): HTMLLayerPanelFolderHeaderElement;
+  };
+  interface HTMLLayerPanelItemElementEventMap {
+    layerItemSelect: { itemId: string; canvasId: string };
+    layerItemDragStart: {
+      itemId: string;
+      canvasId: string;
+      zIndex: number;
     };
-    interface HTMLElementTagNameMap {
-        "blog-app": HTMLBlogAppElement;
-        "blog-article": HTMLBlogArticleElement;
-        "blog-article-drag-clone": HTMLBlogArticleDragCloneElement;
-        "blog-button": HTMLBlogButtonElement;
-        "blog-button-drag-clone": HTMLBlogButtonDragCloneElement;
-        "blog-header": HTMLBlogHeaderElement;
-        "blog-header-drag-clone": HTMLBlogHeaderDragCloneElement;
-        "blog-image": HTMLBlogImageElement;
-        "blog-image-drag-clone": HTMLBlogImageDragCloneElement;
-        "canvas-header": HTMLCanvasHeaderElement;
-        "canvas-section": HTMLCanvasSectionElement;
-        "canvas-section-viewer": HTMLCanvasSectionViewerElement;
-        "component-palette": HTMLComponentPaletteElement;
-        "config-panel": HTMLConfigPanelElement;
-        "confirmation-modal": HTMLConfirmationModalElement;
-        "custom-config-panel": HTMLCustomConfigPanelElement;
-        "custom-drag-clone": HTMLCustomDragCloneElement;
-        "custom-palette-item": HTMLCustomPaletteItemElement;
-        "dashboard-widget": HTMLDashboardWidgetElement;
-        "dashboard-widget-drag-clone": HTMLDashboardWidgetDragCloneElement;
-        "error-boundary": HTMLErrorBoundaryElement;
-        "grid-builder": HTMLGridBuilderElement;
-        "grid-item-wrapper": HTMLGridItemWrapperElement;
-        "grid-viewer": HTMLGridViewerElement;
-        "image-gallery": HTMLImageGalleryElement;
-        "image-gallery-drag-clone": HTMLImageGalleryDragCloneElement;
-        "layer-panel": HTMLLayerPanelElement;
-        "layer-panel-folder-header": HTMLLayerPanelFolderHeaderElement;
-        "layer-panel-item": HTMLLayerPanelItemElement;
-        "live-data": HTMLLiveDataElement;
-        "live-data-drag-clone": HTMLLiveDataDragCloneElement;
-        "section-editor-panel": HTMLSectionEditorPanelElement;
-    }
+    layerItemDrop: {
+      itemId: string;
+      canvasId: string;
+      oldZIndex: number;
+      newZIndex: number;
+    };
+  }
+  interface HTMLLayerPanelItemElement
+    extends Components.LayerPanelItem,
+      HTMLStencilElement {
+    addEventListener<K extends keyof HTMLLayerPanelItemElementEventMap>(
+      type: K,
+      listener: (
+        this: HTMLLayerPanelItemElement,
+        ev: LayerPanelItemCustomEvent<HTMLLayerPanelItemElementEventMap[K]>,
+      ) => any,
+      options?: boolean | AddEventListenerOptions,
+    ): void;
+    addEventListener<K extends keyof DocumentEventMap>(
+      type: K,
+      listener: (this: Document, ev: DocumentEventMap[K]) => any,
+      options?: boolean | AddEventListenerOptions,
+    ): void;
+    addEventListener<K extends keyof HTMLElementEventMap>(
+      type: K,
+      listener: (this: HTMLElement, ev: HTMLElementEventMap[K]) => any,
+      options?: boolean | AddEventListenerOptions,
+    ): void;
+    addEventListener(
+      type: string,
+      listener: EventListenerOrEventListenerObject,
+      options?: boolean | AddEventListenerOptions,
+    ): void;
+    removeEventListener<K extends keyof HTMLLayerPanelItemElementEventMap>(
+      type: K,
+      listener: (
+        this: HTMLLayerPanelItemElement,
+        ev: LayerPanelItemCustomEvent<HTMLLayerPanelItemElementEventMap[K]>,
+      ) => any,
+      options?: boolean | EventListenerOptions,
+    ): void;
+    removeEventListener<K extends keyof DocumentEventMap>(
+      type: K,
+      listener: (this: Document, ev: DocumentEventMap[K]) => any,
+      options?: boolean | EventListenerOptions,
+    ): void;
+    removeEventListener<K extends keyof HTMLElementEventMap>(
+      type: K,
+      listener: (this: HTMLElement, ev: HTMLElementEventMap[K]) => any,
+      options?: boolean | EventListenerOptions,
+    ): void;
+    removeEventListener(
+      type: string,
+      listener: EventListenerOrEventListenerObject,
+      options?: boolean | EventListenerOptions,
+    ): void;
+  }
+  var HTMLLayerPanelItemElement: {
+    prototype: HTMLLayerPanelItemElement;
+    new (): HTMLLayerPanelItemElement;
+  };
+  interface HTMLLiveDataElement
+    extends Components.LiveData,
+      HTMLStencilElement {}
+  var HTMLLiveDataElement: {
+    prototype: HTMLLiveDataElement;
+    new (): HTMLLiveDataElement;
+  };
+  interface HTMLLiveDataDragCloneElement
+    extends Components.LiveDataDragClone,
+      HTMLStencilElement {}
+  var HTMLLiveDataDragCloneElement: {
+    prototype: HTMLLiveDataDragCloneElement;
+    new (): HTMLLiveDataDragCloneElement;
+  };
+  interface HTMLSectionEditorPanelElementEventMap {
+    closePanel: void;
+    updateSection: {
+      canvasId: string;
+      title: string;
+      backgroundColor: string;
+    };
+    previewColorChange: {
+      canvasId: string;
+      backgroundColor: string;
+    };
+    previewTitleChange: {
+      canvasId: string;
+      title: string;
+    };
+    deleteSection: { canvasId: string };
+  }
+  /**
+   * Section Editor Panel Component
+   * ===============================
+   * Demo Component - NOT Part of Library
+   * This component demonstrates how to build custom UI for editing canvas metadata
+   * in applications using the grid-builder library.
+   * Purpose:
+   * --------
+   * Shows how to create a side panel for editing section/canvas settings.
+   * This is completely custom to your application - the library doesn't provide this.
+   * Library Relationship:
+   * ---------------------
+   * - Library owns: Component placement, layouts, zIndex (grid state)
+   * - Host app owns: Canvas metadata (titles, colors, settings) - THIS COMPONENT
+   * - Metadata flows: App → Library via canvasMetadata prop
+   * Pattern Demonstrated:
+   * ---------------------
+   * 1. User clicks section header (demo UI)
+   * 2. App opens this panel (demo component)
+   * 3. User edits title/color
+   * 4. App updates canvasMetadata state
+   * 5. Library receives updated metadata via prop
+   * 6. Library passes backgroundColor to canvas-section
+   * Why This Approach:
+   * ------------------
+   * - Library stays focused on grid logic
+   * - Host app controls all presentation/metadata UI
+   * - You can use any UI framework (Material, Bootstrap, etc.)
+   * - Complete flexibility over settings panel design
+   */
+  interface HTMLSectionEditorPanelElement
+    extends Components.SectionEditorPanel,
+      HTMLStencilElement {
+    addEventListener<K extends keyof HTMLSectionEditorPanelElementEventMap>(
+      type: K,
+      listener: (
+        this: HTMLSectionEditorPanelElement,
+        ev: SectionEditorPanelCustomEvent<
+          HTMLSectionEditorPanelElementEventMap[K]
+        >,
+      ) => any,
+      options?: boolean | AddEventListenerOptions,
+    ): void;
+    addEventListener<K extends keyof DocumentEventMap>(
+      type: K,
+      listener: (this: Document, ev: DocumentEventMap[K]) => any,
+      options?: boolean | AddEventListenerOptions,
+    ): void;
+    addEventListener<K extends keyof HTMLElementEventMap>(
+      type: K,
+      listener: (this: HTMLElement, ev: HTMLElementEventMap[K]) => any,
+      options?: boolean | AddEventListenerOptions,
+    ): void;
+    addEventListener(
+      type: string,
+      listener: EventListenerOrEventListenerObject,
+      options?: boolean | AddEventListenerOptions,
+    ): void;
+    removeEventListener<K extends keyof HTMLSectionEditorPanelElementEventMap>(
+      type: K,
+      listener: (
+        this: HTMLSectionEditorPanelElement,
+        ev: SectionEditorPanelCustomEvent<
+          HTMLSectionEditorPanelElementEventMap[K]
+        >,
+      ) => any,
+      options?: boolean | EventListenerOptions,
+    ): void;
+    removeEventListener<K extends keyof DocumentEventMap>(
+      type: K,
+      listener: (this: Document, ev: DocumentEventMap[K]) => any,
+      options?: boolean | EventListenerOptions,
+    ): void;
+    removeEventListener<K extends keyof HTMLElementEventMap>(
+      type: K,
+      listener: (this: HTMLElement, ev: HTMLElementEventMap[K]) => any,
+      options?: boolean | EventListenerOptions,
+    ): void;
+    removeEventListener(
+      type: string,
+      listener: EventListenerOrEventListenerObject,
+      options?: boolean | EventListenerOptions,
+    ): void;
+  }
+  var HTMLSectionEditorPanelElement: {
+    prototype: HTMLSectionEditorPanelElement;
+    new (): HTMLSectionEditorPanelElement;
+  };
+  interface HTMLElementTagNameMap {
+    "blog-app": HTMLBlogAppElement;
+    "blog-article": HTMLBlogArticleElement;
+    "blog-article-drag-clone": HTMLBlogArticleDragCloneElement;
+    "blog-button": HTMLBlogButtonElement;
+    "blog-button-drag-clone": HTMLBlogButtonDragCloneElement;
+    "blog-header": HTMLBlogHeaderElement;
+    "blog-header-drag-clone": HTMLBlogHeaderDragCloneElement;
+    "blog-image": HTMLBlogImageElement;
+    "blog-image-drag-clone": HTMLBlogImageDragCloneElement;
+    "canvas-header": HTMLCanvasHeaderElement;
+    "canvas-section": HTMLCanvasSectionElement;
+    "canvas-section-viewer": HTMLCanvasSectionViewerElement;
+    "component-palette": HTMLComponentPaletteElement;
+    "config-panel": HTMLConfigPanelElement;
+    "confirmation-modal": HTMLConfirmationModalElement;
+    "custom-config-panel": HTMLCustomConfigPanelElement;
+    "custom-drag-clone": HTMLCustomDragCloneElement;
+    "custom-palette-item": HTMLCustomPaletteItemElement;
+    "dashboard-widget": HTMLDashboardWidgetElement;
+    "dashboard-widget-drag-clone": HTMLDashboardWidgetDragCloneElement;
+    "error-boundary": HTMLErrorBoundaryElement;
+    "grid-builder": HTMLGridBuilderElement;
+    "grid-item-wrapper": HTMLGridItemWrapperElement;
+    "grid-viewer": HTMLGridViewerElement;
+    "image-gallery": HTMLImageGalleryElement;
+    "image-gallery-drag-clone": HTMLImageGalleryDragCloneElement;
+    "layer-panel": HTMLLayerPanelElement;
+    "layer-panel-folder-header": HTMLLayerPanelFolderHeaderElement;
+    "layer-panel-item": HTMLLayerPanelItemElement;
+    "live-data": HTMLLiveDataElement;
+    "live-data-drag-clone": HTMLLiveDataDragCloneElement;
+    "section-editor-panel": HTMLSectionEditorPanelElement;
+  }
 }
 declare namespace LocalJSX {
-    interface BlogApp {
-    }
-    interface BlogArticle {
-        "author"?: string;
-        /**
-          * @default "#fff9c4"
-         */
-        "backgroundColor"?: string;
-        /**
-          * @default "Article content goes here"
-         */
-        "content"?: string;
-        "date"?: string;
-    }
-    interface BlogArticleDragClone {
-    }
-    interface BlogButton {
-        /**
-          * @default "#bbdefb"
-         */
-        "backgroundColor"?: string;
-        "href"?: string;
-        /**
-          * @default "Click me!"
-         */
-        "label"?: string;
-        "onButtonClick"?: (event: BlogButtonCustomEvent<void>) => void;
-        /**
-          * @default "primary"
-         */
-        "variant"?: "primary" | "secondary";
-    }
-    interface BlogButtonDragClone {
-    }
-    interface BlogHeader {
-        /**
-          * @default "#e8eaf6"
-         */
-        "backgroundColor"?: string;
-        /**
-          * @default "Default Header"
-         */
-        "headerTitle"?: string;
-        "subtitle"?: string;
-    }
-    interface BlogHeaderDragClone {
-    }
-    interface BlogImage {
-        /**
-          * @default "Placeholder image"
-         */
-        "alt"?: string;
-        /**
-          * @default "#c8e6c9"
-         */
-        "backgroundColor"?: string;
-        "caption"?: string;
-        /**
-          * @default "contain"
-         */
-        "objectFit"?: "contain" | "cover";
-        /**
-          * @default "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&h=600&fit=crop"
-         */
-        "src"?: string;
-    }
-    interface BlogImageDragClone {
-    }
+  interface BlogApp {}
+  interface BlogArticle {
+    author?: string;
     /**
-     * CanvasHeader Component
-     * ======================
-     * Declarative header component for canvas sections.
-     * **Tag**: `<canvas-header>`
-     * **Shadow DOM**: Disabled (matches blog-app styling)
+     * @default "#fff9c4"
      */
-    interface CanvasHeader {
-        /**
-          * Canvas ID for data tracking  **Purpose**: Identify which canvas this header belongs to **Required**: Yes
-         */
-        "canvasId": string;
-        /**
-          * Whether this canvas is currently active  **Purpose**: Control header opacity (active = full opacity, inactive = dimmed) **Default**: false
-          * @default false
-         */
-        "isActive"?: boolean;
-        /**
-          * Whether this section can be deleted  **Purpose**: Control delete button visibility **Default**: true **Note**: Default sections (hero, articles, footer) should set to false
-          * @default true
-         */
-        "isDeletable"?: boolean;
-        /**
-          * Event emitted when delete button is clicked  **Detail**: { canvasId: string } **Use case**: Delete the canvas section
-         */
-        "onDeleteClick"?: (event: CanvasHeaderCustomEvent<{ canvasId: string }>) => void;
-        /**
-          * Event emitted when header title is clicked  **Detail**: { canvasId: string } **Use case**: Activate canvas and open section editor
-         */
-        "onHeaderClick"?: (event: CanvasHeaderCustomEvent<{ canvasId: string }>) => void;
-        /**
-          * Display title for the canvas section  **Purpose**: Text shown in the title badge **Required**: Yes **Note**: Named sectionTitle to avoid conflict with standard HTML title attribute
-         */
-        "sectionTitle": string;
-    }
+    backgroundColor?: string;
     /**
-     * CanvasSection Component
-     * =======================
-     * Library component providing individual canvas dropzone.
-     * **Tag**: `<canvas-section>`
-     * **Shadow DOM**: Disabled (required for interact.js compatibility)
-     * **Reactivity**: Listens to gridState changes via StencilJS store
+     * @default "Article content goes here"
      */
-    interface CanvasSection {
-        /**
-          * Background color for this canvas  **Host app responsibility**: Pass canvas styling from host app **Library does NOT store**: backgroundColor is presentation concern **Optional**: Defaults to '#ffffff'
-          * @example ```tsx <canvas-section   canvasId="hero-section"   backgroundColor="#f0f4f8" /> ```
-         */
-        "backgroundColor"?: string;
-        /**
-          * Canvas ID for state management  **Format**: 'canvas1', 'canvas2', etc. **Purpose**: Key for accessing canvas data in gridState.canvases **Required**: Component won't render without valid canvasId
-         */
-        "canvasId": string;
-        /**
-          * Canvas title (from canvasMetadata)  **Optional**: Display title for this section **Renders as**: Rotated tab on right side, outside section bounds **Builder mode only**: Title tabs visible in builder, not viewer **Source**: Passed from grid-builder via canvasMetadata[canvasId].title
-          * @example ```tsx <canvas-section   canvasId="hero-section"   canvasTitle="Hero Section" /> ```
-         */
-        "canvasTitle"?: string;
-        /**
-          * Component registry (from parent grid-builder)  **Source**: grid-builder component (built from components prop) **Structure**: ComponentRegistry service instance **Purpose**: Pass to grid-item-wrapper for dynamic rendering
-         */
-        "componentRegistry"?: ComponentRegistry;
-        /**
-          * Grid configuration options  **Optional**: Customizes grid system behavior **Passed from**: grid-builder component **Used for**: Grid size calculations, constraints
-         */
-        "config"?: GridConfig;
-        /**
-          * DOM cache service instance (passed from grid-builder)  **Required for editing mode** (grid-builder provides this)  **Source**: grid-builder → canvas-section → grid-item-wrapper **Purpose**: Support multiple grid-builder instances with isolated DOM caches **Used by**: DragHandler, ResizeHandler for fast canvas element lookups
-         */
-        "domCacheInstance"?: DOMCache;
-        /**
-          * Error adapter service instance (passed from grid-builder)  **Required for editing mode** (grid-builder provides this) **Optional for viewer mode** (grid-viewer doesn't need it)  **Source**: grid-builder → canvas-section → grid-item-wrapper **Purpose**: Support multiple grid-builder instances with isolated error handling **Used by**: Error boundary for handling canvas-level and item-level render errors  **Error isolation strategy**: - Canvas-level errors (dropzone failures, canvas rendering issues) caught here - Item-level errors caught by grid-item-wrapper error boundaries - Error adapter converts to GridErrorEventDetail and emits to EventManager
-         */
-        "errorAdapterInstance"?: GridErrorAdapter;
-        /**
-          * Event manager service instance (passed from grid-builder)  **Required for editing mode** (grid-builder provides this)  **Source**: grid-builder → canvas-section → grid-item-wrapper **Purpose**: Support multiple grid-builder instances with isolated services
-         */
-        "eventManagerInstance"?: EventManager;
-        /**
-          * Whether this canvas is currently active  **Purpose**: Indicate which canvas is currently focused/active **Source**: Computed from gridState.activeCanvasId in grid-builder **Default**: false **Visual effect**: Applies 'active' CSS class to grid-container  **Canvas becomes active when**: - User clicks item on canvas - User clicks canvas background - User starts dragging item on canvas - User starts resizing item on canvas - Programmatically via api.setActiveCanvas()  **Consumer styling hook**: Consumer can style active canvas via CSS: ```css .grid-container.active .canvas-title { opacity: 1; } ```
-          * @example ```tsx <canvas-section   canvasId="hero-section"   isActive={gridState.activeCanvasId === 'hero-section'} /> ```
-          * @default false
-         */
-        "isActive"?: boolean;
-        /**
-          * Deletion hook (from parent grid-builder)  **Source**: grid-builder component (from onBeforeDelete prop) **Purpose**: Pass through to grid-item-wrapper for deletion interception **Optional**: If not provided, components delete immediately
-         */
-        "onBeforeDelete"?: DeletionHook;
-        /**
-          * State change subscription function (passed from grid-builder)  **Required for editing mode** (grid-builder provides this)  **Source**: grid-builder (this.stateManager.onChange) **Purpose**: Subscribe to instance-specific state changes for reactivity  **Usage**: ```typescript onStateChange={(key, callback) => this.stateManager.onChange(key, callback)} ```
-         */
-        "onStateChange"?: (key: string, callback: Function) => void;
-        /**
-          * State manager instance (passed from grid-builder)  **Required for editing mode** (grid-builder provides this)  **Source**: grid-builder → canvas-section → grid-item-wrapper **Purpose**: Support multiple grid-builder instances with isolated state **Used by**: DragHandler, ResizeHandler for accessing canvases and viewport
-         */
-        "stateInstance"?: any;
-        /**
-          * Theme configuration (from parent grid-builder)  **Optional prop**: Theme for selection colors **Source**: grid-builder → canvas-section → grid-item-wrapper **Purpose**: Pass theme.selectionColor to grid-item-wrapper for component selection styling
-         */
-        "theme"?: any;
-        /**
-          * Undo/Redo manager service instance (passed from grid-builder)  **Required for editing mode** (grid-builder provides this)  **Source**: grid-builder → canvas-section → grid-item-wrapper **Purpose**: Support multiple grid-builder instances with isolated undo/redo stacks
-         */
-        "undoRedoManagerInstance"?: UndoRedoManager;
-        /**
-          * Virtual renderer service instance (passed from grid-builder)  **Required for editing mode** (grid-builder provides this)  **Source**: grid-builder → canvas-section → grid-item-wrapper **Purpose**: Support multiple grid-builder instances with isolated services
-         */
-        "virtualRendererInstance"?: VirtualRendererService;
-    }
+    content?: string;
+    date?: string;
+  }
+  interface BlogArticleDragClone {}
+  interface BlogButton {
     /**
-     * CanvasSectionViewer Component
-     * ==============================
-     * Rendering-only canvas component for grid-viewer.
-     * **Tag**: `<canvas-section-viewer>`
-     * **Shadow DOM**: Disabled (consistent with canvas-section)
-     * **Reactivity**: Props-based (no global state subscription)
+     * @default "#bbdefb"
      */
-    interface CanvasSectionViewer {
-        /**
-          * Background color for this canvas  **Optional**: Canvas background color **Default**: '#ffffff'
-         */
-        "backgroundColor"?: string;
-        /**
-          * Breakpoint configuration for responsive layouts  **Optional prop**: Define custom responsive breakpoints **Source**: grid-viewer → canvas-section-viewer → grid-item-wrapper **Used by**: grid-item-wrapper for layout resolution and auto-stacking  **Purpose**: Passed through to grid-item-wrapper to enable multi-breakpoint responsive layouts in viewer mode. Grid-item-wrapper uses this to determine which layout to render, handle auto-stacking, and resolve layout inheritance.  **Example**: ```typescript const breakpoints = {   mobile: { minWidth: 0, layoutMode: 'stack' },   tablet: { minWidth: 768, layoutMode: 'inherit', inheritFrom: 'desktop' },   desktop: { minWidth: 1024, layoutMode: 'manual' } }; ```
-         */
-        "breakpoints"?: any;
-        /**
-          * Canvas ID for identification  **Format**: 'canvas1', 'hero-section', etc. **Purpose**: Element ID and data attribute
-         */
-        "canvasId": string;
-        /**
-          * Component registry (from parent grid-viewer)  **Source**: grid-viewer component **Structure**: ComponentRegistry service instance **Purpose**: Pass to grid-item-wrapper for dynamic rendering
-         */
-        "componentRegistry"?: ComponentRegistry;
-        /**
-          * Grid configuration options  **Optional**: Customizes grid system behavior **Passed from**: grid-viewer component
-         */
-        "config"?: GridConfig;
-        /**
-          * Current viewport/breakpoint name  **Required**: string matching a breakpoint name **Examples**: 'desktop', 'mobile', 'tablet', 'xs', 'sm', 'md', 'lg', 'xl' **Source**: Passed from grid-viewer component  **Purpose**: Determines which layout to render for each item (item.layouts[currentViewport]) **Multi-breakpoint support**: Can be any breakpoint name from breakpoints config
-         */
-        "currentViewport": string;
-        /**
-          * Error adapter service instance (passed from grid-viewer)  **Optional**: Provided by grid-viewer if error handling needed **Purpose**: Support error boundary integration for item render errors **Viewer mode**: May be undefined (simplified error handling without event emission)
-         */
-        "errorAdapterInstance"?: GridErrorAdapter;
-        /**
-          * Items to render in this canvas  **Required**: Array of GridItem objects **Source**: Passed from grid-viewer component  **Unlike canvas-section**: Items passed via props, not from global state
-         */
-        "items": GridItem[];
-        /**
-          * State instance (viewer state with editing fields set to null)  **Optional**: Provided by grid-viewer to eliminate defensive guards in grid-item-wrapper **Purpose**: Provide minimal state object matching StateManager structure **Value**: ViewerState with selectedItemId/selectedCanvasId/activeCanvasId always null
-         */
-        "stateInstance"?: any;
-        /**
-          * Virtual renderer service instance (passed from grid-builder)  **Optional**: Provided by grid-viewer if virtual rendering enabled **Purpose**: Lazy loading of grid items for better performance
-         */
-        "virtualRendererInstance"?: VirtualRendererService;
-    }
+    backgroundColor?: string;
+    href?: string;
     /**
-     * ComponentPalette Component
-     * ===========================
-     * Library component providing draggable component palette UI.
-     * **Tag**: `<component-palette>`
-     * **Shadow DOM**: Disabled (for consistency with other components)
-     * **Reactivity**: Re-renders when components prop changes
-     * ## Usage Patterns
-     * **Pattern 1: Default (inside grid-builder)**
-     * ```typescript
-     * // Palette automatically rendered by grid-builder
-     * <grid-builder components={componentDefinitions} />
-     * ```
-     * **Pattern 2: Independent placement**
-     * ```typescript
-     * // Place palette anywhere in your app
-     * <div class="my-layout">
-     *   <aside class="sidebar">
-     *     <component-palette
-     *       components={componentDefinitions}
-     *       config={gridConfig}
-     *     />
-     *   </aside>
-     *   <main>
-     *     <grid-builder
-     *       components={componentDefinitions}
-     *       config={gridConfig}
-     *       uiOverrides={{
-     *         ComponentPalette: () => null  // Hide default palette
-     *       }}
-     *     />
-     *   </main>
-     * </div>
-     * ```
-     * **Pattern 3: Custom wrapper component**
-     * ```typescript
-     * // Wrap in your own component for styling
-     * @Component ({ tag: 'my-palette-sidebar' })
-     * export class MyPaletteSidebar {
-     * @Prop () components: ComponentDefinition[];
-     * render() {
-     * return (
-     *  <div class="custom-sidebar">
-     *    <h3>Components</h3>
-     *    <component-palette components={this.components} />
-     *  </div>
-     * );
-     * }
-     * }
-     * ```
-     * ## Key Features
-     * - **Self-contained**: Works independently of grid-builder
-     * - **Drag/drop ready**: Uses interact.js for drag functionality
-     * - **Flexible placement**: Can be rendered anywhere in DOM
-     * - **Works across boundaries**: Drag from palette to any canvas-section
+     * @default "Click me!"
      */
-    interface ComponentPalette {
-        /**
-          * Component registry for reactive updates (Observer Pattern)  **Recommended**: Use this instead of components prop for dynamic registration **Optional prop**: ComponentRegistry instance from grid-builder **Source**: Passed from grid-builder component  **Benefits over components prop**: - Automatic palette updates when components are registered - No manual synchronization needed - Framework-driven reactive pattern  **Use case - Dynamic component registration**: ```typescript // In grid-builder story or consumer code const builderEl = document.querySelector('grid-builder'); const paletteEl = document.querySelector('component-palette');  // Share the registry (automatic sync!) paletteEl.componentRegistry = builderEl.componentRegistry;  // Register new component - palette updates automatically! const api = window.gridBuilderAPI; api.registerComponent(newComponentDef); ```  **Priority**: If both components and componentRegistry are provided, componentRegistry takes precedence
-         */
-        "componentRegistry"?: ComponentRegistry;
-        /**
-          * Component definitions to render in palette  **Deprecated**: Use componentRegistry prop for reactive updates **Backward compatibility**: Still supported for static component lists **Source**: Passed from grid-builder component or consumer code  **Each definition provides**: - type: Unique identifier for component - name: Display name in palette - icon: Visual identifier (emoji recommended) - defaultSize: Size when dropped (for drag clone sizing)  **Example**: ```typescript const components = [   {     type: 'header',     name: 'Header',     icon: '📄',     defaultSize: { width: 20, height: 8 },     render: ({ itemId, config }) => <my-header itemId={itemId} config={config} />   } ]; ```
-         */
-        "components"?: ComponentDefinition[];
-        /**
-          * Grid configuration options  **Optional prop**: Customizes grid system behavior **Passed from**: grid-builder component **Used for**: Drag clone sizing (gridToPixelsX/Y calculations)
-         */
-        "config"?: GridConfig;
-        /**
-          * Custom label for this palette instance  **Optional prop**: Provides a descriptive label for this specific palette **Default**: "Component palette" **Used for**: ARIA label on toolbar container  **Use case - Multiple palettes**: When multiple component palettes exist on the same page (e.g., categorized palettes), provide unique labels for screen reader users:  ```typescript <component-palette components={contentComponents} paletteLabel="Content components" /> <component-palette components={mediaComponents} paletteLabel="Media components" /> <component-palette components={interactiveComponents} paletteLabel="Interactive components" /> ```  **Accessibility benefit**: - Screen readers announce: "Content components, toolbar" - Users can navigate between palettes by their distinct labels - Each palette has unique ARIA IDs to avoid conflicts
-          * @default "Component palette"
-         */
-        "paletteLabel"?: string;
-        /**
-          * Show palette header (title)  **Optional prop**: Controls whether the "Components" header is displayed **Default**: true (shows header for backward compatibility)  **Use cases**: - `showHeader={true}` (default): Standard palette with "Components" title - `showHeader={false}`: Chromeless mode - just the component list  **Chromeless mode benefits**: - Embed palette in custom layouts - Add your own headers/titles - Integrate into existing UI structures - More flexible component placement  **Example - Chromeless with custom wrapper**: ```typescript <div class="my-custom-sidebar"> <h3 class="my-title">Available Components</h3> <p class="my-description">Drag to add</p> <component-palette components={componentDefinitions} showHeader={false} /> </div> ```
-          * @default true
-         */
-        "showHeader"?: boolean;
-        /**
-          * Target grid-builder instance ID  **Optional prop**: Specifies which grid-builder instance should receive click-to-add events **Default**: undefined (events received by all grid-builder instances) **Used for**: Multi-instance scenarios with multiple grid-builders on the same page  **Use case - Multiple grid-builders**: When multiple grid-builder instances exist on the same page, use this prop to route palette events to a specific instance:  ```typescript // Grid builders with different API keys <grid-builder api-ref={{ key: 'gridAPI1' }} components={...} /> <grid-builder api-ref={{ key: 'gridAPI2' }} components={...} />  // Palettes targeting specific builders <component-palette   components={components}   targetGridBuilderId="gridAPI1" /> <component-palette   components={components}   targetGridBuilderId="gridAPI2" /> ```  **How it works**: - Palette includes `targetGridBuilderId` in `palette-item-click` event detail - Grid-builder filters events by matching against its own instance ID - If omitted, all grid-builders receive the event (backward compatible)
-          * @default undefined
-         */
-        "targetGridBuilderId"?: string;
-    }
+    label?: string;
+    onButtonClick?: (event: BlogButtonCustomEvent<void>) => void;
     /**
-     * ConfigPanel Component
-     * =====================
-     * Library component providing configuration panel with auto-generated and custom forms.
-     * **Tag**: `<config-panel>`
-     * **Shadow DOM**: Disabled (for consistency with other components)
+     * @default "primary"
      */
-    interface ConfigPanel {
-        /**
-          * Grid Builder API instance  **Source**: Parent component (e.g., blog-app) **Purpose**: Access grid state and subscribe to events **Required**: Component won't work without valid API reference
-         */
-        "api"?: GridBuilderAPI;
-        /**
-          * Component registry (from parent grid-builder)  **Source**: grid-builder component **Purpose**: Look up component definitions for config forms
-         */
-        "componentRegistry"?: ComponentRegistry;
-    }
+    variant?: "primary" | "secondary";
+  }
+  interface BlogButtonDragClone {}
+  interface BlogHeader {
     /**
-     * Confirmation Modal Component
-     * =============================
-     * Demo Component - NOT Part of Library
-     * This component demonstrates how to implement the grid-builder library's
-     * deletion hook system with a custom confirmation modal.
-     * Library Feature Being Demonstrated:
-     * -----------------------------------
-     * This modal is used with the library's **onBeforeDelete hook** system.
-     * How It Works:
-     * -------------
-     * 1. Library calls onBeforeDelete hook when user deletes component
-     * 2. Hook returns a Promise that doesn't resolve immediately
-     * 3. Host app shows this modal (or any modal library)
-     * 4. User clicks "Delete" or "Cancel"
-     * 5. Modal fires confirm/cancel event
-     * 6. Host app resolves Promise with true/false
-     * 7. Library proceeds with or cancels deletion
-     * Code Flow Example:
-     * ------------------
-     * ```typescript
-     * // In parent component (blog-app.tsx):
-     * private handleBeforeDelete = (context: DeletionHookContext): Promise<boolean> => {
-     *   return new Promise((resolve) => {
-     *     this.deleteResolve = resolve;
-     *     this.isConfirmModalOpen = true;  // Show this modal
-     *   });
-     * };
-     * private handleConfirmDelete = () => {
-     *   this.deleteResolve(true);   // Tell library to proceed
-     * };
-     * private handleCancelDelete = () => {
-     *   this.deleteResolve(false);  // Tell library to cancel
-     * };
-     * ```
-     * Why This Pattern:
-     * -----------------
-     * - **Library agnostic**: Library doesn't provide modal UI
-     * - **Flexibility**: Use any modal library (Material, Bootstrap, Ant Design, etc.)
-     * - **Customization**: Full control over modal appearance and behavior
-     * - **Async support**: Can make API calls before resolving
-     * Alternative Implementations:
-     * ---------------------------
-     * You could replace this component with:
-     * - Material Design modal
-     * - Bootstrap modal
-     * - Ant Design modal
-     * - Native browser confirm() (not recommended)
-     * - Custom modal from your design system
-     * The library doesn't care what modal you use - it just waits for the
-     * Promise to resolve with true/false.
+     * @default "#e8eaf6"
      */
-    interface ConfirmationModal {
-        /**
-          * Modal content (title and message) Passed from parent when showing confirmation
-          * @default null
-         */
-        "data"?: ConfirmationModalData | null;
-        /**
-          * Modal open/closed state Controlled by parent component (blog-app)
-          * @default false
-         */
-        "isOpen"?: boolean;
-        /**
-          * Event: User cancelled deletion Parent resolves deletion hook Promise with `false`
-         */
-        "onCancel"?: (event: ConfirmationModalCustomEvent<void>) => void;
-        /**
-          * Event: User confirmed deletion Parent resolves deletion hook Promise with `true`
-         */
-        "onConfirm"?: (event: ConfirmationModalCustomEvent<void>) => void;
-    }
-    interface CustomConfigPanel {
-        /**
-          * Grid Builder API (accessed from window.gridBuilderAPI or passed as prop)  **Source**: window.gridBuilderAPI (set by grid-builder component) **Purpose**: Access grid state and methods **Required**: Component won't work without valid API reference
-         */
-        "api"?: GridBuilderAPI1;
-    }
+    backgroundColor?: string;
     /**
-     * Custom Drag Clone Component
-     * ============================
-     * Custom drag clone that shows a visual preview of the component being dragged.
-     * Each component type has a unique appearance that matches what will be placed
-     * on the canvas, helping with visual alignment and user understanding.
-     * The component fills the exact width and height provided, scaled to match
-     * the actual drop size.
+     * @default "Default Header"
      */
-    interface CustomDragClone {
-        /**
-          * Component type being dragged
-         */
-        "componentType": string;
-        /**
-          * Height in pixels
-         */
-        "height": number;
-        /**
-          * Icon/emoji
-         */
-        "icon": string;
-        /**
-          * Display name
-         */
-        "name": string;
-        /**
-          * Width in pixels
-         */
-        "width": number;
-    }
+    headerTitle?: string;
+    subtitle?: string;
+  }
+  interface BlogHeaderDragClone {}
+  interface BlogImage {
     /**
-     * Custom Palette Item Component
-     * ==============================
-     * Example custom palette item that shows how consumers can create
-     * fully customized palette entries for their components.
-     * Updated to display SVG icons on top with titles below (similar to UI builder pattern)
+     * @default "Placeholder image"
      */
-    interface CustomPaletteItem {
-        /**
-          * Component type
-         */
-        "componentType": string;
-        /**
-          * Icon/emoji or SVG identifier
-         */
-        "icon": string;
-        /**
-          * Display name
-         */
-        "name": string;
-    }
-    interface DashboardWidget {
-        /**
-          * @default "#ffccbc"
-         */
-        "backgroundColor"?: string;
-    }
-    interface DashboardWidgetDragClone {
-    }
+    alt?: string;
     /**
-     * ErrorBoundary Component
-     * ========================
-     * Generic error boundary for catching component render errors.
-     * **Tag**: `<error-boundary>`
-     * **Shadow DOM**: Disabled (allows slot content to access parent styles)
-     * **Reusable**: Zero dependencies, can be extracted to standalone package
+     * @default "#c8e6c9"
      */
-    interface ErrorBoundary {
-        /**
-          * Additional context for error info  **Purpose**: Add domain-specific context to error events **Default**: {}  **Example** (grid-builder specific): ```typescript <error-boundary context={{ itemId: 'item-123', canvasId: 'canvas1' }}>   ... </error-boundary> ```
-         */
-        "context"?: Record<string, any>;
-        /**
-          * Error boundary identifier  **Purpose**: Identifies which boundary caught the error **Required**: Yes **Example**: 'grid-builder', 'canvas-section', 'grid-item-wrapper'  **Used in error events**: Helps parent components know where error originated
-         */
-        "errorBoundary": string;
-        /**
-          * Custom error fallback renderer  **Purpose**: Render custom error UI **Default**: Uses default error UI (red box with message)  **Function signature**: ```typescript (error: Error, errorInfo: BaseErrorInfo, retry?: () => void) => any ```  **Example**: ```typescript errorBoundaryEl.errorFallback = (error, errorInfo, retry) => (   <div class="custom-error">     <h3>{error.message}</h3>     <button onClick={retry}>Try Again</button>   </div> ); ```
-         */
-        "errorFallback"?: ErrorFallbackRenderer;
-        /**
-          * Error event emitter  **Purpose**: Notify parent components of errors **Event name**: 'error' **Detail type**: BaseErrorEventDetail  **Event structure**: ```typescript {   error: Error,              // The caught error   errorInfo: {     errorBoundary: string,   // Which boundary caught it     timestamp: number,     userAgent: string,     componentStack?: string,     ...context               // Additional context   },   severity: 'critical' | 'error' | 'warning' | 'info',   recoverable: boolean } ```  **Example**: ```typescript <error-boundary onError={(e) => {   console.error('Error caught:', e.detail.error);   logToSentry(e.detail); }}>   ... </error-boundary> ```
-         */
-        "onError"?: (event: ErrorBoundaryCustomEvent<BaseErrorEventDetail>) => void;
-        /**
-          * Error recovery strategy  **Purpose**: Control how component recovers from errors **Default**: Auto-determined from error classification  **Strategies**: - `graceful`: Show fallback UI, emit event, continue operation - `strict`: Re-throw error, propagate to parent - `retry`: Attempt automatic retry (not implemented for render errors) - `ignore`: Swallow error, render nothing  **Example**: ```typescript <error-boundary recovery-strategy="graceful">...</error-boundary> ```
-         */
-        "recoveryStrategy"?: ErrorRecoveryStrategy;
-        /**
-          * Whether to show error UI  **Purpose**: Control error UI visibility **Default**: `process.env.NODE_ENV !== 'production'` (show in dev, hide in prod)  **Override behavior**: - `true`: Always show error UI - `false`: Never show error UI (emit event only) - `undefined`: Environment-based (dev: show, prod: hide)  **Example**: ```typescript <error-boundary show-error-ui={true}>...</error-boundary> ```
-         */
-        "showErrorUI"?: boolean;
-    }
+    backgroundColor?: string;
+    caption?: string;
     /**
-     * GridBuilder Component
-     * ======================
-     * Main library component providing complete grid builder functionality.
-     * **Tag**: `<grid-builder>`
-     * **Shadow DOM**: Disabled (required for interact.js compatibility)
-     * **Reactivity**: Listens to gridState changes via StencilJS store
+     * @default "contain"
      */
-    interface GridBuilder {
-        /**
-          * API key for shared state across multiple instances  **Optional prop**: Enables multi-instance sharing **Purpose**: Multiple grid-builder instances with same apiKey share layout data  **Use cases**: - Multi-device preview (mobile + tablet + desktop views side-by-side) - Collaborative editing (multiple users editing same layout) - Synchronized state across instances  **Shared data**: Canvas items, layouts, and z-index counters **Instance-specific**: Current viewport, selection state (each instance independent)  **Example**: ```typescript // Instance 1: Mobile view <grid-builder apiKey="demo-layout" breakpoints={{ mobile: 0, desktop: 768 }}></grid-builder>  // Instance 2: Desktop view (shares data with Instance 1) <grid-builder apiKey="demo-layout" breakpoints={{ mobile: 0, desktop: 768 }}></grid-builder> ```  **Default**: undefined (local-only mode, no sharing)
-         */
-        "apiKey"?: string;
-        /**
-          * Custom API exposure configuration  **Optional prop**: Control where and how the Grid Builder API is exposed **Default**: `{ key: 'gridBuilderAPI' }` **Purpose**: Allows multiple grid-builder instances on the same page  **Options**: 1. **Custom key on window** (multiple instances): ```typescript <grid-builder api-ref={{ key: 'gridAPI1' }}></grid-builder> <grid-builder api-ref={{ key: 'gridAPI2' }}></grid-builder> // Access: window.gridAPI1, window.gridAPI2 ```  2. **Disable automatic exposure** (use ref instead): ```typescript <grid-builder api-ref={null}></grid-builder> // Access via ref: <grid-builder ref={el => this.api = el?.api}></grid-builder> ```
-          * @default {     key: "gridBuilderAPI",   }
-         */
-        "apiRef"?: { key?: string } | null;
-        /**
-          * Breakpoint configuration for responsive layouts  **Optional prop**: Define custom responsive breakpoints **Default**: `{ mobile: { minWidth: 0, layoutMode: 'stack' }, desktop: { minWidth: 768, layoutMode: 'manual' } }` **Backwards compatible**: Existing desktop/mobile behavior maintained by default  **Breakpoint structure**: - `minWidth`: Container width in pixels (mobile-first approach) - `layoutMode`: 'manual' | 'stack' | 'inherit' - `inheritFrom`: Which breakpoint to inherit from (for layoutMode='inherit')  **Layout modes**: - **manual**: Items must be individually positioned (desktop-style) - **stack**: Items auto-stack vertically, full-width (mobile-style) - **inherit**: Inherit layout from another breakpoint  **Examples**:  1. **Simple format** (min-width only): ```typescript <grid-builder breakpoints={{ mobile: 0, desktop: 768 }}></grid-builder> ```  2. **Full format** (3 breakpoints with layout modes): ```typescript <grid-builder breakpoints={{   mobile: { minWidth: 0, layoutMode: 'stack' },   tablet: { minWidth: 768, layoutMode: 'inherit', inheritFrom: 'desktop' },   desktop: { minWidth: 1024, layoutMode: 'manual' } }}></grid-builder> ```  3. **Bootstrap-style** (5 breakpoints): ```typescript <grid-builder breakpoints={{   xs: { minWidth: 0, layoutMode: 'stack' },   sm: { minWidth: 576, layoutMode: 'stack' },   md: { minWidth: 768, layoutMode: 'inherit', inheritFrom: 'lg' },   lg: { minWidth: 992, layoutMode: 'manual' },   xl: { minWidth: 1200, layoutMode: 'manual' } }}></grid-builder> ```  **Automatic viewport detection**: - ResizeObserver monitors container width changes - Current viewport determined by container width (not window size) - Layout automatically switches when container resizes - No manual viewport switching needed
-         */
-        "breakpoints"?: any;
-        /**
-          * Canvas metadata storage (host app responsibility)  **Optional prop**: Store canvas-level presentation metadata **Purpose**: Host app owns canvas metadata (titles, colors, settings)  **Separation of concerns**: - Library owns placement state (items, layouts, zIndex) - Host app owns presentation state (colors, titles, custom metadata)  **Structure**: Record<canvasId, any>  **Example**: ```typescript const canvasMetadata = {   'hero-section': {     title: 'Hero Section',     backgroundColor: '#f0f4f8',     customSettings: { ... }   },   'articles-grid': {     title: 'Articles Grid',     backgroundColor: '#ffffff'   } }; <grid-builder canvasMetadata={canvasMetadata} ... /> ```  **Use with canvas-click events**: - Library fires canvas-click event when canvas background clicked - Host app shows canvas settings panel - Host app updates canvasMetadata state - Library passes metadata to canvas-section via props
-         */
-        "canvasMetadata"?: Record<string, any>;
-        /**
-          * Component definitions registry  **Required prop**: Array of ComponentDefinition objects **Purpose**: Defines available component types (header, text, button, etc.)  **Each definition includes**: - type: Unique identifier (e.g., 'header', 'text-block') - name: Display name in palette - icon: Visual identifier (emoji recommended) - defaultSize: Initial size when dropped - render: Function returning component to render - configSchema: Optional auto-generated config form - renderConfigPanel: Optional custom config UI - Lifecycle hooks: onVisible, onHidden for virtual rendering  **Example**: ```typescript const components = [   {     type: 'header',     name: 'Header',     icon: '📄',     defaultSize: { width: 20, height: 8 },     render: ({ itemId, config }) => (       <my-header itemId={itemId} config={config} />     ),     configSchema: [       { name: 'text', label: 'Text', type: 'text', defaultValue: 'Header' }     ]   } ]; ```
-         */
-        "components": ComponentDefinition[];
-        /**
-          * Grid configuration options  **Optional prop**: Customizes grid system behavior **Default**: Standard 2% grid with 10px-50px constraints  **Configuration options**: - gridSizePercent: Grid unit as % of width (default: 2) - minGridSize: Minimum size in pixels (default: 10) - maxGridSize: Maximum size in pixels (default: 50) - snapToGrid: Enable snap-to-grid (default: true) - showGridLines: Show visual grid (default: true) - minItemSize: Minimum item dimensions (default: { width: 5, height: 4 }) - virtualRenderMargin: Pre-render margin (default: '20%')  **Example**: ```typescript const config = {   gridSizePercent: 3,           // 3% grid (33 units per 100%)   minGridSize: 15,              // 15px minimum   maxGridSize: 60,              // 60px maximum   snapToGrid: true,   virtualRenderMargin: '30%'    // Aggressive pre-loading }; ```
-         */
-        "config"?: GridConfig;
-        /**
-          * Initial state to restore  **Optional prop**: Restore saved layout **Purpose**: Load previously saved grid state  **State structure**: Same as gridState (canvases, viewport, etc.)  **Example**: ```typescript const savedState = JSON.parse(localStorage.getItem('grid-state')); <grid-builder initialState={savedState} ... /> ```
-         */
-        "initialState"?: Partial<GridState>;
-        /**
-          * Unique instance identifier for multi-instance scenarios  **Optional prop**: Auto-generated if not provided **Purpose**: Track individual instances in SharedStateRegistry  **Auto-generation**: If not provided, generates: `grid-builder-{timestamp}-{random}`  **Only relevant when**: apiKey is provided (shared mode) **Ignored when**: apiKey is undefined (local-only mode)
-         */
-        "instanceId"?: string;
-        /**
-          * Hook called before deleting a component  **Optional prop**: Intercept deletion requests for custom workflows **Purpose**: Allow host app to show confirmation, make API calls, etc.  **Hook behavior**: - Return `true` to proceed with deletion - Return `false` to cancel the deletion - Return a Promise for async operations (modals, API calls)  **Example - Confirmation modal**: ```typescript const onBeforeDelete = async (context) => {   const confirmed = await showConfirmModal(     `Delete ${context.item.name}?`,     'This action cannot be undone.'   );   return confirmed; }; <grid-builder onBeforeDelete={onBeforeDelete} ... /> ```  **Example - API call + confirmation**: ```typescript const onBeforeDelete = async (context) => {   // Show loading modal   const modal = showLoadingModal('Deleting...');    try {     // Make API call     await fetch(`/api/components/${context.itemId}`, {       method: 'DELETE'     });     modal.close();     return true; // Proceed with deletion   } catch (error) {     modal.close();     showErrorModal('Failed to delete component');     return false; // Cancel deletion   } }; ```  **Default behavior**: If not provided, components delete immediately
-         */
-        "onBeforeDelete"?: DeletionHook;
-        /**
-          * Component registry ready event  **Purpose**: Notifies external code when componentRegistry has been initialized **Fired**: After componentWillLoad creates the registry with component definitions **Use case**: Allows Storybook stories and other consumers to know when registry is ready for sharing  **Event detail**: { registry: ComponentRegistry } - Reference to the initialized registry  **Example usage**: ```typescript builderEl.addEventListener('registryReady', (event) => {   const { registry } = event.detail;   paletteEl.componentRegistry = registry; }); ```
-         */
-        "onRegistryReady"?: (event: GridBuilderCustomEvent<{ registry: ComponentRegistry }>) => void;
-        /**
-          * Plugin instances for extending functionality  **Optional prop**: Array of GridBuilderPlugin instances **Purpose**: Add custom features, analytics, integrations  **Plugin lifecycle**: 1. Library calls plugin.init(api) on componentDidLoad 2. Plugin subscribes to events, adds UI, etc. 3. Library calls plugin.destroy() on disconnectedCallback  **Example**: ```typescript class AnalyticsPlugin implements GridBuilderPlugin {   name = 'analytics';    init(api: GridBuilderAPI) {     api.on('componentAdded', (e) => {       analytics.track('Component Added', { type: e.item.type });     });   }    destroy() {     // Cleanup   } }  const plugins = [new AnalyticsPlugin()]; ```
-         */
-        "plugins"?: GridBuilderPlugin[];
-        /**
-          * Visual theme customization  **Optional prop**: Customizes colors, fonts, and styling **Default**: Bootstrap-inspired blue theme  **Theme options**: - primaryColor: Accent color (default: '#007bff') - paletteBackground: Palette sidebar color (default: '#f5f5f5') - canvasBackground: Canvas background (default: '#ffffff') - gridLineColor: Grid line color (default: 'rgba(0,0,0,0.1)') - selectionColor: Selection outline (default: '#007bff') - resizeHandleColor: Resize handle color (default: '#007bff') - fontFamily: UI font (default: system font stack) - customProperties: CSS variables for advanced theming  **Example**: ```typescript const theme = {   primaryColor: '#ff6b6b',        // Brand red   paletteBackground: '#fff5f5',   // Light red   customProperties: {     '--text-color': '#ffffff',     '--border-radius': '8px'   } }; ```
-         */
-        "theme"?: GridBuilderTheme;
-        /**
-          * Custom UI component overrides  **Optional prop**: Replace default UI components **Purpose**: Fully customize visual appearance  **Overridable components**: - ConfigPanel: Configuration panel UI - ComponentPalette: Component palette sidebar - Toolbar: Top toolbar with controls  **Example**: ```typescript const uiOverrides = {   Toolbar: (props) => (     <div class="my-toolbar">       <button onClick={props.onUndo}>Undo</button>       <button onClick={props.onRedo}>Redo</button>     </div>   ) }; ```
-         */
-        "uiOverrides"?: UIComponentOverrides;
-    }
+    objectFit?: "contain" | "cover";
     /**
-     * GridItemWrapper Component
-     * ==========================
-     * Library component wrapping individual grid items with drag/resize/selection.
-     * **Tag**: `<grid-item-wrapper>`
-     * **Shadow DOM**: Disabled (required for interact.js compatibility)
-     * **Dynamic rendering**: Uses ComponentDefinition.render() from registry
+     * @default "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&h=600&fit=crop"
      */
-    interface GridItemWrapper {
-        /**
-          * Breakpoint configuration (for viewer mode)  **Purpose**: Define responsive breakpoints and layout modes **Source**: grid-viewer → canvas-section-viewer → grid-item-wrapper **Used by**: render() to determine auto-stacking and layout inheritance  **Note**: When in builder mode (viewerMode=false), this is ignored and stateInstance.breakpoints is used instead. When in viewer mode (viewerMode=true), this prop is optional (defaults to DEFAULT_BREAKPOINTS).
-         */
-        "breakpoints"?: any;
-        /**
-          * All items in the canvas (for viewer mode auto-layout)  **Purpose**: Calculate mobile auto-layout positions **Source**: grid-viewer → canvas-section-viewer → grid-item-wrapper **Used by**: render() to calculate stacked positions in mobile viewport  **Note**: When in builder mode (viewerMode=false), this is ignored and gridState.canvases is used instead. When in viewer mode (viewerMode=true), this prop is required for mobile auto-layout.
-         */
-        "canvasItems"?: GridItem[];
-        /**
-          * Component registry (from parent grid-builder)  **Source**: grid-builder component (built from components prop) **Structure**: ComponentRegistry service instance **Purpose**: Look up component definitions for dynamic rendering  **Instance-based architecture**: Each grid-builder instance has its own registry, supporting multiple grids with different component sets on the same page. Prop drilling (3 levels) is the correct pattern for this use case.
-         */
-        "componentRegistry"?: ComponentRegistry;
-        /**
-          * Grid configuration options  **Optional**: Customizes grid system behavior **Passed from**: grid-builder → canvas-section → grid-item-wrapper **Used for**: Grid size calculations with constraints
-         */
-        "config"?: GridConfig;
-        /**
-          * Current viewport (for viewer mode)  **Purpose**: Determine which layout to render (desktop or mobile) **Source**: grid-viewer → canvas-section-viewer → grid-item-wrapper **Used by**: render() to select appropriate layout  **Note**: When in builder mode (viewerMode=false), this is ignored and gridState.currentViewport is used instead. When in viewer mode (viewerMode=true), this prop is required.
-         */
-        "currentViewport"?: string;
-        /**
-          * DOM cache service instance (passed from grid-builder)  **Required for editing mode** (grid-builder provides this) **Optional for viewer mode** (grid-viewer doesn't need it)  **Source**: grid-builder → canvas-section → grid-item-wrapper **Purpose**: Support multiple grid-builder instances with isolated DOM caches **Used by**: DragHandler, ResizeHandler for fast canvas element lookups
-         */
-        "domCacheInstance"?: DOMCache;
-        /**
-          * Error adapter service instance (passed from grid-builder)  **Required for editing mode** (grid-builder provides this) **Optional for viewer mode** (grid-viewer doesn't need it)  **Source**: grid-builder → canvas-section → grid-item-wrapper **Purpose**: Support multiple grid-builder instances with isolated error handling **Used by**: Error boundary for handling component render errors  **Error isolation strategy**: - Item-level errors (component render failures) are caught by error boundary - Error adapter converts to GridErrorEventDetail and emits to EventManager - Other grid items continue functioning (isolation achieved) - Fallback UI shown for failed item (graceful degradation)
-         */
-        "errorAdapterInstance"?: GridErrorAdapter;
-        /**
-          * Event manager service instance (passed from grid-builder)  **Required for editing mode** (grid-builder provides this) **Optional for viewer mode** (grid-viewer doesn't need it)  **Source**: grid-builder → canvas-section → grid-item-wrapper **Purpose**: Support multiple grid-builder instances with isolated services
-         */
-        "eventManagerInstance"?: EventManager;
-        /**
-          * Grid item data (position, size, type, etc.)  **Source**: Parent canvas-section component **Contains**: id, canvasId, type, name, layouts (desktop/mobile), zIndex, config
-         */
-        "item": GridItem;
-        /**
-          * Deletion hook (from parent grid-builder)  **Source**: grid-builder component (from onBeforeDelete prop) **Purpose**: Allow host app to intercept deletion requests  **Hook behavior**: - Called before deleting a component - Receives context with item data - Returns true/false or Promise<boolean> - If false, deletion is cancelled - If true, deletion proceeds  **Default**: If not provided, components delete immediately
-         */
-        "onBeforeDelete"?: (context: any) => boolean | Promise<boolean>;
-        /**
-          * Render version (force re-render trigger)  **Source**: Parent canvas-section (incremented on resize) **Purpose**: Force grid calculation refresh when container resizes
-         */
-        "renderVersion"?: number;
-        /**
-          * State manager instance (passed from grid-builder)  **Required for editing mode** (grid-builder provides this) **Optional for viewer mode** (grid-viewer doesn't need it)  **Source**: grid-builder → canvas-section → grid-item-wrapper **Purpose**: Support multiple grid-builder instances with isolated state **Used by**: DragHandler, ResizeHandler for accessing canvases and viewport
-         */
-        "stateInstance"?: any;
-        /**
-          * Theme configuration (from parent grid-builder)  **Source**: grid-builder → canvas-section → grid-item-wrapper **Purpose**: Access theme.selectionColor for component selection styling  **Fallback chain for selection color**: 1. ComponentDefinition.selectionColor (per-component override) 2. theme.selectionColor (global theme default) 3. "#f59e0b" (hardcoded fallback - amber/gold)  **Why passed**: grid-item-wrapper doesn't have access to global theme, so must be passed through component tree
-         */
-        "theme"?: any;
-        /**
-          * Undo/Redo manager service instance (passed from grid-builder)  **Required for editing mode** (grid-builder provides this) **Optional for viewer mode** (grid-viewer doesn't need it)  **Source**: grid-builder → canvas-section → grid-item-wrapper **Purpose**: Support multiple grid-builder instances with isolated undo/redo stacks **Used by**: handleItemUpdate() for pushing move/resize commands to undo stack
-         */
-        "undoRedoManagerInstance"?: UndoRedoManager;
-        /**
-          * Viewer mode flag  **Purpose**: Disable editing features for rendering-only mode **Default**: false (editing enabled)  **When true**: - ❌ No drag-and-drop handlers - ❌ No resize handles - ❌ No item header (drag handle) - ❌ No delete button - ❌ No selection state - ✅ Only renders component content  **Use case**: grid-viewer component for display-only mode
-          * @default false
-         */
-        "viewerMode"?: boolean;
-        /**
-          * Virtual renderer service instance (passed from grid-builder)  **Required for editing mode** (grid-builder provides this) **Optional for viewer mode** (grid-viewer doesn't need it)  **Source**: grid-builder → canvas-section → grid-item-wrapper **Purpose**: Support multiple grid-builder instances with isolated services
-         */
-        "virtualRendererInstance"?: VirtualRendererService;
-    }
+    src?: string;
+  }
+  interface BlogImageDragClone {}
+  /**
+   * CanvasHeader Component
+   * ======================
+   * Declarative header component for canvas sections.
+   * **Tag**: `<canvas-header>`
+   * **Shadow DOM**: Disabled (matches blog-app styling)
+   */
+  interface CanvasHeader {
     /**
-     * GridViewer Component
-     * ====================
-     * Rendering-only grid component for displaying layouts created in grid-builder.
-     * **Tag**: `<grid-viewer>`
-     * **Shadow DOM**: Disabled (consistent with grid-builder)
-     * **Reactivity**: Uses local store OR shared store (via apiKey prop)
-     * **Key differences from grid-builder**:
-     * - No interact.js dependency (80% bundle size reduction)
-     * - No palette, config panel, or editing UI
-     * - Simplified state (no selection, no z-index tracking)
-     * - Rendering-only canvas sections
-     * **Multi-instance sharing**:
-     * - **Local mode** (default): Each instance has independent state
-     * - **Shared mode** (with apiKey): Multiple instances share layout data
-     * - Same SharedStateRegistry pattern as grid-builder
-     * - Use case: Multi-device preview (mobile + tablet + desktop side-by-side)
+     * Canvas ID for data tracking  **Purpose**: Identify which canvas this header belongs to **Required**: Yes
      */
-    interface GridViewer {
-        /**
-          * API key for shared state across multiple instances  **Optional prop**: Enables multi-instance sharing **Purpose**: Multiple grid-viewer instances with same apiKey share layout data  **Use cases**: - Multi-device preview (mobile + tablet + desktop views side-by-side) - Collaborative viewing (multiple users viewing same layout) - Live updates across instances  **Shared data**: Canvas items and layouts **Instance-specific**: Current viewport (each instance can show different viewport)  **Example**: ```typescript // Instance 1: Mobile view <grid-viewer apiKey="demo-layout" breakpoints={{ mobile: 0, desktop: 768 }}></grid-viewer>  // Instance 2: Desktop view (shares data with Instance 1) <grid-viewer apiKey="demo-layout" breakpoints={{ mobile: 0, desktop: 768 }}></grid-viewer> ```  **Default**: undefined (local-only mode, no sharing)
-         */
-        "apiKey"?: string;
-        /**
-          * Breakpoint configuration for responsive layouts  **Optional prop**: Define custom responsive breakpoints **Default**: `{ mobile: { minWidth: 0, layoutMode: 'stack' }, desktop: { minWidth: 768, layoutMode: 'manual' } }` **Backwards compatible**: Existing desktop/mobile behavior maintained by default  **Should match builder config**: Use same breakpoints as builder for consistent behavior  **Examples**:  1. **Simple format** (min-width only): ```typescript <grid-viewer breakpoints={{ mobile: 0, desktop: 768 }}></grid-viewer> ```  2. **Full format** (3 breakpoints with layout modes): ```typescript <grid-viewer breakpoints={{   mobile: { minWidth: 0, layoutMode: 'stack' },   tablet: { minWidth: 768, layoutMode: 'inherit', inheritFrom: 'desktop' },   desktop: { minWidth: 1024, layoutMode: 'manual' } }}></grid-viewer> ```
-         */
-        "breakpoints"?: any;
-        /**
-          * Canvas metadata storage (host app responsibility)  **Optional prop**: Store canvas-level presentation metadata **Purpose**: Host app owns canvas metadata (titles, colors, settings)  **Structure**: Record<canvasId, any>  **Example**: ```typescript const canvasMetadata = {   'hero-section': {     backgroundColor: '#f0f4f8',     customSettings: { ... }   } }; ```
-         */
-        "canvasMetadata"?: Record<string, any>;
-        /**
-          * Component definitions registry  **Required prop**: Array of ComponentDefinition objects **Purpose**: Defines how to render each component type  **Must match builder definitions**: Same component types as used in builder  **Example**: ```typescript const components = [   {     type: 'header',     name: 'Header',     icon: '📄',     render: ({ itemId, config }) => (       <my-header itemId={itemId} config={config} />     )   } ]; ```
-         */
-        "components": ComponentDefinition[];
-        /**
-          * Grid configuration options  **Optional prop**: Grid system configuration **Default**: Standard 2% grid with 10px-50px constraints  **Should match builder config**: Use same config as builder for consistent rendering
-         */
-        "config"?: GridConfig;
-        /**
-          * Initial state to display  **Optional prop**: Layout data to render **Accepts**: ViewerState or GridExport (both compatible)  **From builder export**: ```typescript const exportData = await builder.exportState(); viewer.initialState = exportData; // Type-safe! ```  **From API**: ```typescript const layout = await fetch('/api/layouts/123').then(r => r.json()); viewer.initialState = layout; ```
-         */
-        "initialState"?: Partial<ViewerState> | GridExport;
-        /**
-          * Unique instance identifier for multi-instance scenarios  **Optional prop**: Auto-generated if not provided **Purpose**: Track individual instances in SharedStateRegistry  **Auto-generation**: If not provided, generates: `grid-viewer-{timestamp}-{random}`  **Only relevant when**: apiKey is provided (shared mode) **Ignored when**: apiKey is undefined (local-only mode)
-         */
-        "instanceId"?: string;
-        /**
-          * Visual theme customization  **Optional prop**: Customizes colors, fonts, and styling **Default**: Bootstrap-inspired blue theme
-         */
-        "theme"?: GridBuilderTheme;
-    }
-    interface ImageGallery {
-        /**
-          * @default "#f5f5f5"
-         */
-        "backgroundColor"?: string;
-        /**
-          * @default 6
-         */
-        "imageCount"?: number;
-    }
-    interface ImageGalleryDragClone {
-    }
-    interface LayerPanel {
-        /**
-          * Grid Builder API instance (instance-based architecture)  **Required**: Must be provided or component won't display items **Source**: Host app (blog-app) passes this via prop **Purpose**: Access instance-based state for multi-instance support  **Why needed**: Grid-builder uses its own state instance. The layer panel must access that same instance to display items correctly.
-         */
-        "api"?: any;
-        /**
-          * Canvas metadata for folder titles Map of canvasId → { title: string }
-          * @default {}
-         */
-        "canvasMetadata"?: Record<string, { title: string }>;
-        /**
-          * Height of folder header in pixels
-          * @default 40
-         */
-        "folderHeight"?: number;
-        /**
-          * Height of layer item in pixels
-          * @default 40
-         */
-        "itemHeight"?: number;
-        /**
-          * Search input debounce delay in milliseconds
-          * @default 300
-         */
-        "searchDebounceMs"?: number;
-        /**
-          * Pre-render buffer in pixels (renders items outside viewport)
-          * @default 200
-         */
-        "virtualBufferPx"?: number;
-        /**
-          * Number of items to render in virtual window
-          * @default 50
-         */
-        "virtualWindowSize"?: number;
-    }
-    interface LayerPanelFolderHeader {
-        /**
-          * Canvas ID this folder represents
-         */
-        "canvasId": string;
-        /**
-          * Display title for the canvas
-         */
-        "canvasTitle": string;
-        /**
-          * Whether this canvas is the active canvas
-          * @default false
-         */
-        "isActive"?: boolean;
-        /**
-          * Whether this folder has no items matching current search When true, folder appears dimmed
-          * @default false
-         */
-        "isEmpty"?: boolean;
-        /**
-          * Whether this folder is currently expanded
-          * @default true
-         */
-        "isExpanded"?: boolean;
-        /**
-          * Number of items in this canvas
-         */
-        "itemCount": number;
-        /**
-          * Emitted when user clicks the folder header to activate canvas
-         */
-        "onActivateCanvas"?: (event: LayerPanelFolderHeaderCustomEvent<{ canvasId: string }>) => void;
-        /**
-          * Emitted when user double-clicks the folder header to scroll canvas into view
-         */
-        "onScrollToCanvas"?: (event: LayerPanelFolderHeaderCustomEvent<{ canvasId: string }>) => void;
-        /**
-          * Emitted when user clicks the expand/collapse toggle
-         */
-        "onToggleFolder"?: (event: LayerPanelFolderHeaderCustomEvent<{ canvasId: string }>) => void;
-        /**
-          * Total item count (for showing "0 / 15" during search)
-         */
-        "totalItemCount"?: number;
-    }
-    interface LayerPanelItem {
-        /**
-          * Canvas ID containing this item
-         */
-        "canvasId": string;
-        /**
-          * Whether this item is currently active/selected
-          * @default false
-         */
-        "isActive"?: boolean;
-        /**
-          * Unique ID of the grid item this represents
-         */
-        "itemId": string;
-        /**
-          * Display name of the item
-         */
-        "name": string;
-        /**
-          * Emitted when user starts dragging this item for reordering
-         */
-        "onLayerItemDragStart"?: (event: LayerPanelItemCustomEvent<{
-    itemId: string;
     canvasId: string;
+    /**
+     * Whether this canvas is currently active  **Purpose**: Control header opacity (active = full opacity, inactive = dimmed) **Default**: false
+     * @default false
+     */
+    isActive?: boolean;
+    /**
+     * Whether this section can be deleted  **Purpose**: Control delete button visibility **Default**: true **Note**: Default sections (hero, articles, footer) should set to false
+     * @default true
+     */
+    isDeletable?: boolean;
+    /**
+     * Event emitted when delete button is clicked  **Detail**: { canvasId: string } **Use case**: Delete the canvas section
+     */
+    onDeleteClick?: (
+      event: CanvasHeaderCustomEvent<{ canvasId: string }>,
+    ) => void;
+    /**
+     * Event emitted when header title is clicked  **Detail**: { canvasId: string } **Use case**: Activate canvas and open section editor
+     */
+    onHeaderClick?: (
+      event: CanvasHeaderCustomEvent<{ canvasId: string }>,
+    ) => void;
+    /**
+     * Display title for the canvas section  **Purpose**: Text shown in the title badge **Required**: Yes **Note**: Named sectionTitle to avoid conflict with standard HTML title attribute
+     */
+    sectionTitle: string;
+  }
+  /**
+   * CanvasSection Component
+   * =======================
+   * Library component providing individual canvas dropzone.
+   * **Tag**: `<canvas-section>`
+   * **Shadow DOM**: Disabled (required for interact.js compatibility)
+   * **Reactivity**: Listens to gridState changes via StencilJS store
+   */
+  interface CanvasSection {
+    /**
+     * Background color for this canvas  **Host app responsibility**: Pass canvas styling from host app **Library does NOT store**: backgroundColor is presentation concern **Optional**: Defaults to '#ffffff'
+     * @example ```tsx <canvas-section   canvasId="hero-section"   backgroundColor="#f0f4f8" /> ```
+     */
+    backgroundColor?: string;
+    /**
+     * Canvas ID for state management  **Format**: 'canvas1', 'canvas2', etc. **Purpose**: Key for accessing canvas data in gridState.canvases **Required**: Component won't render without valid canvasId
+     */
+    canvasId: string;
+    /**
+     * Canvas title (from canvasMetadata)  **Optional**: Display title for this section **Renders as**: Rotated tab on right side, outside section bounds **Builder mode only**: Title tabs visible in builder, not viewer **Source**: Passed from grid-builder via canvasMetadata[canvasId].title
+     * @example ```tsx <canvas-section   canvasId="hero-section"   canvasTitle="Hero Section" /> ```
+     */
+    canvasTitle?: string;
+    /**
+     * Component registry (from parent grid-builder)  **Source**: grid-builder component (built from components prop) **Structure**: ComponentRegistry service instance **Purpose**: Pass to grid-item-wrapper for dynamic rendering
+     */
+    componentRegistry?: ComponentRegistry;
+    /**
+     * Grid configuration options  **Optional**: Customizes grid system behavior **Passed from**: grid-builder component **Used for**: Grid size calculations, constraints
+     */
+    config?: GridConfig;
+    /**
+     * DOM cache service instance (passed from grid-builder)  **Required for editing mode** (grid-builder provides this)  **Source**: grid-builder → canvas-section → grid-item-wrapper **Purpose**: Support multiple grid-builder instances with isolated DOM caches **Used by**: DragHandler, ResizeHandler for fast canvas element lookups
+     */
+    domCacheInstance?: DOMCache;
+    /**
+     * Error adapter service instance (passed from grid-builder)  **Required for editing mode** (grid-builder provides this) **Optional for viewer mode** (grid-viewer doesn't need it)  **Source**: grid-builder → canvas-section → grid-item-wrapper **Purpose**: Support multiple grid-builder instances with isolated error handling **Used by**: Error boundary for handling canvas-level and item-level render errors  **Error isolation strategy**: - Canvas-level errors (dropzone failures, canvas rendering issues) caught here - Item-level errors caught by grid-item-wrapper error boundaries - Error adapter converts to GridErrorEventDetail and emits to EventManager
+     */
+    errorAdapterInstance?: GridErrorAdapter;
+    /**
+     * Event manager service instance (passed from grid-builder)  **Required for editing mode** (grid-builder provides this)  **Source**: grid-builder → canvas-section → grid-item-wrapper **Purpose**: Support multiple grid-builder instances with isolated services
+     */
+    eventManagerInstance?: EventManager;
+    /**
+     * Whether this canvas is currently active  **Purpose**: Indicate which canvas is currently focused/active **Source**: Computed from gridState.activeCanvasId in grid-builder **Default**: false **Visual effect**: Applies 'active' CSS class to grid-container  **Canvas becomes active when**: - User clicks item on canvas - User clicks canvas background - User starts dragging item on canvas - User starts resizing item on canvas - Programmatically via api.setActiveCanvas()  **Consumer styling hook**: Consumer can style active canvas via CSS: ```css .grid-container.active .canvas-title { opacity: 1; } ```
+     * @example ```tsx <canvas-section   canvasId="hero-section"   isActive={gridState.activeCanvasId === 'hero-section'} /> ```
+     * @default false
+     */
+    isActive?: boolean;
+    /**
+     * Deletion hook (from parent grid-builder)  **Source**: grid-builder component (from onBeforeDelete prop) **Purpose**: Pass through to grid-item-wrapper for deletion interception **Optional**: If not provided, components delete immediately
+     */
+    onBeforeDelete?: DeletionHook;
+    /**
+     * State change subscription function (passed from grid-builder)  **Required for editing mode** (grid-builder provides this)  **Source**: grid-builder (this.stateManager.onChange) **Purpose**: Subscribe to instance-specific state changes for reactivity  **Usage**: ```typescript onStateChange={(key, callback) => this.stateManager.onChange(key, callback)} ```
+     */
+    onStateChange?: (key: string, callback: Function) => void;
+    /**
+     * State manager instance (passed from grid-builder)  **Required for editing mode** (grid-builder provides this)  **Source**: grid-builder → canvas-section → grid-item-wrapper **Purpose**: Support multiple grid-builder instances with isolated state **Used by**: DragHandler, ResizeHandler for accessing canvases and viewport
+     */
+    stateInstance?: any;
+    /**
+     * Theme configuration (from parent grid-builder)  **Optional prop**: Theme for selection colors **Source**: grid-builder → canvas-section → grid-item-wrapper **Purpose**: Pass theme.selectionColor to grid-item-wrapper for component selection styling
+     */
+    theme?: any;
+    /**
+     * Undo/Redo manager service instance (passed from grid-builder)  **Required for editing mode** (grid-builder provides this)  **Source**: grid-builder → canvas-section → grid-item-wrapper **Purpose**: Support multiple grid-builder instances with isolated undo/redo stacks
+     */
+    undoRedoManagerInstance?: UndoRedoManager;
+    /**
+     * Virtual renderer service instance (passed from grid-builder)  **Required for editing mode** (grid-builder provides this)  **Source**: grid-builder → canvas-section → grid-item-wrapper **Purpose**: Support multiple grid-builder instances with isolated services
+     */
+    virtualRendererInstance?: VirtualRendererService;
+  }
+  /**
+   * CanvasSectionViewer Component
+   * ==============================
+   * Rendering-only canvas component for grid-viewer.
+   * **Tag**: `<canvas-section-viewer>`
+   * **Shadow DOM**: Disabled (consistent with canvas-section)
+   * **Reactivity**: Props-based (no global state subscription)
+   */
+  interface CanvasSectionViewer {
+    /**
+     * Background color for this canvas  **Optional**: Canvas background color **Default**: '#ffffff'
+     */
+    backgroundColor?: string;
+    /**
+     * Breakpoint configuration for responsive layouts  **Optional prop**: Define custom responsive breakpoints **Source**: grid-viewer → canvas-section-viewer → grid-item-wrapper **Used by**: grid-item-wrapper for layout resolution and auto-stacking  **Purpose**: Passed through to grid-item-wrapper to enable multi-breakpoint responsive layouts in viewer mode. Grid-item-wrapper uses this to determine which layout to render, handle auto-stacking, and resolve layout inheritance.  **Example**: ```typescript const breakpoints = {   mobile: { minWidth: 0, layoutMode: 'stack' },   tablet: { minWidth: 768, layoutMode: 'inherit', inheritFrom: 'desktop' },   desktop: { minWidth: 1024, layoutMode: 'manual' } }; ```
+     */
+    breakpoints?: any;
+    /**
+     * Canvas ID for identification  **Format**: 'canvas1', 'hero-section', etc. **Purpose**: Element ID and data attribute
+     */
+    canvasId: string;
+    /**
+     * Component registry (from parent grid-viewer)  **Source**: grid-viewer component **Structure**: ComponentRegistry service instance **Purpose**: Pass to grid-item-wrapper for dynamic rendering
+     */
+    componentRegistry?: ComponentRegistry;
+    /**
+     * Grid configuration options  **Optional**: Customizes grid system behavior **Passed from**: grid-viewer component
+     */
+    config?: GridConfig;
+    /**
+     * Current viewport/breakpoint name  **Required**: string matching a breakpoint name **Examples**: 'desktop', 'mobile', 'tablet', 'xs', 'sm', 'md', 'lg', 'xl' **Source**: Passed from grid-viewer component  **Purpose**: Determines which layout to render for each item (item.layouts[currentViewport]) **Multi-breakpoint support**: Can be any breakpoint name from breakpoints config
+     */
+    currentViewport: string;
+    /**
+     * Error adapter service instance (passed from grid-viewer)  **Optional**: Provided by grid-viewer if error handling needed **Purpose**: Support error boundary integration for item render errors **Viewer mode**: May be undefined (simplified error handling without event emission)
+     */
+    errorAdapterInstance?: GridErrorAdapter;
+    /**
+     * Items to render in this canvas  **Required**: Array of GridItem objects **Source**: Passed from grid-viewer component  **Unlike canvas-section**: Items passed via props, not from global state
+     */
+    items: GridItem[];
+    /**
+     * State instance (viewer state with editing fields set to null)  **Optional**: Provided by grid-viewer to eliminate defensive guards in grid-item-wrapper **Purpose**: Provide minimal state object matching StateManager structure **Value**: ViewerState with selectedItemId/selectedCanvasId/activeCanvasId always null
+     */
+    stateInstance?: any;
+    /**
+     * Virtual renderer service instance (passed from grid-builder)  **Optional**: Provided by grid-viewer if virtual rendering enabled **Purpose**: Lazy loading of grid items for better performance
+     */
+    virtualRendererInstance?: VirtualRendererService;
+  }
+  /**
+   * ComponentPalette Component
+   * ===========================
+   * Library component providing draggable component palette UI.
+   * **Tag**: `<component-palette>`
+   * **Shadow DOM**: Disabled (for consistency with other components)
+   * **Reactivity**: Re-renders when components prop changes
+   * ## Usage Patterns
+   * **Pattern 1: Default (inside grid-builder)**
+   * ```typescript
+   * // Palette automatically rendered by grid-builder
+   * <grid-builder components={componentDefinitions} />
+   * ```
+   * **Pattern 2: Independent placement**
+   * ```typescript
+   * // Place palette anywhere in your app
+   * <div class="my-layout">
+   *   <aside class="sidebar">
+   *     <component-palette
+   *       components={componentDefinitions}
+   *       config={gridConfig}
+   *     />
+   *   </aside>
+   *   <main>
+   *     <grid-builder
+   *       components={componentDefinitions}
+   *       config={gridConfig}
+   *       uiOverrides={{
+   *         ComponentPalette: () => null  // Hide default palette
+   *       }}
+   *     />
+   *   </main>
+   * </div>
+   * ```
+   * **Pattern 3: Custom wrapper component**
+   * ```typescript
+   * // Wrap in your own component for styling
+   * @Component ({ tag: 'my-palette-sidebar' })
+   * export class MyPaletteSidebar {
+   * @Prop () components: ComponentDefinition[];
+   * render() {
+   * return (
+   *  <div class="custom-sidebar">
+   *    <h3>Components</h3>
+   *    <component-palette components={this.components} />
+   *  </div>
+   * );
+   * }
+   * }
+   * ```
+   * ## Key Features
+   * - **Self-contained**: Works independently of grid-builder
+   * - **Drag/drop ready**: Uses interact.js for drag functionality
+   * - **Flexible placement**: Can be rendered anywhere in DOM
+   * - **Works across boundaries**: Drag from palette to any canvas-section
+   */
+  interface ComponentPalette {
+    /**
+     * Component registry for reactive updates (Observer Pattern)  **Recommended**: Use this instead of components prop for dynamic registration **Optional prop**: ComponentRegistry instance from grid-builder **Source**: Passed from grid-builder component  **Benefits over components prop**: - Automatic palette updates when components are registered - No manual synchronization needed - Framework-driven reactive pattern  **Use case - Dynamic component registration**: ```typescript // In grid-builder story or consumer code const builderEl = document.querySelector('grid-builder'); const paletteEl = document.querySelector('component-palette');  // Share the registry (automatic sync!) paletteEl.componentRegistry = builderEl.componentRegistry;  // Register new component - palette updates automatically! const api = window.gridBuilderAPI; api.registerComponent(newComponentDef); ```  **Priority**: If both components and componentRegistry are provided, componentRegistry takes precedence
+     */
+    componentRegistry?: ComponentRegistry;
+    /**
+     * Component definitions to render in palette  **Deprecated**: Use componentRegistry prop for reactive updates **Backward compatibility**: Still supported for static component lists **Source**: Passed from grid-builder component or consumer code  **Each definition provides**: - type: Unique identifier for component - name: Display name in palette - icon: Visual identifier (emoji recommended) - defaultSize: Size when dropped (for drag clone sizing)  **Example**: ```typescript const components = [   {     type: 'header',     name: 'Header',     icon: '📄',     defaultSize: { width: 20, height: 8 },     render: ({ itemId, config }) => <my-header itemId={itemId} config={config} />   } ]; ```
+     */
+    components?: ComponentDefinition[];
+    /**
+     * Grid configuration options  **Optional prop**: Customizes grid system behavior **Passed from**: grid-builder component **Used for**: Drag clone sizing (gridToPixelsX/Y calculations)
+     */
+    config?: GridConfig;
+    /**
+     * Custom label for this palette instance  **Optional prop**: Provides a descriptive label for this specific palette **Default**: "Component palette" **Used for**: ARIA label on toolbar container  **Use case - Multiple palettes**: When multiple component palettes exist on the same page (e.g., categorized palettes), provide unique labels for screen reader users:  ```typescript <component-palette components={contentComponents} paletteLabel="Content components" /> <component-palette components={mediaComponents} paletteLabel="Media components" /> <component-palette components={interactiveComponents} paletteLabel="Interactive components" /> ```  **Accessibility benefit**: - Screen readers announce: "Content components, toolbar" - Users can navigate between palettes by their distinct labels - Each palette has unique ARIA IDs to avoid conflicts
+     * @default "Component palette"
+     */
+    paletteLabel?: string;
+    /**
+     * Show palette header (title)  **Optional prop**: Controls whether the "Components" header is displayed **Default**: true (shows header for backward compatibility)  **Use cases**: - `showHeader={true}` (default): Standard palette with "Components" title - `showHeader={false}`: Chromeless mode - just the component list  **Chromeless mode benefits**: - Embed palette in custom layouts - Add your own headers/titles - Integrate into existing UI structures - More flexible component placement  **Example - Chromeless with custom wrapper**: ```typescript <div class="my-custom-sidebar"> <h3 class="my-title">Available Components</h3> <p class="my-description">Drag to add</p> <component-palette components={componentDefinitions} showHeader={false} /> </div> ```
+     * @default true
+     */
+    showHeader?: boolean;
+    /**
+     * Target grid-builder instance ID  **Optional prop**: Specifies which grid-builder instance should receive click-to-add events **Default**: undefined (events received by all grid-builder instances) **Used for**: Multi-instance scenarios with multiple grid-builders on the same page  **Use case - Multiple grid-builders**: When multiple grid-builder instances exist on the same page, use this prop to route palette events to a specific instance:  ```typescript // Grid builders with different API keys <grid-builder api-ref={{ key: 'gridAPI1' }} components={...} /> <grid-builder api-ref={{ key: 'gridAPI2' }} components={...} />  // Palettes targeting specific builders <component-palette   components={components}   targetGridBuilderId="gridAPI1" /> <component-palette   components={components}   targetGridBuilderId="gridAPI2" /> ```  **How it works**: - Palette includes `targetGridBuilderId` in `palette-item-click` event detail - Grid-builder filters events by matching against its own instance ID - If omitted, all grid-builders receive the event (backward compatible)
+     * @default undefined
+     */
+    targetGridBuilderId?: string;
+  }
+  /**
+   * ConfigPanel Component
+   * =====================
+   * Library component providing configuration panel with auto-generated and custom forms.
+   * **Tag**: `<config-panel>`
+   * **Shadow DOM**: Disabled (for consistency with other components)
+   */
+  interface ConfigPanel {
+    /**
+     * Grid Builder API instance  **Source**: Parent component (e.g., blog-app) **Purpose**: Access grid state and subscribe to events **Required**: Component won't work without valid API reference
+     */
+    api?: GridBuilderAPI;
+    /**
+     * Component registry (from parent grid-builder)  **Source**: grid-builder component **Purpose**: Look up component definitions for config forms
+     */
+    componentRegistry?: ComponentRegistry;
+  }
+  /**
+   * Confirmation Modal Component
+   * =============================
+   * Demo Component - NOT Part of Library
+   * This component demonstrates how to implement the grid-builder library's
+   * deletion hook system with a custom confirmation modal.
+   * Library Feature Being Demonstrated:
+   * -----------------------------------
+   * This modal is used with the library's **onBeforeDelete hook** system.
+   * How It Works:
+   * -------------
+   * 1. Library calls onBeforeDelete hook when user deletes component
+   * 2. Hook returns a Promise that doesn't resolve immediately
+   * 3. Host app shows this modal (or any modal library)
+   * 4. User clicks "Delete" or "Cancel"
+   * 5. Modal fires confirm/cancel event
+   * 6. Host app resolves Promise with true/false
+   * 7. Library proceeds with or cancels deletion
+   * Code Flow Example:
+   * ------------------
+   * ```typescript
+   * // In parent component (blog-app.tsx):
+   * private handleBeforeDelete = (context: DeletionHookContext): Promise<boolean> => {
+   *   return new Promise((resolve) => {
+   *     this.deleteResolve = resolve;
+   *     this.isConfirmModalOpen = true;  // Show this modal
+   *   });
+   * };
+   * private handleConfirmDelete = () => {
+   *   this.deleteResolve(true);   // Tell library to proceed
+   * };
+   * private handleCancelDelete = () => {
+   *   this.deleteResolve(false);  // Tell library to cancel
+   * };
+   * ```
+   * Why This Pattern:
+   * -----------------
+   * - **Library agnostic**: Library doesn't provide modal UI
+   * - **Flexibility**: Use any modal library (Material, Bootstrap, Ant Design, etc.)
+   * - **Customization**: Full control over modal appearance and behavior
+   * - **Async support**: Can make API calls before resolving
+   * Alternative Implementations:
+   * ---------------------------
+   * You could replace this component with:
+   * - Material Design modal
+   * - Bootstrap modal
+   * - Ant Design modal
+   * - Native browser confirm() (not recommended)
+   * - Custom modal from your design system
+   * The library doesn't care what modal you use - it just waits for the
+   * Promise to resolve with true/false.
+   */
+  interface ConfirmationModal {
+    /**
+     * Modal content (title and message) Passed from parent when showing confirmation
+     * @default null
+     */
+    data?: ConfirmationModalData | null;
+    /**
+     * Modal open/closed state Controlled by parent component (blog-app)
+     * @default false
+     */
+    isOpen?: boolean;
+    /**
+     * Event: User cancelled deletion Parent resolves deletion hook Promise with `false`
+     */
+    onCancel?: (event: ConfirmationModalCustomEvent<void>) => void;
+    /**
+     * Event: User confirmed deletion Parent resolves deletion hook Promise with `true`
+     */
+    onConfirm?: (event: ConfirmationModalCustomEvent<void>) => void;
+  }
+  interface CustomConfigPanel {
+    /**
+     * Grid Builder API (accessed from window.gridBuilderAPI or passed as prop)  **Source**: window.gridBuilderAPI (set by grid-builder component) **Purpose**: Access grid state and methods **Required**: Component won't work without valid API reference
+     */
+    api?: GridBuilderAPI1;
+  }
+  /**
+   * Custom Drag Clone Component
+   * ============================
+   * Custom drag clone that shows a visual preview of the component being dragged.
+   * Each component type has a unique appearance that matches what will be placed
+   * on the canvas, helping with visual alignment and user understanding.
+   * The component fills the exact width and height provided, scaled to match
+   * the actual drop size.
+   */
+  interface CustomDragClone {
+    /**
+     * Component type being dragged
+     */
+    componentType: string;
+    /**
+     * Height in pixels
+     */
+    height: number;
+    /**
+     * Icon/emoji
+     */
+    icon: string;
+    /**
+     * Display name
+     */
+    name: string;
+    /**
+     * Width in pixels
+     */
+    width: number;
+  }
+  /**
+   * Custom Palette Item Component
+   * ==============================
+   * Example custom palette item that shows how consumers can create
+   * fully customized palette entries for their components.
+   * Updated to display SVG icons on top with titles below (similar to UI builder pattern)
+   */
+  interface CustomPaletteItem {
+    /**
+     * Component type
+     */
+    componentType: string;
+    /**
+     * Icon/emoji or SVG identifier
+     */
+    icon: string;
+    /**
+     * Display name
+     */
+    name: string;
+  }
+  interface DashboardWidget {
+    /**
+     * @default "#ffccbc"
+     */
+    backgroundColor?: string;
+  }
+  interface DashboardWidgetDragClone {}
+  /**
+   * ErrorBoundary Component
+   * ========================
+   * Generic error boundary for catching component render errors.
+   * **Tag**: `<error-boundary>`
+   * **Shadow DOM**: Disabled (allows slot content to access parent styles)
+   * **Reusable**: Zero dependencies, can be extracted to standalone package
+   */
+  interface ErrorBoundary {
+    /**
+     * Additional context for error info  **Purpose**: Add domain-specific context to error events **Default**: {}  **Example** (grid-builder specific): ```typescript <error-boundary context={{ itemId: 'item-123', canvasId: 'canvas1' }}>   ... </error-boundary> ```
+     */
+    context?: Record<string, any>;
+    /**
+     * Error boundary identifier  **Purpose**: Identifies which boundary caught the error **Required**: Yes **Example**: 'grid-builder', 'canvas-section', 'grid-item-wrapper'  **Used in error events**: Helps parent components know where error originated
+     */
+    errorBoundary: string;
+    /**
+     * Custom error fallback renderer  **Purpose**: Render custom error UI **Default**: Uses default error UI (red box with message)  **Function signature**: ```typescript (error: Error, errorInfo: BaseErrorInfo, retry?: () => void) => any ```  **Example**: ```typescript errorBoundaryEl.errorFallback = (error, errorInfo, retry) => (   <div class="custom-error">     <h3>{error.message}</h3>     <button onClick={retry}>Try Again</button>   </div> ); ```
+     */
+    errorFallback?: ErrorFallbackRenderer;
+    /**
+     * Error event emitter  **Purpose**: Notify parent components of errors **Event name**: 'error' **Detail type**: BaseErrorEventDetail  **Event structure**: ```typescript {   error: Error,              // The caught error   errorInfo: {     errorBoundary: string,   // Which boundary caught it     timestamp: number,     userAgent: string,     componentStack?: string,     ...context               // Additional context   },   severity: 'critical' | 'error' | 'warning' | 'info',   recoverable: boolean } ```  **Example**: ```typescript <error-boundary onError={(e) => {   console.error('Error caught:', e.detail.error);   logToSentry(e.detail); }}>   ... </error-boundary> ```
+     */
+    onError?: (event: ErrorBoundaryCustomEvent<BaseErrorEventDetail>) => void;
+    /**
+     * Error recovery strategy  **Purpose**: Control how component recovers from errors **Default**: Auto-determined from error classification  **Strategies**: - `graceful`: Show fallback UI, emit event, continue operation - `strict`: Re-throw error, propagate to parent - `retry`: Attempt automatic retry (not implemented for render errors) - `ignore`: Swallow error, render nothing  **Example**: ```typescript <error-boundary recovery-strategy="graceful">...</error-boundary> ```
+     */
+    recoveryStrategy?: ErrorRecoveryStrategy;
+    /**
+     * Whether to show error UI  **Purpose**: Control error UI visibility **Default**: `process.env.NODE_ENV !== 'production'` (show in dev, hide in prod)  **Override behavior**: - `true`: Always show error UI - `false`: Never show error UI (emit event only) - `undefined`: Environment-based (dev: show, prod: hide)  **Example**: ```typescript <error-boundary show-error-ui={true}>...</error-boundary> ```
+     */
+    showErrorUI?: boolean;
+  }
+  /**
+   * GridBuilder Component
+   * ======================
+   * Main library component providing complete grid builder functionality.
+   * **Tag**: `<grid-builder>`
+   * **Shadow DOM**: Disabled (required for interact.js compatibility)
+   * **Reactivity**: Listens to gridState changes via StencilJS store
+   */
+  interface GridBuilder {
+    /**
+     * API key for shared state across multiple instances  **Optional prop**: Enables multi-instance sharing **Purpose**: Multiple grid-builder instances with same apiKey share layout data  **Use cases**: - Multi-device preview (mobile + tablet + desktop views side-by-side) - Collaborative editing (multiple users editing same layout) - Synchronized state across instances  **Shared data**: Canvas items, layouts, and z-index counters **Instance-specific**: Current viewport, selection state (each instance independent)  **Example**: ```typescript // Instance 1: Mobile view <grid-builder apiKey="demo-layout" breakpoints={{ mobile: 0, desktop: 768 }}></grid-builder>  // Instance 2: Desktop view (shares data with Instance 1) <grid-builder apiKey="demo-layout" breakpoints={{ mobile: 0, desktop: 768 }}></grid-builder> ```  **Default**: undefined (local-only mode, no sharing)
+     */
+    apiKey?: string;
+    /**
+     * Custom API exposure configuration  **Optional prop**: Control where and how the Grid Builder API is exposed **Default**: `{ key: 'gridBuilderAPI' }` **Purpose**: Allows multiple grid-builder instances on the same page  **Options**: 1. **Custom key on window** (multiple instances): ```typescript <grid-builder api-ref={{ key: 'gridAPI1' }}></grid-builder> <grid-builder api-ref={{ key: 'gridAPI2' }}></grid-builder> // Access: window.gridAPI1, window.gridAPI2 ```  2. **Disable automatic exposure** (use ref instead): ```typescript <grid-builder api-ref={null}></grid-builder> // Access via ref: <grid-builder ref={el => this.api = el?.api}></grid-builder> ```
+     * @default {     key: "gridBuilderAPI",   }
+     */
+    apiRef?: { key?: string } | null;
+    /**
+     * Breakpoint configuration for responsive layouts  **Optional prop**: Define custom responsive breakpoints **Default**: `{ mobile: { minWidth: 0, layoutMode: 'stack' }, desktop: { minWidth: 768, layoutMode: 'manual' } }` **Backwards compatible**: Existing desktop/mobile behavior maintained by default  **Breakpoint structure**: - `minWidth`: Container width in pixels (mobile-first approach) - `layoutMode`: 'manual' | 'stack' | 'inherit' - `inheritFrom`: Which breakpoint to inherit from (for layoutMode='inherit')  **Layout modes**: - **manual**: Items must be individually positioned (desktop-style) - **stack**: Items auto-stack vertically, full-width (mobile-style) - **inherit**: Inherit layout from another breakpoint  **Examples**:  1. **Simple format** (min-width only): ```typescript <grid-builder breakpoints={{ mobile: 0, desktop: 768 }}></grid-builder> ```  2. **Full format** (3 breakpoints with layout modes): ```typescript <grid-builder breakpoints={{   mobile: { minWidth: 0, layoutMode: 'stack' },   tablet: { minWidth: 768, layoutMode: 'inherit', inheritFrom: 'desktop' },   desktop: { minWidth: 1024, layoutMode: 'manual' } }}></grid-builder> ```  3. **Bootstrap-style** (5 breakpoints): ```typescript <grid-builder breakpoints={{   xs: { minWidth: 0, layoutMode: 'stack' },   sm: { minWidth: 576, layoutMode: 'stack' },   md: { minWidth: 768, layoutMode: 'inherit', inheritFrom: 'lg' },   lg: { minWidth: 992, layoutMode: 'manual' },   xl: { minWidth: 1200, layoutMode: 'manual' } }}></grid-builder> ```  **Automatic viewport detection**: - ResizeObserver monitors container width changes - Current viewport determined by container width (not window size) - Layout automatically switches when container resizes - No manual viewport switching needed
+     */
+    breakpoints?: any;
+    /**
+     * Canvas metadata storage (host app responsibility)  **Optional prop**: Store canvas-level presentation metadata **Purpose**: Host app owns canvas metadata (titles, colors, settings)  **Separation of concerns**: - Library owns placement state (items, layouts, zIndex) - Host app owns presentation state (colors, titles, custom metadata)  **Structure**: Record<canvasId, any>  **Example**: ```typescript const canvasMetadata = {   'hero-section': {     title: 'Hero Section',     backgroundColor: '#f0f4f8',     customSettings: { ... }   },   'articles-grid': {     title: 'Articles Grid',     backgroundColor: '#ffffff'   } }; <grid-builder canvasMetadata={canvasMetadata} ... /> ```  **Use with canvas-click events**: - Library fires canvas-click event when canvas background clicked - Host app shows canvas settings panel - Host app updates canvasMetadata state - Library passes metadata to canvas-section via props
+     */
+    canvasMetadata?: Record<string, any>;
+    /**
+     * Component definitions registry  **Required prop**: Array of ComponentDefinition objects **Purpose**: Defines available component types (header, text, button, etc.)  **Each definition includes**: - type: Unique identifier (e.g., 'header', 'text-block') - name: Display name in palette - icon: Visual identifier (emoji recommended) - defaultSize: Initial size when dropped - render: Function returning component to render - configSchema: Optional auto-generated config form - renderConfigPanel: Optional custom config UI - Lifecycle hooks: onVisible, onHidden for virtual rendering  **Example**: ```typescript const components = [   {     type: 'header',     name: 'Header',     icon: '📄',     defaultSize: { width: 20, height: 8 },     render: ({ itemId, config }) => (       <my-header itemId={itemId} config={config} />     ),     configSchema: [       { name: 'text', label: 'Text', type: 'text', defaultValue: 'Header' }     ]   } ]; ```
+     */
+    components: ComponentDefinition[];
+    /**
+     * Grid configuration options  **Optional prop**: Customizes grid system behavior **Default**: Standard 2% grid with 10px-50px constraints  **Configuration options**: - gridSizePercent: Grid unit as % of width (default: 2) - minGridSize: Minimum size in pixels (default: 10) - maxGridSize: Maximum size in pixels (default: 50) - snapToGrid: Enable snap-to-grid (default: true) - showGridLines: Show visual grid (default: true) - minItemSize: Minimum item dimensions (default: { width: 5, height: 4 }) - virtualRenderMargin: Pre-render margin (default: '20%')  **Example**: ```typescript const config = {   gridSizePercent: 3,           // 3% grid (33 units per 100%)   minGridSize: 15,              // 15px minimum   maxGridSize: 60,              // 60px maximum   snapToGrid: true,   virtualRenderMargin: '30%'    // Aggressive pre-loading }; ```
+     */
+    config?: GridConfig;
+    /**
+     * Initial state to restore  **Optional prop**: Restore saved layout **Purpose**: Load previously saved grid state  **State structure**: Same as gridState (canvases, viewport, etc.)  **Example**: ```typescript const savedState = JSON.parse(localStorage.getItem('grid-state')); <grid-builder initialState={savedState} ... /> ```
+     */
+    initialState?: Partial<GridState>;
+    /**
+     * Unique instance identifier for multi-instance scenarios  **Optional prop**: Auto-generated if not provided **Purpose**: Track individual instances in SharedStateRegistry  **Auto-generation**: If not provided, generates: `grid-builder-{timestamp}-{random}`  **Only relevant when**: apiKey is provided (shared mode) **Ignored when**: apiKey is undefined (local-only mode)
+     */
+    instanceId?: string;
+    /**
+     * Hook called before deleting a component  **Optional prop**: Intercept deletion requests for custom workflows **Purpose**: Allow host app to show confirmation, make API calls, etc.  **Hook behavior**: - Return `true` to proceed with deletion - Return `false` to cancel the deletion - Return a Promise for async operations (modals, API calls)  **Example - Confirmation modal**: ```typescript const onBeforeDelete = async (context) => {   const confirmed = await showConfirmModal(     `Delete ${context.item.name}?`,     'This action cannot be undone.'   );   return confirmed; }; <grid-builder onBeforeDelete={onBeforeDelete} ... /> ```  **Example - API call + confirmation**: ```typescript const onBeforeDelete = async (context) => {   // Show loading modal   const modal = showLoadingModal('Deleting...');    try {     // Make API call     await fetch(`/api/components/${context.itemId}`, {       method: 'DELETE'     });     modal.close();     return true; // Proceed with deletion   } catch (error) {     modal.close();     showErrorModal('Failed to delete component');     return false; // Cancel deletion   } }; ```  **Default behavior**: If not provided, components delete immediately
+     */
+    onBeforeDelete?: DeletionHook;
+    /**
+     * Component registry ready event  **Purpose**: Notifies external code when componentRegistry has been initialized **Fired**: After componentWillLoad creates the registry with component definitions **Use case**: Allows Storybook stories and other consumers to know when registry is ready for sharing  **Event detail**: { registry: ComponentRegistry } - Reference to the initialized registry  **Example usage**: ```typescript builderEl.addEventListener('registryReady', (event) => {   const { registry } = event.detail;   paletteEl.componentRegistry = registry; }); ```
+     */
+    onRegistryReady?: (
+      event: GridBuilderCustomEvent<{ registry: ComponentRegistry }>,
+    ) => void;
+    /**
+     * Plugin instances for extending functionality  **Optional prop**: Array of GridBuilderPlugin instances **Purpose**: Add custom features, analytics, integrations  **Plugin lifecycle**: 1. Library calls plugin.init(api) on componentDidLoad 2. Plugin subscribes to events, adds UI, etc. 3. Library calls plugin.destroy() on disconnectedCallback  **Example**: ```typescript class AnalyticsPlugin implements GridBuilderPlugin {   name = 'analytics';    init(api: GridBuilderAPI) {     api.on('componentAdded', (e) => {       analytics.track('Component Added', { type: e.item.type });     });   }    destroy() {     // Cleanup   } }  const plugins = [new AnalyticsPlugin()]; ```
+     */
+    plugins?: GridBuilderPlugin[];
+    /**
+     * Visual theme customization  **Optional prop**: Customizes colors, fonts, and styling **Default**: Bootstrap-inspired blue theme  **Theme options**: - primaryColor: Accent color (default: '#007bff') - paletteBackground: Palette sidebar color (default: '#f5f5f5') - canvasBackground: Canvas background (default: '#ffffff') - gridLineColor: Grid line color (default: 'rgba(0,0,0,0.1)') - selectionColor: Selection outline (default: '#007bff') - resizeHandleColor: Resize handle color (default: '#007bff') - fontFamily: UI font (default: system font stack) - customProperties: CSS variables for advanced theming  **Example**: ```typescript const theme = {   primaryColor: '#ff6b6b',        // Brand red   paletteBackground: '#fff5f5',   // Light red   customProperties: {     '--text-color': '#ffffff',     '--border-radius': '8px'   } }; ```
+     */
+    theme?: GridBuilderTheme;
+    /**
+     * Custom UI component overrides  **Optional prop**: Replace default UI components **Purpose**: Fully customize visual appearance  **Overridable components**: - ConfigPanel: Configuration panel UI - ComponentPalette: Component palette sidebar - Toolbar: Top toolbar with controls  **Example**: ```typescript const uiOverrides = {   Toolbar: (props) => (     <div class="my-toolbar">       <button onClick={props.onUndo}>Undo</button>       <button onClick={props.onRedo}>Redo</button>     </div>   ) }; ```
+     */
+    uiOverrides?: UIComponentOverrides;
+  }
+  /**
+   * GridItemWrapper Component
+   * ==========================
+   * Library component wrapping individual grid items with drag/resize/selection.
+   * **Tag**: `<grid-item-wrapper>`
+   * **Shadow DOM**: Disabled (required for interact.js compatibility)
+   * **Dynamic rendering**: Uses ComponentDefinition.render() from registry
+   */
+  interface GridItemWrapper {
+    /**
+     * Breakpoint configuration (for viewer mode)  **Purpose**: Define responsive breakpoints and layout modes **Source**: grid-viewer → canvas-section-viewer → grid-item-wrapper **Used by**: render() to determine auto-stacking and layout inheritance  **Note**: When in builder mode (viewerMode=false), this is ignored and stateInstance.breakpoints is used instead. When in viewer mode (viewerMode=true), this prop is optional (defaults to DEFAULT_BREAKPOINTS).
+     */
+    breakpoints?: any;
+    /**
+     * All items in the canvas (for viewer mode auto-layout)  **Purpose**: Calculate mobile auto-layout positions **Source**: grid-viewer → canvas-section-viewer → grid-item-wrapper **Used by**: render() to calculate stacked positions in mobile viewport  **Note**: When in builder mode (viewerMode=false), this is ignored and gridState.canvases is used instead. When in viewer mode (viewerMode=true), this prop is required for mobile auto-layout.
+     */
+    canvasItems?: GridItem[];
+    /**
+     * Component registry (from parent grid-builder)  **Source**: grid-builder component (built from components prop) **Structure**: ComponentRegistry service instance **Purpose**: Look up component definitions for dynamic rendering  **Instance-based architecture**: Each grid-builder instance has its own registry, supporting multiple grids with different component sets on the same page. Prop drilling (3 levels) is the correct pattern for this use case.
+     */
+    componentRegistry?: ComponentRegistry;
+    /**
+     * Grid configuration options  **Optional**: Customizes grid system behavior **Passed from**: grid-builder → canvas-section → grid-item-wrapper **Used for**: Grid size calculations with constraints
+     */
+    config?: GridConfig;
+    /**
+     * Current viewport (for viewer mode)  **Purpose**: Determine which layout to render (desktop or mobile) **Source**: grid-viewer → canvas-section-viewer → grid-item-wrapper **Used by**: render() to select appropriate layout  **Note**: When in builder mode (viewerMode=false), this is ignored and gridState.currentViewport is used instead. When in viewer mode (viewerMode=true), this prop is required.
+     */
+    currentViewport?: string;
+    /**
+     * DOM cache service instance (passed from grid-builder)  **Required for editing mode** (grid-builder provides this) **Optional for viewer mode** (grid-viewer doesn't need it)  **Source**: grid-builder → canvas-section → grid-item-wrapper **Purpose**: Support multiple grid-builder instances with isolated DOM caches **Used by**: DragHandler, ResizeHandler for fast canvas element lookups
+     */
+    domCacheInstance?: DOMCache;
+    /**
+     * Error adapter service instance (passed from grid-builder)  **Required for editing mode** (grid-builder provides this) **Optional for viewer mode** (grid-viewer doesn't need it)  **Source**: grid-builder → canvas-section → grid-item-wrapper **Purpose**: Support multiple grid-builder instances with isolated error handling **Used by**: Error boundary for handling component render errors  **Error isolation strategy**: - Item-level errors (component render failures) are caught by error boundary - Error adapter converts to GridErrorEventDetail and emits to EventManager - Other grid items continue functioning (isolation achieved) - Fallback UI shown for failed item (graceful degradation)
+     */
+    errorAdapterInstance?: GridErrorAdapter;
+    /**
+     * Event manager service instance (passed from grid-builder)  **Required for editing mode** (grid-builder provides this) **Optional for viewer mode** (grid-viewer doesn't need it)  **Source**: grid-builder → canvas-section → grid-item-wrapper **Purpose**: Support multiple grid-builder instances with isolated services
+     */
+    eventManagerInstance?: EventManager;
+    /**
+     * Grid item data (position, size, type, etc.)  **Source**: Parent canvas-section component **Contains**: id, canvasId, type, name, layouts (desktop/mobile), zIndex, config
+     */
+    item: GridItem;
+    /**
+     * Deletion hook (from parent grid-builder)  **Source**: grid-builder component (from onBeforeDelete prop) **Purpose**: Allow host app to intercept deletion requests  **Hook behavior**: - Called before deleting a component - Receives context with item data - Returns true/false or Promise<boolean> - If false, deletion is cancelled - If true, deletion proceeds  **Default**: If not provided, components delete immediately
+     */
+    onBeforeDelete?: (context: any) => boolean | Promise<boolean>;
+    /**
+     * Render version (force re-render trigger)  **Source**: Parent canvas-section (incremented on resize) **Purpose**: Force grid calculation refresh when container resizes
+     */
+    renderVersion?: number;
+    /**
+     * State manager instance (passed from grid-builder)  **Required for editing mode** (grid-builder provides this) **Optional for viewer mode** (grid-viewer doesn't need it)  **Source**: grid-builder → canvas-section → grid-item-wrapper **Purpose**: Support multiple grid-builder instances with isolated state **Used by**: DragHandler, ResizeHandler for accessing canvases and viewport
+     */
+    stateInstance?: any;
+    /**
+     * Theme configuration (from parent grid-builder)  **Source**: grid-builder → canvas-section → grid-item-wrapper **Purpose**: Access theme.selectionColor for component selection styling  **Fallback chain for selection color**: 1. ComponentDefinition.selectionColor (per-component override) 2. theme.selectionColor (global theme default) 3. "#f59e0b" (hardcoded fallback - amber/gold)  **Why passed**: grid-item-wrapper doesn't have access to global theme, so must be passed through component tree
+     */
+    theme?: any;
+    /**
+     * Undo/Redo manager service instance (passed from grid-builder)  **Required for editing mode** (grid-builder provides this) **Optional for viewer mode** (grid-viewer doesn't need it)  **Source**: grid-builder → canvas-section → grid-item-wrapper **Purpose**: Support multiple grid-builder instances with isolated undo/redo stacks **Used by**: handleItemUpdate() for pushing move/resize commands to undo stack
+     */
+    undoRedoManagerInstance?: UndoRedoManager;
+    /**
+     * Viewer mode flag  **Purpose**: Disable editing features for rendering-only mode **Default**: false (editing enabled)  **When true**: - ❌ No drag-and-drop handlers - ❌ No resize handles - ❌ No item header (drag handle) - ❌ No delete button - ❌ No selection state - ✅ Only renders component content  **Use case**: grid-viewer component for display-only mode
+     * @default false
+     */
+    viewerMode?: boolean;
+    /**
+     * Virtual renderer service instance (passed from grid-builder)  **Required for editing mode** (grid-builder provides this) **Optional for viewer mode** (grid-viewer doesn't need it)  **Source**: grid-builder → canvas-section → grid-item-wrapper **Purpose**: Support multiple grid-builder instances with isolated services
+     */
+    virtualRendererInstance?: VirtualRendererService;
+  }
+  /**
+   * GridViewer Component
+   * ====================
+   * Rendering-only grid component for displaying layouts created in grid-builder.
+   * **Tag**: `<grid-viewer>`
+   * **Shadow DOM**: Disabled (consistent with grid-builder)
+   * **Reactivity**: Uses local store OR shared store (via apiKey prop)
+   * **Key differences from grid-builder**:
+   * - No interact.js dependency (80% bundle size reduction)
+   * - No palette, config panel, or editing UI
+   * - Simplified state (no selection, no z-index tracking)
+   * - Rendering-only canvas sections
+   * **Multi-instance sharing**:
+   * - **Local mode** (default): Each instance has independent state
+   * - **Shared mode** (with apiKey): Multiple instances share layout data
+   * - Same SharedStateRegistry pattern as grid-builder
+   * - Use case: Multi-device preview (mobile + tablet + desktop side-by-side)
+   */
+  interface GridViewer {
+    /**
+     * API key for shared state across multiple instances  **Optional prop**: Enables multi-instance sharing **Purpose**: Multiple grid-viewer instances with same apiKey share layout data  **Use cases**: - Multi-device preview (mobile + tablet + desktop views side-by-side) - Collaborative viewing (multiple users viewing same layout) - Live updates across instances  **Shared data**: Canvas items and layouts **Instance-specific**: Current viewport (each instance can show different viewport)  **Example**: ```typescript // Instance 1: Mobile view <grid-viewer apiKey="demo-layout" breakpoints={{ mobile: 0, desktop: 768 }}></grid-viewer>  // Instance 2: Desktop view (shares data with Instance 1) <grid-viewer apiKey="demo-layout" breakpoints={{ mobile: 0, desktop: 768 }}></grid-viewer> ```  **Default**: undefined (local-only mode, no sharing)
+     */
+    apiKey?: string;
+    /**
+     * Breakpoint configuration for responsive layouts  **Optional prop**: Define custom responsive breakpoints **Default**: `{ mobile: { minWidth: 0, layoutMode: 'stack' }, desktop: { minWidth: 768, layoutMode: 'manual' } }` **Backwards compatible**: Existing desktop/mobile behavior maintained by default  **Should match builder config**: Use same breakpoints as builder for consistent behavior  **Examples**:  1. **Simple format** (min-width only): ```typescript <grid-viewer breakpoints={{ mobile: 0, desktop: 768 }}></grid-viewer> ```  2. **Full format** (3 breakpoints with layout modes): ```typescript <grid-viewer breakpoints={{   mobile: { minWidth: 0, layoutMode: 'stack' },   tablet: { minWidth: 768, layoutMode: 'inherit', inheritFrom: 'desktop' },   desktop: { minWidth: 1024, layoutMode: 'manual' } }}></grid-viewer> ```
+     */
+    breakpoints?: any;
+    /**
+     * Canvas metadata storage (host app responsibility)  **Optional prop**: Store canvas-level presentation metadata **Purpose**: Host app owns canvas metadata (titles, colors, settings)  **Structure**: Record<canvasId, any>  **Example**: ```typescript const canvasMetadata = {   'hero-section': {     backgroundColor: '#f0f4f8',     customSettings: { ... }   } }; ```
+     */
+    canvasMetadata?: Record<string, any>;
+    /**
+     * Component definitions registry  **Required prop**: Array of ComponentDefinition objects **Purpose**: Defines how to render each component type  **Must match builder definitions**: Same component types as used in builder  **Example**: ```typescript const components = [   {     type: 'header',     name: 'Header',     icon: '📄',     render: ({ itemId, config }) => (       <my-header itemId={itemId} config={config} />     )   } ]; ```
+     */
+    components: ComponentDefinition[];
+    /**
+     * Grid configuration options  **Optional prop**: Grid system configuration **Default**: Standard 2% grid with 10px-50px constraints  **Should match builder config**: Use same config as builder for consistent rendering
+     */
+    config?: GridConfig;
+    /**
+     * Initial state to display  **Optional prop**: Layout data to render **Accepts**: ViewerState or GridExport (both compatible)  **From builder export**: ```typescript const exportData = await builder.exportState(); viewer.initialState = exportData; // Type-safe! ```  **From API**: ```typescript const layout = await fetch('/api/layouts/123').then(r => r.json()); viewer.initialState = layout; ```
+     */
+    initialState?: Partial<ViewerState> | GridExport;
+    /**
+     * Unique instance identifier for multi-instance scenarios  **Optional prop**: Auto-generated if not provided **Purpose**: Track individual instances in SharedStateRegistry  **Auto-generation**: If not provided, generates: `grid-viewer-{timestamp}-{random}`  **Only relevant when**: apiKey is provided (shared mode) **Ignored when**: apiKey is undefined (local-only mode)
+     */
+    instanceId?: string;
+    /**
+     * Visual theme customization  **Optional prop**: Customizes colors, fonts, and styling **Default**: Bootstrap-inspired blue theme
+     */
+    theme?: GridBuilderTheme;
+  }
+  interface ImageGallery {
+    /**
+     * @default "#f5f5f5"
+     */
+    backgroundColor?: string;
+    /**
+     * @default 6
+     */
+    imageCount?: number;
+  }
+  interface ImageGalleryDragClone {}
+  interface LayerPanel {
+    /**
+     * Grid Builder API instance (instance-based architecture)  **Required**: Must be provided or component won't display items **Source**: Host app (blog-app) passes this via prop **Purpose**: Access instance-based state for multi-instance support  **Why needed**: Grid-builder uses its own state instance. The layer panel must access that same instance to display items correctly.
+     */
+    api?: any;
+    /**
+     * Canvas metadata for folder titles Map of canvasId → { title: string }
+     * @default {}
+     */
+    canvasMetadata?: Record<string, { title: string }>;
+    /**
+     * Height of folder header in pixels
+     * @default 40
+     */
+    folderHeight?: number;
+    /**
+     * Height of layer item in pixels
+     * @default 40
+     */
+    itemHeight?: number;
+    /**
+     * Search input debounce delay in milliseconds
+     * @default 300
+     */
+    searchDebounceMs?: number;
+    /**
+     * Pre-render buffer in pixels (renders items outside viewport)
+     * @default 200
+     */
+    virtualBufferPx?: number;
+    /**
+     * Number of items to render in virtual window
+     * @default 50
+     */
+    virtualWindowSize?: number;
+  }
+  interface LayerPanelFolderHeader {
+    /**
+     * Canvas ID this folder represents
+     */
+    canvasId: string;
+    /**
+     * Display title for the canvas
+     */
+    canvasTitle: string;
+    /**
+     * Whether this canvas is the active canvas
+     * @default false
+     */
+    isActive?: boolean;
+    /**
+     * Whether this folder has no items matching current search When true, folder appears dimmed
+     * @default false
+     */
+    isEmpty?: boolean;
+    /**
+     * Whether this folder is currently expanded
+     * @default true
+     */
+    isExpanded?: boolean;
+    /**
+     * Number of items in this canvas
+     */
+    itemCount: number;
+    /**
+     * Emitted when user clicks the folder header to activate canvas
+     */
+    onActivateCanvas?: (
+      event: LayerPanelFolderHeaderCustomEvent<{ canvasId: string }>,
+    ) => void;
+    /**
+     * Emitted when user double-clicks the folder header to scroll canvas into view
+     */
+    onScrollToCanvas?: (
+      event: LayerPanelFolderHeaderCustomEvent<{ canvasId: string }>,
+    ) => void;
+    /**
+     * Emitted when user clicks the expand/collapse toggle
+     */
+    onToggleFolder?: (
+      event: LayerPanelFolderHeaderCustomEvent<{ canvasId: string }>,
+    ) => void;
+    /**
+     * Total item count (for showing "0 / 15" during search)
+     */
+    totalItemCount?: number;
+  }
+  interface LayerPanelItem {
+    /**
+     * Canvas ID containing this item
+     */
+    canvasId: string;
+    /**
+     * Whether this item is currently active/selected
+     * @default false
+     */
+    isActive?: boolean;
+    /**
+     * Unique ID of the grid item this represents
+     */
+    itemId: string;
+    /**
+     * Display name of the item
+     */
+    name: string;
+    /**
+     * Emitted when user starts dragging this item for reordering
+     */
+    onLayerItemDragStart?: (
+      event: LayerPanelItemCustomEvent<{
+        itemId: string;
+        canvasId: string;
+        zIndex: number;
+      }>,
+    ) => void;
+    /**
+     * Emitted when user drops this item at a new position
+     */
+    onLayerItemDrop?: (
+      event: LayerPanelItemCustomEvent<{
+        itemId: string;
+        canvasId: string;
+        oldZIndex: number;
+        newZIndex: number;
+      }>,
+    ) => void;
+    /**
+     * Emitted when user clicks on this item
+     */
+    onLayerItemSelect?: (
+      event: LayerPanelItemCustomEvent<{ itemId: string; canvasId: string }>,
+    ) => void;
+    /**
+     * Component type (for icon display)
+     */
+    type: string;
+    /**
+     * Current z-index value
+     */
     zIndex: number;
-  }>) => void;
-        /**
-          * Emitted when user drops this item at a new position
-         */
-        "onLayerItemDrop"?: (event: LayerPanelItemCustomEvent<{
-    itemId: string;
-    canvasId: string;
-    oldZIndex: number;
-    newZIndex: number;
-  }>) => void;
-        /**
-          * Emitted when user clicks on this item
-         */
-        "onLayerItemSelect"?: (event: LayerPanelItemCustomEvent<{ itemId: string; canvasId: string }>) => void;
-        /**
-          * Component type (for icon display)
-         */
-        "type": string;
-        /**
-          * Current z-index value
-         */
-        "zIndex": number;
-    }
-    interface LiveData {
-        /**
-          * @default "#b2ebf2"
-         */
-        "backgroundColor"?: string;
-    }
-    interface LiveDataDragClone {
-    }
+  }
+  interface LiveData {
     /**
-     * Section Editor Panel Component
-     * ===============================
-     * Demo Component - NOT Part of Library
-     * This component demonstrates how to build custom UI for editing canvas metadata
-     * in applications using the grid-builder library.
-     * Purpose:
-     * --------
-     * Shows how to create a side panel for editing section/canvas settings.
-     * This is completely custom to your application - the library doesn't provide this.
-     * Library Relationship:
-     * ---------------------
-     * - Library owns: Component placement, layouts, zIndex (grid state)
-     * - Host app owns: Canvas metadata (titles, colors, settings) - THIS COMPONENT
-     * - Metadata flows: App → Library via canvasMetadata prop
-     * Pattern Demonstrated:
-     * ---------------------
-     * 1. User clicks section header (demo UI)
-     * 2. App opens this panel (demo component)
-     * 3. User edits title/color
-     * 4. App updates canvasMetadata state
-     * 5. Library receives updated metadata via prop
-     * 6. Library passes backgroundColor to canvas-section
-     * Why This Approach:
-     * ------------------
-     * - Library stays focused on grid logic
-     * - Host app controls all presentation/metadata UI
-     * - You can use any UI framework (Material, Bootstrap, etc.)
-     * - Complete flexibility over settings panel design
+     * @default "#b2ebf2"
      */
-    interface SectionEditorPanel {
-        /**
-          * Panel open/closed state Controlled by parent component (blog-app)
-          * @default false
-         */
-        "isOpen"?: boolean;
-        /**
-          * Event: Close panel Fired when user clicks Cancel, Save, or overlay
-         */
-        "onClosePanel"?: (event: SectionEditorPanelCustomEvent<void>) => void;
-        /**
-          * Event: Delete section Fired when user clicks Delete button Parent handles canvas removal
-         */
-        "onDeleteSection"?: (event: SectionEditorPanelCustomEvent<{ canvasId: string }>) => void;
-        /**
-          * Event: Preview color change Fired when user changes color picker (live preview) Parent temporarily updates canvas background
-         */
-        "onPreviewColorChange"?: (event: SectionEditorPanelCustomEvent<{
-    canvasId: string;
-    backgroundColor: string;
-  }>) => void;
-        /**
-          * Event: Preview title change Fired when user types in title input (live preview) Parent temporarily updates canvas title
-         */
-        "onPreviewTitleChange"?: (event: SectionEditorPanelCustomEvent<{
-    canvasId: string;
-    title: string;
-  }>) => void;
-        /**
-          * Event: Update section Fired when user clicks Save with edited values Parent updates canvasMetadata state in response
-         */
-        "onUpdateSection"?: (event: SectionEditorPanelCustomEvent<{
-    canvasId: string;
-    title: string;
-    backgroundColor: string;
-  }>) => void;
-        /**
-          * Section data being edited Passed from parent when user clicks section header
-          * @default null
-         */
-        "sectionData"?: SectionEditorData | null;
-    }
-    interface IntrinsicElements {
-        "blog-app": BlogApp;
-        "blog-article": BlogArticle;
-        "blog-article-drag-clone": BlogArticleDragClone;
-        "blog-button": BlogButton;
-        "blog-button-drag-clone": BlogButtonDragClone;
-        "blog-header": BlogHeader;
-        "blog-header-drag-clone": BlogHeaderDragClone;
-        "blog-image": BlogImage;
-        "blog-image-drag-clone": BlogImageDragClone;
-        "canvas-header": CanvasHeader;
-        "canvas-section": CanvasSection;
-        "canvas-section-viewer": CanvasSectionViewer;
-        "component-palette": ComponentPalette;
-        "config-panel": ConfigPanel;
-        "confirmation-modal": ConfirmationModal;
-        "custom-config-panel": CustomConfigPanel;
-        "custom-drag-clone": CustomDragClone;
-        "custom-palette-item": CustomPaletteItem;
-        "dashboard-widget": DashboardWidget;
-        "dashboard-widget-drag-clone": DashboardWidgetDragClone;
-        "error-boundary": ErrorBoundary;
-        "grid-builder": GridBuilder;
-        "grid-item-wrapper": GridItemWrapper;
-        "grid-viewer": GridViewer;
-        "image-gallery": ImageGallery;
-        "image-gallery-drag-clone": ImageGalleryDragClone;
-        "layer-panel": LayerPanel;
-        "layer-panel-folder-header": LayerPanelFolderHeader;
-        "layer-panel-item": LayerPanelItem;
-        "live-data": LiveData;
-        "live-data-drag-clone": LiveDataDragClone;
-        "section-editor-panel": SectionEditorPanel;
-    }
+    backgroundColor?: string;
+  }
+  interface LiveDataDragClone {}
+  /**
+   * Section Editor Panel Component
+   * ===============================
+   * Demo Component - NOT Part of Library
+   * This component demonstrates how to build custom UI for editing canvas metadata
+   * in applications using the grid-builder library.
+   * Purpose:
+   * --------
+   * Shows how to create a side panel for editing section/canvas settings.
+   * This is completely custom to your application - the library doesn't provide this.
+   * Library Relationship:
+   * ---------------------
+   * - Library owns: Component placement, layouts, zIndex (grid state)
+   * - Host app owns: Canvas metadata (titles, colors, settings) - THIS COMPONENT
+   * - Metadata flows: App → Library via canvasMetadata prop
+   * Pattern Demonstrated:
+   * ---------------------
+   * 1. User clicks section header (demo UI)
+   * 2. App opens this panel (demo component)
+   * 3. User edits title/color
+   * 4. App updates canvasMetadata state
+   * 5. Library receives updated metadata via prop
+   * 6. Library passes backgroundColor to canvas-section
+   * Why This Approach:
+   * ------------------
+   * - Library stays focused on grid logic
+   * - Host app controls all presentation/metadata UI
+   * - You can use any UI framework (Material, Bootstrap, etc.)
+   * - Complete flexibility over settings panel design
+   */
+  interface SectionEditorPanel {
+    /**
+     * Panel open/closed state Controlled by parent component (blog-app)
+     * @default false
+     */
+    isOpen?: boolean;
+    /**
+     * Event: Close panel Fired when user clicks Cancel, Save, or overlay
+     */
+    onClosePanel?: (event: SectionEditorPanelCustomEvent<void>) => void;
+    /**
+     * Event: Delete section Fired when user clicks Delete button Parent handles canvas removal
+     */
+    onDeleteSection?: (
+      event: SectionEditorPanelCustomEvent<{ canvasId: string }>,
+    ) => void;
+    /**
+     * Event: Preview color change Fired when user changes color picker (live preview) Parent temporarily updates canvas background
+     */
+    onPreviewColorChange?: (
+      event: SectionEditorPanelCustomEvent<{
+        canvasId: string;
+        backgroundColor: string;
+      }>,
+    ) => void;
+    /**
+     * Event: Preview title change Fired when user types in title input (live preview) Parent temporarily updates canvas title
+     */
+    onPreviewTitleChange?: (
+      event: SectionEditorPanelCustomEvent<{
+        canvasId: string;
+        title: string;
+      }>,
+    ) => void;
+    /**
+     * Event: Update section Fired when user clicks Save with edited values Parent updates canvasMetadata state in response
+     */
+    onUpdateSection?: (
+      event: SectionEditorPanelCustomEvent<{
+        canvasId: string;
+        title: string;
+        backgroundColor: string;
+      }>,
+    ) => void;
+    /**
+     * Section data being edited Passed from parent when user clicks section header
+     * @default null
+     */
+    sectionData?: SectionEditorData | null;
+  }
+  interface IntrinsicElements {
+    "blog-app": BlogApp;
+    "blog-article": BlogArticle;
+    "blog-article-drag-clone": BlogArticleDragClone;
+    "blog-button": BlogButton;
+    "blog-button-drag-clone": BlogButtonDragClone;
+    "blog-header": BlogHeader;
+    "blog-header-drag-clone": BlogHeaderDragClone;
+    "blog-image": BlogImage;
+    "blog-image-drag-clone": BlogImageDragClone;
+    "canvas-header": CanvasHeader;
+    "canvas-section": CanvasSection;
+    "canvas-section-viewer": CanvasSectionViewer;
+    "component-palette": ComponentPalette;
+    "config-panel": ConfigPanel;
+    "confirmation-modal": ConfirmationModal;
+    "custom-config-panel": CustomConfigPanel;
+    "custom-drag-clone": CustomDragClone;
+    "custom-palette-item": CustomPaletteItem;
+    "dashboard-widget": DashboardWidget;
+    "dashboard-widget-drag-clone": DashboardWidgetDragClone;
+    "error-boundary": ErrorBoundary;
+    "grid-builder": GridBuilder;
+    "grid-item-wrapper": GridItemWrapper;
+    "grid-viewer": GridViewer;
+    "image-gallery": ImageGallery;
+    "image-gallery-drag-clone": ImageGalleryDragClone;
+    "layer-panel": LayerPanel;
+    "layer-panel-folder-header": LayerPanelFolderHeader;
+    "layer-panel-item": LayerPanelItem;
+    "live-data": LiveData;
+    "live-data-drag-clone": LiveDataDragClone;
+    "section-editor-panel": SectionEditorPanel;
+  }
 }
 export { LocalJSX as JSX };
 declare module "@stencil/core" {
-    export namespace JSX {
-        interface IntrinsicElements {
-            "blog-app": LocalJSX.BlogApp & JSXBase.HTMLAttributes<HTMLBlogAppElement>;
-            "blog-article": LocalJSX.BlogArticle & JSXBase.HTMLAttributes<HTMLBlogArticleElement>;
-            "blog-article-drag-clone": LocalJSX.BlogArticleDragClone & JSXBase.HTMLAttributes<HTMLBlogArticleDragCloneElement>;
-            "blog-button": LocalJSX.BlogButton & JSXBase.HTMLAttributes<HTMLBlogButtonElement>;
-            "blog-button-drag-clone": LocalJSX.BlogButtonDragClone & JSXBase.HTMLAttributes<HTMLBlogButtonDragCloneElement>;
-            "blog-header": LocalJSX.BlogHeader & JSXBase.HTMLAttributes<HTMLBlogHeaderElement>;
-            "blog-header-drag-clone": LocalJSX.BlogHeaderDragClone & JSXBase.HTMLAttributes<HTMLBlogHeaderDragCloneElement>;
-            "blog-image": LocalJSX.BlogImage & JSXBase.HTMLAttributes<HTMLBlogImageElement>;
-            "blog-image-drag-clone": LocalJSX.BlogImageDragClone & JSXBase.HTMLAttributes<HTMLBlogImageDragCloneElement>;
-            /**
-             * CanvasHeader Component
-             * ======================
-             * Declarative header component for canvas sections.
-             * **Tag**: `<canvas-header>`
-             * **Shadow DOM**: Disabled (matches blog-app styling)
-             */
-            "canvas-header": LocalJSX.CanvasHeader & JSXBase.HTMLAttributes<HTMLCanvasHeaderElement>;
-            /**
-             * CanvasSection Component
-             * =======================
-             * Library component providing individual canvas dropzone.
-             * **Tag**: `<canvas-section>`
-             * **Shadow DOM**: Disabled (required for interact.js compatibility)
-             * **Reactivity**: Listens to gridState changes via StencilJS store
-             */
-            "canvas-section": LocalJSX.CanvasSection & JSXBase.HTMLAttributes<HTMLCanvasSectionElement>;
-            /**
-             * CanvasSectionViewer Component
-             * ==============================
-             * Rendering-only canvas component for grid-viewer.
-             * **Tag**: `<canvas-section-viewer>`
-             * **Shadow DOM**: Disabled (consistent with canvas-section)
-             * **Reactivity**: Props-based (no global state subscription)
-             */
-            "canvas-section-viewer": LocalJSX.CanvasSectionViewer & JSXBase.HTMLAttributes<HTMLCanvasSectionViewerElement>;
-            /**
-             * ComponentPalette Component
-             * ===========================
-             * Library component providing draggable component palette UI.
-             * **Tag**: `<component-palette>`
-             * **Shadow DOM**: Disabled (for consistency with other components)
-             * **Reactivity**: Re-renders when components prop changes
-             * ## Usage Patterns
-             * **Pattern 1: Default (inside grid-builder)**
-             * ```typescript
-             * // Palette automatically rendered by grid-builder
-             * <grid-builder components={componentDefinitions} />
-             * ```
-             * **Pattern 2: Independent placement**
-             * ```typescript
-             * // Place palette anywhere in your app
-             * <div class="my-layout">
-             *   <aside class="sidebar">
-             *     <component-palette
-             *       components={componentDefinitions}
-             *       config={gridConfig}
-             *     />
-             *   </aside>
-             *   <main>
-             *     <grid-builder
-             *       components={componentDefinitions}
-             *       config={gridConfig}
-             *       uiOverrides={{
-             *         ComponentPalette: () => null  // Hide default palette
-             *       }}
-             *     />
-             *   </main>
-             * </div>
-             * ```
-             * **Pattern 3: Custom wrapper component**
-             * ```typescript
-             * // Wrap in your own component for styling
-             * @Component ({ tag: 'my-palette-sidebar' })
-             * export class MyPaletteSidebar {
-             * @Prop () components: ComponentDefinition[];
-             * render() {
-             * return (
-             *  <div class="custom-sidebar">
-             *    <h3>Components</h3>
-             *    <component-palette components={this.components} />
-             *  </div>
-             * );
-             * }
-             * }
-             * ```
-             * ## Key Features
-             * - **Self-contained**: Works independently of grid-builder
-             * - **Drag/drop ready**: Uses interact.js for drag functionality
-             * - **Flexible placement**: Can be rendered anywhere in DOM
-             * - **Works across boundaries**: Drag from palette to any canvas-section
-             */
-            "component-palette": LocalJSX.ComponentPalette & JSXBase.HTMLAttributes<HTMLComponentPaletteElement>;
-            /**
-             * ConfigPanel Component
-             * =====================
-             * Library component providing configuration panel with auto-generated and custom forms.
-             * **Tag**: `<config-panel>`
-             * **Shadow DOM**: Disabled (for consistency with other components)
-             */
-            "config-panel": LocalJSX.ConfigPanel & JSXBase.HTMLAttributes<HTMLConfigPanelElement>;
-            /**
-             * Confirmation Modal Component
-             * =============================
-             * Demo Component - NOT Part of Library
-             * This component demonstrates how to implement the grid-builder library's
-             * deletion hook system with a custom confirmation modal.
-             * Library Feature Being Demonstrated:
-             * -----------------------------------
-             * This modal is used with the library's **onBeforeDelete hook** system.
-             * How It Works:
-             * -------------
-             * 1. Library calls onBeforeDelete hook when user deletes component
-             * 2. Hook returns a Promise that doesn't resolve immediately
-             * 3. Host app shows this modal (or any modal library)
-             * 4. User clicks "Delete" or "Cancel"
-             * 5. Modal fires confirm/cancel event
-             * 6. Host app resolves Promise with true/false
-             * 7. Library proceeds with or cancels deletion
-             * Code Flow Example:
-             * ------------------
-             * ```typescript
-             * // In parent component (blog-app.tsx):
-             * private handleBeforeDelete = (context: DeletionHookContext): Promise<boolean> => {
-             *   return new Promise((resolve) => {
-             *     this.deleteResolve = resolve;
-             *     this.isConfirmModalOpen = true;  // Show this modal
-             *   });
-             * };
-             * private handleConfirmDelete = () => {
-             *   this.deleteResolve(true);   // Tell library to proceed
-             * };
-             * private handleCancelDelete = () => {
-             *   this.deleteResolve(false);  // Tell library to cancel
-             * };
-             * ```
-             * Why This Pattern:
-             * -----------------
-             * - **Library agnostic**: Library doesn't provide modal UI
-             * - **Flexibility**: Use any modal library (Material, Bootstrap, Ant Design, etc.)
-             * - **Customization**: Full control over modal appearance and behavior
-             * - **Async support**: Can make API calls before resolving
-             * Alternative Implementations:
-             * ---------------------------
-             * You could replace this component with:
-             * - Material Design modal
-             * - Bootstrap modal
-             * - Ant Design modal
-             * - Native browser confirm() (not recommended)
-             * - Custom modal from your design system
-             * The library doesn't care what modal you use - it just waits for the
-             * Promise to resolve with true/false.
-             */
-            "confirmation-modal": LocalJSX.ConfirmationModal & JSXBase.HTMLAttributes<HTMLConfirmationModalElement>;
-            "custom-config-panel": LocalJSX.CustomConfigPanel & JSXBase.HTMLAttributes<HTMLCustomConfigPanelElement>;
-            /**
-             * Custom Drag Clone Component
-             * ============================
-             * Custom drag clone that shows a visual preview of the component being dragged.
-             * Each component type has a unique appearance that matches what will be placed
-             * on the canvas, helping with visual alignment and user understanding.
-             * The component fills the exact width and height provided, scaled to match
-             * the actual drop size.
-             */
-            "custom-drag-clone": LocalJSX.CustomDragClone & JSXBase.HTMLAttributes<HTMLCustomDragCloneElement>;
-            /**
-             * Custom Palette Item Component
-             * ==============================
-             * Example custom palette item that shows how consumers can create
-             * fully customized palette entries for their components.
-             * Updated to display SVG icons on top with titles below (similar to UI builder pattern)
-             */
-            "custom-palette-item": LocalJSX.CustomPaletteItem & JSXBase.HTMLAttributes<HTMLCustomPaletteItemElement>;
-            "dashboard-widget": LocalJSX.DashboardWidget & JSXBase.HTMLAttributes<HTMLDashboardWidgetElement>;
-            "dashboard-widget-drag-clone": LocalJSX.DashboardWidgetDragClone & JSXBase.HTMLAttributes<HTMLDashboardWidgetDragCloneElement>;
-            /**
-             * ErrorBoundary Component
-             * ========================
-             * Generic error boundary for catching component render errors.
-             * **Tag**: `<error-boundary>`
-             * **Shadow DOM**: Disabled (allows slot content to access parent styles)
-             * **Reusable**: Zero dependencies, can be extracted to standalone package
-             */
-            "error-boundary": LocalJSX.ErrorBoundary & JSXBase.HTMLAttributes<HTMLErrorBoundaryElement>;
-            /**
-             * GridBuilder Component
-             * ======================
-             * Main library component providing complete grid builder functionality.
-             * **Tag**: `<grid-builder>`
-             * **Shadow DOM**: Disabled (required for interact.js compatibility)
-             * **Reactivity**: Listens to gridState changes via StencilJS store
-             */
-            "grid-builder": LocalJSX.GridBuilder & JSXBase.HTMLAttributes<HTMLGridBuilderElement>;
-            /**
-             * GridItemWrapper Component
-             * ==========================
-             * Library component wrapping individual grid items with drag/resize/selection.
-             * **Tag**: `<grid-item-wrapper>`
-             * **Shadow DOM**: Disabled (required for interact.js compatibility)
-             * **Dynamic rendering**: Uses ComponentDefinition.render() from registry
-             */
-            "grid-item-wrapper": LocalJSX.GridItemWrapper & JSXBase.HTMLAttributes<HTMLGridItemWrapperElement>;
-            /**
-             * GridViewer Component
-             * ====================
-             * Rendering-only grid component for displaying layouts created in grid-builder.
-             * **Tag**: `<grid-viewer>`
-             * **Shadow DOM**: Disabled (consistent with grid-builder)
-             * **Reactivity**: Uses local store OR shared store (via apiKey prop)
-             * **Key differences from grid-builder**:
-             * - No interact.js dependency (80% bundle size reduction)
-             * - No palette, config panel, or editing UI
-             * - Simplified state (no selection, no z-index tracking)
-             * - Rendering-only canvas sections
-             * **Multi-instance sharing**:
-             * - **Local mode** (default): Each instance has independent state
-             * - **Shared mode** (with apiKey): Multiple instances share layout data
-             * - Same SharedStateRegistry pattern as grid-builder
-             * - Use case: Multi-device preview (mobile + tablet + desktop side-by-side)
-             */
-            "grid-viewer": LocalJSX.GridViewer & JSXBase.HTMLAttributes<HTMLGridViewerElement>;
-            "image-gallery": LocalJSX.ImageGallery & JSXBase.HTMLAttributes<HTMLImageGalleryElement>;
-            "image-gallery-drag-clone": LocalJSX.ImageGalleryDragClone & JSXBase.HTMLAttributes<HTMLImageGalleryDragCloneElement>;
-            "layer-panel": LocalJSX.LayerPanel & JSXBase.HTMLAttributes<HTMLLayerPanelElement>;
-            "layer-panel-folder-header": LocalJSX.LayerPanelFolderHeader & JSXBase.HTMLAttributes<HTMLLayerPanelFolderHeaderElement>;
-            "layer-panel-item": LocalJSX.LayerPanelItem & JSXBase.HTMLAttributes<HTMLLayerPanelItemElement>;
-            "live-data": LocalJSX.LiveData & JSXBase.HTMLAttributes<HTMLLiveDataElement>;
-            "live-data-drag-clone": LocalJSX.LiveDataDragClone & JSXBase.HTMLAttributes<HTMLLiveDataDragCloneElement>;
-            /**
-             * Section Editor Panel Component
-             * ===============================
-             * Demo Component - NOT Part of Library
-             * This component demonstrates how to build custom UI for editing canvas metadata
-             * in applications using the grid-builder library.
-             * Purpose:
-             * --------
-             * Shows how to create a side panel for editing section/canvas settings.
-             * This is completely custom to your application - the library doesn't provide this.
-             * Library Relationship:
-             * ---------------------
-             * - Library owns: Component placement, layouts, zIndex (grid state)
-             * - Host app owns: Canvas metadata (titles, colors, settings) - THIS COMPONENT
-             * - Metadata flows: App → Library via canvasMetadata prop
-             * Pattern Demonstrated:
-             * ---------------------
-             * 1. User clicks section header (demo UI)
-             * 2. App opens this panel (demo component)
-             * 3. User edits title/color
-             * 4. App updates canvasMetadata state
-             * 5. Library receives updated metadata via prop
-             * 6. Library passes backgroundColor to canvas-section
-             * Why This Approach:
-             * ------------------
-             * - Library stays focused on grid logic
-             * - Host app controls all presentation/metadata UI
-             * - You can use any UI framework (Material, Bootstrap, etc.)
-             * - Complete flexibility over settings panel design
-             */
-            "section-editor-panel": LocalJSX.SectionEditorPanel & JSXBase.HTMLAttributes<HTMLSectionEditorPanelElement>;
-        }
+  export namespace JSX {
+    interface IntrinsicElements {
+      "blog-app": LocalJSX.BlogApp & JSXBase.HTMLAttributes<HTMLBlogAppElement>;
+      "blog-article": LocalJSX.BlogArticle &
+        JSXBase.HTMLAttributes<HTMLBlogArticleElement>;
+      "blog-article-drag-clone": LocalJSX.BlogArticleDragClone &
+        JSXBase.HTMLAttributes<HTMLBlogArticleDragCloneElement>;
+      "blog-button": LocalJSX.BlogButton &
+        JSXBase.HTMLAttributes<HTMLBlogButtonElement>;
+      "blog-button-drag-clone": LocalJSX.BlogButtonDragClone &
+        JSXBase.HTMLAttributes<HTMLBlogButtonDragCloneElement>;
+      "blog-header": LocalJSX.BlogHeader &
+        JSXBase.HTMLAttributes<HTMLBlogHeaderElement>;
+      "blog-header-drag-clone": LocalJSX.BlogHeaderDragClone &
+        JSXBase.HTMLAttributes<HTMLBlogHeaderDragCloneElement>;
+      "blog-image": LocalJSX.BlogImage &
+        JSXBase.HTMLAttributes<HTMLBlogImageElement>;
+      "blog-image-drag-clone": LocalJSX.BlogImageDragClone &
+        JSXBase.HTMLAttributes<HTMLBlogImageDragCloneElement>;
+      /**
+       * CanvasHeader Component
+       * ======================
+       * Declarative header component for canvas sections.
+       * **Tag**: `<canvas-header>`
+       * **Shadow DOM**: Disabled (matches blog-app styling)
+       */
+      "canvas-header": LocalJSX.CanvasHeader &
+        JSXBase.HTMLAttributes<HTMLCanvasHeaderElement>;
+      /**
+       * CanvasSection Component
+       * =======================
+       * Library component providing individual canvas dropzone.
+       * **Tag**: `<canvas-section>`
+       * **Shadow DOM**: Disabled (required for interact.js compatibility)
+       * **Reactivity**: Listens to gridState changes via StencilJS store
+       */
+      "canvas-section": LocalJSX.CanvasSection &
+        JSXBase.HTMLAttributes<HTMLCanvasSectionElement>;
+      /**
+       * CanvasSectionViewer Component
+       * ==============================
+       * Rendering-only canvas component for grid-viewer.
+       * **Tag**: `<canvas-section-viewer>`
+       * **Shadow DOM**: Disabled (consistent with canvas-section)
+       * **Reactivity**: Props-based (no global state subscription)
+       */
+      "canvas-section-viewer": LocalJSX.CanvasSectionViewer &
+        JSXBase.HTMLAttributes<HTMLCanvasSectionViewerElement>;
+      /**
+       * ComponentPalette Component
+       * ===========================
+       * Library component providing draggable component palette UI.
+       * **Tag**: `<component-palette>`
+       * **Shadow DOM**: Disabled (for consistency with other components)
+       * **Reactivity**: Re-renders when components prop changes
+       * ## Usage Patterns
+       * **Pattern 1: Default (inside grid-builder)**
+       * ```typescript
+       * // Palette automatically rendered by grid-builder
+       * <grid-builder components={componentDefinitions} />
+       * ```
+       * **Pattern 2: Independent placement**
+       * ```typescript
+       * // Place palette anywhere in your app
+       * <div class="my-layout">
+       *   <aside class="sidebar">
+       *     <component-palette
+       *       components={componentDefinitions}
+       *       config={gridConfig}
+       *     />
+       *   </aside>
+       *   <main>
+       *     <grid-builder
+       *       components={componentDefinitions}
+       *       config={gridConfig}
+       *       uiOverrides={{
+       *         ComponentPalette: () => null  // Hide default palette
+       *       }}
+       *     />
+       *   </main>
+       * </div>
+       * ```
+       * **Pattern 3: Custom wrapper component**
+       * ```typescript
+       * // Wrap in your own component for styling
+       * @Component ({ tag: 'my-palette-sidebar' })
+       * export class MyPaletteSidebar {
+       * @Prop () components: ComponentDefinition[];
+       * render() {
+       * return (
+       *  <div class="custom-sidebar">
+       *    <h3>Components</h3>
+       *    <component-palette components={this.components} />
+       *  </div>
+       * );
+       * }
+       * }
+       * ```
+       * ## Key Features
+       * - **Self-contained**: Works independently of grid-builder
+       * - **Drag/drop ready**: Uses interact.js for drag functionality
+       * - **Flexible placement**: Can be rendered anywhere in DOM
+       * - **Works across boundaries**: Drag from palette to any canvas-section
+       */
+      "component-palette": LocalJSX.ComponentPalette &
+        JSXBase.HTMLAttributes<HTMLComponentPaletteElement>;
+      /**
+       * ConfigPanel Component
+       * =====================
+       * Library component providing configuration panel with auto-generated and custom forms.
+       * **Tag**: `<config-panel>`
+       * **Shadow DOM**: Disabled (for consistency with other components)
+       */
+      "config-panel": LocalJSX.ConfigPanel &
+        JSXBase.HTMLAttributes<HTMLConfigPanelElement>;
+      /**
+       * Confirmation Modal Component
+       * =============================
+       * Demo Component - NOT Part of Library
+       * This component demonstrates how to implement the grid-builder library's
+       * deletion hook system with a custom confirmation modal.
+       * Library Feature Being Demonstrated:
+       * -----------------------------------
+       * This modal is used with the library's **onBeforeDelete hook** system.
+       * How It Works:
+       * -------------
+       * 1. Library calls onBeforeDelete hook when user deletes component
+       * 2. Hook returns a Promise that doesn't resolve immediately
+       * 3. Host app shows this modal (or any modal library)
+       * 4. User clicks "Delete" or "Cancel"
+       * 5. Modal fires confirm/cancel event
+       * 6. Host app resolves Promise with true/false
+       * 7. Library proceeds with or cancels deletion
+       * Code Flow Example:
+       * ------------------
+       * ```typescript
+       * // In parent component (blog-app.tsx):
+       * private handleBeforeDelete = (context: DeletionHookContext): Promise<boolean> => {
+       *   return new Promise((resolve) => {
+       *     this.deleteResolve = resolve;
+       *     this.isConfirmModalOpen = true;  // Show this modal
+       *   });
+       * };
+       * private handleConfirmDelete = () => {
+       *   this.deleteResolve(true);   // Tell library to proceed
+       * };
+       * private handleCancelDelete = () => {
+       *   this.deleteResolve(false);  // Tell library to cancel
+       * };
+       * ```
+       * Why This Pattern:
+       * -----------------
+       * - **Library agnostic**: Library doesn't provide modal UI
+       * - **Flexibility**: Use any modal library (Material, Bootstrap, Ant Design, etc.)
+       * - **Customization**: Full control over modal appearance and behavior
+       * - **Async support**: Can make API calls before resolving
+       * Alternative Implementations:
+       * ---------------------------
+       * You could replace this component with:
+       * - Material Design modal
+       * - Bootstrap modal
+       * - Ant Design modal
+       * - Native browser confirm() (not recommended)
+       * - Custom modal from your design system
+       * The library doesn't care what modal you use - it just waits for the
+       * Promise to resolve with true/false.
+       */
+      "confirmation-modal": LocalJSX.ConfirmationModal &
+        JSXBase.HTMLAttributes<HTMLConfirmationModalElement>;
+      "custom-config-panel": LocalJSX.CustomConfigPanel &
+        JSXBase.HTMLAttributes<HTMLCustomConfigPanelElement>;
+      /**
+       * Custom Drag Clone Component
+       * ============================
+       * Custom drag clone that shows a visual preview of the component being dragged.
+       * Each component type has a unique appearance that matches what will be placed
+       * on the canvas, helping with visual alignment and user understanding.
+       * The component fills the exact width and height provided, scaled to match
+       * the actual drop size.
+       */
+      "custom-drag-clone": LocalJSX.CustomDragClone &
+        JSXBase.HTMLAttributes<HTMLCustomDragCloneElement>;
+      /**
+       * Custom Palette Item Component
+       * ==============================
+       * Example custom palette item that shows how consumers can create
+       * fully customized palette entries for their components.
+       * Updated to display SVG icons on top with titles below (similar to UI builder pattern)
+       */
+      "custom-palette-item": LocalJSX.CustomPaletteItem &
+        JSXBase.HTMLAttributes<HTMLCustomPaletteItemElement>;
+      "dashboard-widget": LocalJSX.DashboardWidget &
+        JSXBase.HTMLAttributes<HTMLDashboardWidgetElement>;
+      "dashboard-widget-drag-clone": LocalJSX.DashboardWidgetDragClone &
+        JSXBase.HTMLAttributes<HTMLDashboardWidgetDragCloneElement>;
+      /**
+       * ErrorBoundary Component
+       * ========================
+       * Generic error boundary for catching component render errors.
+       * **Tag**: `<error-boundary>`
+       * **Shadow DOM**: Disabled (allows slot content to access parent styles)
+       * **Reusable**: Zero dependencies, can be extracted to standalone package
+       */
+      "error-boundary": LocalJSX.ErrorBoundary &
+        JSXBase.HTMLAttributes<HTMLErrorBoundaryElement>;
+      /**
+       * GridBuilder Component
+       * ======================
+       * Main library component providing complete grid builder functionality.
+       * **Tag**: `<grid-builder>`
+       * **Shadow DOM**: Disabled (required for interact.js compatibility)
+       * **Reactivity**: Listens to gridState changes via StencilJS store
+       */
+      "grid-builder": LocalJSX.GridBuilder &
+        JSXBase.HTMLAttributes<HTMLGridBuilderElement>;
+      /**
+       * GridItemWrapper Component
+       * ==========================
+       * Library component wrapping individual grid items with drag/resize/selection.
+       * **Tag**: `<grid-item-wrapper>`
+       * **Shadow DOM**: Disabled (required for interact.js compatibility)
+       * **Dynamic rendering**: Uses ComponentDefinition.render() from registry
+       */
+      "grid-item-wrapper": LocalJSX.GridItemWrapper &
+        JSXBase.HTMLAttributes<HTMLGridItemWrapperElement>;
+      /**
+       * GridViewer Component
+       * ====================
+       * Rendering-only grid component for displaying layouts created in grid-builder.
+       * **Tag**: `<grid-viewer>`
+       * **Shadow DOM**: Disabled (consistent with grid-builder)
+       * **Reactivity**: Uses local store OR shared store (via apiKey prop)
+       * **Key differences from grid-builder**:
+       * - No interact.js dependency (80% bundle size reduction)
+       * - No palette, config panel, or editing UI
+       * - Simplified state (no selection, no z-index tracking)
+       * - Rendering-only canvas sections
+       * **Multi-instance sharing**:
+       * - **Local mode** (default): Each instance has independent state
+       * - **Shared mode** (with apiKey): Multiple instances share layout data
+       * - Same SharedStateRegistry pattern as grid-builder
+       * - Use case: Multi-device preview (mobile + tablet + desktop side-by-side)
+       */
+      "grid-viewer": LocalJSX.GridViewer &
+        JSXBase.HTMLAttributes<HTMLGridViewerElement>;
+      "image-gallery": LocalJSX.ImageGallery &
+        JSXBase.HTMLAttributes<HTMLImageGalleryElement>;
+      "image-gallery-drag-clone": LocalJSX.ImageGalleryDragClone &
+        JSXBase.HTMLAttributes<HTMLImageGalleryDragCloneElement>;
+      "layer-panel": LocalJSX.LayerPanel &
+        JSXBase.HTMLAttributes<HTMLLayerPanelElement>;
+      "layer-panel-folder-header": LocalJSX.LayerPanelFolderHeader &
+        JSXBase.HTMLAttributes<HTMLLayerPanelFolderHeaderElement>;
+      "layer-panel-item": LocalJSX.LayerPanelItem &
+        JSXBase.HTMLAttributes<HTMLLayerPanelItemElement>;
+      "live-data": LocalJSX.LiveData &
+        JSXBase.HTMLAttributes<HTMLLiveDataElement>;
+      "live-data-drag-clone": LocalJSX.LiveDataDragClone &
+        JSXBase.HTMLAttributes<HTMLLiveDataDragCloneElement>;
+      /**
+       * Section Editor Panel Component
+       * ===============================
+       * Demo Component - NOT Part of Library
+       * This component demonstrates how to build custom UI for editing canvas metadata
+       * in applications using the grid-builder library.
+       * Purpose:
+       * --------
+       * Shows how to create a side panel for editing section/canvas settings.
+       * This is completely custom to your application - the library doesn't provide this.
+       * Library Relationship:
+       * ---------------------
+       * - Library owns: Component placement, layouts, zIndex (grid state)
+       * - Host app owns: Canvas metadata (titles, colors, settings) - THIS COMPONENT
+       * - Metadata flows: App → Library via canvasMetadata prop
+       * Pattern Demonstrated:
+       * ---------------------
+       * 1. User clicks section header (demo UI)
+       * 2. App opens this panel (demo component)
+       * 3. User edits title/color
+       * 4. App updates canvasMetadata state
+       * 5. Library receives updated metadata via prop
+       * 6. Library passes backgroundColor to canvas-section
+       * Why This Approach:
+       * ------------------
+       * - Library stays focused on grid logic
+       * - Host app controls all presentation/metadata UI
+       * - You can use any UI framework (Material, Bootstrap, etc.)
+       * - Complete flexibility over settings panel design
+       */
+      "section-editor-panel": LocalJSX.SectionEditorPanel &
+        JSXBase.HTMLAttributes<HTMLSectionEditorPanelElement>;
     }
+  }
 }

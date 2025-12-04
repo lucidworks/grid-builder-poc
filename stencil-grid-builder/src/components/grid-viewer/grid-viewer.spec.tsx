@@ -344,8 +344,8 @@ describe("GridViewer", () => {
 
       // Verify separate registry entries
       const debugInfo = sharedStateRegistry.getDebugInfo();
-      expect(debugInfo["key1"].refCount).toBe(1);
-      expect(debugInfo["key2"].refCount).toBe(1);
+      expect(debugInfo.key1.refCount).toBe(1);
+      expect(debugInfo.key2.refCount).toBe(1);
     });
 
     it("should auto-generate instanceId if not provided", async () => {
