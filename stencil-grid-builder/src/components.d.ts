@@ -226,6 +226,10 @@ export namespace Components {
          */
         "backgroundColor"?: string;
         /**
+          * Breakpoint configuration for responsive layouts  **Optional prop**: Define custom responsive breakpoints **Source**: grid-viewer → canvas-section-viewer → grid-item-wrapper **Used by**: grid-item-wrapper for layout resolution and auto-stacking  **Purpose**: Passed through to grid-item-wrapper to enable multi-breakpoint responsive layouts in viewer mode. Grid-item-wrapper uses this to determine which layout to render, handle auto-stacking, and resolve layout inheritance.  **Example**: ```typescript const breakpoints = {   mobile: { minWidth: 0, layoutMode: 'stack' },   tablet: { minWidth: 768, layoutMode: 'inherit', inheritFrom: 'desktop' },   desktop: { minWidth: 1024, layoutMode: 'manual' } }; ```
+         */
+        "breakpoints"?: any;
+        /**
           * Canvas ID for identification  **Format**: 'canvas1', 'hero-section', etc. **Purpose**: Element ID and data attribute
          */
         "canvasId": string;
@@ -238,9 +242,9 @@ export namespace Components {
          */
         "config"?: GridConfig;
         /**
-          * Current viewport mode  **Required**: 'desktop' | 'mobile' **Source**: Passed from grid-viewer component  **Purpose**: Determines which layout to render for each item
+          * Current viewport/breakpoint name  **Required**: string matching a breakpoint name **Examples**: 'desktop', 'mobile', 'tablet', 'xs', 'sm', 'md', 'lg', 'xl' **Source**: Passed from grid-viewer component  **Purpose**: Determines which layout to render for each item (item.layouts[currentViewport]) **Multi-breakpoint support**: Can be any breakpoint name from breakpoints config
          */
-        "currentViewport": "desktop" | "mobile";
+        "currentViewport": string;
         /**
           * Error adapter service instance (passed from grid-viewer)  **Optional**: Provided by grid-viewer if error handling needed **Purpose**: Support error boundary integration for item render errors **Viewer mode**: May be undefined (simplified error handling without event emission)
          */
@@ -550,10 +554,18 @@ export namespace Components {
          */
         "addComponent": (canvasId: string, componentType: string, position: { x: number; y: number; width: number; height: number; }, config?: Record<string, any>) => Promise<string | null>;
         /**
+          * API key for shared state across multiple instances  **Optional prop**: Enables multi-instance sharing **Purpose**: Multiple grid-builder instances with same apiKey share layout data  **Use cases**: - Multi-device preview (mobile + tablet + desktop views side-by-side) - Collaborative editing (multiple users editing same layout) - Synchronized state across instances  **Shared data**: Canvas items, layouts, and z-index counters **Instance-specific**: Current viewport, selection state (each instance independent)  **Example**: ```typescript // Instance 1: Mobile view <grid-builder apiKey="demo-layout" breakpoints={{ mobile: 0, desktop: 768 }}></grid-builder>  // Instance 2: Desktop view (shares data with Instance 1) <grid-builder apiKey="demo-layout" breakpoints={{ mobile: 0, desktop: 768 }}></grid-builder> ```  **Default**: undefined (local-only mode, no sharing)
+         */
+        "apiKey"?: string;
+        /**
           * Custom API exposure configuration  **Optional prop**: Control where and how the Grid Builder API is exposed **Default**: `{ key: 'gridBuilderAPI' }` **Purpose**: Allows multiple grid-builder instances on the same page  **Options**: 1. **Custom key on window** (multiple instances): ```typescript <grid-builder api-ref={{ key: 'gridAPI1' }}></grid-builder> <grid-builder api-ref={{ key: 'gridAPI2' }}></grid-builder> // Access: window.gridAPI1, window.gridAPI2 ```  2. **Disable automatic exposure** (use ref instead): ```typescript <grid-builder api-ref={null}></grid-builder> // Access via ref: <grid-builder ref={el => this.api = el?.api}></grid-builder> ```
           * @default {     key: "gridBuilderAPI",   }
          */
         "apiRef"?: { key?: string } | null;
+        /**
+          * Breakpoint configuration for responsive layouts  **Optional prop**: Define custom responsive breakpoints **Default**: `{ mobile: { minWidth: 0, layoutMode: 'stack' }, desktop: { minWidth: 768, layoutMode: 'manual' } }` **Backwards compatible**: Existing desktop/mobile behavior maintained by default  **Breakpoint structure**: - `minWidth`: Container width in pixels (mobile-first approach) - `layoutMode`: 'manual' | 'stack' | 'inherit' - `inheritFrom`: Which breakpoint to inherit from (for layoutMode='inherit')  **Layout modes**: - **manual**: Items must be individually positioned (desktop-style) - **stack**: Items auto-stack vertically, full-width (mobile-style) - **inherit**: Inherit layout from another breakpoint  **Examples**:  1. **Simple format** (min-width only): ```typescript <grid-builder breakpoints={{ mobile: 0, desktop: 768 }}></grid-builder> ```  2. **Full format** (3 breakpoints with layout modes): ```typescript <grid-builder breakpoints={{   mobile: { minWidth: 0, layoutMode: 'stack' },   tablet: { minWidth: 768, layoutMode: 'inherit', inheritFrom: 'desktop' },   desktop: { minWidth: 1024, layoutMode: 'manual' } }}></grid-builder> ```  3. **Bootstrap-style** (5 breakpoints): ```typescript <grid-builder breakpoints={{   xs: { minWidth: 0, layoutMode: 'stack' },   sm: { minWidth: 576, layoutMode: 'stack' },   md: { minWidth: 768, layoutMode: 'inherit', inheritFrom: 'lg' },   lg: { minWidth: 992, layoutMode: 'manual' },   xl: { minWidth: 1200, layoutMode: 'manual' } }}></grid-builder> ```  **Automatic viewport detection**: - ResizeObserver monitors container width changes - Current viewport determined by container width (not window size) - Layout automatically switches when container resizes - No manual viewport switching needed
+         */
+        "breakpoints"?: any;
         /**
           * Check if redo is available  **Purpose**: Determine if there are actions to redo  **Example**: ```typescript const builder = document.querySelector('grid-builder'); const canRedo = await builder.canRedo(); redoButton.disabled = !canRedo; ```
           * @returns Promise<boolean> - True if redo is available
@@ -608,6 +620,10 @@ export namespace Components {
          */
         "initialState"?: Partial<GridState>;
         /**
+          * Unique instance identifier for multi-instance scenarios  **Optional prop**: Auto-generated if not provided **Purpose**: Track individual instances in SharedStateRegistry  **Auto-generation**: If not provided, generates: `grid-builder-{timestamp}-{random}`  **Only relevant when**: apiKey is provided (shared mode) **Ignored when**: apiKey is undefined (local-only mode)
+         */
+        "instanceId"?: string;
+        /**
           * Hook called before deleting a component  **Optional prop**: Intercept deletion requests for custom workflows **Purpose**: Allow host app to show confirmation, make API calls, etc.  **Hook behavior**: - Return `true` to proceed with deletion - Return `false` to cancel the deletion - Return a Promise for async operations (modals, API calls)  **Example - Confirmation modal**: ```typescript const onBeforeDelete = async (context) => {   const confirmed = await showConfirmModal(     `Delete ${context.item.name}?`,     'This action cannot be undone.'   );   return confirmed; }; <grid-builder onBeforeDelete={onBeforeDelete} ... /> ```  **Example - API call + confirmation**: ```typescript const onBeforeDelete = async (context) => {   // Show loading modal   const modal = showLoadingModal('Deleting...');    try {     // Make API call     await fetch(`/api/components/${context.itemId}`, {       method: 'DELETE'     });     modal.close();     return true; // Proceed with deletion   } catch (error) {     modal.close();     showErrorModal('Failed to delete component');     return false; // Cancel deletion   } }; ```  **Default behavior**: If not provided, components delete immediately
          */
         "onBeforeDelete"?: DeletionHook;
@@ -660,6 +676,10 @@ export namespace Components {
      */
     interface GridItemWrapper {
         /**
+          * Breakpoint configuration (for viewer mode)  **Purpose**: Define responsive breakpoints and layout modes **Source**: grid-viewer → canvas-section-viewer → grid-item-wrapper **Used by**: render() to determine auto-stacking and layout inheritance  **Note**: When in builder mode (viewerMode=false), this is ignored and stateInstance.breakpoints is used instead. When in viewer mode (viewerMode=true), this prop is optional (defaults to DEFAULT_BREAKPOINTS).
+         */
+        "breakpoints"?: any;
+        /**
           * All items in the canvas (for viewer mode auto-layout)  **Purpose**: Calculate mobile auto-layout positions **Source**: grid-viewer → canvas-section-viewer → grid-item-wrapper **Used by**: render() to calculate stacked positions in mobile viewport  **Note**: When in builder mode (viewerMode=false), this is ignored and gridState.canvases is used instead. When in viewer mode (viewerMode=true), this prop is required for mobile auto-layout.
          */
         "canvasItems"?: GridItem[];
@@ -674,7 +694,7 @@ export namespace Components {
         /**
           * Current viewport (for viewer mode)  **Purpose**: Determine which layout to render (desktop or mobile) **Source**: grid-viewer → canvas-section-viewer → grid-item-wrapper **Used by**: render() to select appropriate layout  **Note**: When in builder mode (viewerMode=false), this is ignored and gridState.currentViewport is used instead. When in viewer mode (viewerMode=true), this prop is required.
          */
-        "currentViewport"?: "desktop" | "mobile";
+        "currentViewport"?: string;
         /**
           * DOM cache service instance (passed from grid-builder)  **Required for editing mode** (grid-builder provides this) **Optional for viewer mode** (grid-viewer doesn't need it)  **Source**: grid-builder → canvas-section → grid-item-wrapper **Purpose**: Support multiple grid-builder instances with isolated DOM caches **Used by**: DragHandler, ResizeHandler for fast canvas element lookups
          */
@@ -727,14 +747,27 @@ export namespace Components {
      * Rendering-only grid component for displaying layouts created in grid-builder.
      * **Tag**: `<grid-viewer>`
      * **Shadow DOM**: Disabled (consistent with grid-builder)
-     * **Reactivity**: Uses local store for viewer state
+     * **Reactivity**: Uses local store OR shared store (via apiKey prop)
      * **Key differences from grid-builder**:
      * - No interact.js dependency (80% bundle size reduction)
      * - No palette, config panel, or editing UI
      * - Simplified state (no selection, no z-index tracking)
      * - Rendering-only canvas sections
+     * **Multi-instance sharing**:
+     * - **Local mode** (default): Each instance has independent state
+     * - **Shared mode** (with apiKey): Multiple instances share layout data
+     * - Same SharedStateRegistry pattern as grid-builder
+     * - Use case: Multi-device preview (mobile + tablet + desktop side-by-side)
      */
     interface GridViewer {
+        /**
+          * API key for shared state across multiple instances  **Optional prop**: Enables multi-instance sharing **Purpose**: Multiple grid-viewer instances with same apiKey share layout data  **Use cases**: - Multi-device preview (mobile + tablet + desktop views side-by-side) - Collaborative viewing (multiple users viewing same layout) - Live updates across instances  **Shared data**: Canvas items and layouts **Instance-specific**: Current viewport (each instance can show different viewport)  **Example**: ```typescript // Instance 1: Mobile view <grid-viewer apiKey="demo-layout" breakpoints={{ mobile: 0, desktop: 768 }}></grid-viewer>  // Instance 2: Desktop view (shares data with Instance 1) <grid-viewer apiKey="demo-layout" breakpoints={{ mobile: 0, desktop: 768 }}></grid-viewer> ```  **Default**: undefined (local-only mode, no sharing)
+         */
+        "apiKey"?: string;
+        /**
+          * Breakpoint configuration for responsive layouts  **Optional prop**: Define custom responsive breakpoints **Default**: `{ mobile: { minWidth: 0, layoutMode: 'stack' }, desktop: { minWidth: 768, layoutMode: 'manual' } }` **Backwards compatible**: Existing desktop/mobile behavior maintained by default  **Should match builder config**: Use same breakpoints as builder for consistent behavior  **Examples**:  1. **Simple format** (min-width only): ```typescript <grid-viewer breakpoints={{ mobile: 0, desktop: 768 }}></grid-viewer> ```  2. **Full format** (3 breakpoints with layout modes): ```typescript <grid-viewer breakpoints={{   mobile: { minWidth: 0, layoutMode: 'stack' },   tablet: { minWidth: 768, layoutMode: 'inherit', inheritFrom: 'desktop' },   desktop: { minWidth: 1024, layoutMode: 'manual' } }}></grid-viewer> ```
+         */
+        "breakpoints"?: any;
         /**
           * Canvas metadata storage (host app responsibility)  **Optional prop**: Store canvas-level presentation metadata **Purpose**: Host app owns canvas metadata (titles, colors, settings)  **Structure**: Record<canvasId, any>  **Example**: ```typescript const canvasMetadata = {   'hero-section': {     backgroundColor: '#f0f4f8',     customSettings: { ... }   } }; ```
          */
@@ -751,6 +784,10 @@ export namespace Components {
           * Initial state to display  **Optional prop**: Layout data to render **Accepts**: ViewerState or GridExport (both compatible)  **From builder export**: ```typescript const exportData = await builder.exportState(); viewer.initialState = exportData; // Type-safe! ```  **From API**: ```typescript const layout = await fetch('/api/layouts/123').then(r => r.json()); viewer.initialState = layout; ```
          */
         "initialState"?: Partial<ViewerState> | GridExport;
+        /**
+          * Unique instance identifier for multi-instance scenarios  **Optional prop**: Auto-generated if not provided **Purpose**: Track individual instances in SharedStateRegistry  **Auto-generation**: If not provided, generates: `grid-viewer-{timestamp}-{random}`  **Only relevant when**: apiKey is provided (shared mode) **Ignored when**: apiKey is undefined (local-only mode)
+         */
+        "instanceId"?: string;
         /**
           * Visual theme customization  **Optional prop**: Customizes colors, fonts, and styling **Default**: Bootstrap-inspired blue theme
          */
@@ -1327,12 +1364,17 @@ declare global {
      * Rendering-only grid component for displaying layouts created in grid-builder.
      * **Tag**: `<grid-viewer>`
      * **Shadow DOM**: Disabled (consistent with grid-builder)
-     * **Reactivity**: Uses local store for viewer state
+     * **Reactivity**: Uses local store OR shared store (via apiKey prop)
      * **Key differences from grid-builder**:
      * - No interact.js dependency (80% bundle size reduction)
      * - No palette, config panel, or editing UI
      * - Simplified state (no selection, no z-index tracking)
      * - Rendering-only canvas sections
+     * **Multi-instance sharing**:
+     * - **Local mode** (default): Each instance has independent state
+     * - **Shared mode** (with apiKey): Multiple instances share layout data
+     * - Same SharedStateRegistry pattern as grid-builder
+     * - Use case: Multi-device preview (mobile + tablet + desktop side-by-side)
      */
     interface HTMLGridViewerElement extends Components.GridViewer, HTMLStencilElement {
     }
@@ -1705,6 +1747,10 @@ declare namespace LocalJSX {
          */
         "backgroundColor"?: string;
         /**
+          * Breakpoint configuration for responsive layouts  **Optional prop**: Define custom responsive breakpoints **Source**: grid-viewer → canvas-section-viewer → grid-item-wrapper **Used by**: grid-item-wrapper for layout resolution and auto-stacking  **Purpose**: Passed through to grid-item-wrapper to enable multi-breakpoint responsive layouts in viewer mode. Grid-item-wrapper uses this to determine which layout to render, handle auto-stacking, and resolve layout inheritance.  **Example**: ```typescript const breakpoints = {   mobile: { minWidth: 0, layoutMode: 'stack' },   tablet: { minWidth: 768, layoutMode: 'inherit', inheritFrom: 'desktop' },   desktop: { minWidth: 1024, layoutMode: 'manual' } }; ```
+         */
+        "breakpoints"?: any;
+        /**
           * Canvas ID for identification  **Format**: 'canvas1', 'hero-section', etc. **Purpose**: Element ID and data attribute
          */
         "canvasId": string;
@@ -1717,9 +1763,9 @@ declare namespace LocalJSX {
          */
         "config"?: GridConfig;
         /**
-          * Current viewport mode  **Required**: 'desktop' | 'mobile' **Source**: Passed from grid-viewer component  **Purpose**: Determines which layout to render for each item
+          * Current viewport/breakpoint name  **Required**: string matching a breakpoint name **Examples**: 'desktop', 'mobile', 'tablet', 'xs', 'sm', 'md', 'lg', 'xl' **Source**: Passed from grid-viewer component  **Purpose**: Determines which layout to render for each item (item.layouts[currentViewport]) **Multi-breakpoint support**: Can be any breakpoint name from breakpoints config
          */
-        "currentViewport": "desktop" | "mobile";
+        "currentViewport": string;
         /**
           * Error adapter service instance (passed from grid-viewer)  **Optional**: Provided by grid-viewer if error handling needed **Purpose**: Support error boundary integration for item render errors **Viewer mode**: May be undefined (simplified error handling without event emission)
          */
@@ -2021,10 +2067,18 @@ declare namespace LocalJSX {
      */
     interface GridBuilder {
         /**
+          * API key for shared state across multiple instances  **Optional prop**: Enables multi-instance sharing **Purpose**: Multiple grid-builder instances with same apiKey share layout data  **Use cases**: - Multi-device preview (mobile + tablet + desktop views side-by-side) - Collaborative editing (multiple users editing same layout) - Synchronized state across instances  **Shared data**: Canvas items, layouts, and z-index counters **Instance-specific**: Current viewport, selection state (each instance independent)  **Example**: ```typescript // Instance 1: Mobile view <grid-builder apiKey="demo-layout" breakpoints={{ mobile: 0, desktop: 768 }}></grid-builder>  // Instance 2: Desktop view (shares data with Instance 1) <grid-builder apiKey="demo-layout" breakpoints={{ mobile: 0, desktop: 768 }}></grid-builder> ```  **Default**: undefined (local-only mode, no sharing)
+         */
+        "apiKey"?: string;
+        /**
           * Custom API exposure configuration  **Optional prop**: Control where and how the Grid Builder API is exposed **Default**: `{ key: 'gridBuilderAPI' }` **Purpose**: Allows multiple grid-builder instances on the same page  **Options**: 1. **Custom key on window** (multiple instances): ```typescript <grid-builder api-ref={{ key: 'gridAPI1' }}></grid-builder> <grid-builder api-ref={{ key: 'gridAPI2' }}></grid-builder> // Access: window.gridAPI1, window.gridAPI2 ```  2. **Disable automatic exposure** (use ref instead): ```typescript <grid-builder api-ref={null}></grid-builder> // Access via ref: <grid-builder ref={el => this.api = el?.api}></grid-builder> ```
           * @default {     key: "gridBuilderAPI",   }
          */
         "apiRef"?: { key?: string } | null;
+        /**
+          * Breakpoint configuration for responsive layouts  **Optional prop**: Define custom responsive breakpoints **Default**: `{ mobile: { minWidth: 0, layoutMode: 'stack' }, desktop: { minWidth: 768, layoutMode: 'manual' } }` **Backwards compatible**: Existing desktop/mobile behavior maintained by default  **Breakpoint structure**: - `minWidth`: Container width in pixels (mobile-first approach) - `layoutMode`: 'manual' | 'stack' | 'inherit' - `inheritFrom`: Which breakpoint to inherit from (for layoutMode='inherit')  **Layout modes**: - **manual**: Items must be individually positioned (desktop-style) - **stack**: Items auto-stack vertically, full-width (mobile-style) - **inherit**: Inherit layout from another breakpoint  **Examples**:  1. **Simple format** (min-width only): ```typescript <grid-builder breakpoints={{ mobile: 0, desktop: 768 }}></grid-builder> ```  2. **Full format** (3 breakpoints with layout modes): ```typescript <grid-builder breakpoints={{   mobile: { minWidth: 0, layoutMode: 'stack' },   tablet: { minWidth: 768, layoutMode: 'inherit', inheritFrom: 'desktop' },   desktop: { minWidth: 1024, layoutMode: 'manual' } }}></grid-builder> ```  3. **Bootstrap-style** (5 breakpoints): ```typescript <grid-builder breakpoints={{   xs: { minWidth: 0, layoutMode: 'stack' },   sm: { minWidth: 576, layoutMode: 'stack' },   md: { minWidth: 768, layoutMode: 'inherit', inheritFrom: 'lg' },   lg: { minWidth: 992, layoutMode: 'manual' },   xl: { minWidth: 1200, layoutMode: 'manual' } }}></grid-builder> ```  **Automatic viewport detection**: - ResizeObserver monitors container width changes - Current viewport determined by container width (not window size) - Layout automatically switches when container resizes - No manual viewport switching needed
+         */
+        "breakpoints"?: any;
         /**
           * Canvas metadata storage (host app responsibility)  **Optional prop**: Store canvas-level presentation metadata **Purpose**: Host app owns canvas metadata (titles, colors, settings)  **Separation of concerns**: - Library owns placement state (items, layouts, zIndex) - Host app owns presentation state (colors, titles, custom metadata)  **Structure**: Record<canvasId, any>  **Example**: ```typescript const canvasMetadata = {   'hero-section': {     title: 'Hero Section',     backgroundColor: '#f0f4f8',     customSettings: { ... }   },   'articles-grid': {     title: 'Articles Grid',     backgroundColor: '#ffffff'   } }; <grid-builder canvasMetadata={canvasMetadata} ... /> ```  **Use with canvas-click events**: - Library fires canvas-click event when canvas background clicked - Host app shows canvas settings panel - Host app updates canvasMetadata state - Library passes metadata to canvas-section via props
          */
@@ -2041,6 +2095,10 @@ declare namespace LocalJSX {
           * Initial state to restore  **Optional prop**: Restore saved layout **Purpose**: Load previously saved grid state  **State structure**: Same as gridState (canvases, viewport, etc.)  **Example**: ```typescript const savedState = JSON.parse(localStorage.getItem('grid-state')); <grid-builder initialState={savedState} ... /> ```
          */
         "initialState"?: Partial<GridState>;
+        /**
+          * Unique instance identifier for multi-instance scenarios  **Optional prop**: Auto-generated if not provided **Purpose**: Track individual instances in SharedStateRegistry  **Auto-generation**: If not provided, generates: `grid-builder-{timestamp}-{random}`  **Only relevant when**: apiKey is provided (shared mode) **Ignored when**: apiKey is undefined (local-only mode)
+         */
+        "instanceId"?: string;
         /**
           * Hook called before deleting a component  **Optional prop**: Intercept deletion requests for custom workflows **Purpose**: Allow host app to show confirmation, make API calls, etc.  **Hook behavior**: - Return `true` to proceed with deletion - Return `false` to cancel the deletion - Return a Promise for async operations (modals, API calls)  **Example - Confirmation modal**: ```typescript const onBeforeDelete = async (context) => {   const confirmed = await showConfirmModal(     `Delete ${context.item.name}?`,     'This action cannot be undone.'   );   return confirmed; }; <grid-builder onBeforeDelete={onBeforeDelete} ... /> ```  **Example - API call + confirmation**: ```typescript const onBeforeDelete = async (context) => {   // Show loading modal   const modal = showLoadingModal('Deleting...');    try {     // Make API call     await fetch(`/api/components/${context.itemId}`, {       method: 'DELETE'     });     modal.close();     return true; // Proceed with deletion   } catch (error) {     modal.close();     showErrorModal('Failed to delete component');     return false; // Cancel deletion   } }; ```  **Default behavior**: If not provided, components delete immediately
          */
@@ -2072,6 +2130,10 @@ declare namespace LocalJSX {
      */
     interface GridItemWrapper {
         /**
+          * Breakpoint configuration (for viewer mode)  **Purpose**: Define responsive breakpoints and layout modes **Source**: grid-viewer → canvas-section-viewer → grid-item-wrapper **Used by**: render() to determine auto-stacking and layout inheritance  **Note**: When in builder mode (viewerMode=false), this is ignored and stateInstance.breakpoints is used instead. When in viewer mode (viewerMode=true), this prop is optional (defaults to DEFAULT_BREAKPOINTS).
+         */
+        "breakpoints"?: any;
+        /**
           * All items in the canvas (for viewer mode auto-layout)  **Purpose**: Calculate mobile auto-layout positions **Source**: grid-viewer → canvas-section-viewer → grid-item-wrapper **Used by**: render() to calculate stacked positions in mobile viewport  **Note**: When in builder mode (viewerMode=false), this is ignored and gridState.canvases is used instead. When in viewer mode (viewerMode=true), this prop is required for mobile auto-layout.
          */
         "canvasItems"?: GridItem[];
@@ -2086,7 +2148,7 @@ declare namespace LocalJSX {
         /**
           * Current viewport (for viewer mode)  **Purpose**: Determine which layout to render (desktop or mobile) **Source**: grid-viewer → canvas-section-viewer → grid-item-wrapper **Used by**: render() to select appropriate layout  **Note**: When in builder mode (viewerMode=false), this is ignored and gridState.currentViewport is used instead. When in viewer mode (viewerMode=true), this prop is required.
          */
-        "currentViewport"?: "desktop" | "mobile";
+        "currentViewport"?: string;
         /**
           * DOM cache service instance (passed from grid-builder)  **Required for editing mode** (grid-builder provides this) **Optional for viewer mode** (grid-viewer doesn't need it)  **Source**: grid-builder → canvas-section → grid-item-wrapper **Purpose**: Support multiple grid-builder instances with isolated DOM caches **Used by**: DragHandler, ResizeHandler for fast canvas element lookups
          */
@@ -2139,14 +2201,27 @@ declare namespace LocalJSX {
      * Rendering-only grid component for displaying layouts created in grid-builder.
      * **Tag**: `<grid-viewer>`
      * **Shadow DOM**: Disabled (consistent with grid-builder)
-     * **Reactivity**: Uses local store for viewer state
+     * **Reactivity**: Uses local store OR shared store (via apiKey prop)
      * **Key differences from grid-builder**:
      * - No interact.js dependency (80% bundle size reduction)
      * - No palette, config panel, or editing UI
      * - Simplified state (no selection, no z-index tracking)
      * - Rendering-only canvas sections
+     * **Multi-instance sharing**:
+     * - **Local mode** (default): Each instance has independent state
+     * - **Shared mode** (with apiKey): Multiple instances share layout data
+     * - Same SharedStateRegistry pattern as grid-builder
+     * - Use case: Multi-device preview (mobile + tablet + desktop side-by-side)
      */
     interface GridViewer {
+        /**
+          * API key for shared state across multiple instances  **Optional prop**: Enables multi-instance sharing **Purpose**: Multiple grid-viewer instances with same apiKey share layout data  **Use cases**: - Multi-device preview (mobile + tablet + desktop views side-by-side) - Collaborative viewing (multiple users viewing same layout) - Live updates across instances  **Shared data**: Canvas items and layouts **Instance-specific**: Current viewport (each instance can show different viewport)  **Example**: ```typescript // Instance 1: Mobile view <grid-viewer apiKey="demo-layout" breakpoints={{ mobile: 0, desktop: 768 }}></grid-viewer>  // Instance 2: Desktop view (shares data with Instance 1) <grid-viewer apiKey="demo-layout" breakpoints={{ mobile: 0, desktop: 768 }}></grid-viewer> ```  **Default**: undefined (local-only mode, no sharing)
+         */
+        "apiKey"?: string;
+        /**
+          * Breakpoint configuration for responsive layouts  **Optional prop**: Define custom responsive breakpoints **Default**: `{ mobile: { minWidth: 0, layoutMode: 'stack' }, desktop: { minWidth: 768, layoutMode: 'manual' } }` **Backwards compatible**: Existing desktop/mobile behavior maintained by default  **Should match builder config**: Use same breakpoints as builder for consistent behavior  **Examples**:  1. **Simple format** (min-width only): ```typescript <grid-viewer breakpoints={{ mobile: 0, desktop: 768 }}></grid-viewer> ```  2. **Full format** (3 breakpoints with layout modes): ```typescript <grid-viewer breakpoints={{   mobile: { minWidth: 0, layoutMode: 'stack' },   tablet: { minWidth: 768, layoutMode: 'inherit', inheritFrom: 'desktop' },   desktop: { minWidth: 1024, layoutMode: 'manual' } }}></grid-viewer> ```
+         */
+        "breakpoints"?: any;
         /**
           * Canvas metadata storage (host app responsibility)  **Optional prop**: Store canvas-level presentation metadata **Purpose**: Host app owns canvas metadata (titles, colors, settings)  **Structure**: Record<canvasId, any>  **Example**: ```typescript const canvasMetadata = {   'hero-section': {     backgroundColor: '#f0f4f8',     customSettings: { ... }   } }; ```
          */
@@ -2163,6 +2238,10 @@ declare namespace LocalJSX {
           * Initial state to display  **Optional prop**: Layout data to render **Accepts**: ViewerState or GridExport (both compatible)  **From builder export**: ```typescript const exportData = await builder.exportState(); viewer.initialState = exportData; // Type-safe! ```  **From API**: ```typescript const layout = await fetch('/api/layouts/123').then(r => r.json()); viewer.initialState = layout; ```
          */
         "initialState"?: Partial<ViewerState> | GridExport;
+        /**
+          * Unique instance identifier for multi-instance scenarios  **Optional prop**: Auto-generated if not provided **Purpose**: Track individual instances in SharedStateRegistry  **Auto-generation**: If not provided, generates: `grid-viewer-{timestamp}-{random}`  **Only relevant when**: apiKey is provided (shared mode) **Ignored when**: apiKey is undefined (local-only mode)
+         */
+        "instanceId"?: string;
         /**
           * Visual theme customization  **Optional prop**: Customizes colors, fonts, and styling **Default**: Bootstrap-inspired blue theme
          */
@@ -2635,12 +2714,17 @@ declare module "@stencil/core" {
              * Rendering-only grid component for displaying layouts created in grid-builder.
              * **Tag**: `<grid-viewer>`
              * **Shadow DOM**: Disabled (consistent with grid-builder)
-             * **Reactivity**: Uses local store for viewer state
+             * **Reactivity**: Uses local store OR shared store (via apiKey prop)
              * **Key differences from grid-builder**:
              * - No interact.js dependency (80% bundle size reduction)
              * - No palette, config panel, or editing UI
              * - Simplified state (no selection, no z-index tracking)
              * - Rendering-only canvas sections
+             * **Multi-instance sharing**:
+             * - **Local mode** (default): Each instance has independent state
+             * - **Shared mode** (with apiKey): Multiple instances share layout data
+             * - Same SharedStateRegistry pattern as grid-builder
+             * - Use case: Multi-device preview (mobile + tablet + desktop side-by-side)
              */
             "grid-viewer": LocalJSX.GridViewer & JSXBase.HTMLAttributes<HTMLGridViewerElement>;
             "image-gallery": LocalJSX.ImageGallery & JSXBase.HTMLAttributes<HTMLImageGalleryElement>;
