@@ -79,7 +79,9 @@ import {
   GridState,
   GridItem,
   generateItemId,
+  normalizeBreakpoints,
 } from "../../services/state-manager";
+import { sharedStateRegistry } from "../../services/shared-state-registry";
 import { VirtualRendererService } from "../../services/virtual-renderer";
 import { EventManager } from "../../services/event-manager";
 import { ComponentRegistry } from "../../services/component-registry";
@@ -97,6 +99,10 @@ import { DOMCache } from "../../utils/dom-cache";
 import { GridErrorAdapter } from "../../services/grid-error-adapter";
 
 // Utility imports
+import {
+  getViewportForWidth,
+  initializeLayouts,
+} from "../../utils/breakpoint-utils";
 import {
   pixelsToGridX,
   pixelsToGridY,
@@ -404,6 +410,98 @@ export class GridBuilder {
   };
 
   /**
+   * Breakpoint configuration for responsive layouts
+   *
+   * **Optional prop**: Define custom responsive breakpoints
+   * **Default**: `{ mobile: { minWidth: 0, layoutMode: 'stack' }, desktop: { minWidth: 768, layoutMode: 'manual' } }`
+   * **Backwards compatible**: Existing desktop/mobile behavior maintained by default
+   *
+   * **Breakpoint structure**:
+   * - `minWidth`: Container width in pixels (mobile-first approach)
+   * - `layoutMode`: 'manual' | 'stack' | 'inherit'
+   * - `inheritFrom`: Which breakpoint to inherit from (for layoutMode='inherit')
+   *
+   * **Layout modes**:
+   * - **manual**: Items must be individually positioned (desktop-style)
+   * - **stack**: Items auto-stack vertically, full-width (mobile-style)
+   * - **inherit**: Inherit layout from another breakpoint
+   *
+   * **Examples**:
+   *
+   * 1. **Simple format** (min-width only):
+   * ```typescript
+   * <grid-builder breakpoints={{ mobile: 0, desktop: 768 }}></grid-builder>
+   * ```
+   *
+   * 2. **Full format** (3 breakpoints with layout modes):
+   * ```typescript
+   * <grid-builder breakpoints={{
+   *   mobile: { minWidth: 0, layoutMode: 'stack' },
+   *   tablet: { minWidth: 768, layoutMode: 'inherit', inheritFrom: 'desktop' },
+   *   desktop: { minWidth: 1024, layoutMode: 'manual' }
+   * }}></grid-builder>
+   * ```
+   *
+   * 3. **Bootstrap-style** (5 breakpoints):
+   * ```typescript
+   * <grid-builder breakpoints={{
+   *   xs: { minWidth: 0, layoutMode: 'stack' },
+   *   sm: { minWidth: 576, layoutMode: 'stack' },
+   *   md: { minWidth: 768, layoutMode: 'inherit', inheritFrom: 'lg' },
+   *   lg: { minWidth: 992, layoutMode: 'manual' },
+   *   xl: { minWidth: 1200, layoutMode: 'manual' }
+   * }}></grid-builder>
+   * ```
+   *
+   * **Automatic viewport detection**:
+   * - ResizeObserver monitors container width changes
+   * - Current viewport determined by container width (not window size)
+   * - Layout automatically switches when container resizes
+   * - No manual viewport switching needed
+   */
+  @Prop() breakpoints?: any; // BreakpointConfig | SimpleBreakpointConfig
+
+  /**
+   * API key for shared state across multiple instances
+   *
+   * **Optional prop**: Enables multi-instance sharing
+   * **Purpose**: Multiple grid-builder instances with same apiKey share layout data
+   *
+   * **Use cases**:
+   * - Multi-device preview (mobile + tablet + desktop views side-by-side)
+   * - Collaborative editing (multiple users editing same layout)
+   * - Synchronized state across instances
+   *
+   * **Shared data**: Canvas items, layouts, and z-index counters
+   * **Instance-specific**: Current viewport, selection state (each instance independent)
+   *
+   * **Example**:
+   * ```typescript
+   * // Instance 1: Mobile view
+   * <grid-builder apiKey="demo-layout" breakpoints={{ mobile: 0, desktop: 768 }}></grid-builder>
+   *
+   * // Instance 2: Desktop view (shares data with Instance 1)
+   * <grid-builder apiKey="demo-layout" breakpoints={{ mobile: 0, desktop: 768 }}></grid-builder>
+   * ```
+   *
+   * **Default**: undefined (local-only mode, no sharing)
+   */
+  @Prop() apiKey?: string;
+
+  /**
+   * Unique instance identifier for multi-instance scenarios
+   *
+   * **Optional prop**: Auto-generated if not provided
+   * **Purpose**: Track individual instances in SharedStateRegistry
+   *
+   * **Auto-generation**: If not provided, generates: `grid-builder-{timestamp}-{random}`
+   *
+   * **Only relevant when**: apiKey is provided (shared mode)
+   * **Ignored when**: apiKey is undefined (local-only mode)
+   */
+  @Prop() instanceId?: string;
+
+  /**
    * Component registry (public property)
    *
    * **Purpose**: Map component type → definition for lookup
@@ -499,7 +597,17 @@ export class GridBuilder {
    * **Generated from**: apiRef.key prop (defaults to 'gridBuilderAPI')
    * **Lifecycle**: Set in componentWillLoad, used throughout component lifetime
    */
-  private instanceId: string;
+  private cacheInstanceId: string;
+
+  /**
+   * Resolved instance identifier (auto-generated if not provided)
+   *
+   * **Purpose**: Unique ID for this grid-builder instance (for SharedStateRegistry reference counting)
+   * **Generated**: `grid-builder-{timestamp}-{random}` if instanceId prop not provided
+   *
+   * **Only used when**: apiKey is provided (shared mode)
+   */
+  private resolvedInstanceId?: string;
 
   /**
    * Host element reference
@@ -779,17 +887,87 @@ export class GridBuilder {
     // Expose interact.js globally (required for drag/drop handlers)
     (window as any).interact = interact;
 
-    // Phase 2: Create service instances (instance-based architecture)
-    // Each grid-builder component gets its own isolated service instances
-    this.stateManager = new StateManager();
-    this.undoRedoManager = new UndoRedoManager();
+    // Phase 2: Determine API key and instance ID for state management
+    // apiKey: Shared state identifier (multiple instances with same key share data)
+    // instanceId: Unique instance identifier for reference counting
+
+    // Normalize apiKey: empty string becomes undefined (local-only mode)
+    const normalizedApiKey = this.apiKey?.trim() || undefined;
+
+    // Generate or use provided instanceId (for SharedStateRegistry reference counting)
+    // Note: StateManager will register the instance via addInstance(), we just need to generate the ID here
+    if (normalizedApiKey) {
+      this.resolvedInstanceId =
+        this.instanceId ||
+        `grid-builder-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+      debug.log(`GridBuilder: Instance ID: ${this.resolvedInstanceId}`);
+      debug.log(
+        `GridBuilder: Will register with SharedStateRegistry via StateManager (apiKey: ${normalizedApiKey}, instanceId: ${this.resolvedInstanceId})`,
+      );
+    }
+
+    // Cache instance ID (separate from shared state instanceId, used for DOM cache)
+    const cacheKey = this.apiRef?.key || "default";
+    this.cacheInstanceId = `${cacheKey}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+
+    debug.log("GridBuilder: Instance identifiers", {
+      apiKey: normalizedApiKey || "(none - local-only mode)",
+      resolvedInstanceId: this.resolvedInstanceId || "(not needed - local mode)",
+      cacheInstanceId: this.cacheInstanceId,
+      willShareState: !!normalizedApiKey,
+    });
+
+    // Phase 2.5: Prepare initial state with custom breakpoints if provided
+    // This must happen before StateManager creation
+    let initialStateWithBreakpoints = this.initialState;
+    if (this.breakpoints && !this.initialState?.breakpoints) {
+      const normalizedBreakpoints = normalizeBreakpoints(this.breakpoints);
+      initialStateWithBreakpoints = {
+        ...this.initialState,
+        breakpoints: normalizedBreakpoints,
+      };
+      debug.log(
+        "GridBuilder: Custom breakpoints will be configured",
+        normalizedBreakpoints,
+      );
+    }
+
+    // Phase 3: Create service instances (instance-based or shared architecture)
+    // StateManager: Handles split state (shared data + instance view) when apiKey provided
+    this.stateManager = new StateManager(
+      normalizedApiKey,
+      this.resolvedInstanceId,
+      initialStateWithBreakpoints,
+    );
+
+    // UndoRedoManager: Get from SharedStateRegistry if using shared state, otherwise create local
+    if (normalizedApiKey) {
+      // Access shared undo manager from registry (synchronous)
+      const entry = sharedStateRegistry.get(normalizedApiKey);
+      if (entry) {
+        this.undoRedoManager = entry.undoManager;
+        debug.log("GridBuilder: Using shared undo/redo manager", {
+          apiKey: normalizedApiKey,
+        });
+      } else {
+        // Fallback: create local undo manager
+        this.undoRedoManager = new UndoRedoManager();
+        debug.warn(
+          "GridBuilder: Could not find shared undo manager, using local",
+          { apiKey: normalizedApiKey },
+        );
+      }
+    } else {
+      // Local undo manager (backward compatible)
+      this.undoRedoManager = new UndoRedoManager();
+      debug.log(
+        "GridBuilder: Using local undo/redo manager (local-only mode)",
+      );
+    }
+
     this.eventManagerInstance = new EventManager();
     this.virtualRendererInstance = new VirtualRendererService();
     this.domCacheInstance = new DOMCache();
-
-    // Set instanceId for cache isolation (needed for error adapter)
-    // This prevents cache collisions when multiple instances share canvasIds
-    this.instanceId = this.apiRef?.key || "gridBuilderAPI";
 
     // Phase 3: Create error adapter instance
     // Bridges generic error-boundary component to grid-builder domain
@@ -812,16 +990,16 @@ export class GridBuilder {
       virtualRendererInstance: !!this.virtualRendererInstance,
       domCacheInstance: !!this.domCacheInstance,
       errorAdapter: !!this.errorAdapter,
-      instanceId: this.instanceId,
+      cacheInstanceId: this.cacheInstanceId,
       hasCustomConfig: !!this.config,
     });
 
     // Clear this instance's cache on load to prevent stale values when remounting
     // Critical for Storybook tab switching: prevents cache from previous tab (Docs/Canvas)
     // ResizeObserver only fires on changes, not initial load, so we must clear here
-    clearGridSizeCache(this.instanceId);
+    clearGridSizeCache(this.cacheInstanceId);
     debug.log("GridBuilder: Cleared instance cache on load", {
-      instanceId: this.instanceId,
+      cacheInstanceId: this.cacheInstanceId,
     });
 
     // Restore initial state if provided
@@ -1419,13 +1597,18 @@ export class GridBuilder {
       this.domCacheInstance.clear();
       debug.log("GridBuilder: Cleared domCacheInstance");
     }
-    // StateManager will be garbage collected (no explicit cleanup needed)
+
+    // Dispose StateManager (handles SharedStateRegistry unregistration internally)
+    if (this.stateManager) {
+      this.stateManager.dispose();
+      debug.log("GridBuilder: Disposed stateManager");
+    }
 
     // Clear grid size cache for this instance only (instance-aware cleanup)
-    if (this.instanceId) {
-      clearGridSizeCache(this.instanceId);
+    if (this.cacheInstanceId) {
+      clearGridSizeCache(this.cacheInstanceId);
       debug.log("GridBuilder: Cleared grid size cache for instance", {
-        instanceId: this.instanceId,
+        cacheInstanceId: this.cacheInstanceId,
       });
     }
 
@@ -1526,23 +1709,21 @@ export class GridBuilder {
         const definition = this.componentRegistry.get(componentType);
         const componentName = definition?.name || componentType;
 
-        // Create new item
+        // Create new item with multi-breakpoint layouts
+        const breakpoints = this.stateManager!.state.breakpoints;
+        const baseLayout = {
+          ...position,
+          customized: true,
+        };
+        const layouts = initializeLayouts(breakpoints, baseLayout);
+
         const newItem = {
           id: generateItemId(),
           canvasId,
           name: componentName,
           type: componentType,
           zIndex: ++canvas.zIndexCounter,
-          layouts: {
-            desktop: { ...position },
-            mobile: {
-              x: 0,
-              y: 0,
-              width: 50,
-              height: position.height,
-              customized: false,
-            },
-          },
+          layouts,
           config: config || {},
         };
 
@@ -1697,27 +1878,26 @@ export class GridBuilder {
           config?: Record<string, any>;
         }[],
       ) => {
-        // Convert API format to state-manager format
+        // Convert API format to state-manager format with multi-breakpoint layouts
+        const breakpoints = this.stateManager!.state.breakpoints;
         const partialItems = components.map(
           ({ canvasId, type, position, config }) => {
             // Look up component definition to get proper name
             const definition = this.componentRegistry.get(type);
             const componentName = definition?.name || type;
 
+            // Initialize layouts for all breakpoints
+            const baseLayout = {
+              ...position,
+              customized: true,
+            };
+            const layouts = initializeLayouts(breakpoints, baseLayout);
+
             return {
               canvasId,
               type,
               name: componentName,
-              layouts: {
-                desktop: { ...position },
-                mobile: {
-                  x: 0,
-                  y: 0,
-                  width: 50,
-                  height: position.height,
-                  customized: false,
-                },
-              },
+              layouts,
               config: config || {},
             };
           },
@@ -2217,13 +2397,18 @@ export class GridBuilder {
   /**
    * Setup ResizeObserver for container-based viewport switching
    *
-   * **Purpose**: Automatically switch between desktop/mobile viewports based on container width
-   * **Breakpoint**: 768px (container width, not window viewport)
+   * **Purpose**: Automatically switch viewports based on container width
+   * **Breakpoints**: Configurable via breakpoints prop (default: mobile at 0px, desktop at 768px)
    *
    * **Observer callback**:
    * 1. Get container width from ResizeObserver entry
-   * 2. Determine target viewport (mobile if < 768px, desktop otherwise)
+   * 2. Determine target viewport using getViewportForWidth() utility
    * 3. Update this.stateManager!.state.currentViewport if changed
+   *
+   * **Multi-breakpoint support**:
+   * - Uses getViewportForWidth() to find matching breakpoint
+   * - Mobile-first approach (largest matching minWidth wins)
+   * - Example: width=800px with {mobile:0, tablet:768, desktop:1024} → 'tablet'
    *
    * **Why container-based**:
    * - More flexible than window.resize (e.g., sidebar layouts, embedded widgets)
@@ -2249,7 +2434,7 @@ export class GridBuilder {
           entry.contentRect.width;
 
         // Skip viewport switching if width is 0 or very small (container not yet laid out)
-        // This prevents premature switching to mobile before CSS layout is complete
+        // This prevents premature switching before CSS layout is complete
         if (width < 100) {
           debug.log(
             `📱 Skipping viewport switch - container not yet laid out (width: ${Math.round(width)}px)`,
@@ -2257,8 +2442,9 @@ export class GridBuilder {
           return;
         }
 
-        // Determine target viewport based on container width
-        const targetViewport = width < 768 ? "mobile" : "desktop";
+        // Determine target viewport from breakpoints config
+        const breakpoints = this.stateManager!.state.breakpoints;
+        const targetViewport = getViewportForWidth(width, breakpoints);
 
         // Only update if viewport changed
         if (this.stateManager!.state.currentViewport !== targetViewport) {
@@ -2580,7 +2766,9 @@ export class GridBuilder {
 
     if (state.canvases) {
       // Deep clone canvases to ensure all nested objects get new references
-      this.stateManager!.state.canvases = JSON.parse(JSON.stringify(state.canvases));
+      this.stateManager!.state.canvases = JSON.parse(
+        JSON.stringify(state.canvases),
+      );
     }
 
     // Update other top-level properties if provided (GridState only, not GridExport)
@@ -2860,10 +3048,10 @@ export class GridBuilder {
   render() {
     const canvasIds = Object.keys(this.stateManager!.state.canvases);
 
-    // Merge instanceId into config for child components (avoids mutating prop)
+    // Merge cacheInstanceId into config for child components (avoids mutating prop)
     const configWithInstance = this.config
-      ? { ...this.config, instanceId: this.instanceId }
-      : { instanceId: this.instanceId };
+      ? { ...this.config, instanceId: this.cacheInstanceId }
+      : { instanceId: this.cacheInstanceId };
 
     return (
       <Host ref={(el) => (this.el = el)}>

@@ -31,6 +31,7 @@ import {
   setActiveCanvas,
 } from "../../../services/state-manager";
 import { clearHistory } from "../../../services/undo-redo";
+import { sharedStateRegistry } from "../../../services/shared-state-registry";
 import { mockDragClone } from "../../../utils/test-helpers";
 import { ComponentDefinition } from "../../../types/component-definition";
 
@@ -69,6 +70,7 @@ describe("grid-builder", () => {
   beforeEach(() => {
     resetState();
     clearHistory();
+    sharedStateRegistry.clear();
 
     // Create test canvases (library now starts empty in Phase 2)
     gridState.canvases = {
@@ -4405,6 +4407,420 @@ describe("grid-builder", () => {
       const addedItem = state.canvases.canvas1.items[0];
       expect(addedItem.layouts.desktop.width).toBe(10);
       expect(addedItem.layouts.desktop.height).toBe(6);
+    });
+  });
+
+  // ==========================================
+  // Shared State Tests (Multi-Instance)
+  // ==========================================
+
+  describe("Shared State (With apiKey)", () => {
+    beforeEach(() => {
+      // Clear SharedStateRegistry before each test
+      sharedStateRegistry.clear();
+    });
+
+    afterEach(() => {
+      // Cleanup after each test
+      sharedStateRegistry.clear();
+    });
+
+    it("should register with SharedStateRegistry in shared mode", () => {
+      const component = new GridBuilder();
+      component.components = mockComponentDefinitions;
+      component.apiKey = "test-key";
+
+      component.componentWillLoad();
+
+      // Verify registration
+      const debugInfo = sharedStateRegistry.getDebugInfo();
+      expect(debugInfo["test-key"]).toBeDefined();
+      expect(debugInfo["test-key"].refCount).toBe(1);
+    });
+
+    it("should share canvases data across instances with same apiKey", () => {
+      // Create first instance
+      const component1 = new GridBuilder();
+      component1.components = mockComponentDefinitions;
+      component1.apiKey = "shared-key";
+      component1.initialState = {
+        canvases: {
+          canvas1: { items: [], zIndexCounter: 1 },
+        },
+      };
+
+      component1.componentWillLoad();
+      component1.componentDidLoad();
+
+      // Create second instance with same apiKey
+      const component2 = new GridBuilder();
+      component2.components = mockComponentDefinitions;
+      component2.apiKey = "shared-key";
+
+      component2.componentWillLoad();
+      component2.componentDidLoad();
+
+      // Verify both instances share the same canvases data
+      const state1 = (component1 as any).stateManager.state;
+      const state2 = (component2 as any).stateManager.state;
+
+      expect(state1.canvases).toBe(state2.canvases);
+
+      // Verify refCount
+      const debugInfo = sharedStateRegistry.getDebugInfo();
+      expect(debugInfo["shared-key"].refCount).toBe(2);
+    });
+
+    it("should have independent viewports across instances", () => {
+      // Create first instance (mobile viewport)
+      const component1 = new GridBuilder();
+      component1.components = mockComponentDefinitions;
+      component1.apiKey = "shared-key";
+      component1.initialState = {
+        canvases: { canvas1: { items: [], zIndexCounter: 1 } },
+        currentViewport: "mobile",
+      };
+
+      component1.componentWillLoad();
+      component1.componentDidLoad();
+
+      // Create second instance (desktop viewport)
+      const component2 = new GridBuilder();
+      component2.components = mockComponentDefinitions;
+      component2.apiKey = "shared-key";
+      component2.initialState = {
+        currentViewport: "desktop",
+      };
+
+      component2.componentWillLoad();
+      component2.componentDidLoad();
+
+      // Verify independent viewports
+      const state1 = (component1 as any).stateManager.state;
+      const state2 = (component2 as any).stateManager.state;
+
+      expect(state1.currentViewport).toBe("mobile");
+      expect(state2.currentViewport).toBe("desktop");
+
+      // But canvases are shared
+      expect(state1.canvases).toBe(state2.canvases);
+    });
+
+    it("should share undo/redo manager across instances", () => {
+      // Create first instance
+      const component1 = new GridBuilder();
+      component1.components = mockComponentDefinitions;
+      component1.apiKey = "shared-key";
+
+      component1.componentWillLoad();
+      component1.componentDidLoad();
+
+      // Create second instance
+      const component2 = new GridBuilder();
+      component2.components = mockComponentDefinitions;
+      component2.apiKey = "shared-key";
+
+      component2.componentWillLoad();
+      component2.componentDidLoad();
+
+      // Verify both instances share the same undo manager
+      const undoManager1 = (component1 as any).undoRedoManager;
+      const undoManager2 = (component2 as any).undoRedoManager;
+
+      expect(undoManager1).toBe(undoManager2);
+    });
+
+    it("should isolate data between different apiKeys", () => {
+      // Create instance with apiKey="key1"
+      const component1 = new GridBuilder();
+      component1.components = mockComponentDefinitions;
+      component1.apiKey = "key1";
+      component1.initialState = {
+        canvases: {
+          canvas1: { items: [], zIndexCounter: 1 },
+        },
+      };
+
+      component1.componentWillLoad();
+      component1.componentDidLoad();
+
+      // Create instance with apiKey="key2"
+      const component2 = new GridBuilder();
+      component2.components = mockComponentDefinitions;
+      component2.apiKey = "key2";
+      component2.initialState = {
+        canvases: {
+          canvas2: { items: [], zIndexCounter: 1 },
+        },
+      };
+
+      component2.componentWillLoad();
+      component2.componentDidLoad();
+
+      // Verify separate state
+      const state1 = (component1 as any).stateManager.state;
+      const state2 = (component2 as any).stateManager.state;
+
+      expect(state1.canvases).not.toBe(state2.canvases);
+      expect(state1.canvases).toHaveProperty("canvas1");
+      expect(state1.canvases).not.toHaveProperty("canvas2");
+      expect(state2.canvases).toHaveProperty("canvas2");
+      expect(state2.canvases).not.toHaveProperty("canvas1");
+
+      // Verify separate registry entries
+      const debugInfo = sharedStateRegistry.getDebugInfo();
+      expect(debugInfo["key1"].refCount).toBe(1);
+      expect(debugInfo["key2"].refCount).toBe(1);
+    });
+
+    it("should auto-generate instanceId if not provided", () => {
+      const component = new GridBuilder();
+      component.components = mockComponentDefinitions;
+      component.apiKey = "test-key";
+
+      component.componentWillLoad();
+
+      const resolvedInstanceId = (component as any).resolvedInstanceId;
+      expect(resolvedInstanceId).toBeDefined();
+      expect(resolvedInstanceId).toMatch(/^grid-builder-\d+-[a-z0-9]+$/);
+    });
+
+    it("should use provided instanceId", () => {
+      const component = new GridBuilder();
+      component.components = mockComponentDefinitions;
+      component.apiKey = "test-key";
+      component.instanceId = "custom-id";
+
+      component.componentWillLoad();
+
+      const resolvedInstanceId = (component as any).resolvedInstanceId;
+      expect(resolvedInstanceId).toBe("custom-id");
+    });
+
+    it("should normalize empty apiKey to undefined (local mode)", () => {
+      const component = new GridBuilder();
+      component.components = mockComponentDefinitions;
+      component.apiKey = "";
+
+      component.componentWillLoad();
+
+      // Empty apiKey should trigger local mode
+      const resolvedInstanceId = (component as any).resolvedInstanceId;
+      expect(resolvedInstanceId).toBeUndefined();
+
+      // Verify no registration
+      const debugInfo = sharedStateRegistry.getDebugInfo();
+      expect(Object.keys(debugInfo)).toHaveLength(0);
+    });
+  });
+
+  // ==========================================
+  // Lifecycle Tests (Reference Counting)
+  // ==========================================
+
+  describe("Lifecycle and Reference Counting", () => {
+    beforeEach(() => {
+      sharedStateRegistry.clear();
+    });
+
+    afterEach(() => {
+      sharedStateRegistry.clear();
+    });
+
+    it("should unregister on disconnectedCallback", () => {
+      const component = new GridBuilder();
+      component.components = mockComponentDefinitions;
+      component.apiKey = "test-key";
+
+      component.componentWillLoad();
+
+      // Verify registered
+      let debugInfo = sharedStateRegistry.getDebugInfo();
+      expect(debugInfo["test-key"].refCount).toBe(1);
+
+      // Disconnect
+      component.disconnectedCallback();
+
+      // Verify unregistered and store disposed
+      debugInfo = sharedStateRegistry.getDebugInfo();
+      expect(debugInfo["test-key"]).toBeUndefined();
+    });
+
+    it("should maintain shared store when one instance disconnects", () => {
+      // Create first instance
+      const component1 = new GridBuilder();
+      component1.components = mockComponentDefinitions;
+      component1.apiKey = "shared-key";
+
+      component1.componentWillLoad();
+
+      // Create second instance
+      const component2 = new GridBuilder();
+      component2.components = mockComponentDefinitions;
+      component2.apiKey = "shared-key";
+
+      component2.componentWillLoad();
+
+      // Verify refCount = 2
+      let debugInfo = sharedStateRegistry.getDebugInfo();
+      expect(debugInfo["shared-key"].refCount).toBe(2);
+
+      // Disconnect first instance
+      component1.disconnectedCallback();
+
+      // Verify refCount = 1, store still exists
+      debugInfo = sharedStateRegistry.getDebugInfo();
+      expect(debugInfo["shared-key"].refCount).toBe(1);
+      expect(debugInfo["shared-key"]).toBeDefined();
+    });
+
+    it("should dispose shared store when last instance disconnects", () => {
+      // Create first instance
+      const component1 = new GridBuilder();
+      component1.components = mockComponentDefinitions;
+      component1.apiKey = "shared-key";
+
+      component1.componentWillLoad();
+
+      // Create second instance
+      const component2 = new GridBuilder();
+      component2.components = mockComponentDefinitions;
+      component2.apiKey = "shared-key";
+
+      component2.componentWillLoad();
+
+      // Disconnect both instances
+      component1.disconnectedCallback();
+      component2.disconnectedCallback();
+
+      // Verify store disposed
+      const debugInfo = sharedStateRegistry.getDebugInfo();
+      expect(debugInfo["shared-key"]).toBeUndefined();
+    });
+  });
+
+  // ==========================================
+  // Local Mode Tests (Backward Compatibility)
+  // ==========================================
+
+  describe("Local Mode (No apiKey)", () => {
+    beforeEach(() => {
+      sharedStateRegistry.clear();
+    });
+
+    afterEach(() => {
+      sharedStateRegistry.clear();
+    });
+
+    it("should have independent state between instances (local mode)", () => {
+      // Create first instance
+      const component1 = new GridBuilder();
+      component1.components = mockComponentDefinitions;
+      component1.initialState = {
+        canvases: {
+          canvas1: { items: [], zIndexCounter: 1 },
+        },
+      };
+
+      component1.componentWillLoad();
+
+      // Create second instance (no apiKey, so independent)
+      const component2 = new GridBuilder();
+      component2.components = mockComponentDefinitions;
+      component2.initialState = {
+        canvases: {
+          canvas2: { items: [], zIndexCounter: 1 },
+        },
+      };
+
+      component2.componentWillLoad();
+
+      // Verify instances have independent state
+      const state1 = (component1 as any).stateManager.state;
+      const state2 = (component2 as any).stateManager.state;
+
+      expect(state1.canvases).toHaveProperty("canvas1");
+      expect(state1.canvases).not.toHaveProperty("canvas2");
+      expect(state2.canvases).toHaveProperty("canvas2");
+      expect(state2.canvases).not.toHaveProperty("canvas1");
+    });
+
+    it("should not register with SharedStateRegistry in local mode", () => {
+      const component = new GridBuilder();
+      component.components = mockComponentDefinitions;
+
+      component.componentWillLoad();
+
+      // Verify no registration
+      const debugInfo = sharedStateRegistry.getDebugInfo();
+      expect(Object.keys(debugInfo)).toHaveLength(0);
+    });
+
+    it("should have independent undo managers in local mode", () => {
+      // Create first instance
+      const component1 = new GridBuilder();
+      component1.components = mockComponentDefinitions;
+
+      component1.componentWillLoad();
+      component1.componentDidLoad();
+
+      // Create second instance
+      const component2 = new GridBuilder();
+      component2.components = mockComponentDefinitions;
+
+      component2.componentWillLoad();
+      component2.componentDidLoad();
+
+      // Verify independent undo managers
+      const undoManager1 = (component1 as any).undoRedoManager;
+      const undoManager2 = (component2 as any).undoRedoManager;
+
+      expect(undoManager1).not.toBe(undoManager2);
+    });
+  });
+
+  // ==========================================
+  // Edge Cases
+  // ==========================================
+
+  describe("Edge Cases", () => {
+    beforeEach(() => {
+      sharedStateRegistry.clear();
+    });
+
+    afterEach(() => {
+      sharedStateRegistry.clear();
+    });
+
+    it("should handle whitespace-only apiKey as local mode", () => {
+      const component = new GridBuilder();
+      component.components = mockComponentDefinitions;
+      component.apiKey = "   ";
+
+      component.componentWillLoad();
+
+      // Whitespace apiKey should trigger local mode
+      const resolvedInstanceId = (component as any).resolvedInstanceId;
+      expect(resolvedInstanceId).toBeUndefined();
+
+      // Verify no registration
+      const debugInfo = sharedStateRegistry.getDebugInfo();
+      expect(Object.keys(debugInfo)).toHaveLength(0);
+    });
+
+    it("should handle rapid create/destroy cycles", () => {
+      for (let i = 0; i < 10; i++) {
+        const component = new GridBuilder();
+        component.components = mockComponentDefinitions;
+        component.apiKey = "cycle-key";
+
+        component.componentWillLoad();
+        component.disconnectedCallback();
+      }
+
+      // Verify no memory leaks
+      const debugInfo = sharedStateRegistry.getDebugInfo();
+      expect(debugInfo["cycle-key"]).toBeUndefined();
     });
   });
 });
