@@ -89,7 +89,7 @@ const DEFAULT_BOTTOM_MARGIN_GRID_UNITS = 5;
  */
 export function calculateCanvasHeightFromItems(
   items: any[],
-  viewport: "desktop" | "mobile",
+  viewport: string,
   config?: GridConfig,
 ): number {
   if (!items || items.length === 0) {

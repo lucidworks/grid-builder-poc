@@ -34,6 +34,10 @@ describe("canvas-height-calculator (instance-based)", () => {
       selectedCanvasId: null,
       activeCanvasId: null,
       showGrid: true,
+      breakpoints: {
+        mobile: { minWidth: 0, layoutMode: "stack" },
+        desktop: { minWidth: 768, layoutMode: "manual" },
+      },
     };
     jest.clearAllMocks();
   });
@@ -66,7 +70,7 @@ describe("canvas-height-calculator (instance-based)", () => {
           canvasId: "canvas1",
           type: "header",
           layouts: {
-            desktop: { x: 0, y: 2, width: 10, height: 6 },
+            desktop: { x: 0, y: 2, width: 10, height: 6, customized: true },
             mobile: { x: 0, y: 2, width: 14, height: 5, customized: false },
           },
         },
@@ -86,7 +90,7 @@ describe("canvas-height-calculator (instance-based)", () => {
           canvasId: "canvas1",
           type: "header",
           layouts: {
-            desktop: { x: 0, y: 2, width: 10, height: 6 }, // bottom=8
+            desktop: { x: 0, y: 2, width: 10, height: 6, customized: true }, // bottom=8
             mobile: { x: 0, y: 2, width: 14, height: 5, customized: false },
           },
         },
@@ -95,7 +99,7 @@ describe("canvas-height-calculator (instance-based)", () => {
           canvasId: "canvas1",
           type: "article",
           layouts: {
-            desktop: { x: 0, y: 10, width: 10, height: 4 }, // bottom=14 (bottommost)
+            desktop: { x: 0, y: 10, width: 10, height: 4, customized: true }, // bottom=14 (bottommost)
             mobile: { x: 0, y: 10, width: 14, height: 4, customized: false },
           },
         },
@@ -104,7 +108,7 @@ describe("canvas-height-calculator (instance-based)", () => {
           canvasId: "canvas1",
           type: "button",
           layouts: {
-            desktop: { x: 0, y: 5, width: 10, height: 3 }, // bottom=8
+            desktop: { x: 0, y: 5, width: 10, height: 3, customized: true }, // bottom=8
             mobile: { x: 0, y: 5, width: 14, height: 3, customized: false },
           },
         },
@@ -124,7 +128,7 @@ describe("canvas-height-calculator (instance-based)", () => {
           canvasId: "canvas1",
           type: "header",
           layouts: {
-            desktop: { x: 0, y: 2, width: 10, height: 6 }, // bottom=8
+            desktop: { x: 0, y: 2, width: 10, height: 6, customized: true }, // bottom=8
             mobile: { x: 0, y: 10, width: 14, height: 3 }, // bottom=13 (ignored)
           },
         },
@@ -141,7 +145,7 @@ describe("canvas-height-calculator (instance-based)", () => {
           canvasId: "canvas1",
           type: "header",
           layouts: {
-            desktop: { x: 0, y: 2, width: 10, height: 6 }, // bottom=8 (ignored)
+            desktop: { x: 0, y: 2, width: 10, height: 6, customized: true }, // bottom=8 (ignored)
             mobile: { x: 0, y: 10, width: 14, height: 3 }, // bottom=13
           },
         },
@@ -158,7 +162,7 @@ describe("canvas-height-calculator (instance-based)", () => {
           canvasId: "canvas1",
           type: "header",
           layouts: {
-            desktop: { x: 0, y: 2, width: 10, height: 6 },
+            desktop: { x: 0, y: 2, width: 10, height: 6, customized: true },
             mobile: {
               x: null,
               y: null,
@@ -185,7 +189,7 @@ describe("canvas-height-calculator (instance-based)", () => {
           canvasId: "canvas1",
           type: "header",
           layouts: {
-            desktop: { x: 0, y: 2, width: 10, height: 6 },
+            desktop: { x: 0, y: 2, width: 10, height: 6, customized: true },
             mobile: { x: 0, y: 5, width: 14, height: null, customized: false },
           },
         },
@@ -205,7 +209,7 @@ describe("canvas-height-calculator (instance-based)", () => {
           canvasId: "canvas1",
           type: "header",
           layouts: {
-            desktop: { x: 0, y: 10, width: 10, height: 10 }, // bottom=20
+            desktop: { x: 0, y: 10, width: 10, height: 10, customized: true }, // bottom=20
             mobile: { x: 0, y: 10, width: 14, height: 10, customized: false },
           },
         },
@@ -225,7 +229,7 @@ describe("canvas-height-calculator (instance-based)", () => {
           canvasId: "canvas1",
           type: "header",
           layouts: {
-            desktop: { x: 0, y: 10, width: 10, height: 10 }, // bottom=20
+            desktop: { x: 0, y: 10, width: 10, height: 10, customized: true }, // bottom=20
             mobile: { x: 0, y: 10, width: 14, height: 10, customized: false },
           },
         },
@@ -246,7 +250,7 @@ describe("canvas-height-calculator (instance-based)", () => {
           canvasId: "canvas1",
           type: "header",
           layouts: {
-            desktop: { x: 0, y: 10, width: 10, height: 10 }, // bottom=20
+            desktop: { x: 0, y: 10, width: 10, height: 10, customized: true }, // bottom=20
             mobile: { x: 0, y: 10, width: 14, height: 10, customized: false },
           },
         },
@@ -267,7 +271,7 @@ describe("canvas-height-calculator (instance-based)", () => {
           canvasId: "canvas1",
           type: "header",
           layouts: {
-            desktop: { x: 0, y: 5, width: 10, height: 8 }, // bottom=13
+            desktop: { x: 0, y: 5, width: 10, height: 8, customized: true }, // bottom=13
             mobile: { x: 0, y: 5, width: 14, height: 8, customized: false },
           },
         },
@@ -329,7 +333,7 @@ describe("canvas-height-calculator (instance-based)", () => {
               type: "header",
               name: "Header",
               layouts: {
-                desktop: { x: 0, y: 2, width: 10, height: 6 },
+                desktop: { x: 0, y: 2, width: 10, height: 6, customized: true },
                 mobile: { x: 0, y: 2, width: 14, height: 5, customized: false },
               },
               config: {},
@@ -359,7 +363,7 @@ describe("canvas-height-calculator (instance-based)", () => {
               type: "header",
               name: "Header",
               layouts: {
-                desktop: { x: 0, y: 2, width: 10, height: 6 }, // bottom=8
+                desktop: { x: 0, y: 2, width: 10, height: 6, customized: true }, // bottom=8
                 mobile: {
                   x: 0,
                   y: 10,
@@ -397,7 +401,7 @@ describe("canvas-height-calculator (instance-based)", () => {
               type: "header",
               name: "Header",
               layouts: {
-                desktop: { x: 0, y: 2, width: 10, height: 6 },
+                desktop: { x: 0, y: 2, width: 10, height: 6, customized: true },
                 mobile: {
                   x: 0,
                   y: 10,
@@ -430,7 +434,7 @@ describe("canvas-height-calculator (instance-based)", () => {
               type: "header",
               name: "Header",
               layouts: {
-                desktop: { x: 0, y: 2, width: 10, height: 6 },
+                desktop: { x: 0, y: 2, width: 10, height: 6, customized: true },
                 mobile: { x: 0, y: 2, width: 14, height: 5, customized: false },
               },
               config: {},
@@ -442,7 +446,13 @@ describe("canvas-height-calculator (instance-based)", () => {
               type: "article",
               name: "Article",
               layouts: {
-                desktop: { x: 0, y: 15, width: 10, height: 8 }, // bottom=23 (bottommost)
+                desktop: {
+                  x: 0,
+                  y: 15,
+                  width: 10,
+                  height: 8,
+                  customized: true,
+                }, // bottom=23 (bottommost)
                 mobile: {
                   x: 0,
                   y: 10,
@@ -478,7 +488,7 @@ describe("canvas-height-calculator (instance-based)", () => {
               type: "header",
               name: "Header",
               layouts: {
-                desktop: { x: 0, y: 2, width: 10, height: 6 },
+                desktop: { x: 0, y: 2, width: 10, height: 6, customized: true },
                 mobile: { x: 0, y: 2, width: 14, height: 5, customized: false },
               },
               config: {},
@@ -495,7 +505,7 @@ describe("canvas-height-calculator (instance-based)", () => {
               type: "footer",
               name: "Footer",
               layouts: {
-                desktop: { x: 0, y: 5, width: 10, height: 4 },
+                desktop: { x: 0, y: 5, width: 10, height: 4, customized: true },
                 mobile: { x: 0, y: 5, width: 14, height: 3, customized: false },
               },
               config: {},
@@ -533,7 +543,13 @@ describe("canvas-height-calculator (instance-based)", () => {
               type: "header",
               name: "Header",
               layouts: {
-                desktop: { x: 0, y: 10, width: 10, height: 10 }, // bottom=20
+                desktop: {
+                  x: 0,
+                  y: 10,
+                  width: 10,
+                  height: 10,
+                  customized: true,
+                }, // bottom=20
                 mobile: {
                   x: 0,
                   y: 10,
@@ -572,7 +588,7 @@ describe("canvas-height-calculator (instance-based)", () => {
               type: "header",
               name: "Header",
               layouts: {
-                desktop: { x: 0, y: 2, width: 10, height: 6 },
+                desktop: { x: 0, y: 2, width: 10, height: 6, customized: true },
                 mobile: { x: 0, y: 2, width: 14, height: 5, customized: false },
               },
               config: {},

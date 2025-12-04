@@ -76,6 +76,7 @@ describe("test-utils", () => {
         y: 100,
         width: 200,
         height: 150,
+        customized: true,
       });
       expect(item.layouts.mobile.customized).toBe(false);
     });

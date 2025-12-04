@@ -203,7 +203,7 @@ describe("space-finder", () => {
               type: "header",
               name: "Header",
               layouts: {
-                desktop: { x: 0, y: 0, width: 10, height: 6 },
+                desktop: { x: 0, y: 0, width: 10, height: 6, customized: true },
                 mobile: { x: 0, y: 0, width: 50, height: 6, customized: false },
               },
               zIndex: 1,
@@ -231,7 +231,7 @@ describe("space-finder", () => {
               type: "header",
               name: "Header",
               layouts: {
-                desktop: { x: 0, y: 0, width: 10, height: 6 },
+                desktop: { x: 0, y: 0, width: 10, height: 6, customized: true },
                 mobile: { x: 0, y: 0, width: 50, height: 6, customized: false },
               },
               zIndex: 1,
@@ -243,7 +243,13 @@ describe("space-finder", () => {
               type: "text",
               name: "Text",
               layouts: {
-                desktop: { x: 0, y: 10, width: 10, height: 8 },
+                desktop: {
+                  x: 0,
+                  y: 10,
+                  width: 10,
+                  height: 8,
+                  customized: true,
+                },
                 mobile: {
                   x: 0,
                   y: 10,
@@ -261,7 +267,13 @@ describe("space-finder", () => {
               type: "button",
               name: "Button",
               layouts: {
-                desktop: { x: 20, y: 5, width: 10, height: 5 },
+                desktop: {
+                  x: 20,
+                  y: 5,
+                  width: 10,
+                  height: 5,
+                  customized: true,
+                },
                 mobile: {
                   x: 0,
                   y: 20,
@@ -297,7 +309,13 @@ describe("space-finder", () => {
               type: "header",
               name: "Header",
               layouts: {
-                desktop: { x: 30, y: 0, width: 10, height: 6 },
+                desktop: {
+                  x: 30,
+                  y: 0,
+                  width: 10,
+                  height: 6,
+                  customized: true,
+                },
                 mobile: { x: 0, y: 0, width: 50, height: 6, customized: false },
               },
               zIndex: 1,
@@ -343,7 +361,7 @@ describe("space-finder", () => {
           type: "header",
           name: "Header",
           layouts: {
-            desktop: { x: 20, y: 20, width: 10, height: 6 },
+            desktop: { x: 20, y: 20, width: 10, height: 6, customized: true },
             mobile: { x: 0, y: 0, width: 50, height: 6, customized: false },
           },
           zIndex: 1,
@@ -366,7 +384,7 @@ describe("space-finder", () => {
           type: "header",
           name: "Header",
           layouts: {
-            desktop: { x: 0, y: 0, width: 15, height: 8 },
+            desktop: { x: 0, y: 0, width: 15, height: 8, customized: true },
             mobile: { x: 0, y: 0, width: 50, height: 8, customized: false },
           },
           zIndex: 1,
@@ -396,7 +414,7 @@ describe("space-finder", () => {
           type: "header",
           name: "Header",
           layouts: {
-            desktop: { x: 0, y: 0, width: 10, height: 6 },
+            desktop: { x: 0, y: 0, width: 10, height: 6, customized: true },
             mobile: { x: 0, y: 0, width: 50, height: 6, customized: false },
           },
           zIndex: 1,
@@ -408,7 +426,7 @@ describe("space-finder", () => {
           type: "text",
           name: "Text",
           layouts: {
-            desktop: { x: 0, y: 10, width: 10, height: 6 },
+            desktop: { x: 0, y: 10, width: 10, height: 6, customized: true },
             mobile: { x: 0, y: 10, width: 50, height: 6, customized: false },
           },
           zIndex: 2,
@@ -475,7 +493,7 @@ describe("space-finder", () => {
           type: "header",
           name: "Header",
           layouts: {
-            desktop: { x: 0, y: 0, width: 30, height: 6 },
+            desktop: { x: 0, y: 0, width: 30, height: 6, customized: true },
             mobile: { x: 0, y: 0, width: 50, height: 6, customized: false },
           },
           zIndex: 1,
@@ -511,7 +529,7 @@ describe("space-finder", () => {
           type: "header",
           name: "Header",
           layouts: {
-            desktop: { x: 5, y: 5, width: 10, height: 6 },
+            desktop: { x: 5, y: 5, width: 10, height: 6, customized: true },
             mobile: { x: 0, y: 0, width: 50, height: 6, customized: false },
           },
           zIndex: 1,
@@ -523,7 +541,7 @@ describe("space-finder", () => {
           type: "text",
           name: "Text",
           layouts: {
-            desktop: { x: 20, y: 8, width: 15, height: 8 },
+            desktop: { x: 20, y: 8, width: 15, height: 8, customized: true },
             mobile: { x: 0, y: 10, width: 50, height: 8, customized: false },
           },
           zIndex: 2,
@@ -551,7 +569,7 @@ describe("space-finder", () => {
           type: "header",
           name: "Header",
           layouts: {
-            desktop: { x: 2, y: 2, width: 20, height: 6 },
+            desktop: { x: 2, y: 2, width: 20, height: 6, customized: true },
             mobile: { x: 0, y: 0, width: 50, height: 6, customized: false },
           },
           zIndex: 1,

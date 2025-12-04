@@ -86,12 +86,7 @@ function createTestItem(canvasId: string): GridItem {
     type: "test-component",
     name: "Test Component",
     layouts: {
-      desktop: {
-        x: 5,
-        y: 2,
-        width: 10,
-        height: 5,
-      },
+      desktop: { customized: true, x: 5, y: 2, width: 10, height: 5 },
       mobile: {
         x: null,
         y: null,
@@ -619,7 +614,7 @@ describe("ResizeHandler", () => {
         type: "header",
         name: "Header Item",
         layouts: {
-          desktop: { x: 5, y: 5, width: 10, height: 6 },
+          desktop: { x: 5, y: 5, width: 10, height: 6, customized: true },
           mobile: { x: 1, y: 1, width: 14, height: 5, customized: false },
         },
         config: {},
@@ -677,7 +672,7 @@ describe("ResizeHandler", () => {
         type: "header",
         name: "Header Item",
         layouts: {
-          desktop: { x: 1, y: 1, width: 10, height: 6 },
+          desktop: { x: 1, y: 1, width: 10, height: 6, customized: true },
           mobile: { x: 1, y: 1, width: 14, height: 5, customized: false },
         },
         config: {},
@@ -690,7 +685,7 @@ describe("ResizeHandler", () => {
         type: "text",
         name: "Text Item",
         layouts: {
-          desktop: { x: 1, y: 1, width: 10, height: 4 },
+          desktop: { x: 1, y: 1, width: 10, height: 4, customized: true },
           mobile: { x: 1, y: 1, width: 14, height: 3, customized: false },
         },
         config: {},
@@ -754,7 +749,7 @@ describe("ResizeHandler", () => {
         type: "header",
         name: "Header Item",
         layouts: {
-          desktop: { x: 1, y: 1, width: 10, height: 6 },
+          desktop: { x: 1, y: 1, width: 10, height: 6, customized: true },
           mobile: { x: 1, y: 1, width: 14, height: 5, customized: false },
         },
         config: {},
@@ -814,7 +809,7 @@ describe("ResizeHandler", () => {
         type: "header",
         name: "Header Item",
         layouts: {
-          desktop: { x: 1, y: 1, width: 10, height: 6 },
+          desktop: { x: 1, y: 1, width: 10, height: 6, customized: true },
           mobile: { x: 1, y: 1, width: 14, height: 5, customized: false },
         },
         config: {},
@@ -867,7 +862,7 @@ describe("ResizeHandler", () => {
         type: "header",
         name: "Header Item",
         layouts: {
-          desktop: { x: 1, y: 1, width: 10, height: 6 },
+          desktop: { x: 1, y: 1, width: 10, height: 6, customized: true },
           mobile: { x: 1, y: 1, width: 14, height: 5, customized: false },
         },
         config: {},

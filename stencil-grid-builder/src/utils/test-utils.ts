@@ -56,7 +56,7 @@ export function createTestItem(overrides?: Partial<GridItem>): GridItem {
     type: "header",
     name: "Test Header",
     layouts: {
-      desktop: { x: 100, y: 100, width: 200, height: 150 },
+      desktop: { x: 100, y: 100, width: 200, height: 150, customized: true },
       mobile: {
         x: null,
         y: null,
@@ -88,6 +88,7 @@ export function createTestItems(
           y: 10 + index * 5,
           width: 200,
           height: 150,
+          customized: true,
         },
         mobile: {
           x: null,
