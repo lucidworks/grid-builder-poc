@@ -99,7 +99,7 @@ const sampleExportedLayout = {
           type: "header",
           name: "Header",
           layouts: {
-            desktop: { x: 0, y: 0, width: 30, height: 4 },
+            desktop: { x: 0, y: 0, width: 30, height: 4, customized: true },
             mobile: {
               x: null,
               y: null,
@@ -117,7 +117,7 @@ const sampleExportedLayout = {
           type: "text",
           name: "Text Block",
           layouts: {
-            desktop: { x: 0, y: 5, width: 20, height: 6 },
+            desktop: { x: 0, y: 5, width: 20, height: 6, customized: true },
             mobile: {
               x: null,
               y: null,
@@ -137,7 +137,7 @@ const sampleExportedLayout = {
           type: "button",
           name: "Button",
           layouts: {
-            desktop: { x: 21, y: 5, width: 12, height: 4 },
+            desktop: { x: 21, y: 5, width: 12, height: 4, customized: true },
             mobile: {
               x: null,
               y: null,
@@ -267,7 +267,7 @@ export const ExportImportWorkflow = () => {
             type: "header",
             name: "Header",
             layouts: {
-              desktop: { x: 0, y: 0, width: 30, height: 4 },
+              desktop: { x: 0, y: 0, width: 30, height: 4, customized: true },
               mobile: {
                 x: null,
                 y: null,
@@ -285,7 +285,7 @@ export const ExportImportWorkflow = () => {
             type: "text",
             name: "Text",
             layouts: {
-              desktop: { x: 0, y: 5, width: 25, height: 6 },
+              desktop: { x: 0, y: 5, width: 25, height: 6, customized: true },
               mobile: {
                 x: null,
                 y: null,
@@ -624,7 +624,7 @@ export const MultipleSections = () => {
             type: "header",
             name: "Hero Header",
             layouts: {
-              desktop: { x: 5, y: 2, width: 40, height: 6 },
+              desktop: { x: 5, y: 2, width: 40, height: 6, customized: true },
               mobile: {
                 x: null,
                 y: null,
@@ -642,7 +642,7 @@ export const MultipleSections = () => {
             type: "text",
             name: "Hero Description",
             layouts: {
-              desktop: { x: 5, y: 9, width: 40, height: 6 },
+              desktop: { x: 5, y: 9, width: 40, height: 6, customized: true },
               mobile: {
                 x: null,
                 y: null,
@@ -666,7 +666,7 @@ export const MultipleSections = () => {
             type: "header",
             name: "Features Header",
             layouts: {
-              desktop: { x: 0, y: 0, width: 50, height: 4 },
+              desktop: { x: 0, y: 0, width: 50, height: 4, customized: true },
               mobile: {
                 x: null,
                 y: null,
@@ -684,7 +684,7 @@ export const MultipleSections = () => {
             type: "text",
             name: "Feature 1",
             layouts: {
-              desktop: { x: 0, y: 5, width: 15, height: 8 },
+              desktop: { x: 0, y: 5, width: 15, height: 8, customized: true },
               mobile: {
                 x: null,
                 y: null,
@@ -704,7 +704,7 @@ export const MultipleSections = () => {
             type: "text",
             name: "Feature 2",
             layouts: {
-              desktop: { x: 17, y: 5, width: 15, height: 8 },
+              desktop: { x: 17, y: 5, width: 15, height: 8, customized: true },
               mobile: {
                 x: null,
                 y: null,
@@ -724,7 +724,7 @@ export const MultipleSections = () => {
             type: "text",
             name: "Feature 3",
             layouts: {
-              desktop: { x: 34, y: 5, width: 15, height: 8 },
+              desktop: { x: 34, y: 5, width: 15, height: 8, customized: true },
               mobile: {
                 x: null,
                 y: null,
@@ -748,7 +748,7 @@ export const MultipleSections = () => {
             type: "text",
             name: "CTA Text",
             layouts: {
-              desktop: { x: 10, y: 2, width: 20, height: 4 },
+              desktop: { x: 10, y: 2, width: 20, height: 4, customized: true },
               mobile: {
                 x: null,
                 y: null,
@@ -766,7 +766,7 @@ export const MultipleSections = () => {
             type: "button",
             name: "CTA Button",
             layouts: {
-              desktop: { x: 32, y: 2, width: 12, height: 4 },
+              desktop: { x: 32, y: 2, width: 12, height: 4, customized: true },
               mobile: {
                 x: null,
                 y: null,
