@@ -61,10 +61,16 @@ import { ComponentRegistry } from "../../services/component-registry";
 import { GridExport } from "../../types/grid-export";
 
 // Service imports - only rendering-related, no editing
-import { ViewerState } from "../../services/state-manager";
+import {
+  ViewerState,
+  DEFAULT_BREAKPOINTS,
+  normalizeBreakpoints,
+} from "../../services/state-manager";
 import { createStore } from "@stencil/store";
 import { createDebugLogger } from "../../utils/debug";
 import { VirtualRendererService } from "../../services/virtual-renderer";
+import { getViewportForWidth } from "../../utils/breakpoint-utils";
+import { sharedStateRegistry } from "../../services/shared-state-registry";
 
 const debug = createDebugLogger("grid-viewer");
 
@@ -76,13 +82,19 @@ const debug = createDebugLogger("grid-viewer");
  *
  * **Tag**: `<grid-viewer>`
  * **Shadow DOM**: Disabled (consistent with grid-builder)
- * **Reactivity**: Uses local store for viewer state
+ * **Reactivity**: Uses local store OR shared store (via apiKey prop)
  *
  * **Key differences from grid-builder**:
  * - No interact.js dependency (80% bundle size reduction)
  * - No palette, config panel, or editing UI
  * - Simplified state (no selection, no z-index tracking)
  * - Rendering-only canvas sections
+ *
+ * **Multi-instance sharing**:
+ * - **Local mode** (default): Each instance has independent state
+ * - **Shared mode** (with apiKey): Multiple instances share layout data
+ * - Same SharedStateRegistry pattern as grid-builder
+ * - Use case: Multi-device preview (mobile + tablet + desktop side-by-side)
  */
 @Component({
   tag: "grid-viewer",
@@ -133,6 +145,33 @@ export class GridViewer {
   @Prop() theme?: GridBuilderTheme;
 
   /**
+   * Breakpoint configuration for responsive layouts
+   *
+   * **Optional prop**: Define custom responsive breakpoints
+   * **Default**: `{ mobile: { minWidth: 0, layoutMode: 'stack' }, desktop: { minWidth: 768, layoutMode: 'manual' } }`
+   * **Backwards compatible**: Existing desktop/mobile behavior maintained by default
+   *
+   * **Should match builder config**: Use same breakpoints as builder for consistent behavior
+   *
+   * **Examples**:
+   *
+   * 1. **Simple format** (min-width only):
+   * ```typescript
+   * <grid-viewer breakpoints={{ mobile: 0, desktop: 768 }}></grid-viewer>
+   * ```
+   *
+   * 2. **Full format** (3 breakpoints with layout modes):
+   * ```typescript
+   * <grid-viewer breakpoints={{
+   *   mobile: { minWidth: 0, layoutMode: 'stack' },
+   *   tablet: { minWidth: 768, layoutMode: 'inherit', inheritFrom: 'desktop' },
+   *   desktop: { minWidth: 1024, layoutMode: 'manual' }
+   * }}></grid-viewer>
+   * ```
+   */
+  @Prop() breakpoints?: any; // BreakpointConfig | SimpleBreakpointConfig
+
+  /**
    * Initial state to display
    *
    * **Optional prop**: Layout data to render
@@ -173,6 +212,46 @@ export class GridViewer {
   @Prop() canvasMetadata?: Record<string, any>;
 
   /**
+   * API key for shared state across multiple instances
+   *
+   * **Optional prop**: Enables multi-instance sharing
+   * **Purpose**: Multiple grid-viewer instances with same apiKey share layout data
+   *
+   * **Use cases**:
+   * - Multi-device preview (mobile + tablet + desktop views side-by-side)
+   * - Collaborative viewing (multiple users viewing same layout)
+   * - Live updates across instances
+   *
+   * **Shared data**: Canvas items and layouts
+   * **Instance-specific**: Current viewport (each instance can show different viewport)
+   *
+   * **Example**:
+   * ```typescript
+   * // Instance 1: Mobile view
+   * <grid-viewer apiKey="demo-layout" breakpoints={{ mobile: 0, desktop: 768 }}></grid-viewer>
+   *
+   * // Instance 2: Desktop view (shares data with Instance 1)
+   * <grid-viewer apiKey="demo-layout" breakpoints={{ mobile: 0, desktop: 768 }}></grid-viewer>
+   * ```
+   *
+   * **Default**: undefined (local-only mode, no sharing)
+   */
+  @Prop() apiKey?: string;
+
+  /**
+   * Unique instance identifier for multi-instance scenarios
+   *
+   * **Optional prop**: Auto-generated if not provided
+   * **Purpose**: Track individual instances in SharedStateRegistry
+   *
+   * **Auto-generation**: If not provided, generates: `grid-viewer-{timestamp}-{random}`
+   *
+   * **Only relevant when**: apiKey is provided (shared mode)
+   * **Ignored when**: apiKey is undefined (local-only mode)
+   */
+  @Prop() instanceId?: string;
+
+  /**
    * Component registry (internal state)
    *
    * **Purpose**: Map component type → definition for lookup
@@ -186,8 +265,33 @@ export class GridViewer {
    *
    * **Purpose**: Minimal state for rendering (no editing state)
    * **Structure**: ViewerState with canvases and currentViewport
+   *
+   * **Mode**: Local-only when apiKey is undefined, instance-specific when apiKey is provided
    */
   private viewerState!: { state: ViewerState };
+
+  /**
+   * Shared data store (only when apiKey is provided)
+   *
+   * **Purpose**: Reference to shared canvases data from SharedStateRegistry
+   * **Mode**: Only populated when apiKey is provided
+   *
+   * **Lifecycle**:
+   * - Created in componentWillLoad if apiKey is provided
+   * - Shared across all instances with same apiKey
+   * - Disposed by registry when last instance disconnects
+   */
+  private sharedDataStore?: { state: { canvases: Record<string, any> } };
+
+  /**
+   * Resolved instance identifier (auto-generated if not provided)
+   *
+   * **Purpose**: Unique ID for this viewer instance (for reference counting)
+   * **Generated**: `grid-viewer-{timestamp}-{random}` if instanceId prop not provided
+   *
+   * **Only used when**: apiKey is provided (shared mode)
+   */
+  private resolvedInstanceId?: string;
 
   /**
    * Host element reference
@@ -216,9 +320,51 @@ export class GridViewer {
    * **Purpose**: Initialize component registry and viewer state
    */
   componentWillLoad() {
+    // Configure breakpoints first (needed for state initialization)
+    const breakpointsConfig = this.breakpoints
+      ? normalizeBreakpoints(this.breakpoints)
+      : DEFAULT_BREAKPOINTS;
+
+    debug.log("GridViewer: Breakpoints configured", breakpointsConfig);
+
+    // Normalize apiKey: empty string becomes undefined (local-only mode)
+    const normalizedApiKey = this.apiKey?.trim() || undefined;
+
     // Validate required props
     if (!this.components || this.components.length === 0) {
       console.error("GridViewer: components prop is required");
+      // Still initialize viewerState/sharedStore to prevent render/watcher errors
+      if (normalizedApiKey) {
+        // Shared mode even without components
+        this.resolvedInstanceId =
+          this.instanceId ||
+          `grid-viewer-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+
+        const registryEntry = sharedStateRegistry.getOrCreate(normalizedApiKey, {
+          canvases: {},
+        });
+        this.sharedDataStore = registryEntry.store;
+        sharedStateRegistry.addInstance(normalizedApiKey, this.resolvedInstanceId);
+
+        this.viewerState = createStore<ViewerState>({
+          canvases: this.sharedDataStore.state.canvases,
+          currentViewport: "desktop",
+          selectedItemId: null,
+          selectedCanvasId: null,
+          activeCanvasId: null,
+          breakpoints: breakpointsConfig,
+        });
+      } else {
+        // Local mode without components
+        this.viewerState = createStore<ViewerState>({
+          canvases: {},
+          currentViewport: "desktop",
+          selectedItemId: null,
+          selectedCanvasId: null,
+          activeCanvasId: null,
+          breakpoints: breakpointsConfig,
+        });
+      }
       return;
     }
 
@@ -230,35 +376,104 @@ export class GridViewer {
       debug.warn("GridViewer: Duplicate component types detected");
     }
 
-    // Initialize local viewer state store with editing-only fields set to null
-    // This allows grid-item-wrapper to access these fields without defensive guards
-    // while maintaining viewer mode as display-only (no actual selection/editing)
-    const initialViewerState: ViewerState = {
-      canvases: {},
-      currentViewport: "desktop",
-      selectedItemId: null, // Always null in viewer mode (no selection)
-      selectedCanvasId: null, // Always null in viewer mode (no selection)
-      activeCanvasId: null, // Always null in viewer mode (no active canvas)
-    };
+    if (normalizedApiKey) {
+      // **Shared mode**: Multi-instance coordination via SharedStateRegistry
+      debug.log(
+        `GridViewer: Initializing in shared mode (apiKey: ${normalizedApiKey})`,
+      );
 
-    // Restore initial state if provided
-    if (this.initialState) {
-      // Handle both ViewerState and GridExport formats
-      if ("viewport" in this.initialState) {
-        // GridExport format
-        initialViewerState.currentViewport = this.initialState.viewport;
-        initialViewerState.canvases = this.initialState.canvases as Record<
-          string,
-          any
-        >;
-      } else {
-        // ViewerState format
-        Object.assign(initialViewerState, this.initialState);
+      // Generate or use provided instanceId
+      this.resolvedInstanceId =
+        this.instanceId ||
+        `grid-viewer-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+      debug.log(`GridViewer: Instance ID: ${this.resolvedInstanceId}`);
+
+      // Prepare initial canvas data
+      let initialCanvases: Record<string, any> = {};
+      if (this.initialState) {
+        if ("viewport" in this.initialState) {
+          // GridExport format
+          initialCanvases = this.initialState.canvases as Record<string, any>;
+        } else if (this.initialState.canvases) {
+          // ViewerState format
+          initialCanvases = this.initialState.canvases;
+        }
       }
-    }
 
-    // Create local store (not global like grid-builder)
-    this.viewerState = createStore<ViewerState>(initialViewerState);
+      // Get or create shared data store from registry
+      const registryEntry = sharedStateRegistry.getOrCreate(normalizedApiKey, {
+        canvases: initialCanvases,
+      });
+      this.sharedDataStore = registryEntry.store;
+
+      // Register this instance for reference counting
+      sharedStateRegistry.addInstance(
+        normalizedApiKey,
+        this.resolvedInstanceId,
+      );
+      debug.log(
+        `GridViewer: Registered with SharedStateRegistry (apiKey: ${normalizedApiKey}, instanceId: ${this.resolvedInstanceId})`,
+      );
+
+      // Create instance-specific store for view state (viewport, selection)
+      // Note: selection fields are always null in viewer mode
+      const initialViewport =
+        this.initialState && "viewport" in this.initialState
+          ? this.initialState.viewport
+          : (this.initialState as Partial<ViewerState>)?.currentViewport ||
+            "desktop";
+
+      this.viewerState = createStore<ViewerState>({
+        canvases: this.sharedDataStore.state.canvases, // Reference to shared data
+        currentViewport: initialViewport,
+        selectedItemId: null, // Always null in viewer mode
+        selectedCanvasId: null, // Always null in viewer mode
+        activeCanvasId: null, // Always null in viewer mode
+        breakpoints: breakpointsConfig,
+      });
+
+      debug.log(
+        `GridViewer: Shared mode initialized (canvases: ${Object.keys(this.sharedDataStore.state.canvases).length})`,
+      );
+    } else {
+      // **Local-only mode**: No sharing, backward compatible behavior
+      debug.log("GridViewer: Initializing in local-only mode (no apiKey)");
+
+      // Initialize local viewer state store with editing-only fields set to null
+      // This allows grid-item-wrapper to access these fields without defensive guards
+      // while maintaining viewer mode as display-only (no actual selection/editing)
+      const initialViewerState: ViewerState = {
+        canvases: {},
+        currentViewport: "desktop",
+        selectedItemId: null, // Always null in viewer mode (no selection)
+        selectedCanvasId: null, // Always null in viewer mode (no selection)
+        activeCanvasId: null, // Always null in viewer mode (no active canvas)
+        breakpoints: breakpointsConfig,
+      };
+
+      // Restore initial state if provided
+      if (this.initialState) {
+        // Handle both ViewerState and GridExport formats
+        if ("viewport" in this.initialState) {
+          // GridExport format
+          initialViewerState.currentViewport = this.initialState.viewport;
+          initialViewerState.canvases = this.initialState.canvases as Record<
+            string,
+            any
+          >;
+        } else {
+          // ViewerState format
+          Object.assign(initialViewerState, this.initialState);
+        }
+      }
+
+      // Create local store (not global like grid-builder)
+      this.viewerState = createStore<ViewerState>(initialViewerState);
+
+      debug.log(
+        `GridViewer: Local mode initialized (canvases: ${Object.keys(this.viewerState.state.canvases).length})`,
+      );
+    }
 
     // Create virtual renderer if enabled (Performance for large layouts)
     if (this.config?.enableVirtualRendering !== false) {
@@ -284,12 +499,25 @@ export class GridViewer {
   /**
    * Disconnected callback (cleanup)
    *
-   * **Purpose**: Clean up ResizeObserver
+   * **Purpose**: Clean up ResizeObserver and unregister from SharedStateRegistry
    */
   disconnectedCallback() {
     // Cleanup ResizeObserver
     if (this.viewportResizeObserver) {
       this.viewportResizeObserver.disconnect();
+    }
+
+    // Unregister from SharedStateRegistry (if in shared mode)
+    // This decrements the reference count and may trigger disposal if this was the last instance
+    const normalizedApiKey = this.apiKey?.trim() || undefined;
+    if (normalizedApiKey && this.resolvedInstanceId) {
+      sharedStateRegistry.removeInstance(
+        normalizedApiKey,
+        this.resolvedInstanceId,
+      );
+      debug.log(
+        `GridViewer: Unregistered from SharedStateRegistry (apiKey: ${normalizedApiKey}, instanceId: ${this.resolvedInstanceId})`,
+      );
     }
   }
 
@@ -307,10 +535,57 @@ export class GridViewer {
    * Watch initialState prop for changes
    *
    * **Purpose**: Update viewer state when initialState prop changes
+   *
+   * **Shared mode behavior**:
+   * - Updates shared data store for canvases (affects all instances with same apiKey)
+   * - Updates instance-specific store for viewport (only affects this instance)
+   *
+   * **Local mode behavior**:
+   * - Updates local store directly (backward compatible)
    */
   @Watch("initialState")
   handleInitialStateChange(newState: Partial<ViewerState> | GridExport) {
-    if (newState) {
+    // Guard: Skip if viewerState not yet initialized (componentWillLoad not complete)
+    if (!newState || !this.viewerState) return;
+
+    const normalizedApiKey = this.apiKey?.trim() || undefined;
+
+    if (normalizedApiKey && this.sharedDataStore) {
+      // **Shared mode**: Update shared data store and instance store separately
+      debug.log(
+        `GridViewer: Updating state in shared mode (apiKey: ${normalizedApiKey})`,
+      );
+
+      // Handle both ViewerState and GridExport formats
+      if ("viewport" in newState) {
+        // GridExport format
+        this.viewerState.state.currentViewport = newState.viewport;
+        // Update shared canvases data (affects all instances)
+        this.sharedDataStore.state.canvases = newState.canvases as Record<
+          string,
+          any
+        >;
+        // Re-sync reference in viewerState (since we replaced the object)
+        this.viewerState.state.canvases = this.sharedDataStore.state.canvases;
+      } else {
+        // ViewerState format
+        // Update viewport (instance-specific)
+        if (newState.currentViewport) {
+          this.viewerState.state.currentViewport = newState.currentViewport;
+        }
+        // Update canvases (shared data)
+        if (newState.canvases) {
+          this.sharedDataStore.state.canvases = newState.canvases;
+          // Re-sync reference in viewerState (since we replaced the object)
+          this.viewerState.state.canvases = this.sharedDataStore.state.canvases;
+        }
+        // Note: selection fields (selectedItemId, selectedCanvasId, activeCanvasId)
+        // are ignored in viewer mode (always null)
+      }
+    } else {
+      // **Local mode**: Update local store directly (backward compatible)
+      debug.log("GridViewer: Updating state in local mode");
+
       // Handle both ViewerState and GridExport formats
       if ("viewport" in newState) {
         // GridExport format
@@ -388,8 +663,9 @@ export class GridViewer {
           return;
         }
 
-        // Determine target viewport based on container width
-        const targetViewport = width < 768 ? "mobile" : "desktop";
+        // Determine target viewport from breakpoints config
+        const breakpoints = this.viewerState.state.breakpoints;
+        const targetViewport = getViewportForWidth(width, breakpoints);
 
         // Only update if viewport changed
         if (this.viewerState.state.currentViewport !== targetViewport) {
@@ -421,6 +697,11 @@ export class GridViewer {
    * - No config panel (viewing only)
    */
   render() {
+    // Guard against missing viewerState (e.g., components prop not provided)
+    if (!this.viewerState) {
+      return <Host></Host>;
+    }
+
     const canvasIds = Object.keys(this.viewerState.state.canvases);
 
     return (
@@ -437,6 +718,7 @@ export class GridViewer {
                   componentRegistry={this.componentRegistry}
                   items={this.viewerState.state.canvases[canvasId].items}
                   currentViewport={this.viewerState.state.currentViewport}
+                  breakpoints={this.viewerState.state.breakpoints}
                   backgroundColor={
                     this.canvasMetadata?.[canvasId]?.backgroundColor
                   }
