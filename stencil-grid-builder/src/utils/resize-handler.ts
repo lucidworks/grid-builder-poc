@@ -876,6 +876,460 @@ export class ResizeHandler {
   }
 
   /**
+   * Resize End Helper Methods
+   * ===========================
+   *
+   * The following helper methods were extracted from handleResizeEnd to reduce
+   * cyclomatic complexity and improve testability. Each method has a single
+   * responsibility and is documented with numbered steps.
+   */
+
+  /**
+   * Apply directional grid snapping to position and size
+   *
+   * **Purpose**: Snap dimensions and position to grid using directional rounding
+   * to prevent visual snap-back when user releases resize
+   *
+   * **Implementation Steps**:
+   * 1. Snap width using directional rounding (grow up, shrink down)
+   * 2. Snap height using directional rounding (grow up, shrink down)
+   * 3. Snap X position using directional rounding for left edge resizes
+   * 4. Snap Y position using directional rounding for top edge resizes
+   * 5. Ensure minimum size constraints are respected
+   *
+   * **Directional Rounding Logic**:
+   * - **Grow**: Round UP to next grid cell (user made it bigger, respect that)
+   * - **Shrink**: Round DOWN to previous grid cell (user made it smaller, respect that)
+   * - **No change**: Round normally to nearest grid cell
+   *
+   * **Why directional rounding**:
+   * - Prevents jarring snap-back when user releases mouse
+   * - Honors user intent (bigger stays bigger, smaller stays smaller)
+   * - Provides predictable grid snapping behavior
+   * @param newWidth - Current width in pixels (before snapping)
+   * @param newHeight - Current height in pixels (before snapping)
+   * @param newX - Current X position in pixels (before snapping)
+   * @param newY - Current Y position in pixels (before snapping)
+   * @param gridSizeX - Horizontal grid size in pixels
+   * @param gridSizeY - Vertical grid size in pixels
+   * @param startRect - Original dimensions before resize started
+   * @param minWidth - Minimum allowed width in pixels
+   * @param minHeight - Minimum allowed height in pixels
+   * @returns Snapped dimensions and position: { width, height, x, y }
+   */
+  private applyDirectionalGridSnapping(
+    newWidth: number,
+    newHeight: number,
+    newX: number,
+    newY: number,
+    gridSizeX: number,
+    gridSizeY: number,
+    startRect: { x: number; y: number; width: number; height: number },
+    minWidth: number,
+    minHeight: number,
+  ): { width: number; height: number; x: number; y: number } {
+    // Step 1: Snap width using directional rounding (grow up, shrink down)
+    let snappedWidth: number;
+    if (newWidth > startRect.width) {
+      // User made it wider → round UP to next grid cell
+      snappedWidth = Math.ceil(newWidth / gridSizeX) * gridSizeX;
+    } else if (newWidth < startRect.width) {
+      // User made it narrower → round DOWN to previous grid cell
+      snappedWidth = Math.floor(newWidth / gridSizeX) * gridSizeX;
+    } else {
+      // No change → keep original (round normally)
+      snappedWidth = Math.round(newWidth / gridSizeX) * gridSizeX;
+    }
+    // Ensure grid snapping doesn't violate minimum size
+    snappedWidth = Math.max(minWidth, snappedWidth);
+
+    // Step 2: Snap height using directional rounding (grow up, shrink down)
+    let snappedHeight: number;
+    if (newHeight > startRect.height) {
+      // User made it taller → round UP to next grid cell
+      snappedHeight = Math.ceil(newHeight / gridSizeY) * gridSizeY;
+    } else if (newHeight < startRect.height) {
+      // User made it shorter → round DOWN to previous grid cell
+      snappedHeight = Math.floor(newHeight / gridSizeY) * gridSizeY;
+    } else {
+      // No change → keep original
+      snappedHeight = Math.round(newHeight / gridSizeY) * gridSizeY;
+    }
+    // Ensure grid snapping doesn't violate minimum size
+    snappedHeight = Math.max(minHeight, snappedHeight);
+
+    // Step 3: Snap X position using directional rounding for left edge resizes
+    let snappedX: number;
+    if (newX < startRect.x) {
+      // User moved left edge left → round DOWN (move further left to grid)
+      snappedX = Math.floor(newX / gridSizeX) * gridSizeX;
+    } else if (newX > startRect.x) {
+      // User moved left edge right → round UP (move further right to grid)
+      snappedX = Math.ceil(newX / gridSizeX) * gridSizeX;
+    } else {
+      snappedX = Math.round(newX / gridSizeX) * gridSizeX;
+    }
+
+    // Step 4: Snap Y position using directional rounding for top edge resizes
+    let snappedY: number;
+    if (newY < startRect.y) {
+      // User moved top edge up → round DOWN (move further up to grid)
+      snappedY = Math.floor(newY / gridSizeY) * gridSizeY;
+    } else if (newY > startRect.y) {
+      // User moved top edge down → round UP (move further down to grid)
+      snappedY = Math.ceil(newY / gridSizeY) * gridSizeY;
+    } else {
+      snappedY = Math.round(newY / gridSizeY) * gridSizeY;
+    }
+
+    // Step 5: Return snapped values
+    return {
+      width: snappedWidth,
+      height: snappedHeight,
+      x: snappedX,
+      y: snappedY,
+    };
+  }
+
+  /**
+   * Preserve fixed edges when resizing from top or left
+   *
+   * **Purpose**: When resizing from top/left edges, preserve the opposite edge position
+   *
+   * **Implementation Steps**:
+   * 1. Check if resizing from top edge - if yes, preserve bottom edge
+   * 2. Check if resizing from left edge - if yes, preserve right edge
+   * 3. Adjust position to maintain fixed edge after grid snapping
+   *
+   * **Why this is needed**:
+   * - Directional snapping snaps BOTH position AND size independently
+   * - This can cause the opposite edge to drift from its original position
+   * - Solution: Keep the snapped size (user expectation), adjust position to preserve fixed edge
+   *
+   * **Example** (top edge resize):
+   * - Original: y=100, height=200 → bottom edge at y=300
+   * - After snap: height=220 (snapped to grid)
+   * - Adjust: y = 300 - 220 = 80 (preserves bottom edge at 300)
+   * @param x - Current X position after grid snapping
+   * @param y - Current Y position after grid snapping
+   * @param width - Current width after grid snapping
+   * @param height - Current height after grid snapping
+   * @param edges - Which edges are being resized (from interact.js event)
+   * @param startRect - Original dimensions before resize started
+   * @returns Adjusted position: { x, y }
+   */
+  private preserveFixedEdges(
+    x: number,
+    y: number,
+    width: number,
+    height: number,
+    edges: any,
+    startRect: { x: number; y: number; width: number; height: number },
+  ): { x: number; y: number } {
+    let adjustedX = x;
+    let adjustedY = y;
+
+    // Step 1: Check if resizing from top edge - if yes, preserve bottom edge
+    if (edges && edges.top) {
+      // Top edge is moving, bottom edge should stay fixed
+      // Height was already snapped (user dragged it, so snap what they requested)
+      // Now adjust Y to preserve the bottom edge: Y = bottom - height
+      const bottomEdge = startRect.y + startRect.height; // Fixed bottom position in pixels
+      adjustedY = bottomEdge - height; // Adjust Y to preserve bottom edge
+
+      debug.log("  ✅ TOP EDGE RESIZE: Preserving bottom edge", {
+        bottomEdge,
+        snappedHeight: height,
+        adjustedY,
+      });
+    }
+
+    // Step 2: Check if resizing from left edge - if yes, preserve right edge
+    if (edges && edges.left) {
+      // Left edge is moving, right edge should stay fixed
+      // Width was already snapped (user dragged it, so snap what they requested)
+      // Now adjust X to preserve the right edge: X = right - width
+      const rightEdge = startRect.x + startRect.width; // Fixed right position in pixels
+      adjustedX = rightEdge - width; // Adjust X to preserve right edge
+
+      debug.log("  ✅ LEFT EDGE RESIZE: Preserving right edge", {
+        rightEdge,
+        snappedWidth: width,
+        adjustedX,
+      });
+    }
+
+    // Step 3: Return adjusted position
+    return { x: adjustedX, y: adjustedY };
+  }
+
+  /**
+   * Apply min/max size constraints and adjust position if needed
+   *
+   * **Purpose**: Clamp size to min/max bounds and adjust position for top/left edge resizes
+   *
+   * **Implementation Steps**:
+   * 1. Store original width/height before clamping
+   * 2. Clamp width to min/max range
+   * 3. Clamp height to min/max range
+   * 4. If width was clamped and resizing from left edge, adjust X position
+   * 5. If height was clamped and resizing from top edge, adjust Y position
+   *
+   * **Why position adjustment is needed**:
+   * - When resizing from left edge, right edge should stay fixed
+   * - If width gets clamped, we must adjust X to maintain right edge position
+   * - Same logic applies for top edge resizes and height clamping
+   *
+   * **Example** (left edge resize with max width clamping):
+   * - Original width: 500px, max width: 400px
+   * - Clamped width: 400px (diff = 100px)
+   * - Adjust X: x += 100 (shifts component right to preserve right edge)
+   * @param width - Current width after grid snapping
+   * @param height - Current height after grid snapping
+   * @param x - Current X position after edge preservation
+   * @param y - Current Y position after edge preservation
+   * @param edges - Which edges are being resized
+   * @param minWidth - Minimum allowed width
+   * @param maxWidth - Maximum allowed width
+   * @param minHeight - Minimum allowed height
+   * @param maxHeight - Maximum allowed height
+   * @returns Constrained size and adjusted position: { width, height, x, y }
+   */
+  private applyMinMaxConstraints(
+    width: number,
+    height: number,
+    x: number,
+    y: number,
+    edges: any,
+    minWidth: number,
+    maxWidth: number,
+    minHeight: number,
+    maxHeight: number,
+  ): { width: number; height: number; x: number; y: number } {
+    // Step 1: Store original width/height before clamping
+    const originalWidth = width;
+    const originalHeight = height;
+
+    // Step 2: Clamp width to min/max range
+    const clampedWidth = Math.max(minWidth, Math.min(maxWidth, width));
+
+    // Step 3: Clamp height to min/max range
+    const clampedHeight = Math.max(minHeight, Math.min(maxHeight, height));
+
+    let adjustedX = x;
+    let adjustedY = y;
+
+    // Step 4: If width was clamped and resizing from left edge, adjust X position
+    if (originalWidth !== clampedWidth && edges && edges.left) {
+      const widthDiff = originalWidth - clampedWidth;
+      adjustedX += widthDiff;
+    }
+
+    // Step 5: If height was clamped and resizing from top edge, adjust Y position
+    if (originalHeight !== clampedHeight && edges && edges.top) {
+      const heightDiff = originalHeight - clampedHeight;
+      adjustedY += heightDiff;
+    }
+
+    return {
+      width: clampedWidth,
+      height: clampedHeight,
+      x: adjustedX,
+      y: adjustedY,
+    };
+  }
+
+  /**
+   * Enforce horizontal boundary constraints
+   *
+   * **Purpose**: Ensure component fits horizontally within canvas bounds
+   *
+   * **Implementation Steps**:
+   * 1. Shrink width if wider than canvas
+   * 2. Ensure left edge is within bounds (x >= 0)
+   * 3. Handle right edge overflow based on resize direction:
+   * - If resizing from right edge: clamp width to fit, keep position
+   * - Otherwise: move component left to fit
+   * 4. Fallback: if can't fit by moving, shrink width and set x=0
+   *
+   * **Priority**:
+   * - Shrink if too large → Move if position is outside → Fallback to x=0
+   *
+   * **Why direction matters**:
+   * - Resizing from right edge: user expects position to stay fixed
+   * - Resizing from left or dragging: can adjust position to fit
+   * @param x - Current X position
+   * @param width - Current width
+   * @param canvasWidth - Canvas width in pixels
+   * @param edges - Which edges are being resized
+   * @param minWidth - Minimum allowed width
+   * @returns Constrained position and width: { x, width }
+   */
+  private enforceHorizontalBoundaries(
+    x: number,
+    width: number,
+    canvasWidth: number,
+    edges: any,
+    minWidth: number,
+  ): { x: number; width: number } {
+    let constrainedX = x;
+    let constrainedWidth = width;
+
+    // Step 1: Shrink width if wider than canvas
+    if (constrainedWidth > canvasWidth) {
+      debug.log(
+        "  ⚠️ Width exceeds canvas, shrinking from",
+        constrainedWidth,
+        "to",
+        canvasWidth,
+      );
+      constrainedWidth = canvasWidth;
+    }
+
+    // Step 2: Ensure left edge is within bounds (x >= 0)
+    if (constrainedX < 0) {
+      debug.log(
+        "  ⚠️ Left edge outside canvas, moving from x =",
+        constrainedX,
+        "to x = 0",
+      );
+      constrainedX = 0;
+    }
+
+    // Step 3: Handle right edge overflow based on resize direction
+    if (constrainedX + constrainedWidth > canvasWidth) {
+      if (edges && edges.right) {
+        // Resizing from RIGHT edge: clamp width to fit, keep position
+        const maxWidth = canvasWidth - constrainedX;
+        debug.log(
+          "  ⚠️ Right edge overflow (resizing from right), clamping width from",
+          constrainedWidth,
+          "to",
+          maxWidth,
+        );
+        constrainedWidth = Math.max(minWidth, maxWidth);
+      } else {
+        // Not resizing from right (dragging or resizing from left): move left to fit
+        const requiredX = canvasWidth - constrainedWidth;
+        debug.log(
+          "  ⚠️ Right edge outside canvas, moving from x =",
+          constrainedX,
+          "to x =",
+          requiredX,
+        );
+        constrainedX = requiredX;
+
+        // Step 4: Fallback: if can't fit by moving, shrink width and set x=0
+        if (constrainedX < 0) {
+          debug.log(
+            "  ⚠️ Cannot fit by moving, shrinking width to",
+            canvasWidth,
+          );
+          constrainedWidth = canvasWidth;
+          constrainedX = 0;
+        }
+      }
+    }
+
+    return { x: constrainedX, width: constrainedWidth };
+  }
+
+  /**
+   * Enforce vertical boundary constraints
+   *
+   * **Purpose**: Ensure component fits vertically within canvas bounds
+   *
+   * **Implementation Steps**:
+   * 1. Shrink height if taller than canvas
+   * 2. Ensure top edge is within bounds (y >= 0)
+   * 3. Handle bottom edge overflow based on resize direction:
+   * - If resizing from bottom edge: clamp height to fit, keep position
+   * - Otherwise: move component up to fit
+   * 4. Fallback: if can't fit by moving, shrink height and set y=0
+   *
+   * **Priority**:
+   * - Shrink if too large → Move if position is outside → Fallback to y=0
+   *
+   * **Why direction matters**:
+   * - Resizing from bottom edge: user expects Y position to stay fixed
+   * - Resizing from top or dragging: can adjust Y position to fit
+   * @param y - Current Y position
+   * @param height - Current height
+   * @param canvasHeight - Canvas height in pixels
+   * @param edges - Which edges are being resized
+   * @param minHeight - Minimum allowed height
+   * @returns Constrained position and height: { y, height }
+   */
+  private enforceVerticalBoundaries(
+    y: number,
+    height: number,
+    canvasHeight: number,
+    edges: any,
+    minHeight: number,
+  ): { y: number; height: number } {
+    let constrainedY = y;
+    let constrainedHeight = height;
+
+    // Step 1: Shrink height if taller than canvas
+    if (constrainedHeight > canvasHeight) {
+      debug.log(
+        "  ⚠️ Height exceeds canvas, shrinking from",
+        constrainedHeight,
+        "to",
+        canvasHeight,
+      );
+      constrainedHeight = canvasHeight;
+    }
+
+    // Step 2: Ensure top edge is within bounds (y >= 0)
+    if (constrainedY < 0) {
+      debug.log(
+        "  ⚠️ Top edge outside canvas, moving from y =",
+        constrainedY,
+        "to y = 0",
+      );
+      constrainedY = 0;
+    }
+
+    // Step 3: Handle bottom edge overflow based on resize direction
+    if (constrainedY + constrainedHeight > canvasHeight) {
+      if (edges && edges.bottom) {
+        // Resizing from BOTTOM edge: clamp height to fit, keep Y position
+        const maxHeight = canvasHeight - constrainedY;
+        debug.log(
+          "  ⚠️ Bottom edge overflow (resizing from bottom), clamping height from",
+          constrainedHeight,
+          "to",
+          maxHeight,
+        );
+        constrainedHeight = Math.max(minHeight, maxHeight);
+      } else {
+        // Not resizing from bottom (dragging or resizing from top): move up to fit
+        const requiredY = canvasHeight - constrainedHeight;
+        debug.log(
+          "  ⚠️ Bottom edge outside canvas, moving from y =",
+          constrainedY,
+          "to y =",
+          requiredY,
+        );
+        constrainedY = requiredY;
+
+        // Step 4: Fallback: if can't fit by moving, shrink height and set y=0
+        if (constrainedY < 0) {
+          debug.log(
+            "  ⚠️ Cannot fit by moving, shrinking height to",
+            canvasHeight,
+          );
+          constrainedHeight = canvasHeight;
+          constrainedY = 0;
+        }
+      }
+    }
+
+    return { y: constrainedY, height: constrainedHeight };
+  }
+
+  /**
    * Handle resize end event - finalize dimensions and update state
    *
    * **Critical responsibilities**:
@@ -980,7 +1434,8 @@ export class ResizeHandler {
    * ```
    */
   private handleResizeEnd(event: InteractResizeEvent): void {
-    // Cancel any pending frame
+    // Step 1: RAF cleanup and early validation
+    // Cancel any pending requestAnimationFrame to prevent stale updates
     if (this.resizeRafId) {
       cancelAnimationFrame(this.resizeRafId);
       this.resizeRafId = null;
@@ -1001,6 +1456,7 @@ export class ResizeHandler {
       return;
     }
 
+    // Step 2: Calculate initial position and size from deltas
     const containerRect = container.getBoundingClientRect();
     const gridSizeX = getGridSizeHorizontal(
       this.item.canvasId,
@@ -1044,244 +1500,91 @@ export class ResizeHandler {
       lastCalculated: { ...this.lastCalculated },
     });
 
-    // Grid snap AFTER user releases mouse (not during resize)
-    // Use directional rounding based on resize direction to prevent snap-back
-    // If user made item bigger, round UP. If smaller, round DOWN.
-
-    // Width: directional rounding based on whether user grew or shrunk
-    if (newWidth > this.startRect.width) {
-      // User made it wider → round UP to next grid cell
-      newWidth = Math.ceil(newWidth / gridSizeX) * gridSizeX;
-    } else if (newWidth < this.startRect.width) {
-      // User made it narrower → round DOWN to previous grid cell
-      newWidth = Math.floor(newWidth / gridSizeX) * gridSizeX;
-    } else {
-      // No change → keep original (round normally)
-      newWidth = Math.round(newWidth / gridSizeX) * gridSizeX;
-    }
-    // Ensure grid snapping doesn't violate minimum size
-    newWidth = Math.max(this.minWidth, newWidth);
-
-    // Height: directional rounding based on whether user grew or shrunk
-    if (newHeight > this.startRect.height) {
-      // User made it taller → round UP to next grid cell
-      newHeight = Math.ceil(newHeight / gridSizeY) * gridSizeY;
-    } else if (newHeight < this.startRect.height) {
-      // User made it shorter → round DOWN to previous grid cell
-      newHeight = Math.floor(newHeight / gridSizeY) * gridSizeY;
-    } else {
-      // No change → keep original
-      newHeight = Math.round(newHeight / gridSizeY) * gridSizeY;
-    }
-    // Ensure grid snapping doesn't violate minimum size
-    newHeight = Math.max(this.minHeight, newHeight);
-
-    // Position: directional rounding for top/left edge resizes
-    if (newX < this.startRect.x) {
-      // User moved left edge left → round DOWN (move further left to grid)
-      newX = Math.floor(newX / gridSizeX) * gridSizeX;
-    } else if (newX > this.startRect.x) {
-      // User moved left edge right → round UP (move further right to grid)
-      newX = Math.ceil(newX / gridSizeX) * gridSizeX;
-    } else {
-      newX = Math.round(newX / gridSizeX) * gridSizeX;
-    }
-
-    if (newY < this.startRect.y) {
-      // User moved top edge up → round DOWN (move further up to grid)
-      newY = Math.floor(newY / gridSizeY) * gridSizeY;
-    } else if (newY > this.startRect.y) {
-      // User moved top edge down → round UP (move further down to grid)
-      newY = Math.ceil(newY / gridSizeY) * gridSizeY;
-    } else {
-      newY = Math.round(newY / gridSizeY) * gridSizeY;
-    }
+    // Step 3: Apply directional grid snapping to position and size
+    // Round UP when growing, DOWN when shrinking to prevent snap-back
+    const snapped = this.applyDirectionalGridSnapping(
+      newWidth,
+      newHeight,
+      newX,
+      newY,
+      gridSizeX,
+      gridSizeY,
+      this.startRect,
+      this.minWidth,
+      this.minHeight,
+    );
+    newWidth = snapped.width;
+    newHeight = snapped.height;
+    newX = snapped.x;
+    newY = snapped.y;
 
     debug.log("  afterDirectionalSnap:", { newX, newY, newWidth, newHeight });
 
-    // CRITICAL FIX: When resizing from top/left edges, preserve the opposite edge position
-    // The directional snapping above snaps BOTH position AND size independently, causing drift
-    // Solution: Keep the snapped size (user expectation), adjust position to preserve fixed edge
+    // Step 4: Preserve fixed edges when resizing from top or left
+    // Adjust position to maintain opposite edge after grid snapping
+    const edgePreserved = this.preserveFixedEdges(
+      newX,
+      newY,
+      newWidth,
+      newHeight,
+      event.edges,
+      this.startRect,
+    );
+    newX = edgePreserved.x;
+    newY = edgePreserved.y;
 
-    if (event.edges.top) {
-      // Top edge is moving, bottom edge should stay fixed
-      // Height was already snapped above (user dragged it, so snap what they requested)
-      // Now adjust Y to preserve the bottom edge: Y = bottom - height
-      const bottomEdge = this.startRect.y + this.startRect.height; // Fixed bottom position in pixels
-      newY = bottomEdge - newHeight; // Adjust Y to preserve bottom edge
-      debug.log("  ✅ TOP EDGE RESIZE: Preserving bottom edge", {
-        bottomEdge,
-        snappedHeight: newHeight,
-        adjustedY: newY,
-      });
-    }
-
-    if (event.edges.left) {
-      // Left edge is moving, right edge should stay fixed
-      // Width was already snapped above (user dragged it, so snap what they requested)
-      // Now adjust X to preserve the right edge: X = right - width
-      const rightEdge = this.startRect.x + this.startRect.width; // Fixed right position in pixels
-      newX = rightEdge - newWidth; // Adjust X to preserve right edge
-      debug.log("  ✅ LEFT EDGE RESIZE: Preserving right edge", {
-        rightEdge,
-        snappedWidth: newWidth,
-        adjustedX: newX,
-      });
-    }
-
-    // Apply min/max size constraints AFTER preserving fixed edges
-    // This ensures the final size respects component constraints
-    // IMPORTANT: When clamping, adjust position if resizing from top/left edges
-    const originalWidth = newWidth;
-    const originalHeight = newHeight;
-
-    newWidth = Math.max(this.minWidth, Math.min(this.maxWidth, newWidth));
-    newHeight = Math.max(this.minHeight, Math.min(this.maxHeight, newHeight));
-
-    // If width was clamped and we're resizing from the left edge, adjust x position
-    if (originalWidth !== newWidth && event.edges.left) {
-      const widthDiff = originalWidth - newWidth;
-      newX += widthDiff;
-    }
-
-    // If height was clamped and we're resizing from the top edge, adjust y position
-    if (originalHeight !== newHeight && event.edges.top) {
-      const heightDiff = originalHeight - newHeight;
-      newY += heightDiff;
-    }
+    // Step 5: Apply min/max size constraints with position adjustment
+    // When size is clamped, adjust position to maintain fixed edges
+    const constrained = this.applyMinMaxConstraints(
+      newWidth,
+      newHeight,
+      newX,
+      newY,
+      event.edges,
+      this.minWidth,
+      this.maxWidth,
+      this.minHeight,
+      this.maxHeight,
+    );
+    newWidth = constrained.width;
+    newHeight = constrained.height;
+    newX = constrained.x;
+    newY = constrained.y;
 
     debug.log("  afterMinMaxClamp:", { newX, newY, newWidth, newHeight });
 
-    // COMPREHENSIVE BOUNDARY CONSTRAINT CHECK
-    // =========================================
-    // Ensure all 4 corners of the component stay within canvas bounds.
-    // Priority: shrink if too large, then move if position is outside.
-
+    // Step 6: Enforce canvas boundary constraints
     const canvasWidth = container.clientWidth;
     const canvasHeight = container.clientHeight;
 
     debug.log("  canvasBounds:", { canvasWidth, canvasHeight });
-    debug.log("  event.edges:", event.edges); // ✅ DEBUG: Check if edges object exists
+    debug.log("  event.edges:", event.edges);
 
-    // 1. HORIZONTAL BOUNDS CHECK
-    // ---------------------------
-    // If component is wider than canvas, shrink it to fit
-    if (newWidth > canvasWidth) {
-      debug.log(
-        "  ⚠️ Width exceeds canvas, shrinking from",
-        newWidth,
-        "to",
-        canvasWidth,
-      );
-      newWidth = canvasWidth;
-    }
+    // Step 6a: Enforce horizontal boundaries (x and width)
+    const horizontal = this.enforceHorizontalBoundaries(
+      newX,
+      newWidth,
+      canvasWidth,
+      event.edges,
+      this.minWidth,
+    );
+    newX = horizontal.x;
+    newWidth = horizontal.width;
 
-    // Ensure left edge is within bounds (x >= 0)
-    if (newX < 0) {
-      debug.log(
-        "  ⚠️ Left edge outside canvas, moving from x =",
-        newX,
-        "to x = 0",
-      );
-      newX = 0;
-    }
-
-    // Ensure right edge is within bounds (x + width <= canvasWidth)
-    if (newX + newWidth > canvasWidth) {
-      if (event.edges && event.edges.right) {
-        // Resizing from RIGHT edge: clamp width to fit, keep position
-        const maxWidth = canvasWidth - newX;
-        debug.log(
-          "  ⚠️ Right edge overflow (resizing from right), clamping width from",
-          newWidth,
-          "to",
-          maxWidth,
-        );
-        newWidth = Math.max(this.minWidth, maxWidth);
-      } else {
-        // Not resizing from right (dragging or resizing from left): move left to fit
-        const requiredX = canvasWidth - newWidth;
-        debug.log(
-          "  ⚠️ Right edge outside canvas, moving from x =",
-          newX,
-          "to x =",
-          requiredX,
-        );
-        newX = requiredX;
-
-        // If still doesn't fit (requiredX < 0), shrink width
-        if (newX < 0) {
-          debug.log(
-            "  ⚠️ Cannot fit by moving, shrinking width to",
-            canvasWidth,
-          );
-          newWidth = canvasWidth;
-          newX = 0;
-        }
-      }
-    }
-
-    // 2. VERTICAL BOUNDS CHECK
-    // -------------------------
-    // If component is taller than canvas, shrink it to fit
-    if (newHeight > canvasHeight) {
-      debug.log(
-        "  ⚠️ Height exceeds canvas, shrinking from",
-        newHeight,
-        "to",
-        canvasHeight,
-      );
-      newHeight = canvasHeight;
-    }
-
-    // Ensure top edge is within bounds (y >= 0)
-    if (newY < 0) {
-      debug.log(
-        "  ⚠️ Top edge outside canvas, moving from y =",
-        newY,
-        "to y = 0",
-      );
-      newY = 0;
-    }
-
-    // Ensure bottom edge is within bounds (y + height <= canvasHeight)
-    if (newY + newHeight > canvasHeight) {
-      if (event.edges && event.edges.bottom) {
-        // Resizing from BOTTOM edge: clamp height to fit, keep Y position
-        const maxHeight = canvasHeight - newY;
-        debug.log(
-          "  ⚠️ Bottom edge overflow (resizing from bottom), clamping height from",
-          newHeight,
-          "to",
-          maxHeight,
-        );
-        newHeight = Math.max(this.minHeight, maxHeight);
-      } else {
-        // Not resizing from bottom (dragging or resizing from top): move up to fit
-        const requiredY = canvasHeight - newHeight;
-        debug.log(
-          "  ⚠️ Bottom edge outside canvas, moving from y =",
-          newY,
-          "to y =",
-          requiredY,
-        );
-        newY = requiredY;
-
-        // If still doesn't fit (requiredY < 0), shrink height
-        if (newY < 0) {
-          debug.log(
-            "  ⚠️ Cannot fit by moving, shrinking height to",
-            canvasHeight,
-          );
-          newHeight = canvasHeight;
-          newY = 0;
-        }
-      }
-    }
+    // Step 6b: Enforce vertical boundaries (y and height)
+    const vertical = this.enforceVerticalBoundaries(
+      newY,
+      newHeight,
+      canvasHeight,
+      event.edges,
+      this.minHeight,
+    );
+    newY = vertical.y;
+    newHeight = vertical.height;
 
     debug.log("  afterBoundaryCheck:", { newX, newY, newWidth, newHeight });
 
-    // Apply final snapped position
+    // Step 7: Apply final position and size to DOM
     event.target.style.transform = `translate(${newX}px, ${newY}px)`;
     event.target.style.width = newWidth + "px";
     event.target.style.height = newHeight + "px";
@@ -1292,14 +1595,13 @@ export class ResizeHandler {
       height: `${newHeight}px`,
     });
 
-    // IMPORTANT: Get latest item from state to preserve any config changes
-    // that occurred during resize (e.g., backgroundColor changes)
+    // Step 8: Update state with final grid-aligned position and size
+    // Get latest item from state to preserve any config changes during resize
     const canvas = this.state.canvases[this.item.canvasId];
     const latestItem = canvas?.items.find((i) => i.id === this.item.id);
-    const baseItem = latestItem || this.item; // Fallback to stored item if not found
+    const baseItem = latestItem || this.item;
 
-    // Create a NEW object to avoid mutating the state directly
-    // This ensures handleItemUpdate can properly detect changes by comparing with snapshot
+    // Create new object to avoid direct state mutation
     const itemToUpdate = JSON.parse(JSON.stringify(baseItem));
 
     // Update item size and position in current viewport's layout (convert to grid units)
@@ -1310,10 +1612,10 @@ export class ResizeHandler {
     layout.width = pixelsToGridX(newWidth, itemToUpdate.canvasId, this.config);
     layout.height = pixelsToGridY(newHeight, this.config);
 
-    // CRITICAL FIX: Only update position when resizing from edges that affect position
-    // - Right/bottom/bottom-right resizes: position stays the same (only size changes)
-    // - Left edge resize: x changes (right edge stays fixed)
-    // - Top edge resize: y changes (bottom edge stays fixed)
+    // Only update position when resizing from edges that affect position
+    // Right/bottom resizes: position unchanged (only size changes)
+    // Left edge resize: x changes (right edge stays fixed)
+    // Top edge resize: y changes (bottom edge stays fixed)
     if (event.edges && event.edges.left) {
       layout.x = pixelsToGridX(newX, itemToUpdate.canvasId, this.config);
     }
@@ -1330,9 +1632,9 @@ export class ResizeHandler {
     debug.log("---");
 
     // Mark current viewport as customized (user manually resized)
-    // This prevents inheritance/fallback from other breakpoints
     layout.customized = true;
 
+    // Step 9: Trigger re-render and cleanup
     // End performance tracking
     if (window.perfMonitor) {
       window.perfMonitor.endOperation("resize");
