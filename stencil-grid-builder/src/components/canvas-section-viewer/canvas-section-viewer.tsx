@@ -86,14 +86,38 @@ export class CanvasSectionViewer {
   @Prop() items!: GridItem[];
 
   /**
-   * Current viewport mode
+   * Current viewport/breakpoint name
    *
-   * **Required**: 'desktop' | 'mobile'
+   * **Required**: string matching a breakpoint name
+   * **Examples**: 'desktop', 'mobile', 'tablet', 'xs', 'sm', 'md', 'lg', 'xl'
    * **Source**: Passed from grid-viewer component
    *
-   * **Purpose**: Determines which layout to render for each item
+   * **Purpose**: Determines which layout to render for each item (item.layouts[currentViewport])
+   * **Multi-breakpoint support**: Can be any breakpoint name from breakpoints config
    */
-  @Prop() currentViewport!: "desktop" | "mobile";
+  @Prop() currentViewport!: string;
+
+  /**
+   * Breakpoint configuration for responsive layouts
+   *
+   * **Optional prop**: Define custom responsive breakpoints
+   * **Source**: grid-viewer → canvas-section-viewer → grid-item-wrapper
+   * **Used by**: grid-item-wrapper for layout resolution and auto-stacking
+   *
+   * **Purpose**: Passed through to grid-item-wrapper to enable multi-breakpoint
+   * responsive layouts in viewer mode. Grid-item-wrapper uses this to determine
+   * which layout to render, handle auto-stacking, and resolve layout inheritance.
+   *
+   * **Example**:
+   * ```typescript
+   * const breakpoints = {
+   *   mobile: { minWidth: 0, layoutMode: 'stack' },
+   *   tablet: { minWidth: 768, layoutMode: 'inherit', inheritFrom: 'desktop' },
+   *   desktop: { minWidth: 1024, layoutMode: 'manual' }
+   * };
+   * ```
+   */
+  @Prop() breakpoints?: any; // BreakpointConfig
 
   /**
    * Grid configuration options
@@ -367,6 +391,7 @@ export class CanvasSectionViewer {
                   componentRegistry={this.componentRegistry}
                   viewerMode
                   currentViewport={this.currentViewport}
+                  breakpoints={this.breakpoints}
                   canvasItems={this.items}
                   virtualRendererInstance={this.virtualRendererInstance}
                   stateInstance={this.stateInstance}
@@ -385,6 +410,7 @@ export class CanvasSectionViewer {
                 componentRegistry={this.componentRegistry}
                 viewerMode
                 currentViewport={this.currentViewport}
+                breakpoints={this.breakpoints}
                 canvasItems={this.items}
                 virtualRendererInstance={this.virtualRendererInstance}
                 stateInstance={this.stateInstance}

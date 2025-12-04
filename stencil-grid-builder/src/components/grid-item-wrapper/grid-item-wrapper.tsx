@@ -28,7 +28,7 @@
 import { Component, h, Listen, Prop, State, Watch } from "@stencil/core";
 
 // Internal imports
-import { GridItem } from "../../services/state-manager";
+import { GridItem, DEFAULT_BREAKPOINTS } from "../../services/state-manager";
 import { UndoRedoManager } from "../../services/undo-redo";
 import { MoveItemCommand } from "../../services/undo-redo-commands";
 import { VirtualRendererService } from "../../services/virtual-renderer";
@@ -37,6 +37,11 @@ import { DragHandler } from "../../utils/drag-handler";
 import { ResizeHandler } from "../../utils/resize-handler";
 import { DOMCache } from "../../utils/dom-cache";
 import { gridToPixelsX, gridToPixelsY } from "../../utils/grid-calculations";
+import {
+  getEffectiveLayout,
+  shouldAutoStack,
+  calculateAutoStackLayout,
+} from "../../utils/breakpoint-utils";
 import { GridConfig } from "../../types/grid-config";
 import { createDebugLogger } from "../../utils/debug";
 import { ComponentRegistry } from "../../services/component-registry";
@@ -160,7 +165,20 @@ export class GridItemWrapper {
    * and gridState.currentViewport is used instead. When in viewer mode
    * (viewerMode=true), this prop is required.
    */
-  @Prop() currentViewport?: "desktop" | "mobile";
+  @Prop() currentViewport?: string;
+
+  /**
+   * Breakpoint configuration (for viewer mode)
+   *
+   * **Purpose**: Define responsive breakpoints and layout modes
+   * **Source**: grid-viewer → canvas-section-viewer → grid-item-wrapper
+   * **Used by**: render() to determine auto-stacking and layout inheritance
+   *
+   * **Note**: When in builder mode (viewerMode=false), this is ignored
+   * and stateInstance.breakpoints is used instead. When in viewer mode
+   * (viewerMode=true), this prop is optional (defaults to DEFAULT_BREAKPOINTS).
+   */
+  @Prop() breakpoints?: any; // BreakpointConfig
 
   /**
    * Virtual renderer service instance (passed from grid-builder)
@@ -905,36 +923,34 @@ export class GridItemWrapper {
       ? this.currentViewport || "desktop"
       : this.stateInstance.currentViewport || "desktop";
 
-    const layout = this.item.layouts[currentViewport];
+    // Get breakpoints config from state (viewer or builder mode)
+    const breakpoints = this.viewerMode
+      ? this.breakpoints || DEFAULT_BREAKPOINTS
+      : this.stateInstance.breakpoints || DEFAULT_BREAKPOINTS;
 
-    // For mobile viewport, calculate auto-layout if not customized
+    // Get effective layout (with inheritance/fallback)
+    const { layout, sourceBreakpoint } = getEffectiveLayout(
+      this.item,
+      currentViewport,
+      breakpoints,
+    );
+
+    // Check if auto-stacking should be applied
     let actualLayout = layout;
-    if (currentViewport === "mobile" && !this.item.layouts.mobile.customized) {
-      // Auto-layout for mobile: stack components vertically at full width
+    if (shouldAutoStack(currentViewport, breakpoints) && !layout.customized) {
+      // Auto-stack: calculate cumulative y-position from previous items
 
       // Use prop-based items in viewer mode, instance state in builder mode
       const canvasItems = this.viewerMode
         ? this.canvasItems || []
         : this.stateInstance.canvases[this.item.canvasId]?.items || [];
 
-      const itemIndex =
-        canvasItems.findIndex((i) => i.id === this.item.id) ?? 0;
-
-      // Calculate Y position by summing heights of all previous items
-      let yPosition = 0;
-      if (itemIndex > 0) {
-        for (let i = 0; i < itemIndex; i++) {
-          const prevItem = canvasItems[i];
-          yPosition += prevItem.layouts.desktop.height || 6;
-        }
-      }
-
-      actualLayout = {
-        x: 0, // Full left
-        y: yPosition,
-        width: 50, // Full width (50 units = 100%)
-        height: this.item.layouts.desktop.height || 6,
-      };
+      // Calculate stacked layout using source breakpoint for height reference
+      actualLayout = calculateAutoStackLayout(
+        this.item,
+        canvasItems,
+        sourceBreakpoint,
+      );
     }
 
     // Compute selection directly from state (only in editing mode)
@@ -1036,11 +1052,14 @@ export class GridItemWrapper {
           {/* Error boundary wraps custom wrapper for item-level error isolation */}
           {this.errorAdapterInstance ? (
             <error-boundary
-              {...this.errorAdapterInstance.createErrorBoundaryConfig("grid-item-wrapper", {
-                itemId: this.item.id,
-                canvasId: this.item.canvasId,
-                componentType: this.item.type,
-              })}
+              {...this.errorAdapterInstance.createErrorBoundaryConfig(
+                "grid-item-wrapper",
+                {
+                  itemId: this.item.id,
+                  canvasId: this.item.canvasId,
+                  componentType: this.item.type,
+                },
+              )}
             >
               {/* Custom wrapper JSX - renders securely */}
               {customWrapper}
@@ -1129,11 +1148,14 @@ export class GridItemWrapper {
         {/* Error boundary wraps component content for item-level error isolation */}
         {this.errorAdapterInstance ? (
           <error-boundary
-            {...this.errorAdapterInstance.createErrorBoundaryConfig("grid-item-wrapper", {
-              itemId: this.item.id,
-              canvasId: this.item.canvasId,
-              componentType: this.item.type,
-            })}
+            {...this.errorAdapterInstance.createErrorBoundaryConfig(
+              "grid-item-wrapper",
+              {
+                itemId: this.item.id,
+                canvasId: this.item.canvasId,
+                componentType: this.item.type,
+              },
+            )}
           >
             <div
               class="grid-item-content"

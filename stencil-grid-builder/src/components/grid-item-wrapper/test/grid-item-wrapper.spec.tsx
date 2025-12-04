@@ -60,7 +60,7 @@ describe("grid-item-wrapper - Active Canvas", () => {
     type: "header",
     name: "Header Item",
     layouts: {
-      desktop: { x: 1, y: 1, width: 10, height: 6 },
+      desktop: { x: 1, y: 1, width: 10, height: 6, customized: true },
       mobile: { x: 1, y: 1, width: 14, height: 5, customized: false },
     },
     config: {},
