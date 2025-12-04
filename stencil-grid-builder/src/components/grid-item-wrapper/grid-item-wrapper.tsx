@@ -904,337 +904,84 @@ export class GridItemWrapper {
    * - This makes hidden components completely invisible and non-interactive
    */
   render() {
-    // Check if component content should render
-    // If renderComponent() returns null (e.g., hideUnknownComponents mode),
-    // don't render the wrapper at all - component should be completely hidden
+    // Step 1: Check if component content should render (early exit for hidden components)
     const componentContent = this.renderComponent();
     if (componentContent === null) {
       return null;
     }
 
-    // Capture item ID and canvas ID at render time for delete handler
-    // This ensures the delete button always deletes the correct item,
-    // even if this.item prop changes during async operations (e.g., confirm dialog)
+    // Step 2: Capture item/canvas IDs for delete handler (prevents stale closure issues)
     const itemIdForDelete = this.item.id;
     const canvasIdForDelete = this.item.canvasId;
 
-    // Use prop-based viewport in viewer mode, instance state in builder mode
-    const currentViewport = this.viewerMode
-      ? this.currentViewport || "desktop"
-      : this.stateInstance.currentViewport || "desktop";
+    // Step 3: Get viewport and breakpoints configuration
+    const { currentViewport, breakpoints } = this.getViewportAndBreakpoints();
 
-    // Get breakpoints config from state (viewer or builder mode)
-    const breakpoints = this.viewerMode
-      ? this.breakpoints || DEFAULT_BREAKPOINTS
-      : this.stateInstance.breakpoints || DEFAULT_BREAKPOINTS;
-
-    // Get effective layout (with inheritance/fallback)
-    const { layout, sourceBreakpoint } = getEffectiveLayout(
-      this.item,
+    // Step 4: Calculate effective layout with auto-stacking
+    const actualLayout = this.calculateEffectiveLayoutWithStacking(
       currentViewport,
       breakpoints,
     );
 
-    // Check if auto-stacking should be applied
-    let actualLayout = layout;
-    if (shouldAutoStack(currentViewport, breakpoints) && !layout.customized) {
-      // Auto-stack: calculate cumulative y-position from previous items
-
-      // Use prop-based items in viewer mode, instance state in builder mode
-      const canvasItems = this.viewerMode
-        ? this.canvasItems || []
-        : this.stateInstance.canvases[this.item.canvasId]?.items || [];
-
-      // Calculate stacked layout using source breakpoint for height reference
-      actualLayout = calculateAutoStackLayout(
-        this.item,
-        canvasItems,
-        sourceBreakpoint,
-      );
-    }
-
-    // Compute selection directly from state (only in editing mode)
+    // Step 5: Compute selection state
     const selectedItemId = this.stateInstance.selectedItemId;
     const isSelected = !this.viewerMode && selectedItemId === this.item.id;
 
+    // Step 6: Build item CSS classes
     const itemClasses = {
       "grid-item": true,
       selected: isSelected,
       "with-animations": this.config?.enableAnimations ?? true,
     };
 
-    // Convert grid units to pixels (with GridConfig support)
-    const xPixels = gridToPixelsX(
-      actualLayout.x,
-      this.item.canvasId,
-      this.config,
+    // Step 7: Get component display information (icon, name, colors)
+    const { definition, icon, displayName, selectionColor, backgroundColor } =
+      this.getComponentDisplayInfo();
+
+    // Step 8: Build item style object (transform, dimensions, colors)
+    const itemStyle = this.buildItemStyle(
+      actualLayout,
+      selectionColor,
+      backgroundColor,
     );
-    const yPixels = gridToPixelsY(actualLayout.y, this.config);
-    const widthPixels = gridToPixelsX(
-      actualLayout.width,
-      this.item.canvasId,
-      this.config,
-    );
-    const heightPixels = gridToPixelsY(actualLayout.height, this.config);
 
-    // Get component definition for icon, name, and selection color
-    const definition = this.componentRegistry?.get(this.item.type);
-    const icon = definition?.icon || "�";
-    const displayName = this.item.name || definition?.name || this.item.type;
-    // Selection color fallback chain:
-    // 1. Component-specific override (ComponentDefinition.selectionColor)
-    // 2. Theme default (theme.selectionColor)
-    // 3. Hardcoded fallback (amber/gold)
-    const selectionColor =
-      definition?.selectionColor || this.theme?.selectionColor || "#f59e0b";
-
-    // Get backgroundColor from config, or fall back to configSchema default
-    const backgroundColorField = definition?.configSchema?.find(
-      (f) => f.name === "backgroundColor",
-    );
-    const backgroundColor =
-      this.item.config?.backgroundColor ||
-      backgroundColorField?.defaultValue ||
-      "transparent";
-
-    const itemStyle = {
-      transform: `translate(${xPixels}px, ${yPixels}px)`,
-      width: `${widthPixels}px`,
-      height: `${heightPixels}px`,
-      zIndex: this.item.zIndex.toString(),
-      "--selection-color": selectionColor,
-      "--animation-duration": `${this.config?.animationDuration ?? 100}ms`,
-      // Apply backgroundColor from config to .grid-item so it fills to edges
-      background: backgroundColor,
-    };
-
-    // Generate unique IDs for custom wrapper and ARIA description
+    // Step 9: Generate unique IDs for ARIA and content slot
     const contentSlotId = `${this.item.id}-content`;
     const descriptionId = `${this.item.id}-description`;
 
-    // ARIA description text for screen readers (only in builder mode)
+    // Step 10: Generate ARIA description text (only in builder mode)
     const ariaDescription = !this.viewerMode
       ? "Use arrow keys to nudge position, drag header to move, resize handles to change size, Delete to remove. Drag components from palette to add new items."
       : null;
 
-    // Check if custom item wrapper is provided
+    // Step 11: Render custom wrapper if provided, otherwise default wrapper
     if (definition?.renderItemWrapper) {
-      const customWrapper = definition.renderItemWrapper({
-        itemId: this.item.id,
-        componentType: this.item.type,
-        name: displayName,
-        icon,
+      return this.renderCustomWrapper(
+        definition,
+        itemClasses,
+        itemStyle,
         isSelected,
+        displayName,
+        icon,
         contentSlotId,
-      });
-
-      return (
-        <div
-          class={itemClasses}
-          id={this.item.id}
-          tabindex={this.viewerMode ? undefined : 0}
-          aria-selected={isSelected ? "true" : "false"}
-          aria-describedby={ariaDescription ? descriptionId : undefined}
-          data-canvas-id={this.item.canvasId}
-          data-component-name={displayName}
-          data-viewer-mode={this.viewerMode ? "true" : "false"}
-          style={itemStyle}
-          onClick={(e) => this.handleClick(e)}
-          ref={(el) => (this.itemRef = el)}
-        >
-          {/* ARIA description (hidden, only for screen readers) */}
-          {ariaDescription && (
-            <div id={descriptionId} class="sr-only">
-              {ariaDescription}
-            </div>
-          )}
-
-          {/* Error boundary wraps custom wrapper for item-level error isolation */}
-          {this.errorAdapterInstance ? (
-            <error-boundary
-              {...this.errorAdapterInstance.createErrorBoundaryConfig(
-                "grid-item-wrapper",
-                {
-                  itemId: this.item.id,
-                  canvasId: this.item.canvasId,
-                  componentType: this.item.type,
-                },
-              )}
-            >
-              {/* Custom wrapper JSX - renders securely */}
-              {customWrapper}
-            </error-boundary>
-          ) : (
-            /* Custom wrapper JSX - renders securely */
-            customWrapper
-          )}
-
-          {/* Render component content into the content slot */}
-          {/* Note: The custom wrapper must include a div with id={contentSlotId} */}
-          {/* This is handled by a ref callback in renderComponent() */}
-
-          {/* Resize Handles (8 points) */}
-          <div class="resize-handle nw" />
-          <div class="resize-handle ne" />
-          <div class="resize-handle sw" />
-          <div class="resize-handle se" />
-          <div class="resize-handle n" />
-          <div class="resize-handle s" />
-          <div class="resize-handle e" />
-          <div class="resize-handle w" />
-        </div>
+        descriptionId,
+        ariaDescription,
       );
     }
 
-    // Default item wrapper
-    return (
-      <div
-        class={itemClasses}
-        id={this.item.id}
-        role="group"
-        aria-label={`${displayName} component`}
-        tabindex={this.viewerMode ? undefined : 0}
-        aria-selected={isSelected ? "true" : "false"}
-        aria-describedby={ariaDescription ? descriptionId : undefined}
-        data-canvas-id={this.item.canvasId}
-        data-component-name={displayName}
-        data-viewer-mode={this.viewerMode ? "true" : "false"}
-        style={itemStyle}
-        onClick={(e) => this.handleClick(e)}
-        ref={(el) => (this.itemRef = el)}
-      >
-        {/* ARIA description (hidden, only for screen readers) */}
-        {ariaDescription && (
-          <div id={descriptionId} class="sr-only">
-            {ariaDescription}
-          </div>
-        )}
-
-        {/* Editing UI (hidden in viewer mode) */}
-        {!this.viewerMode && [
-          /* Drag Handle */
-          <div
-            class="drag-handle"
-            key="drag-handle"
-            aria-label={`Drag ${displayName}`}
-            role="button"
-            aria-grabbed={false}
-          />,
-
-          /* Item Header */
-          <div
-            class="grid-item-header"
-            key="header"
-            aria-label={`${displayName} component header`}
-          >
-            {icon} {displayName}
-          </div>,
-
-          /* Item Controls */
-          <div class="grid-item-controls" key="controls">
-            <button
-              class="grid-item-delete"
-              aria-label={`Delete ${displayName} component`}
-              onClick={() =>
-                this.handleDelete(itemIdForDelete, canvasIdForDelete)
-              }
-            >
-              ×
-            </button>
-          </div>,
-        ]}
-
-        {/* Item Content (always rendered) */}
-        {/* Error boundary wraps component content for item-level error isolation */}
-        {this.errorAdapterInstance ? (
-          <error-boundary
-            {...this.errorAdapterInstance.createErrorBoundaryConfig(
-              "grid-item-wrapper",
-              {
-                itemId: this.item.id,
-                canvasId: this.item.canvasId,
-                componentType: this.item.type,
-              },
-            )}
-          >
-            <div
-              class="grid-item-content"
-              id={contentSlotId}
-              data-component-type={this.item.type}
-            >
-              {componentContent}
-            </div>
-          </error-boundary>
-        ) : (
-          <div
-            class="grid-item-content"
-            id={contentSlotId}
-            data-component-type={this.item.type}
-          >
-            {componentContent}
-          </div>
-        )}
-
-        {/* Resize Handles (hidden in viewer mode) */}
-        {!this.viewerMode && [
-          <div
-            class="resize-handle nw"
-            key="resize-nw"
-            role="slider"
-            aria-label="Resize top-left corner"
-            tabindex={-1}
-          />,
-          <div
-            class="resize-handle ne"
-            key="resize-ne"
-            role="slider"
-            aria-label="Resize top-right corner"
-            tabindex={-1}
-          />,
-          <div
-            class="resize-handle sw"
-            key="resize-sw"
-            role="slider"
-            aria-label="Resize bottom-left corner"
-            tabindex={-1}
-          />,
-          <div
-            class="resize-handle se"
-            key="resize-se"
-            role="slider"
-            aria-label="Resize bottom-right corner"
-            tabindex={-1}
-          />,
-          <div
-            class="resize-handle n"
-            key="resize-n"
-            role="slider"
-            aria-label="Resize top edge"
-            tabindex={-1}
-          />,
-          <div
-            class="resize-handle s"
-            key="resize-s"
-            role="slider"
-            aria-label="Resize bottom edge"
-            tabindex={-1}
-          />,
-          <div
-            class="resize-handle e"
-            key="resize-e"
-            role="slider"
-            aria-label="Resize right edge"
-            tabindex={-1}
-          />,
-          <div
-            class="resize-handle w"
-            key="resize-w"
-            role="slider"
-            aria-label="Resize left edge"
-            tabindex={-1}
-          />,
-        ]}
-      </div>
+    // Step 12: Render default wrapper
+    return this.renderDefaultWrapper(
+      componentContent,
+      itemClasses,
+      itemStyle,
+      isSelected,
+      displayName,
+      icon,
+      contentSlotId,
+      descriptionId,
+      ariaDescription,
+      itemIdForDelete,
+      canvasIdForDelete,
     );
   }
 
@@ -1246,150 +993,365 @@ export class GridItemWrapper {
   };
 
   /**
-   * Handle item update (called by drag/resize handlers)
+   * handleItemUpdate Helper Methods
+   * ================================
+   *
+   * These methods were extracted from handleItemUpdate() to reduce cyclomatic complexity
+   * and improve testability. Each method has a single responsibility and is documented
+   * with numbered steps.
    */
-  private handleItemUpdate = (updatedItem: GridItem) => {
-    // Check if position or canvas changed (for undo/redo)
-    let isDrag = false;
-    let isResize = false;
 
-    // Get current viewport early so it's available for both comparison and event emission
-    const currentViewport = this.stateInstance.currentViewport || "desktop";
+  /**
+   * Detect operation type (drag, resize, or both)
+   *
+   * **Purpose**: Compare snapshot with updated item to determine operation type
+   *
+   * **Implementation Steps**:
+   * 1. Get layouts from snapshot and updated item for current viewport
+   * 2. Check if position changed (drag)
+   * 3. Check if size changed (resize)
+   * 4. Check if canvas changed (cross-canvas drag)
+   * 5. Determine isDrag (position or canvas changed)
+   * 6. Determine isResize (size changed)
+   * 7. Return operation type flags
+   *
+   * **Why this is needed**:
+   * - Consolidates change detection logic
+   * - Supports undo/redo command creation
+   * - Enables conditional event emission
+   * @param snapshot - Item snapshot from drag/resize start
+   * @param updatedItem - Updated item from drag/resize end
+   * @param currentViewport - Current viewport name
+   * @returns Operation type flags: { isDrag, isResize }
+   */
+  private detectOperationType(
+    snapshot: GridItem,
+    updatedItem: GridItem,
+    currentViewport: string,
+  ): { isDrag: boolean; isResize: boolean } {
+    // Step 1: Get layouts for comparison
+    const snapshotLayout = snapshot.layouts[currentViewport];
+    const updatedLayout = updatedItem.layouts[currentViewport];
 
-    if (this.itemSnapshot) {
-      const snapshot = this.itemSnapshot;
+    // Step 2: Check if position changed (drag)
+    const positionOnlyChanged =
+      (snapshotLayout.x !== updatedLayout.x ||
+        snapshotLayout.y !== updatedLayout.y) &&
+      snapshotLayout.width === updatedLayout.width &&
+      snapshotLayout.height === updatedLayout.height;
 
-      // Use current viewport's layout for comparison instead of hardcoded desktop
-      const snapshotLayout = snapshot.layouts[currentViewport];
-      const updatedLayout = updatedItem.layouts[currentViewport];
+    // Step 3: Check if size changed (resize)
+    const sizeChanged =
+      snapshotLayout.width !== updatedLayout.width ||
+      snapshotLayout.height !== updatedLayout.height;
 
-      const positionOnlyChanged =
-        (snapshotLayout.x !== updatedLayout.x ||
-          snapshotLayout.y !== updatedLayout.y) &&
-        snapshotLayout.width === updatedLayout.width &&
-        snapshotLayout.height === updatedLayout.height;
-      const sizeChanged =
-        snapshotLayout.width !== updatedLayout.width ||
-        snapshotLayout.height !== updatedLayout.height;
-      const canvasChanged = snapshot.canvasId !== updatedItem.canvasId;
+    // Step 4: Check if canvas changed (cross-canvas drag)
+    const canvasChanged = snapshot.canvasId !== updatedItem.canvasId;
 
-      isDrag = positionOnlyChanged || canvasChanged;
-      isResize = sizeChanged;
+    // Step 5-6: Determine operation type
+    const isDrag = positionOnlyChanged || canvasChanged;
+    const isResize = sizeChanged;
 
-      if (isDrag || isResize) {
-        // Find source canvas and index
-        const canvases = this.stateInstance.canvases;
-        const sourceCanvas = canvases[snapshot.canvasId];
-        const sourceIndex =
-          sourceCanvas?.items.findIndex((i) => i.id === this.item.id) || 0;
+    // Step 7: Return operation type flags
+    return { isDrag, isResize };
+  }
 
-        // Handle cross-canvas z-index assignment
-        const sourceZIndex = snapshot.zIndex;
-        let targetZIndex = sourceZIndex; // Same canvas = same z-index
+  /**
+   * Handle cross-canvas z-index assignment
+   *
+   * **Purpose**: Assign appropriate z-index when item moves to different canvas
+   *
+   * **Implementation Steps**:
+   * 1. Get source canvas from state
+   * 2. Find item index in source canvas
+   * 3. Get source z-index from snapshot
+   * 4. Check if canvas changed
+   * 5. If changed, assign new z-index from target canvas counter
+   * 6. Update item's z-index
+   * 7. Return z-index values
+   *
+   * **Why this is needed**:
+   * - Each canvas has its own z-index counter
+   * - Cross-canvas moves need new z-index assignment
+   * - Prevents z-index conflicts between canvases
+   * @param snapshot - Item snapshot from drag/resize start
+   * @param updatedItem - Updated item from drag/resize end
+   * @returns Z-index values: { sourceIndex, sourceZIndex, targetZIndex }
+   */
+  private handleCrossCanvasZIndex(
+    snapshot: GridItem,
+    updatedItem: GridItem,
+  ): { sourceIndex: number; sourceZIndex: number; targetZIndex: number } {
+    // Step 1-2: Find source canvas and item index
+    const canvases = this.stateInstance.canvases;
+    const sourceCanvas = canvases[snapshot.canvasId];
+    const sourceIndex =
+      sourceCanvas?.items.findIndex((i: any) => i.id === this.item.id) || 0;
 
-        // If moving to different canvas, assign new z-index from target canvas
-        if (snapshot.canvasId !== updatedItem.canvasId) {
-          const targetCanvas = canvases[updatedItem.canvasId];
-          if (targetCanvas) {
-            targetZIndex = targetCanvas.zIndexCounter++;
-            updatedItem.zIndex = targetZIndex; // Update item's z-index
-          }
-        }
+    // Step 3: Get source z-index from snapshot
+    const sourceZIndex = snapshot.zIndex;
+    let targetZIndex = sourceZIndex; // Step 4: Default to same z-index
 
-        // Push undo command before updating state (only if manager exists)
-        // Include size tracking for resize operations (also handles resize with position change)
-        if (this.undoRedoManagerInstance) {
-          // Get current viewport to ensure viewport-specific undo/redo
-          const currentViewport = this.stateInstance.currentViewport;
-          const currentLayout = snapshot.layouts[currentViewport];
-          const updatedLayout = updatedItem.layouts[currentViewport];
-
-          this.undoRedoManagerInstance.push(
-            new MoveItemCommand(
-              updatedItem.id,
-              snapshot.canvasId,
-              updatedItem.canvasId,
-              {
-                x: currentLayout.x,
-                y: currentLayout.y,
-              },
-              {
-                x: updatedLayout.x,
-                y: updatedLayout.y,
-              },
-              sourceIndex,
-              sourceZIndex,
-              targetZIndex,
-              // Include size for resize tracking (position and size can both change)
-              isResize
-                ? {
-                    width: currentLayout.width,
-                    height: currentLayout.height,
-                  }
-                : undefined,
-              isResize
-                ? {
-                    width: updatedLayout.width,
-                    height: updatedLayout.height,
-                  }
-                : undefined,
-              currentLayout.customized ?? false, // Source customized flag
-              updatedLayout.customized ?? false, // Target customized flag
-              this.stateInstance,
-              currentViewport, // Pass active viewport for viewport-specific undo/redo
-            ),
-          );
-        }
+    // Step 4-6: If moving to different canvas, assign new z-index
+    if (snapshot.canvasId !== updatedItem.canvasId) {
+      const targetCanvas = canvases[updatedItem.canvasId];
+      if (targetCanvas) {
+        targetZIndex = targetCanvas.zIndexCounter++;
+        updatedItem.zIndex = targetZIndex;
       }
     }
 
-    // Update item in state (triggers re-render)
+    // Step 7: Return z-index values
+    return { sourceIndex, sourceZIndex, targetZIndex };
+  }
+
+  /**
+   * Push undo/redo command for drag/resize operation
+   *
+   * **Purpose**: Create and push MoveItemCommand with all required parameters
+   *
+   * **Implementation Steps**:
+   * 1. Get current viewport from state
+   * 2. Get layouts from snapshot and updated item
+   * 3. Create MoveItemCommand with all parameters
+   * 4. Include size tracking for resize operations
+   * 5. Include customized flags for both layouts
+   * 6. Push command to undo/redo manager
+   *
+   * **Why this is needed**:
+   * - Consolidates complex command creation logic
+   * - Supports both drag and resize operations
+   * - Enables viewport-specific undo/redo
+   * @param snapshot - Item snapshot from drag/resize start
+   * @param updatedItem - Updated item from drag/resize end
+   * @param sourceIndex - Item index in source canvas
+   * @param sourceZIndex - Z-index in source canvas
+   * @param targetZIndex - Z-index in target canvas
+   * @param isResize - Whether operation includes resize
+   */
+  private pushUndoRedoCommand(
+    snapshot: GridItem,
+    updatedItem: GridItem,
+    sourceIndex: number,
+    sourceZIndex: number,
+    targetZIndex: number,
+    isResize: boolean,
+  ): void {
+    if (!this.undoRedoManagerInstance) {
+      return;
+    }
+
+    // Step 1: Get current viewport
+    const currentViewport = this.stateInstance.currentViewport;
+
+    // Step 2: Get layouts from snapshot and updated item
+    const currentLayout = snapshot.layouts[currentViewport];
+    const updatedLayout = updatedItem.layouts[currentViewport];
+
+    // Step 3-6: Create and push MoveItemCommand
+    this.undoRedoManagerInstance.push(
+      new MoveItemCommand(
+        updatedItem.id,
+        snapshot.canvasId,
+        updatedItem.canvasId,
+        {
+          x: currentLayout.x,
+          y: currentLayout.y,
+        },
+        {
+          x: updatedLayout.x,
+          y: updatedLayout.y,
+        },
+        sourceIndex,
+        sourceZIndex,
+        targetZIndex,
+        // Include size for resize tracking
+        isResize
+          ? {
+              width: currentLayout.width,
+              height: currentLayout.height,
+            }
+          : undefined,
+        isResize
+          ? {
+              width: updatedLayout.width,
+              height: updatedLayout.height,
+            }
+          : undefined,
+        currentLayout.customized ?? false,
+        updatedLayout.customized ?? false,
+        this.stateInstance,
+        currentViewport,
+      ),
+    );
+  }
+
+  /**
+   * Update item in state (immutable update)
+   *
+   * **Purpose**: Update item in state array without mutating existing state
+   *
+   * **Implementation Steps**:
+   * 1. Get canvases from state
+   * 2. Find item index in current canvas
+   * 3. Create new items array (map with replacement)
+   * 4. Create new canvas object with new items
+   * 5. Create new canvases object with new canvas
+   * 6. Update state with new canvases
+   *
+   * **Why this is needed**:
+   * - Maintains immutability for reactive state
+   * - Triggers re-render with new state
+   * - Prevents stale state issues
+   * @param updatedItem - Updated item from drag/resize end
+   */
+  private updateItemInState(updatedItem: GridItem): void {
+    // Step 1: Get canvases from state
     const canvases = this.stateInstance.canvases;
     const canvas = canvases[this.item.canvasId];
-    const itemIndex = canvas.items.findIndex((i) => i.id === this.item.id);
+
+    // Step 2: Find item index in current canvas
+    const itemIndex = canvas.items.findIndex((i: any) => i.id === this.item.id);
+
     if (itemIndex !== -1) {
-      // Create new items array (immutable update)
-      const newItems = canvas.items.map((item, i) =>
+      // Step 3: Create new items array (immutable update)
+      const newItems = canvas.items.map((item: any, i: any) =>
         i === itemIndex ? updatedItem : item,
       );
 
-      // Create new canvas with new items array
+      // Step 4: Create new canvas with new items array
       const newCanvas = { ...canvas, items: newItems };
 
-      // Create new canvases object
+      // Step 5: Create new canvases object
       const newCanvases = { ...canvases, [this.item.canvasId]: newCanvas };
 
-      // Update state
+      // Step 6: Update state
       this.stateInstance.canvases = newCanvases;
     }
+  }
 
-    // Emit events for plugins (only if manager exists)
-    if (this.eventManagerInstance) {
-      // Get current viewport's layout for event data
-      const currentLayout =
-        updatedItem.layouts[currentViewport as "desktop" | "mobile"];
+  /**
+   * Emit change events for plugins
+   *
+   * **Purpose**: Emit componentDragged or componentResized events based on operation type
+   *
+   * **Implementation Steps**:
+   * 1. Check if event manager exists
+   * 2. Get current layout from updated item
+   * 3. If drag, emit componentDragged event
+   * 4. If resize, emit componentResized event
+   *
+   * **Why this is needed**:
+   * - Notifies plugins about drag/resize operations
+   * - Enables external state synchronization
+   * - Supports analytics and logging
+   * @param updatedItem - Updated item from drag/resize end
+   * @param currentViewport - Current viewport name
+   * @param isDrag - Whether operation was a drag
+   * @param isResize - Whether operation was a resize
+   */
+  private emitChangeEvents(
+    updatedItem: GridItem,
+    currentViewport: string,
+    isDrag: boolean,
+    isResize: boolean,
+  ): void {
+    // Step 1: Check if event manager exists
+    if (!this.eventManagerInstance) {
+      return;
+    }
 
-      if (isDrag) {
-        this.eventManagerInstance.emit("componentDragged", {
-          itemId: updatedItem.id,
-          canvasId: updatedItem.canvasId,
-          position: {
-            x: currentLayout.x,
-            y: currentLayout.y,
-          },
-        });
-      }
-      if (isResize) {
-        this.eventManagerInstance.emit("componentResized", {
-          itemId: updatedItem.id,
-          canvasId: updatedItem.canvasId,
-          size: {
-            width: currentLayout.width,
-            height: currentLayout.height,
-          },
-        });
+    // Step 2: Get current layout for event data
+    const currentLayout =
+      updatedItem.layouts[currentViewport as "desktop" | "mobile"];
+
+    // Step 3: If drag, emit componentDragged event
+    if (isDrag) {
+      this.eventManagerInstance.emit("componentDragged", {
+        itemId: updatedItem.id,
+        canvasId: updatedItem.canvasId,
+        position: {
+          x: currentLayout.x,
+          y: currentLayout.y,
+        },
+      });
+    }
+
+    // Step 4: If resize, emit componentResized event
+    if (isResize) {
+      this.eventManagerInstance.emit("componentResized", {
+        itemId: updatedItem.id,
+        canvasId: updatedItem.canvasId,
+        size: {
+          width: currentLayout.width,
+          height: currentLayout.height,
+        },
+      });
+    }
+  }
+
+  /**
+   * Handle item update (called by drag/resize handlers)
+   *
+   * **Purpose**: Coordinate item state updates, undo/redo tracking, and event emission
+   *
+   * **Implementation Steps**:
+   * 1. Get current viewport for operation tracking
+   * 2. Initialize operation type flags
+   * 3. If snapshot exists, detect operation type
+   * 4. If operation detected, handle z-index and push undo command
+   * 5. Update item in state (triggers re-render)
+   * 6. Emit events for plugins
+   *
+   * **Why this is needed**:
+   * - Centralizes all post-drag/resize state updates
+   * - Ensures undo/redo tracking captures correct snapshots
+   * - Maintains immutable state updates
+   * - Notifies plugins about changes
+   * @param updatedItem - Updated item from drag/resize handler
+   */
+  private handleItemUpdate = (updatedItem: GridItem) => {
+    // Step 1: Get current viewport for operation tracking
+    const currentViewport = this.stateInstance.currentViewport || "desktop";
+
+    // Step 2: Initialize operation type flags
+    let isDrag = false;
+    let isResize = false;
+
+    // Step 3: If snapshot exists, detect operation type
+    if (this.itemSnapshot) {
+      const snapshot = this.itemSnapshot;
+
+      // Step 3a: Determine if this was a drag or resize operation
+      ({ isDrag, isResize } = this.detectOperationType(
+        snapshot,
+        updatedItem,
+        currentViewport,
+      ));
+
+      // Step 4: If operation detected, handle z-index and push undo command
+      if (isDrag || isResize) {
+        // Step 4a: Handle cross-canvas z-index assignment
+        const { sourceIndex, sourceZIndex, targetZIndex } =
+          this.handleCrossCanvasZIndex(snapshot, updatedItem);
+
+        // Step 4b: Push undo/redo command
+        this.pushUndoRedoCommand(
+          snapshot,
+          updatedItem,
+          sourceIndex,
+          sourceZIndex,
+          targetZIndex,
+          isResize,
+        );
       }
     }
+
+    // Step 5: Update item in state (triggers re-render)
+    this.updateItemInState(updatedItem);
+
+    // Step 6: Emit events for plugins
+    this.emitChangeEvents(updatedItem, currentViewport, isDrag, isResize);
   };
 
   /**
@@ -1484,4 +1446,509 @@ export class GridItemWrapper {
     debug.log("  📤 Dispatching grid-item:delete (internal event)");
     this.itemRef.dispatchEvent(event);
   };
+
+  /**
+   * Render Method Helper Methods
+   * ============================
+   *
+   * These methods were extracted from render() to reduce cyclomatic complexity
+   * and improve testability. Each method has a single responsibility and is documented
+   * with numbered steps.
+   */
+
+  /**
+   * Get viewport and breakpoints configuration
+   *
+   * **Purpose**: Determine current viewport and breakpoints based on viewer/builder mode
+   *
+   * **Implementation Steps**:
+   * 1. Check if in viewer mode
+   * 2. Get currentViewport from appropriate source (prop or state)
+   * 3. Get breakpoints from appropriate source (prop or state)
+   * 4. Return viewport and breakpoints
+   *
+   * **Why this is needed**:
+   * - Viewer mode uses props (currentViewport, breakpoints)
+   * - Builder mode uses state (stateInstance.currentViewport, stateInstance.breakpoints)
+   * - Consolidates ternary logic into single method
+   * @returns Viewport and breakpoints configuration
+   */
+  private getViewportAndBreakpoints(): {
+    currentViewport: string;
+    breakpoints: any;
+  } {
+    // Step 1: Check if in viewer mode
+    // Step 2: Get currentViewport from appropriate source
+    const currentViewport = this.viewerMode
+      ? this.currentViewport || "desktop"
+      : this.stateInstance.currentViewport || "desktop";
+
+    // Step 3: Get breakpoints from appropriate source
+    const breakpoints = this.viewerMode
+      ? this.breakpoints || DEFAULT_BREAKPOINTS
+      : this.stateInstance.breakpoints || DEFAULT_BREAKPOINTS;
+
+    // Step 4: Return viewport and breakpoints
+    return { currentViewport, breakpoints };
+  }
+
+  /**
+   * Calculate effective layout with auto-stacking
+   *
+   * **Purpose**: Get layout for current viewport with auto-stacking applied if needed
+   *
+   * **Implementation Steps**:
+   * 1. Get effective layout (with inheritance/fallback)
+   * 2. Check if auto-stacking should be applied
+   * 3. If yes, get canvas items from appropriate source
+   * 4. Calculate stacked layout
+   * 5. Return actual layout
+   *
+   * **Why this is needed**:
+   * - Mobile viewport may use auto-stacking if not customized
+   * - Desktop viewport uses manual positioning
+   * - Viewer and builder modes have different data sources
+   * @param currentViewport - Current viewport name
+   * @param breakpoints - Breakpoints configuration
+   * @returns Layout object with x, y, width, height
+   */
+  private calculateEffectiveLayoutWithStacking(
+    currentViewport: string,
+    breakpoints: any,
+  ): any {
+    // Step 1: Get effective layout (with inheritance/fallback)
+    const { layout, sourceBreakpoint } = getEffectiveLayout(
+      this.item,
+      currentViewport,
+      breakpoints,
+    );
+
+    // Step 2: Check if auto-stacking should be applied
+    let actualLayout = layout;
+    if (shouldAutoStack(currentViewport, breakpoints) && !layout.customized) {
+      // Step 3: Get canvas items from appropriate source
+      const canvasItems = this.viewerMode
+        ? this.canvasItems || []
+        : this.stateInstance.canvases[this.item.canvasId]?.items || [];
+
+      // Step 4: Calculate stacked layout
+      actualLayout = calculateAutoStackLayout(
+        this.item,
+        canvasItems,
+        sourceBreakpoint,
+      );
+    }
+
+    // Step 5: Return actual layout
+    return actualLayout;
+  }
+
+  /**
+   * Get component display information
+   *
+   * **Purpose**: Extract icon, name, selection color, and background color from component definition
+   *
+   * **Implementation Steps**:
+   * 1. Get component definition from registry
+   * 2. Extract icon (fallback to "?")
+   * 3. Extract display name (item.name → definition.name → item.type)
+   * 4. Calculate selection color (definition → theme → hardcoded fallback)
+   * 5. Extract backgroundColor from config or schema default
+   * 6. Return display info object
+   *
+   * **Why this is needed**:
+   * - Consolidates all definition-based lookups
+   * - Implements fallback chain for missing values
+   * - Reduces render() complexity
+   * @returns Display information object
+   */
+  private getComponentDisplayInfo(): {
+    definition: any;
+    icon: string;
+    displayName: string;
+    selectionColor: string;
+    backgroundColor: string;
+  } {
+    // Step 1: Get component definition from registry
+    const definition = this.componentRegistry?.get(this.item.type);
+
+    // Step 2: Extract icon (fallback to "?")
+    const icon = definition?.icon || "?";
+
+    // Step 3: Extract display name (fallback chain)
+    const displayName = this.item.name || definition?.name || this.item.type;
+
+    // Step 4: Calculate selection color (fallback chain)
+    // 1. Component-specific override (ComponentDefinition.selectionColor)
+    // 2. Theme default (theme.selectionColor)
+    // 3. Hardcoded fallback (amber/gold)
+    const selectionColor =
+      definition?.selectionColor || this.theme?.selectionColor || "#f59e0b";
+
+    // Step 5: Extract backgroundColor from config or schema default
+    const backgroundColorField = definition?.configSchema?.find(
+      (f) => f.name === "backgroundColor",
+    );
+    const backgroundColor =
+      this.item.config?.backgroundColor ||
+      backgroundColorField?.defaultValue ||
+      "transparent";
+
+    // Step 6: Return display info object
+    return {
+      definition,
+      icon,
+      displayName,
+      selectionColor,
+      backgroundColor,
+    };
+  }
+
+  /**
+   * Build item style object
+   *
+   * **Purpose**: Convert layout to pixel values and build CSS style object
+   *
+   * **Implementation Steps**:
+   * 1. Convert grid units to pixels (x, y, width, height)
+   * 2. Build style object with transform, dimensions, z-index
+   * 3. Add CSS custom properties (selection color, animation duration)
+   * 4. Add background color
+   * 5. Return style object
+   *
+   * **Why this is needed**:
+   * - Consolidates pixel conversion logic
+   * - Builds complete style object in one place
+   * - Reduces render() complexity
+   * @param layout - Layout object with grid units
+   * @param selectionColor - Selection color for CSS variable
+   * @param backgroundColor - Background color for item
+   * @returns CSS style object
+   */
+  private buildItemStyle(
+    layout: any,
+    selectionColor: string,
+    backgroundColor: string,
+  ): any {
+    // Step 1: Convert grid units to pixels (with GridConfig support)
+    const xPixels = gridToPixelsX(layout.x, this.item.canvasId, this.config);
+    const yPixels = gridToPixelsY(layout.y, this.config);
+    const widthPixels = gridToPixelsX(
+      layout.width,
+      this.item.canvasId,
+      this.config,
+    );
+    const heightPixels = gridToPixelsY(layout.height, this.config);
+
+    // Step 2-4: Build style object
+    return {
+      transform: `translate(${xPixels}px, ${yPixels}px)`,
+      width: `${widthPixels}px`,
+      height: `${heightPixels}px`,
+      zIndex: this.item.zIndex.toString(),
+      "--selection-color": selectionColor,
+      "--animation-duration": `${this.config?.animationDuration ?? 100}ms`,
+      // Apply backgroundColor from config to .grid-item so it fills to edges
+      background: backgroundColor,
+    };
+  }
+
+  /**
+   * Render custom wrapper path
+   *
+   * **Purpose**: Render JSX for custom wrapper case
+   *
+   * **Implementation Steps**:
+   * 1. Call definition.renderItemWrapper() with context
+   * 2. Build wrapper div with classes and attributes
+   * 3. Add ARIA description if not in viewer mode
+   * 4. Wrap custom JSX in error boundary (if available)
+   * 5. Add resize handles
+   * 6. Return complete wrapper JSX
+   *
+   * **Why this is needed**:
+   * - Separates custom wrapper logic from render()
+   * - Reduces cyclomatic complexity
+   * - Easier to test and maintain
+   * @param definition - Component definition
+   * @param itemClasses - CSS classes for item
+   * @param itemStyle - CSS style object
+   * @param isSelected - Selection state
+   * @param displayName - Display name for component
+   * @param icon - Icon for component
+   * @param contentSlotId - ID for content slot
+   * @param descriptionId - ID for ARIA description
+   * @param ariaDescription - ARIA description text
+   * @returns JSX for custom wrapper
+   */
+  private renderCustomWrapper(
+    definition: any,
+    itemClasses: any,
+    itemStyle: any,
+    isSelected: boolean,
+    displayName: string,
+    icon: string,
+    contentSlotId: string,
+    descriptionId: string,
+    ariaDescription: string | null,
+  ): any {
+    // Step 1: Call definition.renderItemWrapper() with context
+    const customWrapper = definition.renderItemWrapper({
+      itemId: this.item.id,
+      componentType: this.item.type,
+      name: displayName,
+      icon,
+      isSelected,
+      contentSlotId,
+    });
+
+    // Step 2-6: Build and return complete wrapper JSX
+    return (
+      <div
+        class={itemClasses}
+        id={this.item.id}
+        tabindex={this.viewerMode ? undefined : 0}
+        aria-selected={isSelected ? "true" : "false"}
+        aria-describedby={ariaDescription ? descriptionId : undefined}
+        data-canvas-id={this.item.canvasId}
+        data-component-name={displayName}
+        data-viewer-mode={this.viewerMode ? "true" : "false"}
+        style={itemStyle}
+        onClick={(e) => this.handleClick(e)}
+        ref={(el) => (this.itemRef = el)}
+      >
+        {/* Step 3: ARIA description (hidden, only for screen readers) */}
+        {ariaDescription && (
+          <div id={descriptionId} class="sr-only">
+            {ariaDescription}
+          </div>
+        )}
+
+        {/* Step 4: Error boundary wraps custom wrapper for item-level error isolation */}
+        {this.errorAdapterInstance ? (
+          <error-boundary
+            {...this.errorAdapterInstance.createErrorBoundaryConfig(
+              "grid-item-wrapper",
+              {
+                itemId: this.item.id,
+                canvasId: this.item.canvasId,
+                componentType: this.item.type,
+              },
+            )}
+          >
+            {/* Custom wrapper JSX - renders securely */}
+            {customWrapper}
+          </error-boundary>
+        ) : (
+          /* Custom wrapper JSX - renders securely */
+          customWrapper
+        )}
+
+        {/* Step 5: Resize Handles (8 points) */}
+        <div class="resize-handle nw" />
+        <div class="resize-handle ne" />
+        <div class="resize-handle sw" />
+        <div class="resize-handle se" />
+        <div class="resize-handle n" />
+        <div class="resize-handle s" />
+        <div class="resize-handle e" />
+        <div class="resize-handle w" />
+      </div>
+    );
+  }
+
+  /**
+   * Render default wrapper path
+   *
+   * **Purpose**: Render JSX for default wrapper case
+   *
+   * **Implementation Steps**:
+   * 1. Build wrapper div with classes and attributes
+   * 2. Add ARIA description if not in viewer mode
+   * 3. Add editing UI (drag handle, header, controls) if not in viewer mode
+   * 4. Wrap component content in error boundary (if available)
+   * 5. Add resize handles if not in viewer mode
+   * 6. Return complete wrapper JSX
+   *
+   * **Why this is needed**:
+   * - Separates default wrapper logic from render()
+   * - Reduces cyclomatic complexity
+   * - Easier to test and maintain
+   * @param componentContent - Rendered component content
+   * @param itemClasses - CSS classes for item
+   * @param itemStyle - CSS style object
+   * @param isSelected - Selection state
+   * @param displayName - Display name for component
+   * @param icon - Icon for component
+   * @param contentSlotId - ID for content slot
+   * @param descriptionId - ID for ARIA description
+   * @param ariaDescription - ARIA description text
+   * @param itemIdForDelete - Item ID for delete handler
+   * @param canvasIdForDelete - Canvas ID for delete handler
+   * @returns JSX for default wrapper
+   */
+  private renderDefaultWrapper(
+    componentContent: any,
+    itemClasses: any,
+    itemStyle: any,
+    isSelected: boolean,
+    displayName: string,
+    icon: string,
+    contentSlotId: string,
+    descriptionId: string,
+    ariaDescription: string | null,
+    itemIdForDelete: string,
+    canvasIdForDelete: string,
+  ): any {
+    // Step 1-6: Build and return complete wrapper JSX
+    return (
+      <div
+        class={itemClasses}
+        id={this.item.id}
+        role="group"
+        aria-label={`${displayName} component`}
+        tabindex={this.viewerMode ? undefined : 0}
+        aria-selected={isSelected ? "true" : "false"}
+        aria-describedby={ariaDescription ? descriptionId : undefined}
+        data-canvas-id={this.item.canvasId}
+        data-component-name={displayName}
+        data-viewer-mode={this.viewerMode ? "true" : "false"}
+        style={itemStyle}
+        onClick={(e) => this.handleClick(e)}
+        ref={(el) => (this.itemRef = el)}
+      >
+        {/* Step 2: ARIA description (hidden, only for screen readers) */}
+        {ariaDescription && (
+          <div id={descriptionId} class="sr-only">
+            {ariaDescription}
+          </div>
+        )}
+
+        {/* Step 3: Editing UI (hidden in viewer mode) */}
+        {!this.viewerMode && [
+          /* Drag Handle */
+          <div
+            class="drag-handle"
+            key="drag-handle"
+            aria-label={`Drag ${displayName}`}
+            role="button"
+            aria-grabbed={false}
+          />,
+
+          /* Item Header */
+          <div
+            class="grid-item-header"
+            key="header"
+            aria-label={`${displayName} component header`}
+          >
+            {icon} {displayName}
+          </div>,
+
+          /* Item Controls */
+          <div class="grid-item-controls" key="controls">
+            <button
+              class="grid-item-delete"
+              aria-label={`Delete ${displayName} component`}
+              onClick={() =>
+                this.handleDelete(itemIdForDelete, canvasIdForDelete)
+              }
+            >
+              ×
+            </button>
+          </div>,
+        ]}
+
+        {/* Step 4: Item Content (always rendered) */}
+        {/* Error boundary wraps component content for item-level error isolation */}
+        {this.errorAdapterInstance ? (
+          <error-boundary
+            {...this.errorAdapterInstance.createErrorBoundaryConfig(
+              "grid-item-wrapper",
+              {
+                itemId: this.item.id,
+                canvasId: this.item.canvasId,
+                componentType: this.item.type,
+              },
+            )}
+          >
+            <div
+              class="grid-item-content"
+              id={contentSlotId}
+              data-component-type={this.item.type}
+            >
+              {componentContent}
+            </div>
+          </error-boundary>
+        ) : (
+          <div
+            class="grid-item-content"
+            id={contentSlotId}
+            data-component-type={this.item.type}
+          >
+            {componentContent}
+          </div>
+        )}
+
+        {/* Step 5: Resize Handles (hidden in viewer mode) */}
+        {!this.viewerMode && [
+          <div
+            class="resize-handle nw"
+            key="resize-nw"
+            role="slider"
+            aria-label="Resize top-left corner"
+            tabindex={-1}
+          />,
+          <div
+            class="resize-handle ne"
+            key="resize-ne"
+            role="slider"
+            aria-label="Resize top-right corner"
+            tabindex={-1}
+          />,
+          <div
+            class="resize-handle sw"
+            key="resize-sw"
+            role="slider"
+            aria-label="Resize bottom-left corner"
+            tabindex={-1}
+          />,
+          <div
+            class="resize-handle se"
+            key="resize-se"
+            role="slider"
+            aria-label="Resize bottom-right corner"
+            tabindex={-1}
+          />,
+          <div
+            class="resize-handle n"
+            key="resize-n"
+            role="slider"
+            aria-label="Resize top edge"
+            tabindex={-1}
+          />,
+          <div
+            class="resize-handle s"
+            key="resize-s"
+            role="slider"
+            aria-label="Resize bottom edge"
+            tabindex={-1}
+          />,
+          <div
+            class="resize-handle e"
+            key="resize-e"
+            role="slider"
+            aria-label="Resize right edge"
+            tabindex={-1}
+          />,
+          <div
+            class="resize-handle w"
+            key="resize-w"
+            role="slider"
+            aria-label="Resize left edge"
+            tabindex={-1}
+          />,
+        ]}
+      </div>
+    );
+  }
 }
