@@ -1117,207 +1117,12 @@ export class GridBuilder {
       });
     };
 
-    // Setup canvas drop event handler for palette items
-    this.canvasDropHandler = (event: Event) => {
-      const customEvent = event as CustomEvent;
-      const { canvasId, componentType, x, y } = customEvent.detail;
-
-      debug.log("🎯 canvas-drop event received:", {
-        canvasId,
-        componentType,
-        x,
-        y,
-      });
-
-      // Get component definition to determine default size
-      const definition = this.componentRegistry.get(componentType);
-      if (!definition) {
-        debug.warn(`Component definition not found for type: ${componentType}`);
-        return;
-      }
-
-      // Convert pixel position to grid units
-      const gridX = pixelsToGridX(x, canvasId, this.config);
-      const gridY = pixelsToGridY(y, this.config);
-
-      debug.log("  Converting to grid units (before constraints):", {
-        gridX,
-        gridY,
-        defaultWidth: definition.defaultSize.width,
-        defaultHeight: definition.defaultSize.height,
-      });
-
-      // Apply boundary constraints (validate, adjust size, constrain position)
-      const constrained = applyBoundaryConstraints(definition, gridX, gridY);
-
-      if (!constrained) {
-        debug.warn(
-          `Cannot place component "${definition.name}" - minimum size exceeds canvas width`,
-        );
-        return;
-      }
-
-      debug.log("  After boundary constraints:", constrained);
-
-      // Use existing addComponent API method with constrained values
-      const newItem = this.api?.addComponent(canvasId, componentType, {
-        x: constrained.x,
-        y: constrained.y,
-        width: constrained.width,
-        height: constrained.height,
-      });
-
-      debug.log("  Created item:", newItem);
-
-      // Set the target canvas as active when item is dropped
-      this.api?.setActiveCanvas(canvasId);
-    };
-
+    // Setup canvas drop event handler for palette items (refactored to extracted method)
+    this.canvasDropHandler = this.handleCanvasDrop;
     this.hostElement.addEventListener("canvas-drop", this.canvasDropHandler);
 
-    // Setup canvas move event handler for cross-canvas moves
-    this.canvasMoveHandler = (event: Event) => {
-      const customEvent = event as CustomEvent;
-      const { itemId, sourceCanvasId, targetCanvasId, x, y } =
-        customEvent.detail;
-
-      debug.log("🔄 canvas-move event received:", {
-        itemId,
-        sourceCanvasId,
-        targetCanvasId,
-        x,
-        y,
-      });
-
-      // 1. Get item from source canvas
-      const sourceCanvas = this.stateManager!.state.canvases[sourceCanvasId];
-      if (!sourceCanvas) {
-        console.error("Source canvas not found:", sourceCanvasId);
-        return;
-      }
-
-      const itemIndex = sourceCanvas.items.findIndex((i) => i.id === itemId);
-      if (itemIndex === -1) {
-        console.error("Item not found in source canvas:", itemId);
-        return;
-      }
-
-      const item = sourceCanvas.items[itemIndex];
-
-      // 2. Get current viewport for layout access
-      const currentViewport = this.stateManager!.state.currentViewport;
-      const currentLayout = item.layouts[currentViewport];
-
-      // 3. Capture state BEFORE move (for undo)
-      const sourcePosition = {
-        x: currentLayout.x,
-        y: currentLayout.y,
-      };
-      const sourceCustomized = currentLayout.customized ?? false;
-
-      // 4. Convert drop position (pixels) to grid units for target canvas
-      let gridX = pixelsToGridX(x, targetCanvasId, this.config);
-      let gridY = pixelsToGridY(y, this.config);
-
-      // 5. Constrain position to target canvas boundaries
-      const constrained = constrainPositionToCanvas(
-        gridX,
-        gridY,
-        currentLayout.width,
-        currentLayout.height,
-        CANVAS_WIDTH_UNITS,
-      );
-
-      gridX = constrained.x;
-      gridY = constrained.y;
-
-      const targetPosition = { x: gridX, y: gridY };
-
-      // 6. Capture source z-index before modification
-      const sourceZIndex = item.zIndex;
-
-      // 7. Update item position in current viewport's layout
-      currentLayout.x = gridX;
-      currentLayout.y = gridY;
-
-      // Mark layout as customized (user manually dropped item)
-      currentLayout.customized = true;
-      const targetCustomized = true;
-
-      // 7. Move item between canvases (updates canvasId, removes from source, adds to target)
-      // Remove from source canvas
-      sourceCanvas.items = sourceCanvas.items.filter((i) => i.id !== itemId);
-
-      // Update item's canvasId
-      item.canvasId = targetCanvasId;
-
-      // Add to target canvas
-      const targetCanvas = this.stateManager!.state.canvases[targetCanvasId];
-      targetCanvas.items.push(item);
-
-      // 8. Assign new z-index in target canvas (prevents z-index conflicts)
-      const targetZIndex = targetCanvas.zIndexCounter++;
-      item.zIndex = targetZIndex;
-      this.stateManager!.state.canvases = {
-        ...this.stateManager!.state.canvases,
-      }; // Trigger reactivity
-
-      // 9. Set target canvas as active
-      this.api?.setActiveCanvas(targetCanvasId);
-
-      // 10. Update selection state if item was selected
-      if (this.stateManager!.state.selectedItemId === itemId) {
-        this.stateManager!.state.selectedCanvasId = targetCanvasId;
-      }
-
-      // 11. Create undo/redo command with z-index tracking (with instance state)
-      const command = new MoveItemCommand(
-        itemId,
-        sourceCanvasId,
-        targetCanvasId,
-        sourcePosition,
-        targetPosition,
-        itemIndex,
-        sourceZIndex,
-        targetZIndex,
-        undefined, // sourceSize (not tracked for drag operations)
-        undefined, // targetSize (not tracked for drag operations)
-        sourceCustomized, // Source customized flag (before drop)
-        targetCustomized, // Target customized flag (after drop, always true for manual drops)
-        this.stateManager!.state, // Pass instance state
-        currentViewport, // Pass active viewport for viewport-specific undo/redo
-      );
-      this.undoRedoManager?.push(command);
-
-      // 11. Emit events for plugins
-      this.eventManagerInstance?.emit("componentMoved", {
-        item,
-        sourceCanvasId,
-        targetCanvasId,
-        position: targetPosition,
-      });
-
-      // 12. Auto-scroll to component after cross-canvas move
-      // Wait for DOM to update after position changes
-      requestAnimationFrame(() => {
-        const itemElement = document.getElementById(itemId);
-        if (itemElement) {
-          itemElement.scrollIntoView({
-            behavior: "smooth",
-            block: "center",
-            inline: "nearest",
-          });
-        }
-      });
-
-      debug.log("✅ Cross-canvas move completed:", {
-        itemId,
-        from: sourceCanvasId,
-        to: targetCanvasId,
-        position: targetPosition,
-      });
-    };
-
+    // Setup canvas move event handler for cross-canvas moves (refactored to extracted method)
+    this.canvasMoveHandler = this.handleCanvasMove;
     this.hostElement.addEventListener("canvas-move", this.canvasMoveHandler);
 
     // Setup canvas activated event handler
@@ -1336,211 +1141,8 @@ export class GridBuilder {
       this.canvasActivatedHandler,
     );
 
-    // Setup keyboard shortcuts
-    this.keyboardHandler = (event: KeyboardEvent) => {
-      // Get modifier keys (Cmd on Mac, Ctrl on Windows/Linux)
-      const isUndo =
-        (event.metaKey || event.ctrlKey) &&
-        event.key === "z" &&
-        !event.shiftKey;
-      const isRedo =
-        (event.metaKey || event.ctrlKey) &&
-        ((event.key === "z" && event.shiftKey) || // Ctrl/Cmd+Shift+Z
-          event.key === "y"); // Ctrl/Cmd+Y
-
-      // Handle undo/redo
-      if (isUndo) {
-        debug.log("⌨️ Keyboard: Undo triggered");
-        event.preventDefault();
-        this.api?.undo();
-        return;
-      }
-
-      if (isRedo) {
-        debug.log("⌨️ Keyboard: Redo triggered");
-        event.preventDefault();
-        this.api?.redo();
-        return;
-      }
-
-      // Handle Delete key (delete selected component)
-      if (event.key === "Delete" || event.key === "Backspace") {
-        if (
-          this.stateManager!.state.selectedItemId &&
-          this.stateManager!.state.selectedCanvasId
-        ) {
-          debug.log("⌨️ Keyboard: Delete triggered", {
-            itemId: this.stateManager!.state.selectedItemId,
-          });
-          event.preventDefault();
-
-          // Capture the item ID and canvas ID before deletion
-          const deletedItemId = this.stateManager!.state.selectedItemId;
-          const deletedCanvasId = this.stateManager!.state.selectedCanvasId;
-
-          // Delete the selected item (async - respects onBeforeDelete hook)
-          this.api
-            ?.deleteComponent(this.stateManager!.state.selectedItemId)
-            .then((deleted) => {
-              if (deleted) {
-                // Announce deletion only if actually deleted (not cancelled by modal)
-                this.announce("Component deleted");
-
-                // Move focus to next logical item for keyboard users
-                this.moveFocusAfterDeletion(deletedCanvasId, deletedItemId);
-              }
-            });
-
-          return;
-        }
-      }
-
-      // Handle Escape key (deselect component)
-      if (event.key === "Escape") {
-        if (
-          this.stateManager!.state.selectedItemId ||
-          this.stateManager!.state.selectedCanvasId
-        ) {
-          debug.log("⌨️ Keyboard: Escape triggered (deselecting)");
-          event.preventDefault();
-
-          // Clear selection
-          this.stateManager!.state.selectedItemId = null;
-          this.stateManager!.state.selectedCanvasId = null;
-
-          // Announce deselection
-          this.announce("Selection cleared");
-
-          return;
-        }
-      }
-
-      // Handle arrow key nudging (only if component is selected)
-      if (
-        !this.stateManager!.state.selectedItemId ||
-        !this.stateManager!.state.selectedCanvasId
-      ) {
-        return;
-      }
-
-      const isArrowKey = [
-        "ArrowUp",
-        "ArrowDown",
-        "ArrowLeft",
-        "ArrowRight",
-      ].includes(event.key);
-      if (!isArrowKey) {
-        return;
-      }
-
-      event.preventDefault();
-
-      // Get selected item
-      const canvas =
-        this.stateManager!.state.canvases[
-          this.stateManager!.state.selectedCanvasId
-        ];
-      if (!canvas) {
-        return;
-      }
-
-      const item = canvas.items.find(
-        (i) => i.id === this.stateManager!.state.selectedItemId,
-      );
-      if (!item) {
-        return;
-      }
-
-      // Get current viewport layout
-      const viewport = this.stateManager!.state.currentViewport;
-      const layout = item.layouts[viewport];
-
-      // Calculate nudge amount (1 grid unit in each direction)
-      const nudgeAmount = 1;
-      let deltaX = 0;
-      let deltaY = 0;
-
-      switch (event.key) {
-        case "ArrowUp":
-          deltaY = -nudgeAmount;
-          break;
-        case "ArrowDown":
-          deltaY = nudgeAmount;
-          break;
-        case "ArrowLeft":
-          deltaX = -nudgeAmount;
-          break;
-        case "ArrowRight":
-          deltaX = nudgeAmount;
-          break;
-      }
-
-      debug.log("⌨️ Keyboard: Nudging component", {
-        key: event.key,
-        deltaX,
-        deltaY,
-        itemId: item.id,
-      });
-
-      // Capture old position and customized flag for undo
-      const oldX = layout.x;
-      const oldY = layout.y;
-      const oldCustomized = layout.customized ?? false;
-
-      // Update position with boundary checks
-      const newX = Math.max(0, layout.x + deltaX);
-      const newY = Math.max(0, layout.y + deltaY);
-
-      // Check right boundary (100 grid units = 100%)
-      const maxX = 100 - layout.width;
-      const constrainedX = Math.min(newX, maxX);
-      const constrainedY = newY; // No vertical limit
-
-      // Only update if position actually changed
-      if (oldX === constrainedX && oldY === constrainedY) {
-        return; // No change, don't create undo command
-      }
-
-      // Update item layout (mutate in place to preserve all properties like 'customized')
-      layout.x = constrainedX;
-      layout.y = constrainedY;
-
-      // Mark layout as customized (user manually nudged with arrow keys)
-      layout.customized = true;
-      const newCustomized = true;
-
-      // Create undo command for nudge (same canvas = z-index unchanged)
-      const nudgeCommand = new MoveItemCommand(
-        item.id,
-        this.stateManager!.state.selectedCanvasId,
-        this.stateManager!.state.selectedCanvasId,
-        { x: oldX, y: oldY },
-        { x: constrainedX, y: constrainedY },
-        canvas.items.findIndex((i) => i.id === item.id),
-        item.zIndex, // sourceZIndex
-        item.zIndex, // targetZIndex (same canvas = no change)
-        undefined, // sourceSize (not tracked for nudge operations)
-        undefined, // targetSize (not tracked for nudge operations)
-        oldCustomized, // Source customized flag (before nudge)
-        newCustomized, // Target customized flag (after nudge, always true for manual nudges)
-        this.stateManager!.state, // Pass instance state
-        viewport, // Pass active viewport for viewport-specific undo/redo
-      );
-      this.undoRedoManager?.push(nudgeCommand);
-
-      // Trigger state update
-      this.stateManager!.state.canvases = {
-        ...this.stateManager!.state.canvases,
-      };
-
-      // Emit event
-      this.eventManagerInstance?.emit("componentDragged", {
-        itemId: item.id,
-        canvasId: this.stateManager!.state.selectedCanvasId,
-        position: { x: constrainedX, y: constrainedY },
-      });
-    };
-
+    // Setup keyboard shortcuts (refactored to extracted method)
+    this.keyboardHandler = this.handleKeyboardShortcuts.bind(this);
     document.addEventListener("keydown", this.keyboardHandler);
 
     // Setup container-based viewport switching
@@ -2699,6 +2301,672 @@ export class GridBuilder {
       }
     }, 10);
   };
+
+  /**
+   * Keyboard Event Handler Helpers
+   * ===============================
+   *
+   * These methods were extracted from the inline keyboardHandler in componentDidLoad()
+   * to reduce cyclomatic complexity and improve testability.
+   */
+
+  /**
+   * Main keyboard shortcuts handler
+   * Delegates to specific handlers for each key type
+   *
+   * **Reduced from 202 lines to ~35 lines** by extracting helper methods
+   */
+  private handleKeyboardShortcuts = (event: KeyboardEvent) => {
+    // Undo/Redo
+    if (this.isUndoShortcut(event)) {
+      debug.log("⌨️ Keyboard: Undo triggered");
+      event.preventDefault();
+      this.api?.undo();
+      return;
+    }
+
+    if (this.isRedoShortcut(event)) {
+      debug.log("⌨️ Keyboard: Redo triggered");
+      event.preventDefault();
+      this.api?.redo();
+      return;
+    }
+
+    // Delete
+    if (this.isDeleteKey(event) && this.hasSelection()) {
+      this.handleDeleteKey(event);
+      return;
+    }
+
+    // Escape
+    if (event.key === "Escape" && this.hasSelection()) {
+      this.handleEscapeKey(event);
+      return;
+    }
+
+    // Arrow key nudging
+    if (this.isArrowKey(event) && this.hasSelection()) {
+      this.handleArrowKeyNudge(event);
+      return;
+    }
+  };
+
+  /**
+   * Check if event is undo shortcut (Ctrl/Cmd+Z)
+   */
+  private isUndoShortcut(event: KeyboardEvent): boolean {
+    return (
+      (event.metaKey || event.ctrlKey) &&
+      event.key === "z" &&
+      !event.shiftKey
+    );
+  }
+
+  /**
+   * Check if event is redo shortcut (Ctrl/Cmd+Shift+Z or Ctrl/Cmd+Y)
+   */
+  private isRedoShortcut(event: KeyboardEvent): boolean {
+    return (
+      (event.metaKey || event.ctrlKey) &&
+      ((event.key === "z" && event.shiftKey) || event.key === "y")
+    );
+  }
+
+  /**
+   * Check if event is delete key
+   */
+  private isDeleteKey(event: KeyboardEvent): boolean {
+    return event.key === "Delete" || event.key === "Backspace";
+  }
+
+  /**
+   * Check if event is arrow key
+   */
+  private isArrowKey(event: KeyboardEvent): boolean {
+    return ["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(
+      event.key,
+    );
+  }
+
+  /**
+   * Check if an item is currently selected
+   */
+  private hasSelection(): boolean {
+    return !!(
+      this.stateManager!.state.selectedItemId &&
+      this.stateManager!.state.selectedCanvasId
+    );
+  }
+
+  /**
+   * Handle delete key press
+   * Deletes selected item and manages focus for accessibility
+   */
+  private handleDeleteKey(event: KeyboardEvent): void {
+    debug.log("⌨️ Keyboard: Delete triggered", {
+      itemId: this.stateManager!.state.selectedItemId,
+    });
+    event.preventDefault();
+
+    const deletedItemId = this.stateManager!.state.selectedItemId!;
+    const deletedCanvasId = this.stateManager!.state.selectedCanvasId!;
+
+    this.api?.deleteComponent(deletedItemId).then((deleted) => {
+      if (deleted) {
+        this.announce("Component deleted");
+        this.moveFocusAfterDeletion(deletedCanvasId, deletedItemId);
+      }
+    });
+  }
+
+  /**
+   * Handle escape key press
+   * Clears current selection
+   */
+  private handleEscapeKey(event: KeyboardEvent): void {
+    debug.log("⌨️ Keyboard: Escape triggered (deselecting)");
+    event.preventDefault();
+
+    this.stateManager!.state.selectedItemId = null;
+    this.stateManager!.state.selectedCanvasId = null;
+
+    this.announce("Selection cleared");
+  }
+
+  /**
+   * Handle arrow key nudging
+   * Moves selected item by 1 grid unit in the arrow direction
+   *
+   * **Implementation Steps**:
+   * 1. Prevent default arrow key behavior
+   * 2. Retrieve current canvas and item from state
+   * 3. Calculate nudge delta based on arrow key direction
+   * 4. Capture old position and customized flag for undo
+   * 5. Apply nudge with boundary constraints (prevent out-of-bounds)
+   * 6. Update layout and set customized flag (manual positioning)
+   * 7. Create undo command for operation
+   * 8. Trigger reactivity by cloning canvases object
+   * 9. Emit componentDragged event for plugins
+   *
+   * **Boundary Constraints**:
+   * - Left/Top: Cannot go below 0
+   * - Right: Cannot exceed 100 - item.width (100 grid units = 100% canvas width)
+   * - Bottom: No constraint (canvas auto-expands vertically)
+   *
+   * **Accessibility**: Provides keyboard-only navigation for users who cannot use mouse
+   */
+  private handleArrowKeyNudge(event: KeyboardEvent): void {
+    event.preventDefault();
+
+    const canvas =
+      this.stateManager!.state.canvases[
+        this.stateManager!.state.selectedCanvasId!
+      ];
+    if (!canvas) {
+      return;
+    }
+
+    const item = canvas.items.find(
+      (i) => i.id === this.stateManager!.state.selectedItemId,
+    );
+    if (!item) {
+      return;
+    }
+
+    const viewport = this.stateManager!.state.currentViewport;
+    const layout = item.layouts[viewport];
+
+    // Calculate nudge direction
+    const delta = this.calculateNudgeDelta(event.key);
+
+    debug.log("⌨️ Keyboard: Nudging component", {
+      key: event.key,
+      deltaX: delta.deltaX,
+      deltaY: delta.deltaY,
+      itemId: item.id,
+    });
+
+    // Capture old state for undo
+    const oldPosition = { x: layout.x, y: layout.y };
+    const oldCustomized = layout.customized ?? false;
+
+    // Apply nudge with boundary constraints
+    const newPosition = this.applyNudgeWithConstraints(layout, delta);
+
+    // Only update if position actually changed
+    if (oldPosition.x === newPosition.x && oldPosition.y === newPosition.y) {
+      return;
+    }
+
+    // Update layout
+    layout.x = newPosition.x;
+    layout.y = newPosition.y;
+    layout.customized = true;
+
+    // Create undo command
+    this.createNudgeUndoCommand(
+      item,
+      canvas,
+      oldPosition,
+      newPosition,
+      oldCustomized,
+      viewport,
+    );
+
+    // Trigger reactivity
+    this.stateManager!.state.canvases = {
+      ...this.stateManager!.state.canvases,
+    };
+
+    // Emit event
+    this.eventManagerInstance?.emit("componentDragged", {
+      itemId: item.id,
+      canvasId: this.stateManager!.state.selectedCanvasId!,
+      position: newPosition,
+    });
+  }
+
+  /**
+   * Calculate nudge delta based on arrow key
+   */
+  private calculateNudgeDelta(key: string): {
+    deltaX: number;
+    deltaY: number;
+  } {
+    const nudgeAmount = 1;
+
+    switch (key) {
+      case "ArrowUp":
+        return { deltaX: 0, deltaY: -nudgeAmount };
+      case "ArrowDown":
+        return { deltaX: 0, deltaY: nudgeAmount };
+      case "ArrowLeft":
+        return { deltaX: -nudgeAmount, deltaY: 0 };
+      case "ArrowRight":
+        return { deltaX: nudgeAmount, deltaY: 0 };
+      default:
+        return { deltaX: 0, deltaY: 0 };
+    }
+  }
+
+  /**
+   * Apply nudge with boundary constraints
+   */
+  private applyNudgeWithConstraints(
+    layout: any,
+    delta: { deltaX: number; deltaY: number },
+  ): { x: number; y: number } {
+    const newX = Math.max(0, layout.x + delta.deltaX);
+    const newY = Math.max(0, layout.y + delta.deltaY);
+
+    // Check right boundary (100 grid units = 100%)
+    const maxX = 100 - layout.width;
+    const constrainedX = Math.min(newX, maxX);
+
+    return { x: constrainedX, y: newY };
+  }
+
+  /**
+   * Create undo command for nudge operation
+   */
+  private createNudgeUndoCommand(
+    item: any,
+    canvas: any,
+    oldPosition: { x: number; y: number },
+    newPosition: { x: number; y: number },
+    oldCustomized: boolean,
+    viewport: string,
+  ): void {
+    const command = new MoveItemCommand(
+      item.id,
+      this.stateManager!.state.selectedCanvasId!,
+      this.stateManager!.state.selectedCanvasId!,
+      oldPosition,
+      newPosition,
+      canvas.items.findIndex((i) => i.id === item.id),
+      item.zIndex,
+      item.zIndex,
+      undefined,
+      undefined,
+      oldCustomized,
+      true,
+      this.stateManager!.state,
+      viewport,
+    );
+
+    this.undoRedoManager?.push(command);
+  }
+
+  /**
+   * Canvas Event Handler Helpers
+   * ==============================
+   *
+   * These methods were extracted from inline event handlers in componentDidLoad()
+   * to reduce cyclomatic complexity and improve testability.
+   */
+
+  /**
+   * Handle canvas drop event (palette items dropped onto canvas)
+   * Delegates to processCanvasDrop for actual logic
+   */
+  private handleCanvasDrop = (event: Event): void => {
+    const customEvent = event as CustomEvent;
+    const { canvasId, componentType, x, y } = customEvent.detail;
+
+    this.processCanvasDrop(canvasId, componentType, x, y);
+  };
+
+  /**
+   * Process canvas drop operation
+   * Converts pixel position to grid units, applies constraints, and adds component
+   *
+   * **Implementation Steps**:
+   * 1. Retrieve component definition from registry
+   * 2. Convert pixel coordinates to grid units (pixel → grid conversion)
+   * 3. Apply boundary constraints (validate size, constrain position)
+   * 4. Create new item via API (includes undo support)
+   * 5. Activate target canvas (visual feedback)
+   *
+   * **Coordinate Conversion**:
+   * - Input: Pixel coordinates (x, y) from mouse drop event
+   * - Output: Grid units (0-100 horizontal, 0-∞ vertical)
+   * - Formula: gridX = Math.round(pixels / gridSize)
+   *
+   * **Boundary Constraints Applied**:
+   * - Item width cannot exceed canvas width (100 grid units)
+   * - Item position adjusted to prevent off-canvas placement
+   * - Minimum size enforced (from config.minItemSize)
+   */
+  private processCanvasDrop(
+    canvasId: string,
+    componentType: string,
+    x: number,
+    y: number,
+  ): void {
+    debug.log("🎯 canvas-drop event received:", {
+      canvasId,
+      componentType,
+      x,
+      y,
+    });
+
+    // Get component definition to determine default size
+    const definition = this.componentRegistry.get(componentType);
+    if (!definition) {
+      debug.warn(`Component definition not found for type: ${componentType}`);
+      return;
+    }
+
+    // Convert pixel position to grid units
+    const gridX = pixelsToGridX(x, canvasId, this.config);
+    const gridY = pixelsToGridY(y, this.config);
+
+    debug.log("  Converting to grid units (before constraints):", {
+      gridX,
+      gridY,
+      defaultWidth: definition.defaultSize.width,
+      defaultHeight: definition.defaultSize.height,
+    });
+
+    // Apply boundary constraints (validate, adjust size, constrain position)
+    const constrained = applyBoundaryConstraints(definition, gridX, gridY);
+
+    if (!constrained) {
+      debug.warn(
+        `Cannot place component "${definition.name}" - minimum size exceeds canvas width`,
+      );
+      return;
+    }
+
+    debug.log("  After boundary constraints:", constrained);
+
+    // Use existing addComponent API method with constrained values
+    const newItem = this.api?.addComponent(canvasId, componentType, {
+      x: constrained.x,
+      y: constrained.y,
+      width: constrained.width,
+      height: constrained.height,
+    });
+
+    debug.log("  Created item:", newItem);
+
+    // Set the target canvas as active when item is dropped
+    this.api?.setActiveCanvas(canvasId);
+  }
+
+  /**
+   * Handle canvas move event (item moved between canvases)
+   * Delegates to processCanvasMove for actual logic
+   */
+  private handleCanvasMove = (event: Event): void => {
+    const customEvent = event as CustomEvent;
+    const { itemId, sourceCanvasId, targetCanvasId, x, y } =
+      customEvent.detail;
+
+    this.processCanvasMove(itemId, sourceCanvasId, targetCanvasId, x, y);
+  };
+
+  /**
+   * Process canvas move operation
+   * Handles cross-canvas item moves with position conversion, z-index management, and undo tracking
+   *
+   * **Implementation Steps**:
+   * 1. Validate source canvas and item existence
+   * 2. Capture current state for undo (position, z-index, customized flag)
+   * 3. Convert drop position from pixels to grid units
+   * 4. Constrain position to target canvas boundaries
+   * 5. Execute move operation (delegates to executeCanvasMove)
+   *
+   * **State Captured for Undo**:
+   * - sourcePosition: Original x, y coordinates
+   * - sourceZIndex: Original stacking order
+   * - sourceCustomized: Whether layout was manually customized
+   * - targetCustomized: Set to true (manual drop always customizes)
+   *
+   * **Cross-Canvas Considerations**:
+   * - Source canvas: Item removed from items array
+   * - Target canvas: Item added with new z-index
+   * - Z-index: Assigned from target canvas counter (prevents conflicts)
+   * - Selection: Updated to reflect new canvas if item was selected
+   */
+  private processCanvasMove(
+    itemId: string,
+    sourceCanvasId: string,
+    targetCanvasId: string,
+    x: number,
+    y: number,
+  ): void {
+    debug.log("🔄 canvas-move event received:", {
+      itemId,
+      sourceCanvasId,
+      targetCanvasId,
+      x,
+      y,
+    });
+
+    // Validate source canvas and item
+    const validation = this.validateCanvasMoveSource(sourceCanvasId, itemId);
+    if (!validation) {
+      return;
+    }
+
+    const { sourceCanvas, item, itemIndex } = validation;
+
+    // Get current viewport for layout access
+    const currentViewport = this.stateManager!.state.currentViewport;
+    const currentLayout = item.layouts[currentViewport];
+
+    // Capture state BEFORE move (for undo)
+    const sourcePosition = {
+      x: currentLayout.x,
+      y: currentLayout.y,
+    };
+    const sourceCustomized = currentLayout.customized ?? false;
+    const sourceZIndex = item.zIndex;
+
+    // Convert drop position and constrain to canvas
+    const targetPosition = this.calculateCanvasMovePosition(
+      x,
+      y,
+      targetCanvasId,
+      currentLayout,
+    );
+
+    // Execute the move operation
+    this.executeCanvasMove(
+      item,
+      sourceCanvas,
+      sourceCanvasId,
+      targetCanvasId,
+      itemIndex,
+      sourceZIndex,
+      sourcePosition,
+      targetPosition,
+      sourceCustomized,
+      true, // targetCustomized (always true for manual drops)
+      currentViewport,
+    );
+  }
+
+  /**
+   * Validate canvas move source
+   * Returns null if validation fails, otherwise returns source canvas, item, and index
+   */
+  private validateCanvasMoveSource(
+    sourceCanvasId: string,
+    itemId: string,
+  ): {
+    sourceCanvas: any;
+    item: any;
+    itemIndex: number;
+  } | null {
+    const sourceCanvas = this.stateManager!.state.canvases[sourceCanvasId];
+    if (!sourceCanvas) {
+      console.error("Source canvas not found:", sourceCanvasId);
+      return null;
+    }
+
+    const itemIndex = sourceCanvas.items.findIndex((i) => i.id === itemId);
+    if (itemIndex === -1) {
+      console.error("Item not found in source canvas:", itemId);
+      return null;
+    }
+
+    const item = sourceCanvas.items[itemIndex];
+
+    return { sourceCanvas, item, itemIndex };
+  }
+
+  /**
+   * Calculate target position for canvas move
+   * Converts pixels to grid units and constrains to canvas boundaries
+   */
+  private calculateCanvasMovePosition(
+    x: number,
+    y: number,
+    targetCanvasId: string,
+    currentLayout: any,
+  ): { x: number; y: number } {
+    // Convert drop position (pixels) to grid units for target canvas
+    let gridX = pixelsToGridX(x, targetCanvasId, this.config);
+    let gridY = pixelsToGridY(y, this.config);
+
+    // Constrain position to target canvas boundaries
+    const constrained = constrainPositionToCanvas(
+      gridX,
+      gridY,
+      currentLayout.width,
+      currentLayout.height,
+      CANVAS_WIDTH_UNITS,
+    );
+
+    return { x: constrained.x, y: constrained.y };
+  }
+
+  /**
+   * Execute canvas move operation
+   * Updates item position, moves between canvases, manages z-index, creates undo command
+   *
+   * **Implementation Steps**:
+   * 1. Update item position in current viewport's layout (x, y, customized)
+   * 2. Remove item from source canvas items array
+   * 3. Update item's canvasId property to target canvas
+   * 4. Add item to target canvas items array
+   * 5. Assign new z-index from target canvas counter (prevents conflicts)
+   * 6. Trigger reactivity by cloning canvases object
+   * 7. Activate target canvas (visual feedback)
+   * 8. Update selection state if item was selected
+   * 9. Create undo/redo command with full state snapshot
+   * 10. Emit componentMoved event for plugins
+   * 11. Auto-scroll to item in new canvas (smooth UX)
+   *
+   * **Z-Index Management**:
+   * - Each canvas maintains independent z-index counter
+   * - New z-index = targetCanvas.zIndexCounter++
+   * - Prevents z-index conflicts when moving between canvases
+   * - Source z-index preserved in undo command
+   *
+   * **Reactivity Trigger**:
+   * - `this.stateManager!.state.canvases = {...}` creates new object reference
+   * - StencilJS @stencil/store detects change and triggers re-render
+   * - Without this, UI wouldn't update despite array mutations
+   *
+   * **Undo/Redo Support**:
+   * - MoveItemCommand captures before/after state
+   * - Includes: position, canvas, z-index, customized flag, viewport
+   * - Undo restores item to source canvas with original state
+   * - Redo re-applies move to target canvas
+   */
+  private executeCanvasMove(
+    item: any,
+    sourceCanvas: any,
+    sourceCanvasId: string,
+    targetCanvasId: string,
+    itemIndex: number,
+    sourceZIndex: number,
+    sourcePosition: { x: number; y: number },
+    targetPosition: { x: number; y: number },
+    sourceCustomized: boolean,
+    targetCustomized: boolean,
+    currentViewport: string,
+  ): void {
+    const currentLayout = item.layouts[currentViewport];
+
+    // Update item position in current viewport's layout
+    currentLayout.x = targetPosition.x;
+    currentLayout.y = targetPosition.y;
+    currentLayout.customized = targetCustomized;
+
+    // Move item between canvases
+    sourceCanvas.items = sourceCanvas.items.filter((i) => i.id !== item.id);
+    item.canvasId = targetCanvasId;
+
+    const targetCanvas = this.stateManager!.state.canvases[targetCanvasId];
+    targetCanvas.items.push(item);
+
+    // Assign new z-index in target canvas (prevents z-index conflicts)
+    const targetZIndex = targetCanvas.zIndexCounter++;
+    item.zIndex = targetZIndex;
+
+    // Trigger reactivity
+    this.stateManager!.state.canvases = {
+      ...this.stateManager!.state.canvases,
+    };
+
+    // Set target canvas as active
+    this.api?.setActiveCanvas(targetCanvasId);
+
+    // Update selection state if item was selected
+    if (this.stateManager!.state.selectedItemId === item.id) {
+      this.stateManager!.state.selectedCanvasId = targetCanvasId;
+    }
+
+    // Create undo/redo command with z-index tracking
+    const command = new MoveItemCommand(
+      item.id,
+      sourceCanvasId,
+      targetCanvasId,
+      sourcePosition,
+      targetPosition,
+      itemIndex,
+      sourceZIndex,
+      targetZIndex,
+      undefined, // sourceSize (not tracked for drag operations)
+      undefined, // targetSize (not tracked for drag operations)
+      sourceCustomized,
+      targetCustomized,
+      this.stateManager!.state,
+      currentViewport,
+    );
+    this.undoRedoManager?.push(command);
+
+    // Emit events for plugins
+    this.eventManagerInstance?.emit("componentMoved", {
+      item,
+      sourceCanvasId,
+      targetCanvasId,
+      position: targetPosition,
+    });
+
+    // Auto-scroll to component after cross-canvas move
+    requestAnimationFrame(() => {
+      const itemElement = document.getElementById(item.id);
+      if (itemElement) {
+        itemElement.scrollIntoView({
+          behavior: "smooth",
+          block: "center",
+          inline: "nearest",
+        });
+      }
+    });
+
+    debug.log("✅ Cross-canvas move completed:", {
+      itemId: item.id,
+      from: sourceCanvasId,
+      to: targetCanvasId,
+      position: targetPosition,
+    });
+  }
 
   /**
    * Export current state to JSON-serializable format
