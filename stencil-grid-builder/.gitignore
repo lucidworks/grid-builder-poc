@@ -9,3 +9,4 @@ node_modules/
 .stencil/
 src/utils/version.ts
 storybook-static
+coverage/
