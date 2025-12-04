@@ -663,101 +663,23 @@ export class DragHandler {
   /**
    * Handle drag end event - finalize position and update state
    *
-   * **Most Complex Method**: Handles grid snapping, boundary constraints, cross-canvas
-   * detection, canvas boundary snap-back, mobile layout handling, and state persistence.
+   * **Processing Steps**:
+   * 1. Cancel pending RAF and cleanup
+   * 2. Suppress click event if drag occurred
+   * 3. Detect target canvas (hybrid approach: full containment or center point)
+   * 4. Handle cross-canvas drag (early exit if detected)
+   * 5. Validate container exists
+   * 6. Calculate snapped position with grid alignment and boundary constraints
+   * 7. Prepare item update with latest state
+   * 8. Apply final position and trigger state update
    *
-   * ## Processing Steps
+   * **Performance**: ~5-10ms total (cross-canvas detection ~1-2ms, grid calculations ~1ms, state update ~3-5ms)
    *
-   * ### 1. Cross-Canvas and Boundary Detection
-   * - Calculate item bounds in viewport coordinates
-   * - Hit-test against all canvas bounding boxes
-   * - Detect if dragged to different canvas OR overlapping canvas boundary
-   * - **Snap-back logic**: If item overlaps boundary, snap to canvas it's mostly within
-   * - **Early exit**: Let dropzone handler manage cross-canvas moves
-   *
-   * **Canvas Boundary Snap-Back**:
-   * - Calculate percentage of item area within each canvas
-   * - If item overlaps a boundary, determine which canvas contains majority
-   * - Snap to bottom/top edge of the canvas containing >50% of item area
-   * - Prevents components from spanning multiple canvases
-   *
-   * **Why check center point for cross-canvas**:
-   * - More intuitive than checking any corner
-   * - Prevents accidental canvas switches when edge crosses boundary
-   * - Matches user mental model ("where did I drop it?")
-   *
-   * **Why delegate to dropzone**:
-   * - Dropzone has specialized logic for cross-canvas moves
-   * - Handles state transfer between canvases
-   * - Emits proper undo/redo commands
-   * - This handler focuses on same-canvas repositioning
-   *
-   * ### 2. Grid Snapping
-   * Formula: `Math.round(position / gridSize) * gridSize`
-   * - Rounds to nearest grid unit
-   * - Separate X and Y snapping (different grid sizes)
-   * - Applied before boundary constraints
-   *
-   * **Why snap before constraints**:
-   * - Ensures snapped position respects grid
-   * - Constraints then clip to canvas bounds
-   * - Prevents off-grid positions at edges
-   *
-   * ### 3. Boundary Constraints
-   * - Prevents item from extending outside canvas
-   * - Uses `Math.max(0, Math.min(pos, maxPos))` clamp pattern
-   * - Considers item width/height (full item must be visible)
-   *
-   * ### 4. Edge Snapping
-   * - Auto-snap to canvas edges within 20px threshold
-   * - Provides "magnetic" edges for precise alignment
-   * - Applied after grid snapping (takes precedence)
-   *
-   * **UX benefit**:
-   * - Easy to align items to canvas edges
-   * - No need for pixel-perfect dragging
-   * - Common layout pattern (full-width headers, etc.)
-   *
-   * ### 5. Mobile Layout Handling
-   * - Detects current viewport (desktop vs mobile)
-   * - Updates appropriate layout object
-   * - Marks mobile layout as "customized" when modified
-   * - Initializes mobile width/height from desktop if not set
-   *
-   * **Why "customized" flag**:
-   * - Mobile layouts default to desktop layout
-   * - Flag indicates user explicitly modified mobile layout
-   * - Prevents future desktop changes from overwriting mobile
-   *
-   * ### 6. State Persistence
-   * - Converts final pixel position to grid units
-   * - Updates item.layouts with new position
-   * - Calls `onUpdate(item)` callback
-   * - Triggers single StencilJS re-render
-   * - Parent component pushes undo/redo command
-   *
-   * ## Performance Characteristics
-   *
-   * **Total execution time**: ~5-10ms
-   * - Cross-canvas detection: ~1-2ms (querySelectorAll + getBoundingClientRect)
-   * - Boundary overlap calculation: ~1ms
-   * - Grid calculations: ~1ms
-   * - Boundary checks: ~0.5ms
-   * - State update: ~3-5ms (single re-render)
-   *
-   * **Why this is acceptable**:
-   * - Only runs once at drag end (not 60fps)
-   * - User expects slight delay when releasing drag
-   * - Grid snapping provides visual feedback justifying delay
-   *
-   * ## Edge Cases Handled
-   *
+   * **Edge Cases Handled**:
    * - Item dragged outside canvas bounds → clamped to canvas
    * - Item dragged to different canvas → delegated to dropzone
-   * - Item overlapping canvas boundary → snapped back to majority canvas
-   * - Canvas container not found → early exit (safety)
-   * - Mobile view with no mobile layout → initialized from desktop
-   * - Item near edge → snapped to edge for alignment
+   * - Canvas container not found → snap back to original position
+   * - Mobile view → mark as customized when modified
    * @param event - interact.js drag end event
    * @example
    * ```typescript
@@ -773,7 +695,7 @@ export class DragHandler {
    * ```
    */
   private handleDragEnd(event: InteractDragEvent): void {
-    // Cancel any pending RAF from drag move
+    // Step 1: Cancel pending RAF and cleanup
     if (this.dragRafId) {
       cancelAnimationFrame(this.dragRafId);
       this.dragRafId = null;
@@ -786,36 +708,165 @@ export class DragHandler {
     const elementToMark = this.dragHandleElement ? this.element : event.target;
     elementToMark.classList.remove("dragging");
 
-    // If drag movement occurred, prevent click event from opening config panel
-    if (this.hasMoved) {
-      // Suppress click on the element that was dragged (event.target = drag handle)
-      // This prevents the click from bubbling up and opening the config panel
-      const draggedElement = event.target;
-      const suppressClick = (e: Event) => {
-        e.stopPropagation();
-        e.preventDefault();
-        // Remove this listener after handling one click
-        draggedElement.removeEventListener("click", suppressClick, true);
-      };
-      draggedElement.addEventListener("click", suppressClick, true);
+    // Step 2: Suppress click event if drag occurred
+    this.suppressClickAfterDrag(event, this.hasMoved, this.dragHandleElement);
 
-      // Fallback cleanup in case click never fires
-      setTimeout(() => {
-        draggedElement.removeEventListener("click", suppressClick, true);
-      }, 100);
-    }
-
-    // Get the element's current position in viewport (use main element if dragging from handle)
+    // Step 3: Detect target canvas (hybrid approach: full containment or center point)
     const elementForRect = this.dragHandleElement ? this.element : event.target;
     const rect = elementForRect.getBoundingClientRect();
+    const targetCanvasId = this.detectTargetCanvas(rect, this.item.canvasId);
 
-    // Find which canvas the item should belong to (hybrid approach)
-    let targetCanvasId = this.item.canvasId;
+    // Step 4: Handle cross-canvas drag (early exit if detected)
+    if (
+      this.handleCrossCanvasDrag(targetCanvasId, this.dragStartCanvasId, event)
+    ) {
+      return;
+    }
+
+    // Step 5: Validate container exists
+    const targetContainer = this.domCacheInstance.getCanvas(targetCanvasId);
+    if (!targetContainer) {
+      // Invalid drop - no canvas found, snap back to original position
+      this.snapBackToOriginalPosition(event);
+      this.onOperationEnd?.();
+      return;
+    }
+
+    // Step 6: Calculate snapped position with grid alignment and boundary constraints
+    const elementForDimensions = this.dragHandleElement
+      ? this.element
+      : event.target;
+    const finalPosition = this.calculateSnappedPosition(
+      deltaX,
+      deltaY,
+      targetCanvasId,
+      elementForDimensions,
+    );
+
+    // Step 7: Prepare item update with latest state
+    const constrainedGridPosition = {
+      x: pixelsToGridX(finalPosition.x, targetCanvasId, this.config),
+      y: pixelsToGridY(finalPosition.y, this.config),
+    };
+    const itemToUpdate = this.prepareItemUpdate(
+      targetCanvasId,
+      constrainedGridPosition,
+    );
+
+    // Step 8: Apply final position and trigger state update
+    this.applyFinalPositionAndUpdate(
+      finalPosition.x,
+      finalPosition.y,
+      itemToUpdate,
+      event,
+      this.dragHandleElement,
+    );
+  }
+
+  /**
+   * Drag End Helper Methods
+   * ========================
+   *
+   * These methods were extracted from handleDragEnd to reduce cyclomatic complexity
+   * and improve testability. Each method has a single responsibility and is documented
+   * with numbered steps.
+   */
+
+  /**
+   * Suppress click event after drag movement
+   *
+   * **Purpose**: Prevent click event from opening config panel after drag operation
+   *
+   * **Implementation Steps**:
+   * 1. Check if drag movement occurred (hasMoved flag)
+   * 2. If no movement, skip suppression (user just clicked)
+   * 3. Add capturing click listener to dragged element
+   * 4. Listener stops propagation and prevents default
+   * 5. Listener removes itself after handling one click
+   * 6. Fallback timeout cleanup after 100ms
+   *
+   * **Why this is needed**:
+   * - Drag events trigger click events when mouse is released
+   * - Without suppression, dragging would open config panel
+   * - Must use capture phase (true) to intercept before bubbling
+   * - Self-removing listener prevents memory leaks
+   *
+   * **Why 100ms timeout**:
+   * - In rare cases, click event may not fire (e.g., if element removed)
+   * - Timeout ensures listener cleanup even if click never happens
+   * - Short timeout (100ms) prevents listener from affecting future clicks
+   * @param event - interact.js drag end event
+   * @param hasMoved - Whether drag movement occurred
+   * @param dragHandleElement - Optional separate drag handle element
+   */
+  private suppressClickAfterDrag(
+    event: InteractDragEvent,
+    hasMoved: boolean,
+    dragHandleElement?: HTMLElement,
+  ): void {
+    // Step 1: Check if drag movement occurred
+    if (!hasMoved) {
+      return; // No movement, allow click event
+    }
+
+    // Step 2: Get the element that was dragged
+    const draggedElement = event.target;
+
+    // Step 3: Create self-removing click suppression listener
+    const suppressClick = (e: Event) => {
+      // Step 4: Stop propagation and prevent default
+      e.stopPropagation();
+      e.preventDefault();
+
+      // Step 5: Remove this listener after handling one click
+      draggedElement.removeEventListener("click", suppressClick, true);
+    };
+
+    // Add listener in capture phase (intercepts before bubbling)
+    draggedElement.addEventListener("click", suppressClick, true);
+
+    // Step 6: Fallback cleanup in case click never fires
+    setTimeout(() => {
+      draggedElement.removeEventListener("click", suppressClick, true);
+    }, 100);
+  }
+
+  /**
+   * Detect target canvas for dropped item
+   *
+   * **Purpose**: Determine which canvas the item should belong to after drag
+   *
+   * **Implementation Steps**:
+   * 1. Query all grid containers (.grid-container)
+   * 2. Check if item is fully contained in any canvas (Priority 1)
+   * 3. If not fully contained, use center point detection (Priority 2)
+   * 4. Return target canvas ID or current canvas as fallback
+   *
+   * **Priority 1: Full Containment**:
+   * - Item's bounding box is completely within canvas bounds
+   * - All edges (left, right, top, bottom) inside canvas
+   * - Preferred method for accurate canvas assignment
+   *
+   * **Priority 2: Center Point**:
+   * - Fallback for oversized items that can't fit in any canvas
+   * - Uses center point (rect.left + width/2, rect.top + height/2)
+   * - More forgiving than full containment
+   *
+   * **Why this approach**:
+   * - Full containment ensures item fits completely
+   * - Center point handles edge cases (very large items)
+   * - Two-tier approach provides robust detection
+   * @param rect - Element's bounding rectangle in viewport coordinates
+   * @param currentCanvasId - Current canvas ID as fallback
+   * @returns Target canvas ID
+   */
+  private detectTargetCanvas(rect: DOMRect, currentCanvasId: string): string {
+    let targetCanvasId = currentCanvasId;
     let isFullyContained = false;
 
     const gridContainers = document.querySelectorAll(".grid-container");
 
-    // Priority 1: Check if item is fully contained in any canvas
+    // Step 1 & 2: Check if item is fully contained in any canvas (Priority 1)
     gridContainers.forEach((container: HTMLElement) => {
       const containerRect = container.getBoundingClientRect();
       if (
@@ -825,12 +876,12 @@ export class DragHandler {
         rect.bottom <= containerRect.bottom
       ) {
         targetCanvasId =
-          container.getAttribute("data-canvas-id") || this.item.canvasId;
+          container.getAttribute("data-canvas-id") || currentCanvasId;
         isFullyContained = true;
       }
     });
 
-    // Priority 2: Fallback to center point detection (for oversized items)
+    // Step 3: Use center point detection if not fully contained (Priority 2)
     if (!isFullyContained) {
       const centerX = rect.left + rect.width / 2;
       const centerY = rect.top + rect.height / 2;
@@ -844,39 +895,110 @@ export class DragHandler {
           centerY <= containerRect.bottom
         ) {
           targetCanvasId =
-            container.getAttribute("data-canvas-id") || this.item.canvasId;
+            container.getAttribute("data-canvas-id") || currentCanvasId;
         }
       });
     }
 
-    // If canvas changed from drag start, let the dropzone handle it
-    // (Use dragStartCanvasId since item.canvasId may have been updated by dropzone already)
-    if (targetCanvasId !== this.dragStartCanvasId) {
-      // Clean up drag state (dragging class already removed above)
+    // Step 4: Return target canvas ID
+    return targetCanvasId;
+  }
+
+  /**
+   * Handle cross-canvas drag detection
+   *
+   * **Purpose**: Detect if item was dragged to different canvas and delegate handling
+   *
+   * **Implementation Steps**:
+   * 1. Compare target canvas with drag start canvas
+   * 2. If canvases differ, clean up drag state
+   * 3. End performance tracking
+   * 4. Notify parent operation ended
+   * 5. Return true to signal early exit from handleDragEnd
+   *
+   * **Why delegate to dropzone**:
+   * - Dropzone has specialized logic for cross-canvas moves
+   * - Handles state transfer between canvases
+   * - Emits proper undo/redo commands
+   * - This handler focuses on same-canvas repositioning
+   *
+   * **What gets cleaned up**:
+   * - data-x, data-y attributes reset to 0
+   * - Performance monitoring ended
+   * - Parent notified via onOperationEnd callback
+   * @param targetCanvasId - Canvas where item was dropped
+   * @param dragStartCanvasId - Canvas where drag started
+   * @param event - interact.js drag end event
+   * @returns True if cross-canvas drag detected (early exit), false otherwise
+   */
+  private handleCrossCanvasDrag(
+    targetCanvasId: string,
+    dragStartCanvasId: string,
+    event: InteractDragEvent,
+  ): boolean {
+    // Step 1: Compare target canvas with drag start canvas
+    if (targetCanvasId !== dragStartCanvasId) {
+      // Step 2: Clean up drag state
       event.target.setAttribute("data-x", "0");
       event.target.setAttribute("data-y", "0");
 
-      // End performance tracking
+      // Step 3: End performance tracking
       if (window.perfMonitor) {
         window.perfMonitor.endOperation("drag");
       }
 
-      // Notify parent that drag operation has ended (re-enable snapshot capture)
+      // Step 4: Notify parent that drag operation has ended
       this.onOperationEnd?.();
-      return;
+
+      // Step 5: Return true to signal early exit
+      return true;
     }
 
-    // Calculate new position relative to current canvas (same-canvas drag only)
-    const targetContainer = this.domCacheInstance.getCanvas(targetCanvasId);
-    if (!targetContainer) {
-      // Invalid drop - no canvas found, snap back to original position
-      this.snapBackToOriginalPosition(event);
+    // Same-canvas drag, continue processing
+    return false;
+  }
 
-      // Notify parent that drag operation has ended (re-enable snapshot capture)
-      this.onOperationEnd?.();
-      return;
-    }
-
+  /**
+   * Calculate snapped position with grid alignment and boundary constraints
+   *
+   * **Purpose**: Convert drag delta to final grid-aligned position within canvas bounds
+   *
+   * **Implementation Steps**:
+   * 1. Get grid sizes for target canvas
+   * 2. Calculate new position (base + delta)
+   * 3. Snap to grid using Math.round
+   * 4. Get item dimensions from element styles
+   * 5. Convert to grid units for boundary checking
+   * 6. Apply boundary constraints via constrainPositionToCanvas
+   * 7. Convert constrained grid position back to pixels
+   *
+   * **Grid Snapping Formula**:
+   * ```
+   * snappedX = Math.round(pixelX / gridSizeX) * gridSizeX
+   * ```
+   *
+   * **Why snap before constraints**:
+   * - Ensures snapped position respects grid system
+   * - Constraints then clip to canvas bounds
+   * - Prevents off-grid positions at canvas edges
+   *
+   * **Boundary Constraints**:
+   * - constrainPositionToCanvas ensures item stays within canvas
+   * - Considers item width/height (full item must be visible)
+   * - Uses canvas width of 100 grid units (CANVAS_WIDTH_UNITS constant)
+   * @param deltaX - Cumulative horizontal drag delta in pixels
+   * @param deltaY - Cumulative vertical drag delta in pixels
+   * @param targetCanvasId - Canvas where item is being dropped
+   * @param element - Grid item element for dimension lookup
+   * @returns Final position in pixels: { x, y }
+   */
+  private calculateSnappedPosition(
+    deltaX: number,
+    deltaY: number,
+    targetCanvasId: string,
+    element: HTMLElement,
+  ): { x: number; y: number } {
+    // Step 1: Get grid sizes for target canvas
     const gridSizeX = getGridSizeHorizontal(
       targetCanvasId,
       this.config,
@@ -885,29 +1007,25 @@ export class DragHandler {
     );
     const gridSizeY = getGridSizeVertical(this.config);
 
-    // Final position is base position + drag delta
+    // Step 2: Calculate new position (base + delta)
     let newX = this.basePosition.x + deltaX;
     let newY = this.basePosition.y + deltaY;
 
-    // Snap to grid (separate X and Y)
+    // Step 3: Snap to grid (separate X and Y)
     newX = Math.round(newX / gridSizeX) * gridSizeX;
     newY = Math.round(newY / gridSizeY) * gridSizeY;
 
-    // Get item dimensions (use main element if dragging from handle)
-    const elementForDimensions = this.dragHandleElement
-      ? this.element
-      : event.target;
-    const itemWidth = parseFloat(elementForDimensions.style.width) || 0;
-    const itemHeight = parseFloat(elementForDimensions.style.height) || 0;
+    // Step 4: Get item dimensions from element styles
+    const itemWidth = parseFloat(element.style.width) || 0;
+    const itemHeight = parseFloat(element.style.height) || 0;
 
-    // Convert to grid units for boundary checking
+    // Step 5: Convert to grid units for boundary checking
     const gridX = pixelsToGridX(newX, targetCanvasId, this.config);
     const gridY = pixelsToGridY(newY, this.config);
     const gridWidth = pixelsToGridX(itemWidth, targetCanvasId, this.config);
     const gridHeight = pixelsToGridY(itemHeight, this.config);
 
-    // Apply boundary constraints to keep component fully within canvas
-    // If item is dragged beyond edge, it will snap to the nearest valid position
+    // Step 6: Apply boundary constraints to keep component fully within canvas
     const constrained = constrainPositionToCanvas(
       gridX,
       gridY,
@@ -916,59 +1034,126 @@ export class DragHandler {
       CANVAS_WIDTH_UNITS,
     );
 
-    // Convert back to pixels
-    const gridSizeXForConversion = getGridSizeHorizontal(
-      targetCanvasId,
-      this.config,
-      false,
-      this.domCacheInstance,
-    );
-    const gridSizeYForConversion = getGridSizeVertical(this.config);
-    newX = constrained.x * gridSizeXForConversion;
-    newY = constrained.y * gridSizeYForConversion;
+    // Step 7: Convert back to pixels
+    newX = constrained.x * gridSizeX;
+    newY = constrained.y * gridSizeY;
 
-    // IMPORTANT: Get latest item from state to preserve any config changes
-    // that occurred during drag (e.g., backgroundColor changes)
-    const canvas = this.state.canvases[this.item.canvasId];
+    return { x: newX, y: newY };
+  }
+
+  /**
+   * Prepare item update with latest state and new position
+   *
+   * **Purpose**: Get latest item from state and prepare update object with new position
+   *
+   * **Implementation Steps**:
+   * 1. Get canvas from state
+   * 2. Find latest item in canvas (preserves config changes during drag)
+   * 3. Deep clone item to avoid direct state mutation
+   * 4. Get current viewport (desktop or mobile)
+   * 5. Update layout position (x, y in grid units)
+   * 6. Mark layout as customized (user manually positioned)
+   * 7. Return prepared item update object
+   *
+   * **Why get latest item from state**:
+   * - Item config may have changed during drag (e.g., backgroundColor)
+   * - this.item is stale snapshot from drag start
+   * - Latest item preserves all changes that occurred during drag
+   * - Deep clone prevents direct state mutation
+   *
+   * **Why mark as customized**:
+   * - Indicates user explicitly positioned item in this viewport
+   * - Prevents inheritance/fallback from other breakpoints
+   * - Important for responsive layouts (desktop vs mobile)
+   * @param targetCanvasId - Canvas where item is being dropped
+   * @param constrainedPosition - Final position in grid units
+   * @returns Prepared item update object (deep clone with new position)
+   */
+  private prepareItemUpdate(
+    targetCanvasId: string,
+    constrainedPosition: { x: number; y: number },
+  ): GridItem {
+    // Step 1: Get canvas from state
+    const canvas = this.state.canvases[targetCanvasId];
+
+    // Step 2: Find latest item in canvas (preserves config changes during drag)
     const latestItem = canvas?.items.find((i) => i.id === this.item.id);
     const baseItem = latestItem || this.item; // Fallback to stored item if not found
 
-    // Create a NEW object to avoid mutating the state directly
-    // This ensures handleItemUpdate can properly detect changes by comparing with snapshot
+    // Step 3: Deep clone item to avoid direct state mutation
     const itemToUpdate = JSON.parse(JSON.stringify(baseItem));
 
-    // Update item position in current viewport's layout (use constrained grid units)
+    // Step 4: Get current viewport (desktop or mobile)
     const currentViewport = this.state.currentViewport || "desktop";
     const layout = itemToUpdate.layouts[currentViewport];
 
-    layout.x = constrained.x;
-    layout.y = constrained.y;
+    // Step 5: Update layout position (x, y in grid units)
+    layout.x = constrainedPosition.x;
+    layout.y = constrainedPosition.y;
 
-    // Mark current viewport as customized (user manually positioned)
-    // This prevents inheritance/fallback from other breakpoints
+    // Step 6: Mark layout as customized (user manually positioned)
     layout.customized = true;
 
-    // Wait for next animation frame before applying final position
-    // This allows CSS transitions to animate from current position to final snapped position
-    // (dragging class was removed above, enabling transitions)
+    // Step 7: Return prepared item update object
+    return itemToUpdate;
+  }
+
+  /**
+   * Apply final position to DOM and trigger state update
+   *
+   * **Purpose**: Apply final snapped position via RAF and update state
+   *
+   * **Implementation Steps**:
+   * 1. Wait for next animation frame (allows CSS transitions)
+   * 2. Apply final transform to element
+   * 3. Reset data attributes (data-x, data-y to 0)
+   * 4. End performance tracking
+   * 5. Trigger state update via onUpdate callback
+   * 6. Notify parent operation ended
+   *
+   * **Why use RAF**:
+   * - Dragging class was already removed, enabling CSS transitions
+   * - RAF allows browser to complete one paint cycle
+   * - Creates smooth transition from drag position to snapped position
+   * - Better UX than instant position change
+   *
+   * **What onUpdate does**:
+   * - Triggers single StencilJS re-render
+   * - Parent component updates grid state
+   * - Parent pushes undo/redo command
+   * - Completes the drag operation
+   * @param finalX - Final X position in pixels
+   * @param finalY - Final Y position in pixels
+   * @param itemToUpdate - Prepared item update object
+   * @param event - interact.js drag end event
+   * @param dragHandleElement - Optional separate drag handle element
+   */
+  private applyFinalPositionAndUpdate(
+    finalX: number,
+    finalY: number,
+    itemToUpdate: GridItem,
+    event: InteractDragEvent,
+    dragHandleElement?: HTMLElement,
+  ): void {
+    // Step 1: Wait for next animation frame (allows CSS transitions)
     requestAnimationFrame(() => {
-      // Apply final snapped position to DOM (to main element if dragging from handle)
-      const elementToMove = this.dragHandleElement
-        ? this.element
-        : event.target;
-      elementToMove.style.transform = `translate(${newX}px, ${newY}px)`;
+      // Step 2: Apply final snapped position to DOM
+      const elementToMove = dragHandleElement ? this.element : event.target;
+      elementToMove.style.transform = `translate(${finalX}px, ${finalY}px)`;
+
+      // Step 3: Reset data attributes
       event.target.setAttribute("data-x", "0");
       event.target.setAttribute("data-y", "0");
 
-      // End performance tracking
+      // Step 4: End performance tracking
       if (window.perfMonitor) {
         window.perfMonitor.endOperation("drag");
       }
 
-      // Trigger StencilJS update (single re-render at end)
+      // Step 5: Trigger state update (single re-render)
       this.onUpdate(itemToUpdate);
 
-      // Notify parent that drag operation has ended (re-enable snapshot capture)
+      // Step 6: Notify parent operation ended
       this.onOperationEnd?.();
     });
   }
