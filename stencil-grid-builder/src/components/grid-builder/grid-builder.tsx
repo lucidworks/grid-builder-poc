@@ -2456,8 +2456,10 @@ export class GridBuilder {
    * **Accessibility**: Provides keyboard-only navigation for users who cannot use mouse
    */
   private handleArrowKeyNudge(event: KeyboardEvent): void {
+    // Step 1: Prevent default arrow key behavior
     event.preventDefault();
 
+    // Step 2: Retrieve current canvas and item from state
     const canvas =
       this.stateManager!.state.canvases[
         this.stateManager!.state.selectedCanvasId!
@@ -2476,7 +2478,7 @@ export class GridBuilder {
     const viewport = this.stateManager!.state.currentViewport;
     const layout = item.layouts[viewport];
 
-    // Calculate nudge direction
+    // Step 3: Calculate nudge delta based on arrow key direction
     const delta = this.calculateNudgeDelta(event.key);
 
     debug.log("⌨️ Keyboard: Nudging component", {
@@ -2486,11 +2488,11 @@ export class GridBuilder {
       itemId: item.id,
     });
 
-    // Capture old state for undo
+    // Step 4: Capture old position and customized flag for undo
     const oldPosition = { x: layout.x, y: layout.y };
     const oldCustomized = layout.customized ?? false;
 
-    // Apply nudge with boundary constraints
+    // Step 5: Apply nudge with boundary constraints (prevent out-of-bounds)
     const newPosition = this.applyNudgeWithConstraints(layout, delta);
 
     // Only update if position actually changed
@@ -2498,12 +2500,12 @@ export class GridBuilder {
       return;
     }
 
-    // Update layout
+    // Step 6: Update layout and set customized flag (manual positioning)
     layout.x = newPosition.x;
     layout.y = newPosition.y;
     layout.customized = true;
 
-    // Create undo command
+    // Step 7: Create undo command for operation
     this.createNudgeUndoCommand(
       item,
       canvas,
@@ -2513,12 +2515,12 @@ export class GridBuilder {
       viewport,
     );
 
-    // Trigger reactivity
+    // Step 8: Trigger reactivity by cloning canvases object
     this.stateManager!.state.canvases = {
       ...this.stateManager!.state.canvases,
     };
 
-    // Emit event
+    // Step 9: Emit componentDragged event for plugins
     this.eventManagerInstance?.emit("componentDragged", {
       itemId: item.id,
       canvasId: this.stateManager!.state.selectedCanvasId!,
@@ -2650,14 +2652,14 @@ export class GridBuilder {
       y,
     });
 
-    // Get component definition to determine default size
+    // Step 1: Retrieve component definition from registry
     const definition = this.componentRegistry.get(componentType);
     if (!definition) {
       debug.warn(`Component definition not found for type: ${componentType}`);
       return;
     }
 
-    // Convert pixel position to grid units
+    // Step 2: Convert pixel coordinates to grid units (pixel → grid conversion)
     const gridX = pixelsToGridX(x, canvasId, this.config);
     const gridY = pixelsToGridY(y, this.config);
 
@@ -2668,7 +2670,7 @@ export class GridBuilder {
       defaultHeight: definition.defaultSize.height,
     });
 
-    // Apply boundary constraints (validate, adjust size, constrain position)
+    // Step 3: Apply boundary constraints (validate size, constrain position)
     const constrained = applyBoundaryConstraints(definition, gridX, gridY);
 
     if (!constrained) {
@@ -2680,7 +2682,7 @@ export class GridBuilder {
 
     debug.log("  After boundary constraints:", constrained);
 
-    // Use existing addComponent API method with constrained values
+    // Step 4: Create new item via API (includes undo support)
     const newItem = this.api?.addComponent(canvasId, componentType, {
       x: constrained.x,
       y: constrained.y,
@@ -2690,7 +2692,7 @@ export class GridBuilder {
 
     debug.log("  Created item:", newItem);
 
-    // Set the target canvas as active when item is dropped
+    // Step 5: Activate target canvas (visual feedback)
     this.api?.setActiveCanvas(canvasId);
   }
 
@@ -2744,7 +2746,7 @@ export class GridBuilder {
       y,
     });
 
-    // Validate source canvas and item
+    // Step 1: Validate source canvas and item existence
     const validation = this.validateCanvasMoveSource(sourceCanvasId, itemId);
     if (!validation) {
       return;
@@ -2756,7 +2758,7 @@ export class GridBuilder {
     const currentViewport = this.stateManager!.state.currentViewport;
     const currentLayout = item.layouts[currentViewport];
 
-    // Capture state BEFORE move (for undo)
+    // Step 2: Capture current state for undo (position, z-index, customized flag)
     const sourcePosition = {
       x: currentLayout.x,
       y: currentLayout.y,
@@ -2764,7 +2766,8 @@ export class GridBuilder {
     const sourceCustomized = currentLayout.customized ?? false;
     const sourceZIndex = item.zIndex;
 
-    // Convert drop position and constrain to canvas
+    // Step 3: Convert drop position from pixels to grid units
+    // Step 4: Constrain position to target canvas boundaries
     const targetPosition = this.calculateCanvasMovePosition(
       x,
       y,
@@ -2772,7 +2775,7 @@ export class GridBuilder {
       currentLayout,
     );
 
-    // Execute the move operation
+    // Step 5: Execute move operation (delegates to executeCanvasMove)
     this.executeCanvasMove(
       item,
       sourceCanvas,
@@ -2892,36 +2895,39 @@ export class GridBuilder {
   ): void {
     const currentLayout = item.layouts[currentViewport];
 
-    // Update item position in current viewport's layout
+    // Step 1: Update item position in current viewport's layout (x, y, customized)
     currentLayout.x = targetPosition.x;
     currentLayout.y = targetPosition.y;
     currentLayout.customized = targetCustomized;
 
-    // Move item between canvases
+    // Step 2: Remove item from source canvas items array
     sourceCanvas.items = sourceCanvas.items.filter((i) => i.id !== item.id);
+
+    // Step 3: Update item's canvasId property to target canvas
     item.canvasId = targetCanvasId;
 
+    // Step 4: Add item to target canvas items array
     const targetCanvas = this.stateManager!.state.canvases[targetCanvasId];
     targetCanvas.items.push(item);
 
-    // Assign new z-index in target canvas (prevents z-index conflicts)
+    // Step 5: Assign new z-index from target canvas counter (prevents conflicts)
     const targetZIndex = targetCanvas.zIndexCounter++;
     item.zIndex = targetZIndex;
 
-    // Trigger reactivity
+    // Step 6: Trigger reactivity by cloning canvases object
     this.stateManager!.state.canvases = {
       ...this.stateManager!.state.canvases,
     };
 
-    // Set target canvas as active
+    // Step 7: Activate target canvas (visual feedback)
     this.api?.setActiveCanvas(targetCanvasId);
 
-    // Update selection state if item was selected
+    // Step 8: Update selection state if item was selected
     if (this.stateManager!.state.selectedItemId === item.id) {
       this.stateManager!.state.selectedCanvasId = targetCanvasId;
     }
 
-    // Create undo/redo command with z-index tracking
+    // Step 9: Create undo/redo command with full state snapshot
     const command = new MoveItemCommand(
       item.id,
       sourceCanvasId,
@@ -2940,7 +2946,7 @@ export class GridBuilder {
     );
     this.undoRedoManager?.push(command);
 
-    // Emit events for plugins
+    // Step 10: Emit componentMoved event for plugins
     this.eventManagerInstance?.emit("componentMoved", {
       item,
       sourceCanvasId,
@@ -2948,7 +2954,7 @@ export class GridBuilder {
       position: targetPosition,
     });
 
-    // Auto-scroll to component after cross-canvas move
+    // Step 11: Auto-scroll to item in new canvas (smooth UX)
     requestAnimationFrame(() => {
       const itemElement = document.getElementById(item.id);
       if (itemElement) {
