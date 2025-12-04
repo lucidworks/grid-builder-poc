@@ -1068,6 +1068,8 @@ export class DragHandler {
    * - Important for responsive layouts (desktop vs mobile)
    * @param targetCanvasId - Canvas where item is being dropped
    * @param constrainedPosition - Final position in grid units
+   * @param constrainedPosition.x - X coordinate in grid units
+   * @param constrainedPosition.y - Y coordinate in grid units
    * @returns Prepared item update object (deep clone with new position)
    */
   private prepareItemUpdate(

@@ -96,8 +96,16 @@ const DEFAULT_BOTTOM_SPACING = 2;
  * { x: 5, y: 5, width: 10, height: 10 }
  * ); // true (actual overlap)
  * ```
- * @param item1 - First rectangle (x, y, width, height)
- * @param item2 - Second rectangle (x, y, width, height)
+ * @param item1 - First rectangle
+ * @param item1.x - X coordinate of first rectangle
+ * @param item1.y - Y coordinate of first rectangle
+ * @param item1.width - Width of first rectangle
+ * @param item1.height - Height of first rectangle
+ * @param item2 - Second rectangle
+ * @param item2.x - X coordinate of second rectangle
+ * @param item2.y - Y coordinate of second rectangle
+ * @param item2.width - Width of second rectangle
+ * @param item2.height - Height of second rectangle
  * @returns true if rectangles overlap, false if separated or just touching
  */
 export function checkCollision(

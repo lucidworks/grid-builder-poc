@@ -300,6 +300,10 @@ export interface GridBuilderAPI {
    * @param canvasId - Target canvas
    * @param componentType - Component type (must match registered definition)
    * @param position - Position in grid units
+   * @param position.x - X coordinate in grid units
+   * @param position.y - Y coordinate in grid units
+   * @param position.width - Width in grid units
+   * @param position.height - Height in grid units
    * @param config - Optional initial configuration
    * @returns Created item ID or null if failed
    * @example

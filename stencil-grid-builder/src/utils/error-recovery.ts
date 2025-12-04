@@ -591,6 +591,10 @@ export function getRecommendedStrategy(
  * ```
  * @param operation - Async function to execute
  * @param options - Recovery options
+ * @param options.fallback - Fallback value to return on failure
+ * @param options.strategy - Recovery strategy (retry, graceful, strict, ignore)
+ * @param options.retryConfig - Retry configuration (maxRetries, baseDelay, etc.)
+ * @param options.onError - Callback invoked on error
  * @returns Operation result or fallback value
  */
 export async function executeWithRecovery<T>(

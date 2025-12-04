@@ -3256,6 +3256,10 @@ export class GridBuilder {
    * @param canvasId - Canvas to add component to
    * @param componentType - Component type from registry
    * @param position - Grid position and size
+   * @param position.x - X coordinate in grid units
+   * @param position.y - Y coordinate in grid units
+   * @param position.width - Width in grid units
+   * @param position.height - Height in grid units
    * @param config - Optional component configuration
    * @returns Promise<string | null> - New item ID or null if failed
    */

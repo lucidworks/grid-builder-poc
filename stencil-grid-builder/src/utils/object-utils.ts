@@ -23,11 +23,10 @@
  * | structuredClone | 1× (baseline) | Modern browsers, complex types |
  * | Custom shallow clone | 20-50× faster | GridItem objects |
  * | JSON.parse fallback | 0.1-0.2× | Legacy browser support |
- *
  * @module object-utils
  */
 
-import type { GridItem } from '../types/api';
+import type { GridItem } from "../types/api";
 
 /**
  * Type guard to check if an object is a GridItem
@@ -42,22 +41,21 @@ import type { GridItem } from '../types/api';
  * **Usage**:
  * ```typescript
  * if (isGridItem(obj)) {
- *   // Use optimized shallow clone (20-50× faster)
+ * // Use optimized shallow clone (20-50× faster)
  * }
  * ```
- *
  * @param obj - Object to check
  * @returns True if object matches GridItem structure
  */
 export function isGridItem(obj: any): obj is GridItem {
   return !!(
     obj &&
-    typeof obj === 'object' &&
-    typeof obj.id === 'string' &&
+    typeof obj === "object" &&
+    typeof obj.id === "string" &&
     obj.layouts &&
-    typeof obj.layouts === 'object' &&
+    typeof obj.layouts === "object" &&
     obj.layouts.desktop &&
-    typeof obj.layouts.desktop === 'object'
+    typeof obj.layouts.desktop === "object"
   );
 }
 
@@ -81,7 +79,6 @@ export function isGridItem(obj: any): obj is GridItem {
  * - GridItem has only 2 levels of nesting (layouts.desktop, layouts.mobile)
  * - No functions, circular references, or complex prototypes
  * - All properties are primitives or simple objects
- *
  * @param item - GridItem to clone
  * @returns Deep clone of the GridItem
  */
@@ -145,13 +142,12 @@ export function cloneGridItem(item: GridItem): GridItem {
  * // After (5-50× faster):
  * const itemClone = deepClone(item);
  * ```
- *
  * @param obj - Object to clone
  * @returns Deep clone of the object
  */
 export function deepClone<T>(obj: T): T {
   // Option 1: Use native structuredClone if available (5-10× faster)
-  if (typeof structuredClone !== 'undefined') {
+  if (typeof structuredClone !== "undefined") {
     try {
       return structuredClone(obj);
     } catch (e) {

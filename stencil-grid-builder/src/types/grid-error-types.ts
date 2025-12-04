@@ -210,6 +210,9 @@ export type GridErrorEventHandler = (detail: GridErrorEventDetail) => void;
  * ```
  * @param errorBoundary - Which boundary caught the error
  * @param gridContext - Grid-specific context fields
+ * @param gridContext.itemId - ID of grid item (if applicable)
+ * @param gridContext.canvasId - ID of canvas (if applicable)
+ * @param gridContext.componentType - Type of component (if applicable)
  * @returns Complete error context object
  */
 export function buildGridErrorContext(

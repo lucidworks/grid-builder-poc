@@ -863,7 +863,11 @@ export class MoveItemCommand implements Command {
    * @param sourceCanvasId - Canvas where item started
    * @param targetCanvasId - Canvas where item ended
    * @param sourcePosition - Position before drag (will be shallow cloned)
+   * @param sourcePosition.x - X coordinate before drag
+   * @param sourcePosition.y - Y coordinate before drag
    * @param targetPosition - Position after drag (will be shallow cloned)
+   * @param targetPosition.x - X coordinate after drag
+   * @param targetPosition.y - Y coordinate after drag
    * @param sourceIndex - Original array index in source canvas
    * @param sourceZIndex - Z-index in source canvas (for undo restoration)
    * @param targetZIndex - Z-index in target canvas (assigned during move)

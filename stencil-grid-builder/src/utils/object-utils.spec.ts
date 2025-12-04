@@ -5,18 +5,18 @@
  * Verifies performance optimization paths and fallback behavior.
  */
 
-import { deepClone, isGridItem, cloneGridItem } from './object-utils';
-import type { GridItem } from '../types/api';
+import { deepClone, isGridItem, cloneGridItem } from "./object-utils";
+import type { GridItem } from "../types/api";
 
-describe('Object Utilities', () => {
+describe("Object Utilities", () => {
   // ============================================================================
   // Test Data
   // ============================================================================
 
   const mockGridItem: GridItem = {
-    id: 'item-1',
-    canvasId: 'canvas-1',
-    type: 'header',
+    id: "item-1",
+    canvasId: "canvas-1",
+    type: "header",
     zIndex: 1,
     layouts: {
       desktop: {
@@ -34,15 +34,15 @@ describe('Object Utilities', () => {
       },
     },
     config: {
-      title: 'Test Header',
-      subtitle: 'Subtitle',
+      title: "Test Header",
+      subtitle: "Subtitle",
     },
   };
 
   const mockGridItemWithoutMobile: GridItem = {
-    id: 'item-2',
-    canvasId: 'canvas-1',
-    type: 'text',
+    id: "item-2",
+    canvasId: "canvas-1",
+    type: "text",
     zIndex: 2,
     layouts: {
       desktop: {
@@ -58,54 +58,54 @@ describe('Object Utilities', () => {
   // isGridItem Tests
   // ============================================================================
 
-  describe('isGridItem', () => {
-    it('should return true for valid GridItem with mobile layout', () => {
+  describe("isGridItem", () => {
+    it("should return true for valid GridItem with mobile layout", () => {
       const result = isGridItem(mockGridItem);
       expect(result).toBe(true);
     });
 
-    it('should return true for valid GridItem without mobile layout', () => {
+    it("should return true for valid GridItem without mobile layout", () => {
       const result = isGridItem(mockGridItemWithoutMobile);
       expect(result).toBe(true);
     });
 
-    it('should return false for null', () => {
+    it("should return false for null", () => {
       const result = isGridItem(null);
       expect(result).toBe(false);
     });
 
-    it('should return false for undefined', () => {
+    it("should return false for undefined", () => {
       const result = isGridItem(undefined);
       expect(result).toBe(false);
     });
 
-    it('should return false for primitive types', () => {
-      expect(isGridItem('string')).toBe(false);
+    it("should return false for primitive types", () => {
+      expect(isGridItem("string")).toBe(false);
       expect(isGridItem(123)).toBe(false);
       expect(isGridItem(true)).toBe(false);
     });
 
-    it('should return false for object without id', () => {
+    it("should return false for object without id", () => {
       const obj = {
         layouts: { desktop: { x: 0, y: 0, width: 10, height: 10 } },
       };
       expect(isGridItem(obj)).toBe(false);
     });
 
-    it('should return false for object without layouts', () => {
-      const obj = { id: 'item-1' };
+    it("should return false for object without layouts", () => {
+      const obj = { id: "item-1" };
       expect(isGridItem(obj)).toBe(false);
     });
 
-    it('should return false for object without desktop layout', () => {
+    it("should return false for object without desktop layout", () => {
       const obj = {
-        id: 'item-1',
+        id: "item-1",
         layouts: { mobile: { x: 0, y: 0, width: 10, height: 10 } },
       };
       expect(isGridItem(obj)).toBe(false);
     });
 
-    it('should return false for object with invalid id type', () => {
+    it("should return false for object with invalid id type", () => {
       const obj = {
         id: 123, // Should be string
         layouts: { desktop: { x: 0, y: 0, width: 10, height: 10 } },
@@ -118,8 +118,8 @@ describe('Object Utilities', () => {
   // cloneGridItem Tests
   // ============================================================================
 
-  describe('cloneGridItem', () => {
-    it('should create a deep clone of GridItem with mobile layout', () => {
+  describe("cloneGridItem", () => {
+    it("should create a deep clone of GridItem with mobile layout", () => {
       const clone = cloneGridItem(mockGridItem);
 
       // Verify clone is a new object
@@ -144,7 +144,7 @@ describe('Object Utilities', () => {
       expect(clone.config).toBe(mockGridItem.config);
     });
 
-    it('should create a deep clone of GridItem without mobile layout', () => {
+    it("should create a deep clone of GridItem without mobile layout", () => {
       const clone = cloneGridItem(mockGridItemWithoutMobile);
 
       // Verify clone is a new object
@@ -165,7 +165,7 @@ describe('Object Utilities', () => {
       );
     });
 
-    it('should mutate clone without affecting original - desktop layout', () => {
+    it("should mutate clone without affecting original - desktop layout", () => {
       const clone = cloneGridItem(mockGridItem);
 
       // Mutate clone's desktop layout
@@ -176,7 +176,7 @@ describe('Object Utilities', () => {
       expect(clone.layouts.desktop.x).toBe(999);
     });
 
-    it('should mutate clone without affecting original - mobile layout', () => {
+    it("should mutate clone without affecting original - mobile layout", () => {
       const clone = cloneGridItem(mockGridItem);
 
       // Mutate clone's mobile layout
@@ -187,7 +187,7 @@ describe('Object Utilities', () => {
       expect(clone.layouts.mobile!.width).toBe(999);
     });
 
-    it('should preserve all GridItem properties', () => {
+    it("should preserve all GridItem properties", () => {
       const clone = cloneGridItem(mockGridItem);
 
       // Verify all properties are preserved
@@ -199,8 +199,8 @@ describe('Object Utilities', () => {
   // deepClone Tests
   // ============================================================================
 
-  describe('deepClone', () => {
-    it('should clone a GridItem using optimized path', () => {
+  describe("deepClone", () => {
+    it("should clone a GridItem using optimized path", () => {
       const clone = deepClone(mockGridItem);
 
       // Verify clone is a new object
@@ -214,7 +214,7 @@ describe('Object Utilities', () => {
       expect(clone.layouts.desktop).not.toBe(mockGridItem.layouts.desktop);
     });
 
-    it('should clone a GridItem without mobile layout', () => {
+    it("should clone a GridItem without mobile layout", () => {
       const clone = deepClone(mockGridItemWithoutMobile);
 
       // Verify clone is a new object
@@ -229,22 +229,22 @@ describe('Object Utilities', () => {
       );
     });
 
-    it('should clone primitive values', () => {
-      expect(deepClone('string')).toBe('string');
+    it("should clone primitive values", () => {
+      expect(deepClone("string")).toBe("string");
       expect(deepClone(123)).toBe(123);
       expect(deepClone(true)).toBe(true);
       expect(deepClone(null)).toBe(null);
     });
 
-    it('should clone simple objects', () => {
-      const obj = { a: 1, b: 'test', c: true };
+    it("should clone simple objects", () => {
+      const obj = { a: 1, b: "test", c: true };
       const clone = deepClone(obj);
 
       expect(clone).not.toBe(obj);
       expect(clone).toEqual(obj);
     });
 
-    it('should clone nested objects', () => {
+    it("should clone nested objects", () => {
       const obj = {
         a: 1,
         b: {
@@ -262,7 +262,7 @@ describe('Object Utilities', () => {
       expect(clone).toEqual(obj);
     });
 
-    it('should clone arrays', () => {
+    it("should clone arrays", () => {
       const arr = [1, 2, { a: 3 }];
       const clone = deepClone(arr);
 
@@ -271,39 +271,39 @@ describe('Object Utilities', () => {
       expect(clone).toEqual(arr);
     });
 
-    it('should clone Date objects if structuredClone is available', () => {
-      const date = new Date('2025-01-04');
+    it("should clone Date objects if structuredClone is available", () => {
+      const date = new Date("2025-01-04");
       const clone = deepClone(date);
 
       // If structuredClone is available, Date should be preserved
       // If not (using JSON.parse fallback), it becomes a string
-      if (typeof structuredClone !== 'undefined') {
+      if (typeof structuredClone !== "undefined") {
         expect(clone).toBeInstanceOf(Date);
         expect(clone.getTime()).toBe(date.getTime());
       } else {
         // JSON.parse fallback converts Date to string
-        expect(typeof clone).toBe('string');
+        expect(typeof clone).toBe("string");
       }
     });
 
-    it('should handle undefined values', () => {
-      const obj = { a: 1, b: undefined, c: 'test' };
+    it("should handle undefined values", () => {
+      const obj = { a: 1, b: undefined, c: "test" };
       const clone = deepClone(obj);
 
       // Note: JSON.parse fallback will drop undefined values
       // structuredClone preserves them
-      if (typeof structuredClone !== 'undefined') {
+      if (typeof structuredClone !== "undefined") {
         expect(clone).toEqual(obj);
         expect(clone.b).toBeUndefined();
       } else {
         // JSON.parse drops undefined
         expect(clone.a).toBe(1);
-        expect(clone.c).toBe('test');
-        expect('b' in clone).toBe(false);
+        expect(clone.c).toBe("test");
+        expect("b" in clone).toBe(false);
       }
     });
 
-    it('should mutate clone without affecting original', () => {
+    it("should mutate clone without affecting original", () => {
       const obj = { a: 1, b: { c: 2 } };
       const clone = deepClone(obj);
 
@@ -313,11 +313,11 @@ describe('Object Utilities', () => {
       expect(clone.b.c).toBe(999);
     });
 
-    it('should handle complex GridItem with all optional fields', () => {
+    it("should handle complex GridItem with all optional fields", () => {
       const complexItem: GridItem = {
-        id: 'complex-1',
-        canvasId: 'canvas-1',
-        type: 'dashboard',
+        id: "complex-1",
+        canvasId: "canvas-1",
+        type: "dashboard",
         zIndex: 5,
         layouts: {
           desktop: { x: 0, y: 0, width: 50, height: 100 },
@@ -326,7 +326,7 @@ describe('Object Utilities', () => {
         config: {
           nested: {
             deeply: {
-              value: 'test',
+              value: "test",
             },
           },
           array: [1, 2, 3],
@@ -349,14 +349,14 @@ describe('Object Utilities', () => {
   // Performance Characteristics Tests
   // ============================================================================
 
-  describe('Performance Characteristics', () => {
-    it('should use structuredClone path when available', () => {
+  describe("Performance Characteristics", () => {
+    it("should use structuredClone path when available", () => {
       // This test verifies the code path, not actual performance
       const obj = { a: 1, b: { c: 2 } };
 
       // Mock structuredClone if not available
       const originalStructuredClone = (globalThis as any).structuredClone;
-      if (typeof structuredClone === 'undefined') {
+      if (typeof structuredClone === "undefined") {
         (globalThis as any).structuredClone = (val: any) =>
           JSON.parse(JSON.stringify(val));
       }
@@ -374,7 +374,7 @@ describe('Object Utilities', () => {
       }
     });
 
-    it('should use optimized GridItem path for GridItem objects', () => {
+    it("should use optimized GridItem path for GridItem objects", () => {
       // This test verifies the fast path is used for GridItem
       const clone = deepClone(mockGridItem);
 

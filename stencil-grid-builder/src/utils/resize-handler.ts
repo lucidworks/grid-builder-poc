@@ -380,8 +380,13 @@ export class ResizeHandler {
    * Warns but continues if styles missing (won't break app, just logs issue)
    * @param element - DOM element to make resizable (grid-item-wrapper)
    * @param item - Grid item data for dimension/position management
+   * @param state - GridState instance for managing grid state
    * @param onUpdate - Callback invoked with updated item after resize ends
+   * @param domCacheInstance - DOM cache service instance
    * @param componentDefinition - Optional component definition for min/max size constraints
+   * @param config - Optional grid configuration
+   * @param onOperationStart - Optional callback invoked when resize starts
+   * @param onOperationEnd - Optional callback invoked when resize ends
    * @example
    * ```typescript
    * // Typical usage in component
@@ -914,6 +919,10 @@ export class ResizeHandler {
    * @param gridSizeX - Horizontal grid size in pixels
    * @param gridSizeY - Vertical grid size in pixels
    * @param startRect - Original dimensions before resize started
+   * @param startRect.x - Original X position in pixels
+   * @param startRect.y - Original Y position in pixels
+   * @param startRect.width - Original width in pixels
+   * @param startRect.height - Original height in pixels
    * @param minWidth - Minimum allowed width in pixels
    * @param minHeight - Minimum allowed height in pixels
    * @returns Snapped dimensions and position: { width, height, x, y }
@@ -1017,6 +1026,10 @@ export class ResizeHandler {
    * @param height - Current height after grid snapping
    * @param edges - Which edges are being resized (from interact.js event)
    * @param startRect - Original dimensions before resize started
+   * @param startRect.x - Original X position in pixels
+   * @param startRect.y - Original Y position in pixels
+   * @param startRect.width - Original width in pixels
+   * @param startRect.height - Original height in pixels
    * @returns Adjusted position: { x, y }
    */
   private preserveFixedEdges(
